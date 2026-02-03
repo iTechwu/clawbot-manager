@@ -1,0 +1,71 @@
+{
+  "title": "Persona Templates",
+  "description": "Manage persona templates for your bots. System templates are read-only, but you can duplicate them to create your own.",
+  "tabs": {
+    "system": "System Templates",
+    "user": "My Templates"
+  },
+  "badge": {
+    "system": "System"
+  },
+  "fields": {
+    "name": "Name",
+    "icon": "Icon",
+    "emoji": "Emoji",
+    "tagline": "Tagline",
+    "soulMarkdown": "Soul Markdown",
+    "soulPreview": "Preview",
+    "soulPreviewPlaceholder": "Brief description of the persona..."
+  },
+  "icon": {
+    "emoji": "Emoji",
+    "upload": "Upload Image",
+    "emojiHint": "Enter an emoji",
+    "uploadHint": "Click to upload image",
+    "remove": "Remove"
+  },
+  "actions": {
+    "create": "Create Template",
+    "edit": "Edit",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "creating": "Creating...",
+    "deleting": "Deleting...",
+    "duplicating": "Duplicating..."
+  },
+  "dialog": {
+    "create": {
+      "title": "Create Template",
+      "description": "Create a new persona template for your bots."
+    },
+    "edit": {
+      "title": "Edit Template",
+      "description": "Update your persona template."
+    },
+    "delete": {
+      "title": "Delete Template",
+      "description": "Are you sure you want to delete \"{name}\"? This action cannot be undone."
+    },
+    "duplicate": {
+      "title": "Duplicate Template",
+      "description": "Create a copy of \"{name}\" as your own template.",
+      "namePlaceholder": "{name} (Copy)"
+    }
+  },
+  "messages": {
+    "noSystemTemplates": "No system templates available.",
+    "noUserTemplates": "You haven't created any templates yet. Create one or duplicate a system template to get started.",
+    "createSuccess": "Template created successfully",
+    "updateSuccess": "Template updated successfully",
+    "deleteSuccess": "Template deleted successfully",
+    "duplicateSuccess": "Template duplicated successfully",
+    "createError": "Failed to create template",
+    "updateError": "Failed to update template",
+    "deleteError": "Failed to delete template",
+    "duplicateError": "Failed to duplicate template",
+    "loadError": "Failed to load templates"
+  }
+}

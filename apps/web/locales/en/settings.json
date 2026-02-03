@@ -1,0 +1,45 @@
+{
+  "title": "Settings",
+  "apiKeys": "API Keys",
+  "apiKeysDescription": "Manage your AI provider API keys for bot integrations.",
+  "stats": {
+    "totalKeys": "Total Keys"
+  },
+  "account": "Account",
+  "accountDescription": "Manage your account settings and preferences.",
+  "security": "Security",
+  "securityDescription": "Configure security settings and authentication.",
+  "notifications": "Notifications",
+  "notificationsDescription": "Manage your notification preferences.",
+  "comingSoon": "This feature is coming soon.",
+  "profile": {
+    "title": "Profile",
+    "description": "Update your personal information",
+    "avatar": "Avatar",
+    "avatarDescription": "Click to upload a new avatar",
+    "nickname": "Nickname",
+    "nicknamePlaceholder": "Enter your nickname",
+    "email": "Email",
+    "mobile": "Mobile",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "saveSuccess": "Profile updated successfully",
+    "saveError": "Failed to update profile"
+  },
+  "password": {
+    "title": "Change Password",
+    "description": "Update your account password",
+    "currentPassword": "Current Password",
+    "currentPasswordPlaceholder": "Enter current password",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Enter new password (min 6 characters)",
+    "confirmPassword": "Confirm New Password",
+    "confirmPasswordPlaceholder": "Re-enter new password",
+    "changePassword": "Change Password",
+    "changing": "Changing...",
+    "changeSuccess": "Password changed successfully",
+    "changeError": "Failed to change password",
+    "passwordMismatch": "Passwords do not match",
+    "noPasswordAuth": "Your account does not have password authentication"
+  }
+}

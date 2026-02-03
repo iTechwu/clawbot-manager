@@ -1,0 +1,16 @@
+{
+  "network": {
+    "connectionFailed": "Network connection failed",
+    "timeout": "Request timeout",
+    "serverError": "Server error"
+  },
+  "auth": {
+    "unauthorized": "Unauthorized, please login again",
+    "forbidden": "No permission to access",
+    "sessionExpired": "Session expired"
+  },
+  "general": {
+    "unknown": "Unknown error",
+    "tryAgain": "Please try again later"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "labels": {
+    "email": "邮箱",
+    "password": "密码",
+    "username": "用户名",
+    "phone": "手机号",
+    "name": "姓名",
+    "description": "描述"
+  },
+  "placeholders": {
+    "email": "请输入邮箱",
+    "password": "请输入密码",
+    "username": "请输入用户名",
+    "phone": "请输入手机号",
+    "name": "请输入姓名",
+    "description": "请输入描述"
+  }
+}

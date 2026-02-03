@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+coverage/
+
+# Turbo
+.turbo/
+
+# Generated files
+*.generated.*
+prisma/client/
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/

@@ -1,0 +1,325 @@
+{
+  "title": "Bot Management",
+  "description": "Create, configure, and manage your AI chatbots across multiple platforms.",
+  "tabs": {
+    "bots": "Bots",
+    "apiKeys": "API Keys"
+  },
+  "stats": {
+    "total": "Total Bots",
+    "running": "Running",
+    "stopped": "Stopped"
+  },
+  "actions": {
+    "createBot": "Create Bot",
+    "addApiKey": "Add API Key",
+    "manageApiKeys": "Manage API Keys",
+    "start": "Start",
+    "stop": "Stop",
+    "delete": "Delete",
+    "refresh": "Refresh"
+  },
+  "status": {
+    "created": "Created",
+    "starting": "Starting",
+    "running": "Running",
+    "stopped": "Stopped",
+    "error": "Error"
+  },
+  "fields": {
+    "name": "Name",
+    "hostname": "Hostname",
+    "provider": "AI Provider",
+    "model": "Model",
+    "channel": "Channel",
+    "port": "Port",
+    "status": "Status",
+    "createdAt": "Created At",
+    "vendor": "Vendor",
+    "label": "Label",
+    "tag": "Tag",
+    "apiKey": "API Key",
+    "actions": "Actions"
+  },
+  "providers": {
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "google": "Google AI",
+    "venice": "Venice AI",
+    "deepseek": "DeepSeek",
+    "groq": "Groq"
+  },
+  "channels": {
+    "discord": "Discord",
+    "slack": "Slack",
+    "telegram": "Telegram",
+    "web": "Web Chat"
+  },
+  "wizard": {
+    "title": "Create New Bot",
+    "steps": {
+      "template": "Template",
+      "templateDesc": "Choose a Persona Template",
+      "personality": "Personality",
+      "personalityDesc": "Customize your bot identity",
+      "features": "Features",
+      "featuresDesc": "Configure providers and channels",
+      "configure": "Configure",
+      "configureDesc": "Set up model and tokens",
+      "review": "Review",
+      "reviewDesc": "Review and create",
+      "basicInfo": "Basic Info",
+      "provider": "AI Provider",
+      "channel": "Channel",
+      "persona": "Persona"
+    },
+    "completeStep": "Please complete this step",
+    "step1": {
+      "title": "Choose a Persona Template",
+      "description": "Start with a pre-built personality or create your own from scratch",
+      "searchPlaceholder": "Search templates...",
+      "noMatch": "No templates match \"{query}\"",
+      "scratchTemplate": {
+        "name": "Start from Scratch",
+        "tagline": "Create your own custom persona",
+        "soulPreview": "Define your bot's personality manually"
+      }
+    },
+    "step2": {
+      "title": "Personality",
+      "description": "Customize your bot's identity and personality",
+      "avatar": "Avatar",
+      "emoji": "Emoji",
+      "botName": "Bot Name *",
+      "botNamePlaceholder": "My Awesome Bot",
+      "botNameHint": "Display name for your bot",
+      "hostname": "Hostname *",
+      "hostnamePlaceholder": "my-awesome-bot",
+      "hostnameHint": "Used for container name and API access (max 64 chars, lowercase letters, numbers, and hyphens only)",
+      "avatarUrl": "Avatar URL (optional)",
+      "avatarUrlPlaceholder": "https://...",
+      "systemPrompt": "System Prompt (SOUL.md)",
+      "systemPromptPlaceholder": "# Soul\n\n## Core Identity\nYou are a helpful assistant...\n\n## Personality\n- Friendly and approachable\n- Patient and understanding\n\n## Boundaries\n- Be honest about limitations",
+      "systemPromptHint": "Define your bot's personality, behavior, and boundaries using Markdown"
+    },
+    "step3": {
+      "title": "Features",
+      "description": "Configure LLM providers, channels, and bot features",
+      "llmProviders": "LLM Providers *",
+      "showLess": "Show less",
+      "showAll": "Show all ({count} more)",
+      "channels": "Channels *",
+      "features": "Features",
+      "commands": "Commands",
+      "commandsDesc": "Allow /commands in chat",
+      "tts": "Text-to-Speech",
+      "ttsDesc": "Voice responses",
+      "sandbox": "Sandbox",
+      "sandboxDesc": "Isolated environment",
+      "sessionScope": "Session Scope",
+      "sessionScopes": {
+        "user": "Per User",
+        "channel": "Per Channel",
+        "global": "Global"
+      },
+      "routingTags": "API Routing Tags",
+      "routingTagsPlaceholder": "prod, high-priority",
+      "routingTagsHint": "Comma-separated tags for API key routing. Keys with matching tags will be used first. Leave empty to use default keys."
+    },
+    "step4": {
+      "title": "Configure",
+      "description": "Configure model settings and channel tokens",
+      "llmConfig": "LLM Provider Configuration",
+      "model": "Model",
+      "selectModel": "Select model",
+      "channelConfig": "Channel Configuration",
+      "botToken": "Bot Token *",
+      "featureSettings": "Feature Settings",
+      "tts": "Text-to-Speech",
+      "voice": "Voice",
+      "selectVoice": "Select voice",
+      "sandboxMode": "Sandbox Mode",
+      "timeout": "Timeout (seconds)",
+      "emptyState": "No providers or channels selected.",
+      "emptyStateHint": "Go back to enable at least one of each."
+    },
+    "step5": {
+      "title": "Review Your Bot",
+      "description": "Verify everything looks correct before creating",
+      "persona": "Persona",
+      "name": "Name",
+      "notSet": "(not set)",
+      "hostname": "Hostname",
+      "emoji": "Emoji",
+      "soulPreview": "SOUL.md Preview",
+      "providers": "Providers",
+      "noProviders": "No providers selected",
+      "modelLabel": "Model: {model}",
+      "defaultModel": "default",
+      "channels": "Channels",
+      "noChannels": "No channels selected",
+      "tokenLabel": "Token: {token}",
+      "features": "Features",
+      "commands": "Commands",
+      "tts": "TTS",
+      "sandbox": "Sandbox",
+      "sessionScope": "Session Scope: ",
+      "routingTags": "Routing Tags: "
+    },
+    "basicInfo": {
+      "title": "Basic Information",
+      "botName": "Bot Name",
+      "botNamePlaceholder": "My Awesome Bot",
+      "hostname": "Hostname",
+      "hostnamePlaceholder": "my-bot",
+      "hostnameHint": "Lowercase letters, numbers, and hyphens only"
+    },
+    "provider": {
+      "title": "AI Provider",
+      "description": "Select the AI provider and model for your bot"
+    },
+    "channel": {
+      "title": "Channel",
+      "description": "Select where your bot will be deployed",
+      "tokenLabel": {
+        "discord": "Discord Bot Token",
+        "slack": "Slack Bot Token",
+        "telegram": "Telegram Bot Token",
+        "web": "API Token"
+      },
+      "tokenPlaceholder": "Enter token..."
+    },
+    "persona": {
+      "title": "Persona",
+      "personaName": "Bot Persona Name",
+      "personaNamePlaceholder": "Assistant",
+      "systemPrompt": "System Prompt (Soul)",
+      "systemPromptPlaceholder": "You are a helpful assistant...",
+      "emoji": "Emoji (optional)",
+      "emojiPlaceholder": "🤖",
+      "avatarUrl": "Avatar URL (optional)",
+      "avatarUrlPlaceholder": "https://..."
+    },
+    "features": {
+      "title": "Features & Summary",
+      "enableCommands": "Enable slash commands",
+      "enableTts": "Enable text-to-speech",
+      "enableSandbox": "Enable code sandbox",
+      "sessionScope": "Session Scope",
+      "sessionScopes": {
+        "user": "Per User",
+        "channel": "Per Channel",
+        "global": "Global"
+      }
+    },
+    "summary": {
+      "title": "Summary"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "back": "Back",
+      "next": "Next",
+      "create": "Create Bot",
+      "creating": "Creating..."
+    },
+    "avatar": {
+      "upload": "Upload",
+      "remove": "Remove",
+      "hint": "PNG, JPG up to 1MB"
+    },
+    "emoji": {
+      "hide": "Hide",
+      "pick": "Pick"
+    },
+    "markdown": {
+      "hint": "Markdown supported",
+      "placeholder": "# Soul\n\nDescribe your bot's personality, guidelines, and behavior..."
+    }
+  },
+  "apiKeyModal": {
+    "title": "Add API Key",
+    "description": "Add a new API key for an AI provider.",
+    "provider": "Provider",
+    "selectProvider": "Select provider",
+    "apiKey": "API Key",
+    "apiKeyRequired": "API Key is required",
+    "baseUrl": "API Base URL",
+    "baseUrlDefault": "Default",
+    "label": "Label (optional)",
+    "labelPlaceholder": "My API Key",
+    "labelHint": "Optional name to identify this key",
+    "tag": "Tag (optional)",
+    "tagPlaceholder": "production",
+    "tagHint": "Bots with matching tags will use this key. Leave empty for default.",
+    "actions": {
+      "cancel": "Cancel",
+      "add": "Add Key",
+      "adding": "Adding..."
+    }
+  },
+  "health": {
+    "status": "Status",
+    "botCount": "Bots",
+    "keyCount": "API Keys"
+  },
+  "messages": {
+    "noBots": "No bots found. Create your first bot to get started.",
+    "noApiKeys": "No API keys found. Add your first API key to get started.",
+    "loadingBots": "Loading bots...",
+    "loadingApiKeys": "Loading API keys...",
+    "createSuccess": "Bot created successfully",
+    "deleteSuccess": "Bot deleted successfully",
+    "startSuccess": "Bot started successfully",
+    "stopSuccess": "Bot stopped successfully",
+    "addKeySuccess": "API key added successfully",
+    "deleteKeySuccess": "API key deleted successfully",
+    "error": "Operation failed"
+  },
+  "diagnostics": {
+    "title": "Diagnostics",
+    "description": "Monitor system health and container metrics",
+    "containerStats": "Container Stats",
+    "orphanedResources": "Orphaned Resources",
+    "cleanup": "Cleanup",
+    "cleanupSuccess": "Cleanup successful",
+    "noOrphans": "No orphaned resources",
+    "systemOverview": {
+      "title": "System Overview",
+      "loading": "Loading system metrics...",
+      "avgCpu": "Avg CPU",
+      "memory": "Memory",
+      "activeBots": "Active Bots",
+      "totalMemory": "Total Memory",
+      "networkIn": "Network In",
+      "networkOut": "Network Out"
+    },
+    "containerMetrics": {
+      "title": "Container Metrics",
+      "noContainers": "No running containers",
+      "container": "Container",
+      "cpu": "CPU",
+      "memory": "Memory",
+      "network": "Network"
+    },
+    "healthStatus": {
+      "title": "API Health",
+      "checking": "Checking...",
+      "healthy": "Healthy",
+      "unhealthy": "Unhealthy",
+      "lastChecked": "Last checked"
+    },
+    "cleanupPanel": {
+      "title": "Resource Cleanup",
+      "scanning": "Scanning...",
+      "retry": "Retry",
+      "orphanedContainers": "Orphaned Containers",
+      "orphanedWorkspaces": "Orphaned Workspaces",
+      "orphanedSecrets": "Orphaned Secrets",
+      "cleanUp": "Clean Up",
+      "cleaning": "Cleaning...",
+      "refresh": "Refresh",
+      "noOrphanedResources": "No orphaned resources",
+      "cleanedUp": "Cleaned up {count} orphaned resources"
+    }
+  }
+}

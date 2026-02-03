@@ -1,0 +1,8 @@
+{
+  "required": "此字段为必填项",
+  "email": "请输入有效的邮箱地址",
+  "phone": "请输入有效的手机号",
+  "minLength": "最少需要 {min} 个字符",
+  "maxLength": "最多允许 {max} 个字符",
+  "pattern": "格式不正确"
+}

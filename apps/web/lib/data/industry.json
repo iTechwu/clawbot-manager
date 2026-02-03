@@ -1,0 +1,369 @@
+{
+  "industries": [
+    {
+      "id": "fashion",
+      "name": "服饰鞋包",
+      "categories": [
+        {
+          "id": "women-fashion",
+          "name": "女装 / 女士精品",
+          "items": ["连衣裙", "T 恤 / 衬衫", "裤装", "内衣 / 家居服"],
+          "subcategories": [
+            {
+              "name": "配饰",
+              "items": ["帽子", "围巾", "腰带"]
+            },
+            {
+              "name": "鞋靴",
+              "items": ["高跟鞋", "休闲鞋", "运动鞋"]
+            }
+          ]
+        },
+        {
+          "id": "men-fashion",
+          "name": "男装",
+          "items": ["衬衫", "夹克 / 外套", "休闲裤", "运动服饰"],
+          "subcategories": [
+            {
+              "name": "配饰",
+              "items": ["领带", "手表", "钱包"]
+            }
+          ]
+        },
+        {
+          "id": "kids-fashion",
+          "name": "童装 / 婴儿装",
+          "items": ["连体衣", "儿童外套", "童鞋", "亲子装", "孕妇装"]
+        },
+        {
+          "id": "shoes",
+          "name": "鞋靴",
+          "items": ["运动鞋", "休闲鞋", "高跟鞋", "雪地靴", "雨靴"]
+        },
+        {
+          "id": "bags",
+          "name": "箱包 / 皮具",
+          "items": ["背包", "手提包", "旅行箱", "钱包", "皮带"]
+        },
+        {
+          "id": "underwear",
+          "name": "内衣 / 家居服",
+          "items": ["文胸", "睡衣套装", "保暖内衣", "泳衣", "袜子"]
+        }
+      ]
+    },
+    {
+      "id": "beauty",
+      "name": "美妆个护",
+      "categories": [
+        {
+          "id": "skincare",
+          "name": "护肤",
+          "items": ["洁面乳", "精华液", "面膜", "面霜", "防晒霜"]
+        },
+        {
+          "id": "makeup",
+          "name": "彩妆",
+          "items": ["口红", "眼影", "粉底液", "腮红", "美妆工具"]
+        },
+        {
+          "id": "perfume",
+          "name": "香水 / 香氛",
+          "items": ["女士香水", "男士香水", "车载香薰", "身体喷雾"]
+        },
+        {
+          "id": "personal-care",
+          "name": "个人护理",
+          "items": ["洗发水", "沐浴露", "电动牙刷", "剃须刀", "脱毛仪"]
+        },
+        {
+          "id": "beauty-devices",
+          "name": "美容仪器",
+          "items": ["洁面仪", "导入仪", "美容仪", "美发工具"]
+        }
+      ]
+    },
+    {
+      "id": "home",
+      "name": "家居生活",
+      "categories": [
+        {
+          "id": "furniture",
+          "name": "家具",
+          "items": ["沙发", "床", "餐桌椅", "办公桌椅", "收纳柜"]
+        },
+        {
+          "id": "textiles",
+          "name": "家纺 / 床上用品",
+          "items": ["四件套", "被子", "枕头", "窗帘", "地毯"]
+        },
+        {
+          "id": "kitchen",
+          "name": "厨房用品",
+          "items": ["锅具", "餐具", "烘焙工具"],
+          "subcategories": [
+            {
+              "name": "小家电",
+              "items": ["电饭煲", "微波炉"]
+            }
+          ]
+        },
+        {
+          "id": "building-materials",
+          "name": "家装建材",
+          "items": ["灯具", "开关插座", "瓷砖", "涂料", "五金工具"]
+        },
+        {
+          "id": "storage-cleaning",
+          "name": "收纳 / 清洁",
+          "items": ["收纳箱", "垃圾桶", "扫地机器人", "清洁剂"]
+        }
+      ]
+    },
+    {
+      "id": "electronics",
+      "name": "数码家电",
+      "categories": [
+        {
+          "id": "mobile",
+          "name": "手机 / 通讯",
+          "items": ["智能手机", "耳机", "对讲机"],
+          "subcategories": [
+            {
+              "name": "手机配件",
+              "items": ["壳", "膜", "充电器"]
+            }
+          ]
+        },
+        {
+          "id": "computer",
+          "name": "电脑 / 办公",
+          "items": ["笔记本电脑", "台式机", "显示器", "打印机", "办公文具"]
+        },
+        {
+          "id": "major-appliances",
+          "name": "大家电",
+          "items": ["冰箱", "洗衣机", "空调", "电视", "热水器"]
+        },
+        {
+          "id": "small-appliances",
+          "name": "小家电",
+          "items": ["空气净化器", "加湿器", "电烤箱", "榨汁机", "电吹风"]
+        },
+        {
+          "id": "smart-devices",
+          "name": "智能设备",
+          "items": ["智能手表", "智能音箱", "智能家居套装", "AI 机器人"]
+        },
+        {
+          "id": "digital-accessories",
+          "name": "数码配件",
+          "items": ["相机", "运动相机", "U 盘", "移动硬盘", "数据线"]
+        }
+      ]
+    },
+    {
+      "id": "mother-baby",
+      "name": "母婴玩具",
+      "categories": [
+        {
+          "id": "baby-products",
+          "name": "母婴用品",
+          "items": ["奶粉", "纸尿裤", "婴儿车", "安全座椅", "孕妇装"]
+        },
+        {
+          "id": "toys",
+          "name": "玩具 / 早教",
+          "items": ["积木", "遥控车", "拼图", "早教机", "毛绒玩具"]
+        },
+        {
+          "id": "kids-clothing",
+          "name": "童装童鞋",
+          "items": ["儿童羽绒服", "童鞋", "婴儿帽", "亲子装"]
+        },
+        {
+          "id": "maternity",
+          "name": "孕妇用品",
+          "items": ["防辐射服", "孕妇内衣", "产后恢复用品"]
+        }
+      ]
+    },
+    {
+      "id": "food",
+      "name": "食品生鲜",
+      "categories": [
+        {
+          "id": "snacks",
+          "name": "零食 / 坚果",
+          "items": ["薯片", "巧克力", "坚果", "果脯", "速食面"]
+        },
+        {
+          "id": "grain-oil",
+          "name": "粮油调味",
+          "items": ["大米", "食用油", "酱油", "调味料", "干货"]
+        },
+        {
+          "id": "fresh",
+          "name": "生鲜水果",
+          "items": ["蔬菜", "水果", "肉类", "海鲜", "速冻食品"]
+        },
+        {
+          "id": "beverages",
+          "name": "饮料 / 酒水",
+          "items": ["矿泉水", "碳酸饮料", "牛奶", "啤酒", "葡萄酒"]
+        },
+        {
+          "id": "health-supplements",
+          "name": "保健品",
+          "items": ["维生素", "蛋白粉", "益生菌", "美容养颜品"]
+        }
+      ]
+    },
+    {
+      "id": "sports",
+      "name": "运动户外",
+      "categories": [
+        {
+          "id": "sportswear",
+          "name": "运动服饰",
+          "items": ["瑜伽服", "运动内衣", "速干衣", "运动鞋"]
+        },
+        {
+          "id": "fitness",
+          "name": "健身器材",
+          "items": ["跑步机", "哑铃", "瑜伽垫", "动感单车"]
+        },
+        {
+          "id": "outdoor",
+          "name": "户外装备",
+          "items": ["帐篷", "睡袋", "登山杖", "背包", "户外灯具"]
+        },
+        {
+          "id": "cycling",
+          "name": "骑行装备",
+          "items": ["自行车", "头盔", "骑行服", "车载配件"]
+        },
+        {
+          "id": "sports-accessories",
+          "name": "运动配件",
+          "items": ["护具", "跳绳", "篮球", "羽毛球拍"]
+        }
+      ]
+    },
+    {
+      "id": "automotive",
+      "name": "汽车用品",
+      "categories": [
+        {
+          "id": "car-decoration",
+          "name": "汽车装饰",
+          "items": ["座套", "方向盘套", "车载香水", "摆件"]
+        },
+        {
+          "id": "car-maintenance",
+          "name": "汽车保养",
+          "items": ["机油", "轮胎", "雨刮器", "防冻液"]
+        },
+        {
+          "id": "car-electronics",
+          "name": "汽车电子",
+          "items": ["行车记录仪", "导航仪", "倒车影像", "车载充电器"]
+        },
+        {
+          "id": "motorcycle",
+          "name": "摩托车 / 配件",
+          "items": ["摩托车头盔", "骑行服", "摩托车配件"]
+        }
+      ]
+    },
+    {
+      "id": "books-media",
+      "name": "图书音像",
+      "categories": [
+        {
+          "id": "books",
+          "name": "图书",
+          "items": ["小说", "教材", "工具书", "儿童读物", "漫画"]
+        },
+        {
+          "id": "media",
+          "name": "音像制品",
+          "items": ["CD", "DVD", "蓝光碟", "有声书"]
+        },
+        {
+          "id": "stationery",
+          "name": "文具 / 办公",
+          "items": ["笔记本", "笔", "文件夹", "打印机耗材"]
+        }
+      ]
+    },
+    {
+      "id": "virtual-services",
+      "name": "虚拟服务（生活服务类）",
+      "categories": [
+        {
+          "id": "recharge",
+          "name": "充值 / 卡券",
+          "items": ["手机话费", "游戏点卡", "视频会员", "礼品卡"]
+        },
+        {
+          "id": "software",
+          "name": "软件 / 工具",
+          "items": ["办公软件激活码", "设计软件", "游戏外挂", "插件"]
+        },
+        {
+          "id": "education",
+          "name": "教育培训",
+          "items": ["在线课程", "考试辅导", "职业技能培训", "语言学习"]
+        },
+        {
+          "id": "custom-services",
+          "name": "服务定制",
+          "items": ["设计服务", "文案撰写", "程序开发", "翻译服务"]
+        },
+        {
+          "id": "digital-content",
+          "name": "数字内容",
+          "items": ["电子书"],
+          "subcategories": [
+            {
+              "name": "设计素材",
+              "items": ["PPT 模板", "PSD 文件"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "specialty",
+      "name": "其他特色类目",
+      "categories": [
+        {
+          "id": "jewelry",
+          "name": "珠宝 / 黄金",
+          "items": ["黄金首饰", "钻石", "翡翠", "银饰", "珍珠"]
+        },
+        {
+          "id": "pet-supplies",
+          "name": "宠物用品",
+          "items": ["猫粮 / 狗粮", "猫砂盆", "宠物玩具", "牵引绳"]
+        },
+        {
+          "id": "flowers-plants",
+          "name": "鲜花绿植",
+          "items": ["鲜花速递", "盆栽", "园艺工具", "种子"]
+        },
+        {
+          "id": "crafts",
+          "name": "工艺品 / 收藏",
+          "items": ["书画", "陶瓷", "文玩", "纪念币", "手工艺品"]
+        },
+        {
+          "id": "industrial",
+          "name": "工业 / 农资",
+          "items": ["机械设备", "五金建材", "农业化肥", "畜牧用品"]
+        }
+      ]
+    }
+  ]
+}

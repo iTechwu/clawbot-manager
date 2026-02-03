@@ -1,0 +1,127 @@
+{
+  "compilerOptions": {
+    // 输出配置
+    "outDir": "./dist",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "ignoreDeprecations": "5.0",
+    "target": "ES2022",
+    "declaration": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "incremental": true,
+
+    // 装饰器支持 (NestJS 必需)
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+
+    // 模块互操作
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+
+    // 类型检查 - 保持现有宽松配置，后续可逐步启用严格模式
+    "strict": false,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "strictFunctionTypes": false,
+
+    // 代码质量检查
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+
+    // 性能优化
+    "skipLibCheck": true,
+
+    // 类型定义
+    "types": ["node", "jest"],
+
+    "paths": {
+      "*": ["./*"],
+
+      // src 模块路径 (用于跨模块引用)
+      "src/*": ["./src/*"],
+
+      // Monorepo 共享包
+      "@repo/utils": ["../../packages/utils"],
+      "@repo/utils/*": ["../../packages/utils/*"],
+      "@repo/utils/array": ["../../packages/utils/array.util.ts"],
+      "@repo/utils/bcrypt": ["../../packages/utils/bcrypt.util.ts"],
+      "@repo/utils/bigint": ["../../packages/utils/bigint.util.ts"],
+      "@repo/utils/ip": ["../../packages/utils/ip.util.ts"],
+      "@repo/utils/json": ["../../packages/utils/json.util.ts"],
+      "@repo/utils/object": ["../../packages/utils/object.util.ts"],
+      "@repo/utils/serialize": ["../../packages/utils/serialize.util.ts"],
+      "@repo/utils/string": ["../../packages/utils/string.util.ts"],
+      "@repo/utils/timer": ["../../packages/utils/timer.util.ts"],
+      "@repo/utils/urlencode": ["../../packages/utils/urlencode.util.ts"],
+      "@repo/utils/validate": ["../../packages/utils/validate.util.ts"],
+      "@repo/constants": ["../../packages/constants/src"],
+      "@repo/validators": ["../../packages/validators/src"],
+      "@repo/contracts": ["../../packages/contracts/src"],
+      "@repo/contracts/*": ["../../packages/contracts/src/*"],
+
+      // === 通用目录别名 (infra/common、config、filter、decorators 等) ===
+      "@/common/*": ["./libs/infra/common/*"],
+      "@/config/*": ["./libs/infra/common/config/*"],
+      "@/filter/*": ["./libs/infra/common/filter/*"],
+      "@/decorators/*": ["./libs/infra/common/decorators/*"],
+      "@/interceptor/*": ["./libs/infra/common/interceptor/*"],
+      "@/middleware/*": ["./libs/infra/common/middleware/*"],
+      "@/pipes/*": ["./libs/infra/common/pipes/*"],
+      "@/enums/*": ["./libs/infra/common/enums/*"],
+      "@/ts-rest/*": ["./libs/infra/common/ts-rest/*"],
+      "@/adapters/*": ["./libs/infra/common/adapters/*"],
+
+      // === infra：prisma / redis / utils / shared-db ===
+      "@/prisma/*": ["./libs/infra/prisma/prisma/*"],
+      "@/prisma-read/*": ["./libs/infra/prisma/prisma-read/*"],
+      "@/prisma-write/*": ["./libs/infra/prisma/prisma-write/*"],
+      "@/utils/*": ["./libs/infra/utils/*"],
+      "@/shared-db/*": ["./libs/infra/shared-db/*"],
+
+      // === 业务层 db 模块（domain） ===
+      "@/db/*": ["./libs/domain/db/src/modules/*"],
+
+      // === 通用 libs 兜底（仅保留未单独列出的情况） ===
+      "@/libs/*": ["./libs/*"],
+
+      // === Nest 库别名 @app/*（infra + domain） ===
+      "@app/auth": ["./libs/domain/auth/src"],
+      "@app/auth/*": ["./libs/domain/auth/src/*"],
+      "@app/db": ["./libs/domain/db/src"],
+      "@app/db/*": ["./libs/domain/db/src/*"],
+
+      "@app/shared-db": ["./libs/infra/shared-db"],
+      "@app/shared-db/*": ["./libs/infra/shared-db/*"],
+
+      "@app/i18n": ["./libs/infra/i18n"],
+      "@app/i18n/*": ["./libs/infra/i18n/*"],
+      "@app/jwt": ["./libs/infra/jwt"],
+      "@app/jwt/*": ["./libs/infra/jwt/*"],
+      "@app/prisma": ["./libs/infra/prisma/prisma"],
+      "@app/prisma/*": ["./libs/infra/prisma/*"],
+      "@app/redis": ["./libs/infra/redis/src"],
+      "@app/redis/*": ["./libs/infra/redis/*"],
+      "@app/rabbitmq": ["./libs/infra/rabbitmq/src"],
+      "@app/rabbitmq/*": ["./libs/infra/rabbitmq/src/*"],
+
+      "@app/clients/internal/*": ["./libs/infra/clients/internal/*"],
+      "@app/clients/plugin": ["./libs/infra/clients/plugin"],
+      "@app/clients/plugin/*": ["./libs/infra/clients/plugin/*"],
+      "@app/shared-services/*": ["./libs/infra/shared-services/*"],
+      
+      "@app/services/sms": ["./libs/infra/shared-services/sms"],
+      "@app/services/email": ["./libs/infra/shared-services/email"],
+      "@app/services/file-storage": ["./libs/infra/shared-services/file-storage"],
+      "@app/services/ip-info": ["./libs/domain/services/ip-info"]
+    }
+  },
+  "include": ["src/**/*", "libs/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,0 +1,49 @@
+# 依赖目录
+node_modules
+**/node_modules
+
+# 构建输出
+dist
+**/dist
+.next
+**/.next
+build
+**/build
+
+# 日志
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# 测试
+coverage
+**/.coverage
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Git
+.git
+.gitignore
+
+# 其他
+.DS_Store
+*.pem
+**/.env.production
+
+
+
+
+
+
+

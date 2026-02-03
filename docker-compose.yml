@@ -1,0 +1,67 @@
+x-common: &common
+  platform: ${DOCKER_PLATFORM:-linux/arm64}
+
+services:
+  botenv:
+    <<: *common
+    profiles: ["build"]
+    build:
+      context: .
+      dockerfile: Dockerfile.botenv
+      args:
+        BASE_IMAGE: ${OPENCLAW_BASE_IMAGE:-openclaw:latest}
+    image: ${BOTENV_IMAGE:-botmaker-env:latest}
+
+  botmaker:
+    <<: *common
+    build: .
+    container_name: botmaker
+    env_file: .env
+    environment:
+      PORT: ${PORT:-7100}
+      DATA_DIR: /app/data
+      SECRETS_DIR: /app/secrets
+      OPENCLAW_IMAGE: ${BOTENV_IMAGE:-botmaker-env:latest}
+    ports:
+      - "${PORT:-7100}:${PORT:-7100}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - botmaker-data:/app/data
+      - botmaker-secrets:/app/secrets
+      - ./secrets:/secrets:ro
+    depends_on:
+      - keyring-proxy
+    networks: [bm-internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:${PORT:-7100}/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  keyring-proxy:
+    <<: *common
+    build: ./proxy
+    container_name: keyring-proxy
+    env_file: .env
+    volumes:
+      - proxy-data:/data
+      - ./secrets:/secrets:ro
+    networks: [bm-internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:${ADMIN_PORT:-9100}/admin/health',{headers:{Authorization:'Bearer '+require('fs').readFileSync('/secrets/admin_token','utf8').trim()}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  bm-internal:
+    name: bm-internal
+
+volumes:
+  botmaker-data:
+  botmaker-secrets:
+  proxy-data:

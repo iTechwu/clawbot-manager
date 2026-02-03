@@ -1,0 +1,71 @@
+{
+  "title": "人设模板",
+  "description": "管理机器人的人设模板。系统模板为只读，但您可以复制它们来创建自己的模板。",
+  "tabs": {
+    "system": "系统模板",
+    "user": "我的模板"
+  },
+  "badge": {
+    "system": "系统"
+  },
+  "fields": {
+    "name": "名称",
+    "icon": "图标",
+    "emoji": "表情",
+    "tagline": "标语",
+    "soulMarkdown": "Soul Markdown",
+    "soulPreview": "预览",
+    "soulPreviewPlaceholder": "人设的简要描述..."
+  },
+  "icon": {
+    "emoji": "表情",
+    "upload": "上传图片",
+    "emojiHint": "输入一个表情符号",
+    "uploadHint": "点击上传图片",
+    "remove": "移除"
+  },
+  "actions": {
+    "create": "创建模板",
+    "edit": "编辑",
+    "delete": "删除",
+    "duplicate": "复制",
+    "cancel": "取消",
+    "save": "保存",
+    "saving": "保存中...",
+    "creating": "创建中...",
+    "deleting": "删除中...",
+    "duplicating": "复制中..."
+  },
+  "dialog": {
+    "create": {
+      "title": "创建模板",
+      "description": "为您的机器人创建新的人设模板。"
+    },
+    "edit": {
+      "title": "编辑模板",
+      "description": "更新您的人设模板。"
+    },
+    "delete": {
+      "title": "删除模板",
+      "description": "确定要删除\"{name}\"吗？此操作无法撤销。"
+    },
+    "duplicate": {
+      "title": "复制模板",
+      "description": "将\"{name}\"复制为您自己的模板。",
+      "namePlaceholder": "{name}（副本）"
+    }
+  },
+  "messages": {
+    "noSystemTemplates": "暂无系统模板。",
+    "noUserTemplates": "您还没有创建任何模板。创建一个或复制系统模板来开始使用。",
+    "createSuccess": "模板创建成功",
+    "updateSuccess": "模板更新成功",
+    "deleteSuccess": "模板删除成功",
+    "duplicateSuccess": "模板复制成功",
+    "createError": "创建模板失败",
+    "updateError": "更新模板失败",
+    "deleteError": "删除模板失败",
+    "duplicateError": "复制模板失败",
+    "loadError": "加载模板失败"
+  }
+}

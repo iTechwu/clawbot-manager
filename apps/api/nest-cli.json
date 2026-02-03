@@ -1,0 +1,25 @@
+{
+    "$schema": "https://json.schemastore.org/nest-cli",
+    "collection": "@nestjs/schematics",
+    "sourceRoot": "src",
+    "entryFile": "apps/api/src/main",
+    "compilerOptions": {
+        "deleteOutDir": true,
+        "assets": [
+            {
+                "include": ".env*",
+                "watchAssets": true
+            },
+            {
+                "include": "config.local.yaml",
+                "watchAssets": true
+            },
+            {
+                "include": "libs/infra/i18n/**/*",
+                "watchAssets": true
+            }
+        ],
+        "builder": "tsc",
+        "tsConfigPath": "tsconfig.build.json"
+    }
+}

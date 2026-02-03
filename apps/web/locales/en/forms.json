@@ -1,0 +1,18 @@
+{
+  "labels": {
+    "email": "Email",
+    "password": "Password",
+    "username": "Username",
+    "phone": "Phone",
+    "name": "Name",
+    "description": "Description"
+  },
+  "placeholders": {
+    "email": "Enter email",
+    "password": "Enter password",
+    "username": "Enter username",
+    "phone": "Enter phone number",
+    "name": "Enter name",
+    "description": "Enter description"
+  }
+}

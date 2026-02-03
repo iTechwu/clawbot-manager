@@ -1,0 +1,93 @@
+{
+  "name": "clawbotmanager",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@repo/web",
+    "dev:api": "turbo run dev --filter=@repo/api",
+    "build": "turbo run build",
+    "build:web": "turbo run build --filter=@repo/web",
+    "build:api": "turbo run build --filter=@repo/api",
+    "lint": "turbo run lint",
+    "lint:web": "turbo run lint --filter=@repo/web",
+    "lint:api": "turbo run lint --filter=@repo/api",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "test:web": "turbo run test --filter=@repo/web",
+    "test:api": "turbo run test --filter=@repo/api",
+    "test:packages": "turbo run test --filter=@repo/validators --filter=@repo/utils --filter=@repo/contracts",
+    "test:cov": "turbo run test:cov",
+    "test:e2e": "turbo run test:e2e --filter=@repo/web",
+    "db:format": "turbo run db:format --filter=@repo/api",
+    "db:generate": "turbo run db:generate --filter=@repo/api",
+    "db:migrate:dev": "turbo run db:migrate:dev --filter=@repo/api",
+    "db:migrate:deploy": "turbo run db:migrate:deploy --filter=@repo/api",
+    "db:push": "turbo run db:push --filter=@repo/api",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "generate:enums": "node scripts/generate-prisma-enums.js",
+    "generate:i18n-errors": "ts-node scripts/generate-i18n-errors.ts",
+    "export-scaffold": "node scripts/export-scaffold-for-create.js",
+    "create-scaffold": "node packages/create-pardx-scaffold/cli.js",
+    "prebuild": "pnpm generate:enums"
+  },
+  "devDependencies": {
+    "prettier": "^3.7.4",
+    "turbo": "^2.8.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@10.28.2",
+  "pnpm": {
+    "overrides": {
+      "openai": "^6.17.0",
+      "glob": "^11.0.1",
+      "rimraf": "^6.0.1",
+      "rxjs": "7.8.2",
+      "punycode": "^2.3.1"
+    },
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "openai": "6",
+        "rxjs": "7.8.2"
+      },
+      "ignoreMissing": [
+        "openai",
+        "@swc/core",
+        "@swc/wasm",
+        "@swc-node/register",
+        "node-notifier",
+        "ts-node",
+        "encoding",
+        "webpack-cli"
+      ]
+    },
+    "onlyBuiltDependencies": [
+      "@alicloud/openapi-core",
+      "@nestjs/core",
+      "@parcel/watcher",
+      "@prisma/engines",
+      "@scarf/scarf",
+      "@swc/core",
+      "bcrypt",
+      "core-js-pure",
+      "esbuild",
+      "msgpackr-extract",
+      "prisma",
+      "protobufjs",
+      "sharp",
+      "tos-crc64-js",
+      "unrs-resolver"
+    ]
+  },
+  "dependencies": {
+    "framer-motion": "^12.29.0",
+    "web-vitals": "^5.1.0",
+    "zod": "^4.3.6"
+  },
+  "description": "ClawBotManager - AI Bot 管理与运维平台",
+  "author": "Techwu <wumin.itea@gmail.com>"
+}

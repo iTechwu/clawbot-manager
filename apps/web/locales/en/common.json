@@ -1,0 +1,76 @@
+{
+  "header": {
+    "title": "ClawBotManager",
+    "newBot": "New Bot",
+    "theme": {
+      "auto": "Auto",
+      "dark": "Dark",
+      "light": "Light",
+      "ariaLabel": "Current theme: {theme}. Click to change.",
+      "tooltip": "Theme: {theme}"
+    }
+  },
+  "navbar": {
+    "search": "Search",
+    "notifications": "Notifications",
+    "toggleTheme": "Toggle theme",
+    "pages": {
+      "bots": "Bots",
+      "secrets": "API Keys",
+      "diagnostics": "Diagnostics",
+      "settings": "Settings"
+    },
+    "user": {
+      "profile": "Profile",
+      "settings": "Settings",
+      "logout": "Log out",
+      "account": "Account"
+    }
+  },
+  "nav": {
+    "title": "ClawBotManager",
+    "subtitle": "Bot Management",
+    "management": "Management",
+    "bots": "Bots",
+    "templates": "Templates",
+    "secrets": "API Keys",
+    "diagnostics": "Diagnostics",
+    "settings": "Settings"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "submit": "Submit",
+    "reset": "Reset",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "refresh": "Refresh",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "loading": "Loading...",
+    "retry": "Retry"
+  },
+  "status": {
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "pending": "Pending",
+    "processing": "Processing",
+    "completed": "Completed",
+    "failed": "Failed"
+  },
+  "messages": {
+    "noData": "No data",
+    "loadMore": "Load more",
+    "endOfList": "End of list"
+  }
+}

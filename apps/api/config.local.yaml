@@ -1,0 +1,353 @@
+app:
+  name: 'xica'
+  ChineseName: 'Xica'
+  version: '2.1.0'
+  apiVersion: '1' # API 版本号
+  minClientVersion: '0.0.1' # 最低兼容前端版本
+  port: 3200
+  logger: true
+  transport: 'TCP'
+  domain: 'xica.ai'
+  MaxPageSize: 500
+  defaultPageSize: 100
+  defaultMiniPageSize: 30
+  canCreateTrail: true
+  defaultVendor: 'tos'
+  defaultBucketPublic: false
+  enableRetryMechanism: true
+  enableEnhancedLogging: true
+  maxRetries: 3
+  baseRetryDelay: 1000
+  nestLogOutput: 'both'
+  audioTranscribe:
+    statusUpdateMode: 'polling'
+    pollingInterval: 30
+  zones:
+    - zone: 'cn'
+      locale: 'zh-CN'
+      defaultPrivateBucket: 'tos-pardx-files'
+      defaultPublicBucket: 'tos-pardx-files'
+      transcodeBucket: 'tos-pardx-files'
+
+uploadConfig:
+  chrunkSize: 8388608 #1024 * 1024 * 8
+
+ipinfo:
+  url: 'https://ipinfo.io'
+  token: 'f23c2d43721815'
+
+# 功能开关配置
+# Provider 说明:
+#   - memory: 开发测试用，重启后重置
+#   - redis: 生产环境推荐，分布式一致，支持动态修改
+#   - unleash: 企业级，需部署 Unleash 服务器 (docker run -p 4242:4242 unleashorg/unleash-server)
+featureFlags:
+  provider: 'redis'
+  # Redis 配置
+  redis:
+    keyPrefix: 'pardx:feature:' # Redis 键前缀
+    defaultTTL: 0 # 默认过期时间 (秒), 0=永不过期
+  # 默认功能开关 (按类别组织)
+  defaultFlags:
+    # ========== 限流系统开关 ==========
+    rate-limit-enabled: true # 全局限流开关 (关闭后所有限流失效)
+    rate-limit-ai-generation: true # AI 生成限流开关
+    rate-limit-export: true # 导出限流开关
+    # ========== 业务熔断开关 (Kill Switch) ==========
+    kill-switch-ai-generation: false # AI 生成熔断 (true=熔断, false=正常)
+    kill-switch-batch-export: false # 批量导出熔断
+    # ========== 新功能灰度 (逐步开放) ==========
+    new-dashboard: false # 新版仪表盘
+    new-editor: false # 新版编辑器
+    # ========== Beta 功能 (内测用户) ==========
+    beta-ai-assistant: true # AI 助手
+    beta-auto-transcribe: false # 自动转写
+    # ========== 付费功能 (权益控制) ==========
+    premium-export: true # 高级导出
+    premium-collaboration: true # 高级协作
+    # ========== 系统开关 (运维控制) ==========
+    maintenance-mode: false # 维护模式
+    debug-mode: false # 调试模式
+
+# 限流配置
+# 说明:
+#   - enabled: 静态开关 (需重启生效)
+#   - featureFlag: 动态开关 (通过 Feature Flag 实时控制)
+#   - 两者同时为 true 时限流才生效
+rateLimit:
+  enabled: true # 静态开关
+  featureFlag: 'rate-limit-enabled' # 动态开关 (对应 featureFlags.defaultFlags)
+  # 默认限流配置 (无装饰器时的降级配置)
+  default:
+    limit: 100 # 每窗口请求数
+    window: 60 # 窗口时间 (秒)
+  # 各维度限流配置
+  dimensions:
+    ip:
+      limit: 200 # IP: 每分钟 200 次
+      window: 60
+    userId:
+      limit: 500 # 用户: 每分钟 500 次
+      window: 60
+    tenantId:
+      limit: 2000 # 租户: 每分钟 2000 次
+      window: 60
+    apiKey:
+      limit: 1000 # API Key: 每分钟 1000 次
+      window: 60
+  # Redis 配置
+  redis:
+    keyPrefix: 'pardx:ratelimit:' # Redis 键前缀
+  # 白名单 (不受限流限制)
+  whitelist:
+    ips:
+      - '127.0.0.1'
+      - '::1'
+      - '10.0.0.0/8' # 内网
+    userIds: [] # 管理员用户 ID
+    apiKeys: [] # 内部服务 API Key
+
+pinecone:
+  apiKey: 'cd14c373-cf91-4857-bdba-8384386193d5'
+
+# jwt 配置
+jwt:
+  secret: '0EHAmnd9i82n'
+  expireIn: 3600
+
+crypto:
+  key: 'ypV324cCAwEAAQ=='
+  iv: 'MIICIjANBgkqhkiG'
+
+cdn:
+  cn:
+    url: 'https://files.pardx.cn/images'
+    downloaderUrl: 'https://downloader.pardx.cn/cdn-cgi/files'
+    vodUrl: 'https://vod.pardx.cn/cdn-cgi/files'
+    thumbTemplate: ''
+  us:
+    url: 'https://image.dndshare.com/cdn-cgi/image'
+    downloaderUrl: 'https://pardxdownloader.hedespace.com/cdn-cgi/files'
+    vodUrl: 'https://pardxvod.hedespace.com/cdn-cgi/files'
+    thumbTemplate: ''
+
+redis:
+  - name: 'access'
+    key: 'pardx:session:access:'
+    expireIn: 600 # 10分钟
+  - name: 'session'
+    key: 'pardx:session:sess:'
+    expireIn: 2592000 # 30天
+  - name: 'refresh'
+    key: 'pardx:session:refresh:'
+    expireIn: 2592000 # 30天
+  - name: 'fileSystemFildId'
+    key: 'pardx:fileSystem:fildId:'
+    expireIn: -1
+  - name: 'fileSystemCallbackAuth'
+    key: 'pardx:fileSystem:callbackAuth:'
+    expireIn: 86400 # 24小时
+  - name: 'shortCode'
+    key: 'pardx:shortCode:'
+    expireIn: -1
+  - name: 'dailyQuestion'
+    key: 'pardx:daily-question:'
+    expireIn: 86400 # 24小时 (每天过期)
+  - name: 'checkInStatus'
+    key: 'pardx:check-in-status:'
+    expireIn: 86400 # 24小时 (每天过期)
+  - name: 'emailCodeDevice'
+    key: 'pardx:emailCode:device:'
+    expireIn: 180 # 3分钟
+  - name: 'emailCodeEmail'
+    key: 'pardx:emailCode:Email:'
+    expireIn: 180 # 3分钟
+  - name: 'emailCodePerDay'
+    key: 'pardx:emailCode:EmailNumPerDay:'
+    expireIn: 86400
+  - name: 'deviceCodePerDay'
+    key: 'pardx:emailCode:EmailNumOnDevicePerDay:'
+    expireIn: 86400
+  - name: 'emailCode'
+    key: 'pardx:verify:emailCode:'
+  - name: 'mobileCodeDevice'
+    key: 'pardx:mobileCode:device:'
+    expireIn: 1800 # 30分钟
+  - name: 'mobileCode'
+    key: 'pardx:verify:mobileCode:'
+    expireIn: 600 # 10分钟有效
+  - name: 'subscription'
+    key: 'pardx:subscription:'
+    expireIn: 600 # 10分钟
+  - name: 'subscriptionList'
+    key: 'pardx:subscription:list:'
+    expireIn: 300 # 5分钟（列表缓存时间较短，保证数据新鲜度）
+  - name: 'notificationList'
+    key: 'pardx:notification:list:'
+    expireIn: 300 # 5分钟（通知列表缓存时间较短，保证数据新鲜度）
+  - name: 'notificationStats'
+    key: 'pardx:notification:stats:'
+    expireIn: 60 # 1分钟（统计数据更新频繁，缓存时间更短）
+  - name: 'privateDownloadUrl'
+    key: 'pardx:file:fileurl:'
+    expireIn: 30 #1小时
+  - name: 'ipinfo'
+    key: 'pardx:ipinfo:ip:'
+    expireIn: 2592000 #30天
+  - name: 'transferSaveForlder'
+    key: 'pardx:transferSave:folderIds:'
+    expireIn: 86400
+  - name: 'recycleBinTask'
+    key: 'pardx:recycleTask:fileSystemIds:'
+    expireIn: 86400
+  - name: 'moveFolder'
+    key: 'pardx:moveFolder:folderIds:'
+    expireIn: 86400
+  # Long-term Memory System Cache (长期记忆系统缓存)
+  - name: 'userPreferences'
+    key: 'pardx:memory:preferences:'
+    expireIn: 300 # 5分钟 (参考 Python 最佳实践)
+  - name: 'memoryStats'
+    key: 'pardx:memory:stats:'
+    expireIn: 300 # 5分钟
+  - name: 'preferenceStats'
+    key: 'pardx:memory:preferenceStats:'
+    expireIn: 300 # 5分钟
+  - name: 'processTaskIdList' # 正在处理的taskId
+    key: 'pardx:processTaskList:taskId:'
+    expireIn: 86400
+  - name: 'taskFileList' # 正在处理的task里面剩余处理的fsIds
+    key: 'pardx:taskFileList:fsIds:'
+    expireIn: 86400
+  # ========== 业务实体缓存 (用于 @Cacheable 装饰器) ==========
+  - name: 'userInfo' # 用户信息缓存
+    key: 'pardx:cache:user:'
+    expireIn: 1800 # 30分钟，提升登录响应速度
+  - name: 'spaceInfo' # 空间信息缓存
+    key: 'pardx:cache:space:'
+    expireIn: 1800 # 30分钟
+  - name: 'planInfo' # 套餐信息缓存
+    key: 'pardx:cache:plan:'
+    expireIn: 300 # 5分钟，变更频率低，查询频繁
+  - name: 'permissions' # 权限配置缓存
+    key: 'pardx:cache:perm:'
+    expireIn: 600 # 10分钟，基础配置，变更少
+  - name: 'modulePermission' # 模块级权限缓存
+    key: 'pardx:cache:modulePerm:'
+    expireIn: 300 # 5分钟
+  - name: 'userRole' # 用户角色缓存 (包含 baseRole)
+    key: 'pardx:cache:userRole:'
+    expireIn: 3600 # 1小时
+  - name: 'userInfoCache' # 旧的用户缓存 (保持兼容)
+    key: 'pardx:user:'
+    expireIn: -1
+  - name: 'systemTask'
+    key: 'pardx:task:'
+    expireIn: -1
+  - name: 'stockTask'
+    key: 'pardx:stockTask:'
+    expireIn: 86400
+  - name: 'systemTaskListenerLock'
+    key: 'pardx:taskListener:'
+    expireIn: 15
+  - name: 'taskLock'
+    key: 'pardx:tasks:'
+    expireIn: 10
+  - name: 'tradeCache'
+    key: 'pardx:file:fileurl:'
+    expireIn: 30 #30s
+  - name: 'sseChannel'
+    key: 'pardx:sseChannel:'
+    expireIn: 86400
+  - name: 'wxAccessToken'
+    key: 'pardx:wx:accessToken:'
+    expireIn: 7200
+  - name: 'wxmpQrcode'
+    key: 'pardx:wxmp:qrcode:'
+    expireIn: 300
+  # 流式识别会话数据持久化（Redis）
+  - name: 'streamingAsrSession'
+    key: 'pardx:streaming-asr:session:'
+    expireIn: 7200 # 2小时（与会话最大时长一致）
+
+buckets:
+  - bucket: 'tos-pardx-files'
+    region: 'cn-beijing'
+    zone: 'cn-beijing'
+    endpoint: 'https://tos-s3-cn-beijing.volces.com'
+    internalEndpoint: 'https://tos-s3-cn-beijing.ivolces.com'
+    domain: 'https://tos-pardx-files.tos-cn-beijing.volces.com'
+    tosEndpoint: 'tos-cn-beijing.volces.com'
+    tosInternalEndpoint: 'tos-cn-beijing.ivolces.com'
+    vendor: 'tos'
+    webhook: ''
+    locale: 'cn'
+    isPublic: false
+    isDefault: false
+
+# =============================================================================
+# Database Metrics and Monitoring Configuration
+# 数据库指标和监控配置
+# =============================================================================
+dbMetrics:
+  # Enable or disable metrics collection
+  # 启用或禁用指标收集
+  enabled: true
+
+  # Slow query thresholds in milliseconds
+  # 慢查询阈值（毫秒）
+  # - info: Queries >= this will be logged at INFO level
+  # - warn: Queries >= this will be logged at WARN level
+  # - error: Queries >= this will be logged at ERROR level
+  slowQueryThresholds:
+    info: 100 # >= 100ms: INFO level
+    warn: 500 # >= 500ms: WARN level
+    error: 1000 # >= 1000ms: ERROR level
+
+  # Whether to log query parameters
+  # 是否记录查询参数
+  logQueryParams: true
+
+  # Whether to log query results (can be verbose)
+  # 是否记录查询结果（可能会很冗长）
+  logQueryResult: false
+
+  # Maximum length of parameters to log (truncated if longer)
+  # 记录参数的最大长度（超过将被截断）
+  maxParamLogLength: 1000
+
+# =============================================================================
+# Transaction Configuration
+# 事务配置
+# =============================================================================
+transaction:
+  # Retry configuration for transient failures
+  # 瞬态失败的重试配置
+  retry:
+    # Enable retry by default for @Transactional decorator
+    # 默认为 @Transactional 装饰器启用重试
+    enabled: true
+
+    # Maximum retry attempts
+    # 最大重试次数
+    maxRetries: 3
+
+    # Base delay between retries in milliseconds
+    # 重试之间的基础延迟（毫秒）
+    baseDelay: 100
+
+    # Exponential backoff multiplier
+    # 指数退避倍数
+    backoffMultiplier: 2
+
+    # Maximum retry delay in milliseconds
+    # 最大重试延迟（毫秒）
+    maxDelay: 5000
+
+  # Default maximum wait time to acquire transaction lock (ms)
+  # 默认获取事务锁的最大等待时间（毫秒）
+  defaultMaxWait: 5000
+
+  # Default transaction timeout (ms)
+  # 默认事务超时时间（毫秒）
+  defaultTimeout: 30000

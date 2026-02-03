@@ -1,0 +1,45 @@
+{
+  "title": "设置",
+  "apiKeys": "API 密钥",
+  "apiKeysDescription": "管理用于机器人集成的 AI 提供商 API 密钥。",
+  "stats": {
+    "totalKeys": "密钥总数"
+  },
+  "account": "账户",
+  "accountDescription": "管理您的账户设置和偏好。",
+  "security": "安全",
+  "securityDescription": "配置安全设置和身份验证。",
+  "notifications": "通知",
+  "notificationsDescription": "管理您的通知偏好。",
+  "comingSoon": "此功能即将推出。",
+  "profile": {
+    "title": "个人资料",
+    "description": "更新您的个人信息",
+    "avatar": "头像",
+    "avatarDescription": "点击上传新头像",
+    "nickname": "昵称",
+    "nicknamePlaceholder": "请输入昵称",
+    "email": "邮箱",
+    "mobile": "手机号",
+    "saveChanges": "保存更改",
+    "saving": "保存中...",
+    "saveSuccess": "个人资料已更新",
+    "saveError": "更新失败，请重试"
+  },
+  "password": {
+    "title": "修改密码",
+    "description": "更新您的账户密码",
+    "currentPassword": "当前密码",
+    "currentPasswordPlaceholder": "请输入当前密码",
+    "newPassword": "新密码",
+    "newPasswordPlaceholder": "请输入新密码（至少6位）",
+    "confirmPassword": "确认新密码",
+    "confirmPasswordPlaceholder": "请再次输入新密码",
+    "changePassword": "修改密码",
+    "changing": "修改中...",
+    "changeSuccess": "密码已修改",
+    "changeError": "修改失败，请重试",
+    "passwordMismatch": "两次输入的密码不一致",
+    "noPasswordAuth": "您的账户未设置密码登录方式"
+  }
+}

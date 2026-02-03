@@ -1,0 +1,325 @@
+{
+  "title": "Bot 管理",
+  "description": "创建、配置和管理您在多个平台上的 AI 聊天机器人。",
+  "tabs": {
+    "bots": "Bots",
+    "apiKeys": "API 密钥"
+  },
+  "stats": {
+    "total": "Bot 总数",
+    "running": "运行中",
+    "stopped": "已停止"
+  },
+  "actions": {
+    "createBot": "创建 Bot",
+    "addApiKey": "添加 API 密钥",
+    "manageApiKeys": "管理 API 密钥",
+    "start": "启动",
+    "stop": "停止",
+    "delete": "删除",
+    "refresh": "刷新"
+  },
+  "status": {
+    "created": "已创建",
+    "starting": "启动中",
+    "running": "运行中",
+    "stopped": "已停止",
+    "error": "错误"
+  },
+  "fields": {
+    "name": "名称",
+    "hostname": "主机名",
+    "provider": "AI 提供商",
+    "model": "模型",
+    "channel": "渠道",
+    "port": "端口",
+    "status": "状态",
+    "createdAt": "创建时间",
+    "vendor": "供应商",
+    "label": "标签",
+    "tag": "标记",
+    "apiKey": "API 密钥",
+    "actions": "操作"
+  },
+  "providers": {
+    "openai": "OpenAI",
+    "anthropic": "Anthropic",
+    "google": "Google AI",
+    "venice": "Venice AI",
+    "deepseek": "DeepSeek",
+    "groq": "Groq"
+  },
+  "channels": {
+    "discord": "Discord",
+    "slack": "Slack",
+    "telegram": "Telegram",
+    "web": "Web 聊天"
+  },
+  "wizard": {
+    "title": "创建新 Bot",
+    "steps": {
+      "template": "模板",
+      "templateDesc": "选择人设模板",
+      "personality": "个性",
+      "personalityDesc": "自定义 Bot 身份",
+      "features": "功能",
+      "featuresDesc": "配置提供商和渠道",
+      "configure": "配置",
+      "configureDesc": "设置模型和令牌",
+      "review": "审核",
+      "reviewDesc": "审核并创建",
+      "basicInfo": "基本信息",
+      "provider": "AI 提供商",
+      "channel": "渠道",
+      "persona": "人设"
+    },
+    "completeStep": "请完成此步骤",
+    "step1": {
+      "title": "选择人设模板",
+      "description": "从预设人设开始，或从头创建自己的",
+      "searchPlaceholder": "搜索模板...",
+      "noMatch": "没有匹配 \"{query}\" 的模板",
+      "scratchTemplate": {
+        "name": "从头开始",
+        "tagline": "创建您自己的自定义人设",
+        "soulPreview": "手动定义您的 Bot 个性"
+      }
+    },
+    "step2": {
+      "title": "个性",
+      "description": "自定义 Bot 的身份和个性",
+      "avatar": "头像",
+      "emoji": "表情",
+      "botName": "Bot 名称 *",
+      "botNamePlaceholder": "我的 Bot",
+      "botNameHint": "Bot 的显示名称",
+      "hostname": "主机名 *",
+      "hostnamePlaceholder": "my-awesome-bot",
+      "hostnameHint": "用于容器名称和 API 访问（最多 64 个字符，仅限小写字母、数字和连字符）",
+      "avatarUrl": "头像 URL（可选）",
+      "avatarUrlPlaceholder": "https://...",
+      "systemPrompt": "系统提示词 (SOUL.md)",
+      "systemPromptPlaceholder": "# Soul\n\n## 核心身份\n你是一个有帮助的助手...\n\n## 个性\n- 友好且平易近人\n- 耐心且善解人意\n\n## 边界\n- 诚实面对局限性",
+      "systemPromptHint": "使用 Markdown 定义 Bot 的个性、行为和边界"
+    },
+    "step3": {
+      "title": "功能",
+      "description": "配置 LLM 提供商、渠道和 Bot 功能",
+      "llmProviders": "LLM 提供商 *",
+      "showLess": "收起",
+      "showAll": "显示全部（还有 {count} 个）",
+      "channels": "渠道 *",
+      "features": "功能",
+      "commands": "命令",
+      "commandsDesc": "允许在聊天中使用 /命令",
+      "tts": "文字转语音",
+      "ttsDesc": "语音回复",
+      "sandbox": "沙箱",
+      "sandboxDesc": "隔离环境",
+      "sessionScope": "会话范围",
+      "sessionScopes": {
+        "user": "按用户",
+        "channel": "按频道",
+        "global": "全局"
+      },
+      "routingTags": "API 路由标签",
+      "routingTagsPlaceholder": "prod, high-priority",
+      "routingTagsHint": "逗号分隔的 API 密钥路由标签。具有匹配标签的密钥将优先使用。留空使用默认密钥。"
+    },
+    "step4": {
+      "title": "配置",
+      "description": "配置模型设置和渠道令牌",
+      "llmConfig": "LLM 提供商配置",
+      "model": "模型",
+      "selectModel": "选择模型",
+      "channelConfig": "渠道配置",
+      "botToken": "Bot 令牌 *",
+      "featureSettings": "功能设置",
+      "tts": "文字转语音",
+      "voice": "语音",
+      "selectVoice": "选择语音",
+      "sandboxMode": "沙箱模式",
+      "timeout": "超时时间（秒）",
+      "emptyState": "未选择提供商或渠道。",
+      "emptyStateHint": "请返回上一步至少启用一个提供商和一个渠道。"
+    },
+    "step5": {
+      "title": "审核您的 Bot",
+      "description": "在创建前确认所有设置正确",
+      "persona": "人设",
+      "name": "名称",
+      "notSet": "（未设置）",
+      "hostname": "主机名",
+      "emoji": "表情",
+      "soulPreview": "SOUL.md 预览",
+      "providers": "提供商",
+      "noProviders": "未选择提供商",
+      "modelLabel": "模型：{model}",
+      "defaultModel": "默认",
+      "channels": "渠道",
+      "noChannels": "未选择渠道",
+      "tokenLabel": "令牌：{token}",
+      "features": "功能",
+      "commands": "命令",
+      "tts": "TTS",
+      "sandbox": "沙箱",
+      "sessionScope": "会话范围：",
+      "routingTags": "路由标签："
+    },
+    "basicInfo": {
+      "title": "基本信息",
+      "botName": "Bot 名称",
+      "botNamePlaceholder": "我的 Bot",
+      "hostname": "主机名",
+      "hostnamePlaceholder": "my-bot",
+      "hostnameHint": "仅限小写字母、数字和连字符"
+    },
+    "provider": {
+      "title": "AI 提供商",
+      "description": "选择 Bot 使用的 AI 提供商和模型"
+    },
+    "channel": {
+      "title": "渠道",
+      "description": "选择 Bot 部署的平台",
+      "tokenLabel": {
+        "discord": "Discord Bot Token",
+        "slack": "Slack Bot Token",
+        "telegram": "Telegram Bot Token",
+        "web": "API Token"
+      },
+      "tokenPlaceholder": "输入 Token..."
+    },
+    "persona": {
+      "title": "人设",
+      "personaName": "Bot 人设名称",
+      "personaNamePlaceholder": "助手",
+      "systemPrompt": "系统提示词 (Soul)",
+      "systemPromptPlaceholder": "你是一个有帮助的助手...",
+      "emoji": "表情符号（可选）",
+      "emojiPlaceholder": "🤖",
+      "avatarUrl": "头像 URL（可选）",
+      "avatarUrlPlaceholder": "https://..."
+    },
+    "features": {
+      "title": "功能与摘要",
+      "enableCommands": "启用斜杠命令",
+      "enableTts": "启用文字转语音",
+      "enableSandbox": "启用代码沙箱",
+      "sessionScope": "会话范围",
+      "sessionScopes": {
+        "user": "按用户",
+        "channel": "按频道",
+        "global": "全局"
+      }
+    },
+    "summary": {
+      "title": "摘要"
+    },
+    "actions": {
+      "cancel": "取消",
+      "back": "上一步",
+      "next": "下一步",
+      "create": "创建 Bot",
+      "creating": "创建中..."
+    },
+    "avatar": {
+      "upload": "上传",
+      "remove": "移除",
+      "hint": "PNG, JPG 最大 1MB"
+    },
+    "emoji": {
+      "hide": "隐藏",
+      "pick": "选择"
+    },
+    "markdown": {
+      "hint": "支持 Markdown",
+      "placeholder": "# Soul\n\n描述你的 Bot 的个性、指南和行为..."
+    }
+  },
+  "apiKeyModal": {
+    "title": "添加 API 密钥",
+    "description": "为 AI 提供商添加新的 API 密钥。",
+    "provider": "提供商",
+    "selectProvider": "选择提供商",
+    "apiKey": "API 密钥",
+    "apiKeyRequired": "API 密钥是必填项",
+    "baseUrl": "API 基础 URL",
+    "baseUrlDefault": "默认",
+    "label": "标签（可选）",
+    "labelPlaceholder": "我的 API 密钥",
+    "labelHint": "用于识别此密钥的可选名称",
+    "tag": "标记（可选）",
+    "tagPlaceholder": "production",
+    "tagHint": "具有匹配标记的 Bot 将使用此密钥。留空为默认。",
+    "actions": {
+      "cancel": "取消",
+      "add": "添加密钥",
+      "adding": "添加中..."
+    }
+  },
+  "health": {
+    "status": "状态",
+    "botCount": "Bots",
+    "keyCount": "API 密钥"
+  },
+  "messages": {
+    "noBots": "暂无 Bot。创建您的第一个 Bot 开始使用。",
+    "noApiKeys": "暂无 API 密钥。添加您的第一个 API 密钥开始使用。",
+    "loadingBots": "加载 Bots 中...",
+    "loadingApiKeys": "加载 API 密钥中...",
+    "createSuccess": "Bot 创建成功",
+    "deleteSuccess": "Bot 删除成功",
+    "startSuccess": "Bot 启动成功",
+    "stopSuccess": "Bot 停止成功",
+    "addKeySuccess": "API 密钥添加成功",
+    "deleteKeySuccess": "API 密钥删除成功",
+    "error": "操作失败"
+  },
+  "diagnostics": {
+    "title": "诊断",
+    "description": "监控系统健康状态和容器指标",
+    "containerStats": "容器统计",
+    "orphanedResources": "孤立资源",
+    "cleanup": "清理",
+    "cleanupSuccess": "清理成功",
+    "noOrphans": "没有孤立资源",
+    "systemOverview": {
+      "title": "系统概览",
+      "loading": "加载系统指标中...",
+      "avgCpu": "平均 CPU",
+      "memory": "内存",
+      "activeBots": "活跃 Bots",
+      "totalMemory": "总内存",
+      "networkIn": "网络入",
+      "networkOut": "网络出"
+    },
+    "containerMetrics": {
+      "title": "容器指标",
+      "noContainers": "没有运行中的容器",
+      "container": "容器",
+      "cpu": "CPU",
+      "memory": "内存",
+      "network": "网络"
+    },
+    "healthStatus": {
+      "title": "API 健康状态",
+      "checking": "检查中...",
+      "healthy": "健康",
+      "unhealthy": "不健康",
+      "lastChecked": "上次检查"
+    },
+    "cleanupPanel": {
+      "title": "资源清理",
+      "scanning": "扫描中...",
+      "retry": "重试",
+      "orphanedContainers": "孤立容器",
+      "orphanedWorkspaces": "孤立工作空间",
+      "orphanedSecrets": "孤立密钥",
+      "cleanUp": "清理",
+      "cleaning": "清理中...",
+      "refresh": "刷新",
+      "noOrphanedResources": "没有孤立资源",
+      "cleanedUp": "已清理 {count} 个孤立资源"
+    }
+  }
+}

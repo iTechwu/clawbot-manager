@@ -1,0 +1,141 @@
+.cursor/
+.vscode/
+.cursorrules
+.mcp.json
+CLAUDE.md
+
+# Dependencies
+node_modules/
+**/node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+**/dist/
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Turbo
+.turbo/
+**/.turbo/
+
+# Generated files
+*.generated.*
+prisma/client/
+**/prisma/client/
+.next/
+.vercel/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.claude/config.json
+
+# Logs
+logs/
+**/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log.*
+*.gz
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# IDE and editors
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Uploads and user-generated content
+uploads/
+**/uploads/
+undefined/
+secrets/
+
+# Keys and secrets
+keys/
+**/keys/config.json
+*.pem
+*.key
+*.crt
+*.cert
+
+# Database
+# 忽略数据 dump 文件（通常包含日期和数据），保留 schema 文件
+**/*data*.sql
+**/*dump*.sql
+**/*_data_*.sql
+# 保留以下文件：
+# - Prisma migrations
+# - Schema 文件 (schema.sql, struct.sql, *schema.sql)
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+.cache/
+
+# Package manager lock files (optional - some teams prefer to commit these)
+# pnpm-lock.yaml
+# package-lock.json
+# yarn.lock
+
+# Prisma
+# Keep migrations (they should be committed), ignore generated client
+# migrations are already handled above in the Database section
+
+# Docker
+
+# Miscellaneous
+*.seed
+*.pid
+*.seed.*
+.cache
+.parcel-cache
+.npm
+.eslintcache
+.stylelintcache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Local development
+.local/
+local/
+
+.claude/
+
+# Tests
+__tests__/

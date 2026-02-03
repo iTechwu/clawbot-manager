@@ -1,0 +1,122 @@
+@baseUrl = http://127.0.0.1:3200
+@apiVersionHeader = x-api-version: 1
+
+### ============================================
+### 测试服务是否运行
+### ============================================
+GET {{baseUrl}}/api/sign/in/device
+{{apiVersionHeader}}
+
+### ============================================
+### 登录接口
+### ============================================
+
+### 邮箱登录
+POST {{baseUrl}}/api/sign/in/email
+Content-Type: application/json
+{{apiVersionHeader}}
+
+{
+  "email": "dev@pardx.ai",
+  "password": "3.1415926535"
+}
+
+### 手机号密码登录
+POST {{baseUrl}}/api/sign/in/mobile/password
+Content-Type: application/json
+{{apiVersionHeader}}
+
+{
+  "mobile": "188888016381",
+  "password": "3.1415926535"
+}
+
+### 手机号验证码登录
+POST {{baseUrl}}/api/sign/in/phone
+Content-Type: application/json
+{{apiVersionHeader}}
+
+{
+  "mobile": "18888801638",
+  "code": "1234"
+}
+
+### ============================================
+### 注册接口
+### ============================================
+
+### 邮箱注册
+POST {{baseUrl}}/api/sign/up/email
+Content-Type: application/json
+{{apiVersionHeader}}
+
+{
+  "email": "dev@pardx.ai",
+  "password": "3.1415926535",
+  "name": "dev"
+}
+
+### 手机号注册
+POST {{baseUrl}}/api/sign/up/mobile
+Content-Type: application/json
+{{apiVersionHeader}}
+
+{
+  "mobile": "18888880001",
+  "password": "3.1415926",
+  "name": "001",
+  "code": "18888880009",
+  "iddCode": "0086"
+}
+
+### ============================================
+### Token 刷新
+### ============================================
+
+### 刷新 Token
+GET {{baseUrl}}/api/sign/refresh/token?refresh=YOUR_REFRESH_TOKEN
+{{apiVersionHeader}}
+
+### 通过 Cookie 刷新 Token
+GET {{baseUrl}}/api/sign/in/cookie?refresh=YOUR_REFRESH_TOKEN
+{{apiVersionHeader}}
+
+### ============================================
+### 验证码发送
+### ============================================
+
+### 发送手机登录验证码
+POST {{baseUrl}}/api/sign/send/code/mobile/login
+Content-Type: application/json
+{{apiVersionHeader}}
+
+{
+  "mobile": "18888801638",
+  "iddCode": "0086"
+}
+
+### 发送手机注册验证码
+POST {{baseUrl}}/api/sign/send/code/mobile/register
+Content-Type: application/json
+{{apiVersionHeader}}
+
+{
+  "mobile": "18888801638",
+  "iddCode": "0086"
+}
+
+### 发送邮箱验证码
+POST {{baseUrl}}/api/sign/send/verifyemail
+Content-Type: application/json
+{{apiVersionHeader}}
+
+{
+  "email": "dev@pardx.ai"
+}
+
+### 获取 space 信息
+GET http://localhost:3100/api/knowledge-base/space
+Content-Type: application/json
+{{apiVersionHeader}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4ODQ5ZTFlNC1hMzZkLTQ5M2YtODAwZC1mNDQwNThmY2M1MTQiLCJ0ZWFtSWQiOiJhN2JhYjUxOC0yYjA3LTRkZjAtYjY3OS1jNjUwOTY1ODRhYWEiLCJvcGVuaWQiOiIxODg4ODgwMTYzOCIsImlzQW5vbnltaXR5IjpmYWxzZSwiaXNBZG1pbiI6dHJ1ZSwibmlja25hbWUiOiJ0ZXN0MDEiLCJjb2RlIjoidGVzdDAxLTh2cm41OXA4YWYiLCJoZWFkZXJJbWciOm51bGwsInNleCI6IkZlbWFsZSIsImlhdCI6MTc2NjgyOTY2MiwiZXhwIjoxNzY2ODMzMjYyfQ.z9J1e45E7BiBJMRplDVsALeVxM7Z2oaK0t5A3uiL-hs
+teamtoken: U2FsdGVkX1+Yir8ZifgTOLtc3LgG/JTshv7UsFfeQBwIKiCJNVl7Jhhll8mRsi4P5EN3Bp16pZ0F9ecwZLMpjA==

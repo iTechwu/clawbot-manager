@@ -1,0 +1,182 @@
+'use client';
+
+import { useState } from 'react';
+import { WizardProvider, useWizard } from './wizard-context';
+import {
+  Step1Templates,
+  Step2Personality,
+  Step3Features,
+  Step4Config,
+  Step5Review,
+} from './steps';
+import { useBots } from '@/hooks/useBots';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Button,
+  Alert,
+} from '@repo/ui';
+import { AlertCircle, Check } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+
+const STEP_KEYS = [
+  { titleKey: 'template', descKey: 'templateDesc' },
+  { titleKey: 'personality', descKey: 'personalityDesc' },
+  { titleKey: 'features', descKey: 'featuresDesc' },
+  { titleKey: 'configure', descKey: 'configureDesc' },
+  { titleKey: 'review', descKey: 'reviewDesc' },
+] as const;
+
+interface CreateBotWizardProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+function WizardContent({ onClose }: { onClose: () => void }) {
+  const t = useTranslations('bots');
+  const { state, dispatch, validate, buildInput, canProceed } = useWizard();
+  const { handleCreate, createLoading } = useBots();
+  const [error, setError] = useState<string | null>(null);
+
+  const handleNext = () => {
+    const result = validate(state.step);
+    if (result.valid && state.step < 5) {
+      dispatch({ type: 'SET_STEP', step: state.step + 1 });
+    } else if (!result.valid) {
+      setError(result.error || t('wizard.completeStep'));
+    }
+  };
+
+  const handleBack = () => {
+    setError(null);
+    if (state.step > 1) {
+      dispatch({ type: 'SET_STEP', step: state.step - 1 });
+    }
+  };
+
+  const handleSubmit = async () => {
+    setError(null);
+    try {
+      const input = buildInput();
+      await handleCreate(input);
+      dispatch({ type: 'RESET' });
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('messages.error'));
+    }
+  };
+
+  const renderStepContent = () => {
+    switch (state.step) {
+      case 1:
+        return <Step1Templates />;
+      case 2:
+        return <Step2Personality />;
+      case 3:
+        return <Step3Features />;
+      case 4:
+        return <Step4Config />;
+      case 5:
+        return <Step5Review />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* Progress Steps */}
+      <div className="mb-6 flex-shrink-0">
+        <div className="flex justify-between">
+          {STEP_KEYS.map((stepKey, index) => {
+            const stepNum = index + 1;
+            const isActive = stepNum === state.step;
+            const isCompleted = stepNum < state.step;
+            return (
+              <div key={stepNum} className="flex flex-col items-center">
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : isCompleted
+                        ? 'bg-green-500 text-white'
+                        : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {isCompleted ? <Check className="h-4 w-4" /> : stepNum}
+                </div>
+                <div className="mt-1 text-center">
+                  <div
+                    className={`text-xs font-medium ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
+                  >
+                    {t(`wizard.steps.${stepKey.titleKey}`)}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {/* Current step description */}
+        <div className="mt-4 text-center">
+          <p className="text-muted-foreground text-sm">
+            {t(`wizard.steps.${STEP_KEYS[state.step - 1]?.descKey}`)}
+          </p>
+        </div>
+      </div>
+
+      {/* Step Content */}
+      <div className="min-h-0 flex-1 overflow-y-auto">{renderStepContent()}</div>
+
+      {/* Error */}
+      {error && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="size-4" />
+          <span className="ml-2">{error}</span>
+        </Alert>
+      )}
+
+      {/* Actions */}
+      <div className="border-border mt-6 flex flex-shrink-0 justify-between border-t pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={state.step === 1 ? onClose : handleBack}
+        >
+          {state.step === 1
+            ? t('wizard.actions.cancel')
+            : t('wizard.actions.back')}
+        </Button>
+        {state.step < 5 ? (
+          <Button type="button" onClick={handleNext} disabled={!canProceed()}>
+            {t('wizard.actions.next')}
+          </Button>
+        ) : (
+          <Button type="button" onClick={handleSubmit} disabled={createLoading}>
+            {createLoading
+              ? t('wizard.actions.creating')
+              : t('wizard.actions.create')}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function CreateBotWizard({ isOpen, onClose }: CreateBotWizardProps) {
+  const t = useTranslations('bots');
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="flex h-[600px] max-w-2xl flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle>{t('wizard.title')}</DialogTitle>
+        </DialogHeader>
+        <WizardProvider>
+          <WizardContent onClose={onClose} />
+        </WizardProvider>
+      </DialogContent>
+    </Dialog>
+  );
+}
