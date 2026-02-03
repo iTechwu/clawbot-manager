@@ -4,6 +4,7 @@ import { BotService, BotUsageLogService } from '@app/db';
 import { EncryptionService } from '../../bot-api/services/encryption.service';
 import { KeyringService } from './keyring.service';
 import { UpstreamService } from './upstream.service';
+import { QuotaService } from './quota.service';
 import { getVendorConfig, isVendorSupported } from '../config/vendor.config';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
@@ -47,6 +48,7 @@ export class ProxyService {
     private readonly encryptionService: EncryptionService,
     private readonly keyringService: KeyringService,
     private readonly upstreamService: UpstreamService,
+    private readonly quotaService: QuotaService,
   ) {}
 
   /**
@@ -96,6 +98,11 @@ export class ProxyService {
 
       // 5. 记录使用日志
       await this.logUsage(bot.id, vendor, keySelection.keyId, statusCode);
+
+      // 6. 检查配额并发送通知（异步，不阻塞响应）
+      this.quotaService.checkAndNotify(bot.id).catch((err) => {
+        this.logger.error('Failed to check quota:', err);
+      });
 
       return { success: true, statusCode };
     } catch (error) {

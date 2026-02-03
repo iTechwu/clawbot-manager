@@ -6,6 +6,7 @@ export * from './analytics.schema';
 export * from './bot.schema';
 export * from './download.schema';
 export * from './message.schema';
+export * from './operate-log.schema';
 export * from './persona-template.schema';
 export * from './risk-words.schema';
 export * from './setting.schema';

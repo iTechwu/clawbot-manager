@@ -19,3 +19,4 @@ export * from './modules/provider-key';
 export * from './modules/bot-provider-key';
 export * from './modules/bot-usage-log';
 export * from './modules/persona-template';
+export * from './modules/operate-log';

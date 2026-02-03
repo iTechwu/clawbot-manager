@@ -58,7 +58,7 @@ export function Step1Templates() {
     );
   }, [searchQuery, templates]);
 
-  const handleSelect = (templateId: string, template?: { emoji: string; soulMarkdown: string }) => {
+  const handleSelect = (templateId: string, template?: { emoji?: string; avatarUrl?: string; soulMarkdown: string }) => {
     dispatch({ type: 'SELECT_TEMPLATE', templateId, template });
   };
 
@@ -135,7 +135,8 @@ export function Step1Templates() {
               }`}
               onClick={() =>
                 handleSelect(template.id, {
-                  emoji: template.emoji,
+                  emoji: template.emoji ?? undefined,
+                  avatarUrl: template.avatarUrl ?? undefined,
                   soulMarkdown: template.soulMarkdown,
                 })
               }

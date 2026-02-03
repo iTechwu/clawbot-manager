@@ -20,7 +20,6 @@ import {
   Moon,
   Sun,
   Search,
-  Bell,
   Sparkles,
   Settings,
   LogOut,
@@ -29,6 +28,7 @@ import {
 import { useTheme } from 'next-themes';
 import { useTranslations } from 'next-intl';
 import { LocaleSwitcher } from './locale-switcher';
+import { NotificationDropdown } from './notification-dropdown';
 import { ClientOnly } from '@/components/client-only';
 import { getUser, clearAll } from '@/lib/storage';
 import type { UserInfo } from '@repo/contracts';
@@ -97,10 +97,7 @@ export function AppNavbar() {
           <Search className="size-4" />
           <span className="sr-only">{t('search')}</span>
         </Button>
-        <Button variant="ghost" size="icon" className="size-8">
-          <Bell className="size-4" />
-          <span className="sr-only">{t('notifications')}</span>
-        </Button>
+        <NotificationDropdown />
         <Separator orientation="vertical" className="mx-1 h-4" />
         <LocaleSwitcher />
         <Button

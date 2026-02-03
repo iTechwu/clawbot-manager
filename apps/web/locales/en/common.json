@@ -72,5 +72,13 @@
     "noData": "No data",
     "loadMore": "Load more",
     "endOfList": "End of list"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications",
+    "markAllRead": "Mark all read",
+    "markAsRead": "Mark as read",
+    "quotaWarning": "Quota Warning",
+    "quotaExceeded": "Quota Exceeded"
   }
 }

@@ -49,7 +49,12 @@ export class BotUsageLogService extends TransactionalServiceBase {
       page?: number;
     },
     additional?: { select?: Prisma.BotUsageLogSelect },
-  ): Promise<{ list: BotUsageLog[]; total: number; page: number; limit: number }> {
+  ): Promise<{
+    list: BotUsageLog[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const {
       orderBy = { createdAt: 'desc' },
       limit = this.appConfig.MaxPageSize,
@@ -71,6 +76,23 @@ export class BotUsageLogService extends TransactionalServiceBase {
     ]);
 
     return { list, total, page, limit };
+  }
+
+  @HandlePrismaError(DbOperationType.QUERY)
+  async listByBotId(
+    botId: string,
+    options?: { startDate?: Date },
+  ): Promise<BotUsageLog[]> {
+    const where: Prisma.BotUsageLogWhereInput = { botId };
+
+    if (options?.startDate) {
+      where.createdAt = { gte: options.startDate };
+    }
+
+    return this.getReadClient().botUsageLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   @HandlePrismaError(DbOperationType.CREATE)
@@ -95,7 +117,9 @@ export class BotUsageLogService extends TransactionalServiceBase {
   }
 
   @HandlePrismaError(DbOperationType.DELETE)
-  async delete(where: Prisma.BotUsageLogWhereUniqueInput): Promise<BotUsageLog> {
+  async delete(
+    where: Prisma.BotUsageLogWhereUniqueInput,
+  ): Promise<BotUsageLog> {
     return this.getWriteClient().botUsageLog.delete({ where });
   }
 }

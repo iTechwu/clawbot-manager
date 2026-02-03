@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useWizard } from '../wizard-context';
 import { Input, Label, Textarea } from '@repo/ui';
+import { IconSelector } from '@/app/[locale]/(main)/templates/components/icon-selector';
 
 /**
  * Derive hostname from display name.
@@ -34,16 +35,16 @@ export function Step2Personality() {
     dispatch({ type: 'SET_HOSTNAME', hostname: value.slice(0, 64) });
   };
 
-  const handleEmojiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch({ type: 'SET_EMOJI', emoji: e.target.value });
+  const handleEmojiChange = (emoji: string) => {
+    dispatch({ type: 'SET_EMOJI', emoji });
   };
 
-  const handleAvatarUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch({
-      type: 'SET_AVATAR',
-      file: null,
-      previewUrl: e.target.value,
-    });
+  const handleAvatarChange = (fileId: string, previewUrl: string) => {
+    dispatch({ type: 'SET_AVATAR', fileId, previewUrl });
+  };
+
+  const handleClearIcon = () => {
+    dispatch({ type: 'CLEAR_AVATAR' });
   };
 
   const handleSoulChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -59,35 +60,18 @@ export function Step2Personality() {
         </p>
       </div>
 
-      <div className="grid grid-cols-[120px_1fr] gap-6">
-        {/* Avatar Column */}
+      <div className="grid grid-cols-[200px_1fr] gap-6">
+        {/* Icon Selector Column */}
         <div className="space-y-3">
           <Label>{t('avatar')}</Label>
-          <div className="bg-muted flex size-24 items-center justify-center rounded-lg border">
-            {state.avatarPreviewUrl ? (
-              <img
-                src={state.avatarPreviewUrl}
-                alt="Avatar"
-                className="size-full rounded-lg object-cover"
-              />
-            ) : (
-              <span className="text-4xl">{state.emoji}</span>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="emoji" className="text-xs">
-              {t('emoji')}
-            </Label>
-            <Input
-              id="emoji"
-              type="text"
-              value={state.emoji}
-              onChange={handleEmojiChange}
-              placeholder="🤖"
-              maxLength={2}
-              className="h-8 text-center"
-            />
-          </div>
+          <IconSelector
+            emoji={state.emoji || undefined}
+            avatarFileId={state.avatarFileId || undefined}
+            avatarPreviewUrl={state.avatarPreviewUrl || undefined}
+            onEmojiChange={handleEmojiChange}
+            onAvatarChange={handleAvatarChange}
+            onClear={handleClearIcon}
+          />
         </div>
 
         {/* Fields Column */}
@@ -119,17 +103,6 @@ export function Step2Personality() {
             <p className="text-muted-foreground text-xs">
               {t('hostnameHint')}
             </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="avatar-url">{t('avatarUrl')}</Label>
-            <Input
-              id="avatar-url"
-              type="url"
-              value={state.avatarPreviewUrl}
-              onChange={handleAvatarUrlChange}
-              placeholder={t('avatarUrlPlaceholder')}
-            />
           </div>
         </div>
       </div>

@@ -35,6 +35,12 @@ import { PersonaTemplateApiModule } from './modules/persona-template-api/persona
 /** user-api module */
 import { UserApiModule } from './modules/user-api/user-api.module';
 
+/** message-api module */
+import { MessageApiModule } from './modules/message-api/message-api.module';
+
+/** operate-log-api module */
+import { OperateLogApiModule } from './modules/operate-log-api/operate-log-api.module';
+
 /** i18n */
 import {
   AcceptLanguageResolver,
@@ -190,6 +196,8 @@ import { DbMetricsService } from '@app/prisma/db-metrics/src/db-metrics.service'
     SignModule,
     PersonaTemplateApiModule,
     UserApiModule,
+    MessageApiModule,
+    OperateLogApiModule,
   ],
   providers: [
     {

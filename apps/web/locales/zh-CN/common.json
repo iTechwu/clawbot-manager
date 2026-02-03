@@ -72,5 +72,13 @@
     "noData": "暂无数据",
     "loadMore": "加载更多",
     "endOfList": "已到底部"
+  },
+  "notifications": {
+    "title": "通知",
+    "empty": "暂无通知",
+    "markAllRead": "全部已读",
+    "markAsRead": "标记已读",
+    "quotaWarning": "配额警告",
+    "quotaExceeded": "配额超限"
   }
 }

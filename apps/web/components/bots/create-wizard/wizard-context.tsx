@@ -17,6 +17,7 @@ export interface WizardState {
   botName: string;
   hostname: string;
   emoji: string;
+  avatarFileId: string;
   avatarFile: File | null;
   avatarPreviewUrl: string;
   soulMarkdown: string;
@@ -42,11 +43,12 @@ export interface ValidationResult {
 
 type WizardAction =
   | { type: 'SET_STEP'; step: number }
-  | { type: 'SELECT_TEMPLATE'; templateId: string; template?: { emoji: string; soulMarkdown: string } }
+  | { type: 'SELECT_TEMPLATE'; templateId: string; template?: { emoji?: string; avatarUrl?: string; soulMarkdown: string } }
   | { type: 'SET_BOT_NAME'; name: string }
   | { type: 'SET_HOSTNAME'; hostname: string }
   | { type: 'SET_EMOJI'; emoji: string }
-  | { type: 'SET_AVATAR'; file: File | null; previewUrl: string }
+  | { type: 'SET_AVATAR'; fileId: string; previewUrl: string }
+  | { type: 'CLEAR_AVATAR' }
   | { type: 'SET_SOUL_MARKDOWN'; markdown: string }
   | { type: 'TOGGLE_PROVIDER'; providerId: string }
   | { type: 'TOGGLE_CHANNEL'; channelId: string }
@@ -66,6 +68,7 @@ const initialState: WizardState = {
   botName: '',
   hostname: '',
   emoji: '🤖',
+  avatarFileId: '',
   avatarFile: null,
   avatarPreviewUrl: '',
   soulMarkdown: '',
@@ -99,7 +102,9 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       return {
         ...state,
         selectedTemplateId: action.templateId,
-        emoji: template.emoji || state.emoji,
+        emoji: template.emoji || '',
+        avatarPreviewUrl: template.avatarUrl || '',
+        avatarFileId: '',
         soulMarkdown: template.soulMarkdown,
       };
     }
@@ -111,13 +116,27 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       return { ...state, hostname: action.hostname };
 
     case 'SET_EMOJI':
-      return { ...state, emoji: action.emoji };
+      return {
+        ...state,
+        emoji: action.emoji,
+        avatarFileId: '',
+        avatarPreviewUrl: '',
+      };
 
     case 'SET_AVATAR':
       return {
         ...state,
-        avatarFile: action.file,
+        avatarFileId: action.fileId,
         avatarPreviewUrl: action.previewUrl,
+        emoji: '',
+      };
+
+    case 'CLEAR_AVATAR':
+      return {
+        ...state,
+        avatarFileId: '',
+        avatarPreviewUrl: '',
+        emoji: '🤖',
       };
 
     case 'SET_SOUL_MARKDOWN':
@@ -289,10 +308,14 @@ export function buildCreateBotInput(state: WizardState): CreateBotInput {
     hostname: state.hostname,
     providers,
     channels,
+    personaTemplateId: state.selectedTemplateId && state.selectedTemplateId !== 'scratch'
+      ? state.selectedTemplateId
+      : undefined,
     persona: {
       name: state.botName,
       soulMarkdown: state.soulMarkdown,
       emoji: state.emoji || undefined,
+      avatarFileId: state.avatarFileId || undefined,
       avatarUrl: state.avatarPreviewUrl || undefined,
     },
     features: {

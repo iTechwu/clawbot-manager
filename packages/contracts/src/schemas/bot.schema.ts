@@ -35,6 +35,11 @@ export const BotSchema = z.object({
   tags: z.array(z.string()).nullable(),
   status: BotStatusSchema,
   createdById: z.string().uuid(),
+  personaTemplateId: z.string().uuid().nullable(),
+  emoji: z.string().nullable(),
+  avatarFileId: z.string().uuid().nullable(),
+  avatarUrl: z.string().nullable(),
+  soulMarkdown: z.string().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   containerStatus: ContainerStatusSchema.nullable().optional(),
@@ -74,7 +79,8 @@ export type WizardFeatures = z.infer<typeof WizardFeaturesSchema>;
 export const PersonaSchema = z.object({
   name: z.string(),
   soulMarkdown: z.string(),
-  emoji: z.string().optional(),
+  emoji: z.string().max(10).optional(),
+  avatarFileId: z.string().uuid().optional(),
   avatarUrl: z.string().url().optional(),
 });
 
@@ -88,6 +94,7 @@ export const CreateBotInputSchema = z.object({
   providers: z.array(ProviderConfigSchema).min(1),
   primaryProvider: z.string().optional(),
   channels: z.array(ChannelConfigSchema).min(1),
+  personaTemplateId: z.string().uuid().optional(),
   persona: PersonaSchema,
   features: WizardFeaturesSchema,
   tags: z.array(z.string()).optional(),

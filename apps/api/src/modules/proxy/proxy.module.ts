@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ProviderKeyModule, BotModule, BotUsageLogModule } from '@app/db';
+import { ProviderKeyModule, BotModule, BotUsageLogModule, MessageDbModule } from '@app/db';
 import { ProxyController } from './proxy.controller';
 import { ProxyService } from './services/proxy.service';
 import { KeyringService } from './services/keyring.service';
 import { UpstreamService } from './services/upstream.service';
+import { QuotaService } from './services/quota.service';
 import { EncryptionService } from '../bot-api/services/encryption.service';
 
 /**
@@ -16,6 +17,7 @@ import { EncryptionService } from '../bot-api/services/encryption.service';
  * - Round-robin 负载均衡
  * - SSE 流式响应支持
  * - 使用日志记录
+ * - Token 配额检查和通知
  */
 @Module({
   imports: [
@@ -23,14 +25,16 @@ import { EncryptionService } from '../bot-api/services/encryption.service';
     ProviderKeyModule,
     BotModule,
     BotUsageLogModule,
+    MessageDbModule,
   ],
   controllers: [ProxyController],
   providers: [
     ProxyService,
     KeyringService,
     UpstreamService,
+    QuotaService,
     EncryptionService,
   ],
-  exports: [ProxyService],
+  exports: [ProxyService, QuotaService],
 })
 export class ProxyModule {}

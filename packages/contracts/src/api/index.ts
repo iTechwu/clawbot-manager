@@ -2,6 +2,7 @@ export * from './analytics.contract';
 export * from './bot.contract';
 export * from './download.contract';
 export * from './message.contract';
+export * from './operate-log.contract';
 export * from './persona-template.contract';
 export * from './risk-words.contract';
 export * from './setting.contract';

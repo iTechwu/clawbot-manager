@@ -56,6 +56,7 @@ model UserInfo {
   bots             Bot[]
   providerKeys     ProviderKey[]
   personaTemplates PersonaTemplate[]
+  operateLogs      OperateLog[]
 
   @@index([code])
   @@index([isDeleted, isAdmin])
@@ -98,6 +99,7 @@ model PersonaTemplate {
 
   createdBy  UserInfo?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
   avatarFile FileSource? @relation(fields: [avatarFileId], references: [id], onDelete: SetNull)
+  bots       Bot[]
 
   @@index([isSystem])
   @@index([createdById])
@@ -318,6 +320,7 @@ model FileSource {
   // Relations
   userAvatars      UserInfo[]
   personaTemplates PersonaTemplate[]
+  botAvatars       Bot[]
 
   @@index([fsize, sha256])
   @@index([isDeleted])
@@ -359,19 +362,23 @@ enum BotStatus {
 /// Bot - 机器人实体
 /// 管理 AI 机器人的生命周期和配置
 model Bot {
-  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  name           String    @db.VarChar(255)
-  hostname       String    @unique @db.VarChar(64)
-  aiProvider     String    @map("ai_provider") @db.VarChar(50)
-  model          String    @db.VarChar(100)
-  channelType    String    @map("channel_type") @db.VarChar(50)
-  containerId    String?   @map("container_id") @db.VarChar(255)
-  port           Int?
-  gatewayToken   String?   @map("gateway_token") @db.VarChar(255)
-  proxyTokenHash String?   @unique @map("proxy_token_hash") @db.VarChar(64)
-  tags           String[]
-  status         BotStatus @default(created)
-  createdById    String    @map("created_by_id") @db.Uuid
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name              String    @db.VarChar(255)
+  hostname          String    @unique @db.VarChar(64)
+  aiProvider        String    @map("ai_provider") @db.VarChar(50)
+  model             String    @db.VarChar(100)
+  channelType       String    @map("channel_type") @db.VarChar(50)
+  containerId       String?   @map("container_id") @db.VarChar(255)
+  port              Int?
+  gatewayToken      String?   @map("gateway_token") @db.VarChar(255)
+  proxyTokenHash    String?   @unique @map("proxy_token_hash") @db.VarChar(64)
+  tags              String[]
+  status            BotStatus @default(created)
+  createdById       String    @map("created_by_id") @db.Uuid
+  personaTemplateId String?   @map("persona_template_id") @db.Uuid
+  emoji             String?   @db.VarChar(10)
+  avatarFileId      String?   @map("avatar_file_id") @db.Uuid
+  soulMarkdown      String?   @map("soul_markdown") @db.Text
 
   isDeleted Boolean   @default(false) @map("is_deleted")
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -379,13 +386,17 @@ model Bot {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   // Relations
-  createdBy    UserInfo         @relation(fields: [createdById], references: [id])
-  providerKeys BotProviderKey[]
-  usageLogs    BotUsageLog[]
+  createdBy       UserInfo         @relation(fields: [createdById], references: [id])
+  personaTemplate PersonaTemplate? @relation(fields: [personaTemplateId], references: [id], onDelete: SetNull)
+  avatarFile      FileSource?      @relation(fields: [avatarFileId], references: [id], onDelete: SetNull)
+  providerKeys    BotProviderKey[]
+  usageLogs       BotUsageLog[]
 
   @@index([status])
   @@index([hostname])
   @@index([createdById])
+  @@index([personaTemplateId])
+  @@index([avatarFileId])
   @@index([isDeleted])
   @@map("b_bot")
 }
@@ -501,4 +512,56 @@ model MessageRecipient {
   @@index([isDeleted])
   @@index([userId, isRead, isDeleted]) // Composite index for unread message count queries
   @@map("message_recipient")
+}
+
+// ============================================================================
+// Operation Log System - 操作日志系统
+// ============================================================================
+
+enum OperateType {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  START
+  STOP
+  EXPORT
+  IMPORT
+
+  @@map("operate_type")
+}
+
+enum OperateTarget {
+  BOT
+  PROVIDER_KEY
+  USER
+  PERSONA_TEMPLATE
+  SYSTEM
+
+  @@map("operate_target")
+}
+
+/// OperateLog - 操作日志
+/// 记录用户的操作行为，用于审计和追踪
+model OperateLog {
+  id          String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId      String        @map("user_id") @db.Uuid
+  operateType OperateType   @map("operate_type")
+  target      OperateTarget
+  targetId    String?       @map("target_id") @db.Uuid
+  targetName  String?       @map("target_name") @db.VarChar(255)
+  detail      Json?
+  ipAddress   String?       @map("ip_address") @db.VarChar(45)
+  userAgent   String?       @map("user_agent") @db.VarChar(500)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user UserInfo @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([operateType])
+  @@index([target])
+  @@index([targetId])
+  @@index([createdAt(sort: Desc)])
+  @@map("operate_log")
 }

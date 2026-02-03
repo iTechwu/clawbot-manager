@@ -1,6 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { BotModule, ProviderKeyModule, UserInfoModule } from '@app/db';
+import {
+  BotModule,
+  ProviderKeyModule,
+  UserInfoModule,
+  OperateLogModule,
+  PersonaTemplateModule,
+} from '@app/db';
 import { AuthModule } from '@app/auth';
 import { JwtModule } from '@app/jwt/jwt.module';
 import { RedisModule } from '@app/redis';
@@ -17,9 +23,11 @@ import { ReconciliationService } from './services/reconciliation.service';
     BotModule,
     ProviderKeyModule,
     UserInfoModule,
+    OperateLogModule,
     AuthModule,
     JwtModule,
     RedisModule,
+    PersonaTemplateModule,
   ],
   controllers: [BotApiController],
   providers: [
@@ -29,6 +37,11 @@ import { ReconciliationService } from './services/reconciliation.service';
     WorkspaceService,
     ReconciliationService,
   ],
-  exports: [BotApiService, DockerService, WorkspaceService, ReconciliationService],
+  exports: [
+    BotApiService,
+    DockerService,
+    WorkspaceService,
+    ReconciliationService,
+  ],
 })
 export class BotApiModule {}

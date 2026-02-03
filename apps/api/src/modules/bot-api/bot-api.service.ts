@@ -4,7 +4,12 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
-import { BotService, ProviderKeyService } from '@app/db';
+import {
+  BotService,
+  ProviderKeyService,
+  OperateLogService,
+  PersonaTemplateService,
+} from '@app/db';
 import { EncryptionService } from './services/encryption.service';
 import { DockerService } from './services/docker.service';
 import { WorkspaceService } from './services/workspace.service';
@@ -28,6 +33,8 @@ export class BotApiService {
     private readonly encryptionService: EncryptionService,
     private readonly dockerService: DockerService,
     private readonly workspaceService: WorkspaceService,
+    private readonly operateLogService: OperateLogService,
+    private readonly personaTemplateService: PersonaTemplateService,
   ) {}
 
   // ============================================================================
@@ -41,8 +48,9 @@ export class BotApiService {
     const enrichedBots = await Promise.all(
       list.map(async (bot) => {
         if (bot.containerId) {
-          const containerStatus =
-            await this.dockerService.getContainerStatus(bot.containerId);
+          const containerStatus = await this.dockerService.getContainerStatus(
+            bot.containerId,
+          );
           return { ...bot, containerStatus };
         }
         return bot;
@@ -93,6 +101,28 @@ export class BotApiService {
       .filter((p): p is number => p !== null);
     const port = await this.dockerService.allocatePort(usedPorts);
 
+    // Handle PersonaTemplate: create new one if not provided (scratch template)
+    let personaTemplateId = input.personaTemplateId;
+    if (!personaTemplateId) {
+      // Create a new PersonaTemplate for this bot (scratch template)
+      const newTemplate = await this.personaTemplateService.create({
+        name: input.name,
+        emoji: input.persona.emoji || null,
+        tagline: `Custom persona for ${input.name}`,
+        soulMarkdown: input.persona.soulMarkdown,
+        soulPreview: input.persona.soulMarkdown.slice(0, 200),
+        isSystem: false,
+        avatarFile: input.persona.avatarFileId
+          ? { connect: { id: input.persona.avatarFileId } }
+          : undefined,
+        createdBy: { connect: { id: userId } },
+      });
+      personaTemplateId = newTemplate.id;
+      this.logger.log(
+        `Created new PersonaTemplate: ${personaTemplateId} for bot ${input.hostname}`,
+      );
+    }
+
     // Create workspace
     const workspacePath = await this.workspaceService.createWorkspace({
       hostname: input.hostname,
@@ -118,7 +148,10 @@ export class BotApiService {
         workspacePath,
       });
     } catch (error) {
-      this.logger.warn(`Failed to create container for ${input.hostname}:`, error);
+      this.logger.warn(
+        `Failed to create container for ${input.hostname}:`,
+        error,
+      );
       // Continue without container - can be created later
     }
 
@@ -134,10 +167,31 @@ export class BotApiService {
       gatewayToken,
       tags: input.tags || [],
       status: 'created',
+      emoji: input.persona.emoji || null,
+      soulMarkdown: input.persona.soulMarkdown || null,
+      personaTemplate: { connect: { id: personaTemplateId } },
+      avatarFile: input.persona.avatarFileId
+        ? { connect: { id: input.persona.avatarFileId } }
+        : undefined,
       createdBy: { connect: { id: userId } },
     });
 
     this.logger.log(`Bot created: ${input.hostname}`);
+
+    // Log operation
+    await this.operateLogService.create({
+      user: { connect: { id: userId } },
+      operateType: 'CREATE',
+      target: 'BOT',
+      targetId: bot.id,
+      targetName: bot.name,
+      detail: {
+        hostname: bot.hostname,
+        aiProvider: bot.aiProvider,
+        model: bot.model,
+      },
+    });
+
     return bot;
   }
 
@@ -166,6 +220,16 @@ export class BotApiService {
       { id: bot.id },
       { isDeleted: true, deletedAt: new Date(), status: 'stopped' },
     );
+
+    // Log operation
+    await this.operateLogService.create({
+      user: { connect: { id: userId } },
+      operateType: 'DELETE',
+      target: 'BOT',
+      targetId: bot.id,
+      targetName: bot.name,
+      detail: { hostname },
+    });
 
     this.logger.log(`Bot deleted: ${hostname}`);
   }
@@ -200,6 +264,17 @@ export class BotApiService {
       }
 
       await this.botService.update({ id: bot.id }, { status: 'running' });
+
+      // Log operation
+      await this.operateLogService.create({
+        user: { connect: { id: userId } },
+        operateType: 'START',
+        target: 'BOT',
+        targetId: bot.id,
+        targetName: bot.name,
+        detail: { hostname },
+      });
+
       this.logger.log(`Bot started: ${hostname}`);
       return { success: true, status: 'running' };
     } catch (error) {
@@ -221,6 +296,17 @@ export class BotApiService {
       }
 
       await this.botService.update({ id: bot.id }, { status: 'stopped' });
+
+      // Log operation
+      await this.operateLogService.create({
+        user: { connect: { id: userId } },
+        operateType: 'STOP',
+        target: 'BOT',
+        targetId: bot.id,
+        targetName: bot.name,
+        detail: { hostname },
+      });
+
       this.logger.log(`Bot stopped: ${hostname}`);
       return { success: true, status: 'stopped' };
     } catch (error) {
@@ -282,7 +368,10 @@ export class BotApiService {
         await this.workspaceService.deleteWorkspace(hostname);
         workspacesRemoved++;
       } catch (error) {
-        this.logger.warn(`Failed to remove orphaned workspace ${hostname}:`, error);
+        this.logger.warn(
+          `Failed to remove orphaned workspace ${hostname}:`,
+          error,
+        );
       }
     }
 
@@ -324,10 +413,24 @@ export class BotApiService {
     });
 
     this.logger.log(`Provider key added: ${key.id} (${input.vendor})`);
+
+    // Log operation
+    await this.operateLogService.create({
+      user: { connect: { id: userId } },
+      operateType: 'CREATE',
+      target: 'PROVIDER_KEY',
+      targetId: key.id,
+      targetName: input.label || input.vendor,
+      detail: { vendor: input.vendor, tag: input.tag },
+    });
+
     return { id: key.id };
   }
 
-  async deleteProviderKey(id: string, userId: string): Promise<{ ok: boolean }> {
+  async deleteProviderKey(
+    id: string,
+    userId: string,
+  ): Promise<{ ok: boolean }> {
     const key = await this.providerKeyService.get({ id });
     if (!key || key.createdById !== userId) {
       throw new NotFoundException(`Provider key with id "${id}" not found`);
@@ -336,6 +439,17 @@ export class BotApiService {
       { id },
       { isDeleted: true, deletedAt: new Date() },
     );
+
+    // Log operation
+    await this.operateLogService.create({
+      user: { connect: { id: userId } },
+      operateType: 'DELETE',
+      target: 'PROVIDER_KEY',
+      targetId: id,
+      targetName: key.label || key.vendor,
+      detail: { vendor: key.vendor },
+    });
+
     this.logger.log(`Provider key deleted: ${id}`);
     return { ok: true };
   }
