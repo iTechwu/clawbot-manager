@@ -8,6 +8,7 @@ export * from './download.schema';
 export * from './message.schema';
 export * from './operate-log.schema';
 export * from './persona-template.schema';
+export * from './provider.schema';
 export * from './risk-words.schema';
 export * from './setting.schema';
 export * from './sign.schema';

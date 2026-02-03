@@ -1,5 +1,21 @@
 import { z } from 'zod';
 import { BotStatusSchema } from './prisma-enums.generated';
+// 从新的 provider schema 导入
+import {
+  ProviderVendorSchema,
+  getEffectiveApiHost,
+  isCustomApiHost,
+  PROVIDER_DEFAULT_BASE_URLS,
+} from './provider.schema';
+
+// 重新导出 provider 相关类型和函数
+export {
+  ProviderVendorSchema,
+  getEffectiveApiHost,
+  isCustomApiHost,
+  PROVIDER_DEFAULT_BASE_URLS,
+} from './provider.schema';
+export type { ProviderVendor } from './provider.schema';
 
 // BotStatus/BotStatusSchema 来自 prisma-enums.generated，由 index 统一导出
 
@@ -51,12 +67,15 @@ export type Bot = z.infer<typeof BotSchema>;
 // Bot Creation Schemas
 // ============================================================================
 
-export const ProviderConfigSchema = z.object({
+export const BotProviderConfigSchema = z.object({
   providerId: z.string(),
   model: z.string(),
 });
 
-export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
+export type BotProviderConfig = z.infer<typeof BotProviderConfigSchema>;
+
+/** @deprecated 使用 BotProviderConfigSchema 代替 */
+export const ProviderConfigSchema = BotProviderConfigSchema;
 
 export const ChannelConfigSchema = z.object({
   channelType: z.string(),
@@ -91,7 +110,7 @@ export const CreateBotInputSchema = z.object({
   hostname: z.string().regex(/^[a-z0-9-]{1,64}$/, {
     message: 'Hostname must be lowercase alphanumeric with hyphens, max 64 chars',
   }),
-  providers: z.array(ProviderConfigSchema).min(1),
+  providers: z.array(BotProviderConfigSchema).min(1),
   primaryProvider: z.string().optional(),
   channels: z.array(ChannelConfigSchema).min(1),
   personaTemplateId: z.string().uuid().optional(),
@@ -146,54 +165,7 @@ export type CleanupReport = z.infer<typeof CleanupReportSchema>;
 // Provider Key Schemas
 // ============================================================================
 
-export const ProviderVendorSchema = z.enum([
-  'openai',
-  'anthropic',
-  'google',
-  'venice',
-  'deepseek',
-  'groq',
-]);
-
-export type ProviderVendor = z.infer<typeof ProviderVendorSchema>;
-
-/**
- * Default base URLs for each AI provider.
- * These are the official API endpoints.
- */
-export const PROVIDER_DEFAULT_BASE_URLS: Record<ProviderVendor, string> = {
-  openai: 'https://api.openai.com/v1',
-  anthropic: 'https://api.anthropic.com',
-  google: 'https://generativelanguage.googleapis.com/v1beta',
-  venice: 'https://api.venice.ai/api/v1',
-  deepseek: 'https://api.deepseek.com',
-  groq: 'https://api.groq.com/openai/v1',
-};
-
-/**
- * Get the effective base URL for a provider key.
- * Returns the custom baseUrl if set, otherwise returns the default for the vendor.
- */
-export function getEffectiveBaseUrl(
-  vendor: ProviderVendor,
-  customBaseUrl?: string | null,
-): string {
-  if (customBaseUrl && customBaseUrl.trim()) {
-    return customBaseUrl.trim();
-  }
-  return PROVIDER_DEFAULT_BASE_URLS[vendor];
-}
-
-/**
- * Check if a base URL is custom (different from the default).
- */
-export function isCustomBaseUrl(
-  vendor: ProviderVendor,
-  baseUrl?: string | null,
-): boolean {
-  if (!baseUrl) return false;
-  return baseUrl.trim() !== PROVIDER_DEFAULT_BASE_URLS[vendor];
-}
+// ProviderVendorSchema 和相关函数已从 provider.schema.ts 导入
 
 export const ProviderKeySchema = z.object({
   id: z.string().uuid(),
