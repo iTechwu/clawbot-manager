@@ -141,7 +141,8 @@ export class DockerService implements OnModuleInit {
     }
 
     // Get provider config for environment variable naming
-    const providerConfig = PROVIDER_CONFIGS[options.aiProvider as ProviderVendor];
+    const providerConfig =
+      PROVIDER_CONFIGS[options.aiProvider as ProviderVendor];
 
     // Helper function to get environment variable name for API key
     const getApiKeyEnvName = (provider: string): string => {

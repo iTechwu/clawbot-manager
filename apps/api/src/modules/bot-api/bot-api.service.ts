@@ -150,7 +150,10 @@ export class BotApiService {
     });
 
     // Determine API type from provider config
-    const providerConfig = PROVIDER_CONFIGS[primaryProvider.providerId as keyof typeof PROVIDER_CONFIGS];
+    const providerConfig =
+      PROVIDER_CONFIGS[
+        primaryProvider.providerId as keyof typeof PROVIDER_CONFIGS
+      ];
     const apiType = providerConfig?.apiType || 'openai';
 
     // Get provider key if keyId is provided
@@ -160,7 +163,8 @@ export class BotApiService {
     let proxyTokenHash: string | undefined;
 
     // Check if zero-trust mode is available (keyring-proxy configured and healthy)
-    const useZeroTrust = this.keyringProxyClient.isConfigured() && this.proxyUrl;
+    const useZeroTrust =
+      this.keyringProxyClient.isConfigured() && this.proxyUrl;
 
     if (primaryProvider.keyId) {
       try {
@@ -171,9 +175,7 @@ export class BotApiService {
           if (useZeroTrust) {
             // Zero-trust mode: Register bot with proxy, don't pass API key to container
             // The proxy will inject the API key at request time
-            this.logger.log(
-              `Using zero-trust mode for bot ${input.hostname}`,
-            );
+            this.logger.log(`Using zero-trust mode for bot ${input.hostname}`);
 
             // Note: In zero-trust mode, the API key is managed by the proxy
             // We need to ensure the key is registered with the proxy
@@ -240,7 +242,10 @@ export class BotApiService {
               );
             }
           } catch (keyError) {
-            this.logger.warn(`Failed to get provider key for fallback:`, keyError);
+            this.logger.warn(
+              `Failed to get provider key for fallback:`,
+              keyError,
+            );
           }
         }
       }
@@ -406,7 +411,8 @@ export class BotApiService {
         });
 
         // Check if zero-trust mode is available
-        const useZeroTrust = this.keyringProxyClient.isConfigured() && this.proxyUrl;
+        const useZeroTrust =
+          this.keyringProxyClient.isConfigured() && this.proxyUrl;
 
         if (botProviderKey) {
           try {
@@ -415,23 +421,33 @@ export class BotApiService {
             });
             if (providerKey && providerKey.createdById === userId) {
               // Get API type from provider config
-              const providerConfig = PROVIDER_CONFIGS[providerKey.vendor as keyof typeof PROVIDER_CONFIGS];
+              const providerConfig =
+                PROVIDER_CONFIGS[
+                  providerKey.vendor as keyof typeof PROVIDER_CONFIGS
+                ];
               apiType = providerConfig?.apiType || 'openai';
               apiBaseUrl = providerKey.baseUrl || undefined;
 
               if (useZeroTrust) {
                 // Zero-trust mode: Register bot with proxy
                 try {
-                  const registration = await this.keyringProxyClient.registerBot(
-                    bot.id,
-                    hostname,
-                    bot.tags,
-                  );
+                  const registration =
+                    await this.keyringProxyClient.registerBot(
+                      bot.id,
+                      hostname,
+                      bot.tags,
+                    );
                   proxyToken = registration.token;
                   // Update proxyTokenHash in database
-                  const proxyTokenHash = this.encryptionService.hashToken(proxyToken);
-                  await this.botService.update({ id: bot.id }, { proxyTokenHash });
-                  this.logger.log(`Bot ${hostname} registered with keyring-proxy for start`);
+                  const proxyTokenHash =
+                    this.encryptionService.hashToken(proxyToken);
+                  await this.botService.update(
+                    { id: bot.id },
+                    { proxyTokenHash },
+                  );
+                  this.logger.log(
+                    `Bot ${hostname} registered with keyring-proxy for start`,
+                  );
                 } catch (proxyError) {
                   this.logger.warn(
                     `Failed to register bot with keyring-proxy, falling back to direct mode:`,
