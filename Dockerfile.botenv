@@ -1,6 +1,11 @@
+# =============================================================================
+# ClawBot Manager - Bot Environment Image
+# =============================================================================
 # Extended base image for bot containers with build tools and utilities
-# Build: docker compose build botenv
-# Usage: Automatically used by clawbot-manager when spawning bot containers
+#
+# Build: docker compose --profile build up botenv
+# Usage: Automatically used by ClawBot Manager when spawning bot containers
+# =============================================================================
 
 FROM uhub.service.ucloud.cn/pardx/openclaw:latest
 

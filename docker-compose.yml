@@ -1,7 +1,35 @@
+# =============================================================================
+# ClawBot Manager - Docker Compose Configuration
+# =============================================================================
+# Services:
+#   - api: NestJS backend (port 3100)
+#   - web: Next.js frontend (port 3000)
+#   - botenv: Bot environment image (build profile only)
+#
+# Prerequisites:
+#   - PostgreSQL and Redis should be running externally
+#   - Configure DATABASE_URL and REDIS_URL in environment or .env files
+#
+# Usage:
+#   docker compose up -d              # Start all services
+#   docker compose up -d api web      # Start only api and web
+#   docker compose --profile build up # Build botenv image
+# =============================================================================
+
 x-common: &common
   platform: ${DOCKER_PLATFORM:-linux/arm64}
+  restart: unless-stopped
+
+x-healthcheck: &healthcheck
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 10s
 
 services:
+  # ---------------------------------------------------------------------------
+  # Bot Environment Image (build only)
+  # ---------------------------------------------------------------------------
   botenv:
     <<: *common
     profiles: ['build']
@@ -10,70 +38,77 @@ services:
       dockerfile: Dockerfile.botenv
       args:
         BASE_IMAGE: ${OPENCLAW_BASE_IMAGE:-openclaw:latest}
-    image: ${BOTENV_IMAGE:-clawbot-manager-env:latest}
+    image: ${BOTENV_IMAGE:-clawbot-env:latest}
 
-  clawbot-manager:
+  # ---------------------------------------------------------------------------
+  # API Service - NestJS Backend
+  # ---------------------------------------------------------------------------
+  api:
     <<: *common
-    build: .
-    container_name: clawbot-manager
-    env_file: .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    image: clawbot-api:latest
+    container_name: clawbot-api
+    env_file:
+      - ./apps/api/.env
     environment:
-      PORT: ${PORT:-7100}
-      DATA_DIR: /app/data
-      SECRETS_DIR: /app/secrets
-      OPENCLAW_IMAGE: ${BOTENV_IMAGE:-clawbot-manager-env:latest}
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3100
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
     ports:
-      - '${PORT:-7100}:${PORT:-7100}'
+      - '${API_PORT:-3100}:3100'
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - clawbot-manager-data:/app/data
-      - clawbot-manager-secrets:/app/secrets
-      - ./secrets:/secrets:ro
-    depends_on:
-      - keyring-proxy
-    networks: [bm-internal]
-    restart: unless-stopped
+      - api-logs:/app/apps/api/logs
+    networks:
+      - clawbot-network
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     healthcheck:
-      test:
-        [
-          'CMD',
-          'node',
-          '-e',
-          "fetch('http://localhost:${PORT:-7100}/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      <<: *healthcheck
+      test: ['CMD', 'curl', '-f', 'http://localhost:3100/health']
 
-  keyring-proxy:
+  # ---------------------------------------------------------------------------
+  # Web Service - Next.js Frontend
+  # ---------------------------------------------------------------------------
+  web:
     <<: *common
-    build: ./proxy
-    container_name: keyring-proxy
-    env_file: .env
-    volumes:
-      - proxy-data:/data
-      - ./secrets:/secrets:ro
-    networks: [bm-internal]
-    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    image: clawbot-web:latest
+    container_name: clawbot-web
+    env_file:
+      - ./apps/web/.env.local
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://api:3100/api}
+    ports:
+      - '${WEB_PORT:-3000}:3000'
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - clawbot-network
     healthcheck:
-      test:
-        [
-          'CMD',
-          'node',
-          '-e',
-          "fetch('http://localhost:${ADMIN_PORT:-9100}/admin/health',{headers:{Authorization:'Bearer '+require('fs').readFileSync('/secrets/admin_token','utf8').trim()}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      <<: *healthcheck
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000']
 
+# =============================================================================
+# Networks
+# =============================================================================
 networks:
-  bm-internal:
-    name: bm-internal
+  clawbot-network:
+    name: clawbot-network
+    driver: bridge
 
+# =============================================================================
+# Volumes
+# =============================================================================
 volumes:
-  clawbot-manager-data:
-  clawbot-manager-secrets:
-  proxy-data:
+  api-logs:
+    name: clawbot-api-logs

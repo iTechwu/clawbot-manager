@@ -254,9 +254,9 @@ export class DockerService implements OnModuleInit {
     }
 
     // Determine network mode:
-    // - In zero-trust mode, connect to bm-internal network to reach keyring-proxy
+    // - In zero-trust mode, connect to clawbot-network to reach keyring-proxy
     // - In direct mode, use bridge network
-    const networkMode = options.proxyUrl ? 'bm-internal' : 'bridge';
+    const networkMode = options.proxyUrl ? 'clawbot-network' : 'bridge';
 
     const container = await this.docker.createContainer({
       name: containerName,
