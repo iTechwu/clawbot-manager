@@ -1,6 +1,15 @@
 import type { ChannelDefinition } from './types';
 
 // Popular channels
+export const feishu: ChannelDefinition = {
+  id: 'feishu',
+  label: '飞书/Lark',
+  icon: '🪶',
+  popular: true,
+  tokenHint: '从飞书开放平台获取 Bot App ID 和 App Secret',
+  tokenPlaceholder: 'cli_xxx...',
+};
+
 export const telegram: ChannelDefinition = {
   id: 'telegram',
   label: 'Telegram',

@@ -73,7 +73,7 @@ const initialState: WizardState = {
   avatarPreviewUrl: '',
   soulMarkdown: '',
   enabledProviders: [],
-  enabledChannels: [],
+  enabledChannels: ['feishu'],
   routingTags: [],
   features: {
     commands: true,
@@ -84,7 +84,9 @@ const initialState: WizardState = {
     sessionScope: 'user',
   },
   providerConfigs: {},
-  channelConfigs: {},
+  channelConfigs: {
+    feishu: { token: '' },
+  },
 };
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {

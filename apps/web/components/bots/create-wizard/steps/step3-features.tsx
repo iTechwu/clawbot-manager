@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useWizard } from '../wizard-context';
 import { POPULAR_CHANNELS, OTHER_CHANNELS, getProvider } from '@/lib/config';
+import { ChannelIcon } from '@/lib/config/channels/channel-icons';
 import { useProviderKeys } from '@/hooks/useProviderKeys';
 import { getUser } from '@/lib/storage';
 import { Input, Badge, Button } from '@repo/ui';
@@ -236,8 +237,8 @@ export function Step3Features() {
                 onChange={() => handleChannelToggle(channel.id)}
                 className="size-4 rounded border-gray-300"
               />
-              <span className="mr-1">{channel.icon}</span>
-              <span className="text-sm">{channel.label}</span>
+              <ChannelIcon channelId={channel.id} className="size-4 shrink-0" />
+              <span className="text-sm truncate">{channel.label}</span>
             </label>
           ))}
         </div>
@@ -277,7 +278,7 @@ export function Step3Features() {
                       onChange={() => handleChannelToggle(channel.id)}
                       className="size-3 rounded border-gray-300"
                     />
-                    <span className="text-xs">{channel.icon}</span>
+                    <ChannelIcon channelId={channel.id} className="size-3 shrink-0" />
                     <span className="truncate text-xs">{channel.label}</span>
                   </label>
                 ))}

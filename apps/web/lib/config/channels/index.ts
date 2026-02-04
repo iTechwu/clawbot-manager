@@ -1,5 +1,6 @@
 import type { ChannelDefinition } from './types';
 import {
+  feishu,
   telegram,
   discord,
   slack,
@@ -35,6 +36,7 @@ import {
 export type { ChannelDefinition };
 
 export const CHANNELS: ChannelDefinition[] = [
+  feishu,
   telegram,
   discord,
   slack,
@@ -76,6 +78,7 @@ export function getChannel(id: string): ChannelDefinition | undefined {
 
 // Re-export individual channels for direct import
 export {
+  feishu,
   telegram,
   discord,
   slack,
