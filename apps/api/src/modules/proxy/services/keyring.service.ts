@@ -56,9 +56,8 @@ export class KeyringService {
     this.roundRobinIndex.set(cacheKey, currentIndex + 1);
 
     try {
-      const raw =
-        Buffer.isBuffer(key.secretEncrypted) ?
-          key.secretEncrypted
+      const raw = Buffer.isBuffer(key.secretEncrypted)
+        ? key.secretEncrypted
         : Buffer.from(key.secretEncrypted);
       const secret = this.encryptionService.decrypt(raw);
       return {

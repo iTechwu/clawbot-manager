@@ -13,8 +13,12 @@ import { getDefaultModel } from '@/lib/config';
 
 type SessionScope = 'user' | 'channel' | 'global';
 
+// Step 4 sub-steps
+export type Step4SubStep = 'llm' | 'channels' | 'features';
+
 export interface WizardState {
   step: number;
+  step4SubStep: Step4SubStep;
   selectedTemplateId: string | null;
   botName: string;
   hostname: string;
@@ -48,6 +52,7 @@ export interface ValidationResult {
 
 type WizardAction =
   | { type: 'SET_STEP'; step: number }
+  | { type: 'SET_STEP4_SUBSTEP'; subStep: Step4SubStep }
   | {
       type: 'SELECT_TEMPLATE';
       templateId: string;
@@ -87,6 +92,7 @@ type WizardAction =
 
 const initialState: WizardState = {
   step: 1,
+  step4SubStep: 'llm',
   selectedTemplateId: null,
   botName: '',
   hostname: '',
@@ -116,6 +122,9 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
   switch (action.type) {
     case 'SET_STEP':
       return { ...state, step: action.step };
+
+    case 'SET_STEP4_SUBSTEP':
+      return { ...state, step4SubStep: action.subStep };
 
     case 'SELECT_TEMPLATE': {
       // Use provided template data or fallback to SCRATCH_TEMPLATE for 'scratch'
@@ -335,6 +344,71 @@ export function validateStep(
     default:
       return { valid: true };
   }
+}
+
+/**
+ * Get available sub-steps for step 4 based on current state
+ */
+export function getAvailableSubSteps(state: WizardState): Step4SubStep[] {
+  const subSteps: Step4SubStep[] = [];
+
+  if (state.enabledProviders.length > 0) {
+    subSteps.push('llm');
+  }
+  if (state.enabledChannels.length > 0) {
+    subSteps.push('channels');
+  }
+  if (state.features.tts || state.features.sandbox) {
+    subSteps.push('features');
+  }
+
+  return subSteps;
+}
+
+/**
+ * Get the next sub-step in step 4
+ */
+export function getNextSubStep(state: WizardState): Step4SubStep | null {
+  const available = getAvailableSubSteps(state);
+  const currentIndex = available.indexOf(state.step4SubStep);
+
+  if (currentIndex === -1 || currentIndex >= available.length - 1) {
+    return null;
+  }
+
+  return available[currentIndex + 1] ?? null;
+}
+
+/**
+ * Get the previous sub-step in step 4
+ */
+export function getPrevSubStep(state: WizardState): Step4SubStep | null {
+  const available = getAvailableSubSteps(state);
+  const currentIndex = available.indexOf(state.step4SubStep);
+
+  if (currentIndex <= 0) {
+    return null;
+  }
+
+  return available[currentIndex - 1] ?? null;
+}
+
+/**
+ * Check if current sub-step is the last one
+ */
+export function isLastSubStep(state: WizardState): boolean {
+  const available = getAvailableSubSteps(state);
+  const currentIndex = available.indexOf(state.step4SubStep);
+  return currentIndex === available.length - 1;
+}
+
+/**
+ * Check if current sub-step is the first one
+ */
+export function isFirstSubStep(state: WizardState): boolean {
+  const available = getAvailableSubSteps(state);
+  const currentIndex = available.indexOf(state.step4SubStep);
+  return currentIndex === 0;
 }
 
 export function buildCreateBotInput(state: WizardState): CreateBotInput {

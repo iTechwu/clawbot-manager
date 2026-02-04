@@ -93,7 +93,8 @@ export class UpstreamService {
     rawResponse: ServerResponse,
   ): Promise<number> {
     return new Promise((resolve, reject) => {
-      const { vendorConfig, path, method, headers, body, apiKey, customUrl } = req;
+      const { vendorConfig, path, method, headers, body, apiKey, customUrl } =
+        req;
 
       // 解析目标 URL
       let targetHost: string;
@@ -151,51 +152,56 @@ export class UpstreamService {
       );
 
       const httpModule = useHttps ? https : http;
-      const proxyReq = httpModule.request(options, (proxyRes: IncomingMessage) => {
-        const statusCode = proxyRes.statusCode ?? 500;
+      const proxyReq = httpModule.request(
+        options,
+        (proxyRes: IncomingMessage) => {
+          const statusCode = proxyRes.statusCode ?? 500;
 
-        // 构建转发的响应头（排除 hop-by-hop 头）
-        const forwardHeaders: Record<string, string | string[]> = {};
-        for (const [key, value] of Object.entries(proxyRes.headers)) {
-          const lowerKey = key.toLowerCase();
-          if (
-            value &&
-            !['connection', 'transfer-encoding', 'content-length'].includes(lowerKey)
-          ) {
-            forwardHeaders[key] = value;
+          // 构建转发的响应头（排除 hop-by-hop 头）
+          const forwardHeaders: Record<string, string | string[]> = {};
+          for (const [key, value] of Object.entries(proxyRes.headers)) {
+            const lowerKey = key.toLowerCase();
+            if (
+              value &&
+              !['connection', 'transfer-encoding', 'content-length'].includes(
+                lowerKey,
+              )
+            ) {
+              forwardHeaders[key] = value;
+            }
           }
-        }
 
-        // 对于 SSE 响应，确保正确的流式头
-        const contentType = proxyRes.headers['content-type'];
-        if (contentType?.includes('text/event-stream')) {
-          forwardHeaders['cache-control'] = 'no-cache';
-          forwardHeaders['connection'] = 'keep-alive';
-        }
-
-        // 使用原始响应绕过 Fastify/NestJS 缓冲
-        // 这对于 SSE 流式传输正常工作至关重要
-        rawResponse.writeHead(statusCode, forwardHeaders);
-
-        proxyRes.on('data', (chunk) => {
-          rawResponse.write(chunk);
-          // 强制刷新 SSE - 确保事件立即发送
-          if (typeof (rawResponse as any).flush === 'function') {
-            (rawResponse as any).flush();
+          // 对于 SSE 响应，确保正确的流式头
+          const contentType = proxyRes.headers['content-type'];
+          if (contentType?.includes('text/event-stream')) {
+            forwardHeaders['cache-control'] = 'no-cache';
+            forwardHeaders['connection'] = 'keep-alive';
           }
-        });
 
-        proxyRes.on('end', () => {
-          rawResponse.end();
-          resolve(statusCode);
-        });
+          // 使用原始响应绕过 Fastify/NestJS 缓冲
+          // 这对于 SSE 流式传输正常工作至关重要
+          rawResponse.writeHead(statusCode, forwardHeaders);
 
-        proxyRes.on('error', (err) => {
-          this.logger.error('Upstream response error:', err);
-          rawResponse.end();
-          reject(err);
-        });
-      });
+          proxyRes.on('data', (chunk) => {
+            rawResponse.write(chunk);
+            // 强制刷新 SSE - 确保事件立即发送
+            if (typeof (rawResponse as any).flush === 'function') {
+              (rawResponse as any).flush();
+            }
+          });
+
+          proxyRes.on('end', () => {
+            rawResponse.end();
+            resolve(statusCode);
+          });
+
+          proxyRes.on('error', (err) => {
+            this.logger.error('Upstream response error:', err);
+            rawResponse.end();
+            reject(err);
+          });
+        },
+      );
 
       proxyReq.on('error', (err) => {
         this.logger.error('Upstream request error:', err);
@@ -219,9 +225,12 @@ export class UpstreamService {
    *
    * 用于非流式请求，返回完整响应
    */
-  async forwardToUpstreamBuffered(req: UpstreamRequest): Promise<UpstreamResult> {
+  async forwardToUpstreamBuffered(
+    req: UpstreamRequest,
+  ): Promise<UpstreamResult> {
     return new Promise((resolve, reject) => {
-      const { vendorConfig, path, method, headers, body, apiKey, customUrl } = req;
+      const { vendorConfig, path, method, headers, body, apiKey, customUrl } =
+        req;
 
       // 解析目标 URL
       let targetHost: string;
@@ -267,33 +276,36 @@ export class UpstreamService {
       };
 
       const httpModule = useHttps ? https : http;
-      const proxyReq = httpModule.request(options, (proxyRes: IncomingMessage) => {
-        const statusCode = proxyRes.statusCode ?? 500;
-        const chunks: Buffer[] = [];
+      const proxyReq = httpModule.request(
+        options,
+        (proxyRes: IncomingMessage) => {
+          const statusCode = proxyRes.statusCode ?? 500;
+          const chunks: Buffer[] = [];
 
-        const responseHeaders: Record<string, string | string[]> = {};
-        for (const [key, value] of Object.entries(proxyRes.headers)) {
-          if (value) {
-            responseHeaders[key] = value;
+          const responseHeaders: Record<string, string | string[]> = {};
+          for (const [key, value] of Object.entries(proxyRes.headers)) {
+            if (value) {
+              responseHeaders[key] = value;
+            }
           }
-        }
 
-        proxyRes.on('data', (chunk) => {
-          chunks.push(chunk);
-        });
-
-        proxyRes.on('end', () => {
-          resolve({
-            statusCode,
-            headers: responseHeaders,
-            body: Buffer.concat(chunks),
+          proxyRes.on('data', (chunk) => {
+            chunks.push(chunk);
           });
-        });
 
-        proxyRes.on('error', (err) => {
-          reject(err);
-        });
-      });
+          proxyRes.on('end', () => {
+            resolve({
+              statusCode,
+              headers: responseHeaders,
+              body: Buffer.concat(chunks),
+            });
+          });
+
+          proxyRes.on('error', (err) => {
+            reject(err);
+          });
+        },
+      );
 
       proxyReq.on('error', (err) => {
         reject(err);

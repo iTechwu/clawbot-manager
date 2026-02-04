@@ -22,16 +22,39 @@ export class ChannelApiService {
    * List all channel definitions with their credential fields
    */
   async listChannels(): Promise<ChannelDefinitionListResponse> {
-    const channels = await this.channelDefinitionService.findMany({
-      where: { isDeleted: false },
-      orderBy: [{ popular: 'desc' }, { sortOrder: 'asc' }, { label: 'asc' }],
-      include: {
-        credentialFields: {
-          where: { isDeleted: false },
-          orderBy: { sortOrder: 'asc' },
+    const { list: channels } = await this.channelDefinitionService.list(
+      {},
+      {
+        orderBy: { popular: 'desc' },
+      },
+      {
+        select: {
+          id: true,
+          label: true,
+          icon: true,
+          popular: true,
+          tokenHint: true,
+          tokenPlaceholder: true,
+          helpUrl: true,
+          helpText: true,
+          sortOrder: true,
+          credentialFields: {
+            where: { isDeleted: false },
+            orderBy: { sortOrder: 'asc' },
+            select: {
+              id: true,
+              channelId: true,
+              key: true,
+              label: true,
+              placeholder: true,
+              fieldType: true,
+              required: true,
+              sortOrder: true,
+            },
+          },
         },
       },
-    });
+    );
 
     const mappedChannels: ChannelDefinition[] = channels.map((channel) =>
       this.mapChannelToDto(channel),
@@ -51,15 +74,36 @@ export class ChannelApiService {
    * Get a single channel definition by ID
    */
   async getChannelById(id: string): Promise<ChannelDefinition | null> {
-    const channel = await this.channelDefinitionService.findFirst({
-      where: { id, isDeleted: false },
-      include: {
-        credentialFields: {
-          where: { isDeleted: false },
-          orderBy: { sortOrder: 'asc' },
+    const channel = await this.channelDefinitionService.get(
+      { id },
+      {
+        select: {
+          id: true,
+          label: true,
+          icon: true,
+          popular: true,
+          tokenHint: true,
+          tokenPlaceholder: true,
+          helpUrl: true,
+          helpText: true,
+          sortOrder: true,
+          credentialFields: {
+            where: { isDeleted: false },
+            orderBy: { sortOrder: 'asc' },
+            select: {
+              id: true,
+              channelId: true,
+              key: true,
+              label: true,
+              placeholder: true,
+              fieldType: true,
+              required: true,
+              sortOrder: true,
+            },
+          },
         },
       },
-    });
+    );
 
     if (!channel) {
       return null;

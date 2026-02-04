@@ -2,12 +2,13 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Docker from 'dockerode';
 import { isAbsolute, join } from 'node:path';
+import { PROVIDER_CONFIGS } from '@repo/contracts';
 import type {
   ContainerStats,
   OrphanReport,
   CleanupReport,
+  ProviderVendor,
 } from '@repo/contracts';
-import { PROVIDER_CONFIGS, type ProviderVendor } from '@repo/contracts';
 
 export interface ContainerInfo {
   id: string;

@@ -37,11 +37,13 @@ export class AuthGuard implements CanActivate {
     // 这两个配置在早期版本的 YAML 中存在，但当前模板中是可选的
     // 为了在本地/开发环境下更好地降级，这里给出空对象默认值
     this.outOfAnonymityPathConfig =
-      (this.config.get('outOfAnonymityPath') as Record<string, string[]> | undefined) ??
-      {};
+      (this.config.get('outOfAnonymityPath') as
+        | Record<string, string[]>
+        | undefined) ?? {};
     this.outOfUserPathConfig =
-      (this.config.get('outOfUserPath') as Record<string, string[]> | undefined) ??
-      {};
+      (this.config.get('outOfUserPath') as
+        | Record<string, string[]>
+        | undefined) ?? {};
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

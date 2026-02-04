@@ -26,7 +26,8 @@ export class MessageApiService {
     const { limit = 20, page = 1, read } = query;
     const offset = (page - 1) * limit;
 
-    const isRead = read === 'true' ? true : read === 'false' ? false : undefined;
+    const isRead =
+      read === 'true' ? true : read === 'false' ? false : undefined;
 
     const { list, total } = await this.messageDb.getUserMessages(userId, {
       isRead,

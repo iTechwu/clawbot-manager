@@ -5,6 +5,7 @@ import { ChannelApiService } from './channel-api.service';
 import {
   ChannelDefinitionModule,
   ChannelCredentialFieldModule,
+  UserInfoModule,
 } from '@app/db';
 import { AuthModule } from '@app/auth';
 import { JwtModule } from '@app/jwt/jwt.module';
@@ -15,6 +16,7 @@ import { RedisModule } from '@app/redis';
     ConfigModule,
     ChannelDefinitionModule,
     ChannelCredentialFieldModule,
+    UserInfoModule,
     AuthModule,
     JwtModule,
     RedisModule,

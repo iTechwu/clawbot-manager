@@ -134,7 +134,7 @@
     "step4": {
       "title": "Configure",
       "description": "Configure model settings and channel tokens",
-      "llmConfig": "LLM Provider Configuration",
+      "llmConfig": "LLM Configuration",
       "apiKey": "API Key",
       "selectApiKey": "Select API Key",
       "autoSelectKey": "Auto select",
@@ -159,7 +159,10 @@
       "sandboxMode": "Sandbox Mode",
       "timeout": "Timeout (seconds)",
       "emptyState": "No providers or channels selected.",
-      "emptyStateHint": "Go back to enable at least one of each."
+      "emptyStateHint": "Go back to enable at least one of each.",
+      "prevSubStep": "Previous",
+      "nextSubStep": "Next",
+      "subStepProgress": "{current} / {total}"
     },
     "step5": {
       "title": "Review Your Bot",

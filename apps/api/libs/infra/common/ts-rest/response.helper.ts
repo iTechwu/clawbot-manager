@@ -64,7 +64,10 @@ export type TsRestSuccessResponse<T, S extends number = 200> = {
  * }
  * ```
  */
-export function success<T>(data: T, status: 200 = 200): TsRestSuccessResponse<T, 200> {
+export function success<T>(
+  data: T,
+  status: 200 = 200,
+): TsRestSuccessResponse<T, 200> {
   return {
     status,
     body: {

@@ -1,2 +1,6 @@
 export { UploaderModule } from './uploader.module';
-export { UploaderService, TokenRequest, SignatureData } from './uploader.service';
+export {
+  UploaderService,
+  TokenRequest,
+  SignatureData,
+} from './uploader.service';

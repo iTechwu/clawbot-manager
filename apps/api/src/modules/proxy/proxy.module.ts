@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ProviderKeyModule, BotModule, BotUsageLogModule, MessageDbModule } from '@app/db';
+import {
+  ProviderKeyModule,
+  BotModule,
+  BotUsageLogModule,
+  MessageDbModule,
+} from '@app/db';
 import { ProxyController } from './proxy.controller';
 import { ProxyService } from './services/proxy.service';
 import { KeyringService } from './services/keyring.service';

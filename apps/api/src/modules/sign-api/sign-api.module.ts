@@ -9,11 +9,7 @@ import { SmsServiceModule } from '@app/shared-services/sms';
 import { EmailServiceModule } from '@app/shared-services/email';
 import { VerifyModule } from '@app/clients/internal/verify';
 import { FileStorageServiceModule } from '@app/shared-services/file-storage';
-import {
-  UserInfoModule,
-  EmailAuthModule,
-  MobileAuthModule,
-} from '@app/db';
+import { UserInfoModule, EmailAuthModule, MobileAuthModule } from '@app/db';
 
 @Module({
   imports: [

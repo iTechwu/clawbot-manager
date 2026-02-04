@@ -134,7 +134,7 @@
     "step4": {
       "title": "配置",
       "description": "配置模型设置和渠道令牌",
-      "llmConfig": "LLM 提供商配置",
+      "llmConfig": "LLM 配置",
       "apiKey": "API 密钥",
       "selectApiKey": "选择 API 密钥",
       "autoSelectKey": "自动选择",
@@ -159,7 +159,10 @@
       "sandboxMode": "沙箱模式",
       "timeout": "超时时间（秒）",
       "emptyState": "未选择提供商或渠道。",
-      "emptyStateHint": "请返回上一步至少启用一个提供商和一个渠道。"
+      "emptyStateHint": "请返回上一步至少启用一个提供商和一个渠道。",
+      "prevSubStep": "上一步",
+      "nextSubStep": "下一步",
+      "subStepProgress": "{current} / {total}"
     },
     "step5": {
       "title": "审核您的 Bot",

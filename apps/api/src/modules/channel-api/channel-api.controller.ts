@@ -1,9 +1,11 @@
 import { Controller, VERSION_NEUTRAL } from '@nestjs/common';
 import { TsRestHandler, tsRestHandler } from '@ts-rest/nest';
 import { channelContract as cc } from '@repo/contracts/api';
-import { success, notFound } from '@/common/ts-rest/response.helper';
+import { success } from '@/common/ts-rest/response.helper';
 import { ChannelApiService } from './channel-api.service';
 import { Auth } from '@app/auth';
+import { ApiError } from '@google-cloud/storage';
+import { CommonErrorCode } from '@repo/contracts';
 
 /**
  * Channel API 控制器
@@ -32,7 +34,7 @@ export class ChannelApiController {
     return tsRestHandler(cc.getById, async ({ params }) => {
       const channel = await this.channelApiService.getChannelById(params.id);
       if (!channel) {
-        return notFound({ error: 'Channel not found' });
+        throw new ApiError(CommonErrorCode.NotFound);
       }
       return success(channel);
     });

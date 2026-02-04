@@ -146,8 +146,13 @@ export class KeyringProxyClient implements OnModuleInit {
       this.logger.log(`Bot registered with proxy: ${hostname}`);
       return response.data;
     } catch (error) {
-      this.logger.error(`Failed to register bot with proxy: ${hostname}`, error);
-      throw new Error(`Failed to register bot with proxy: ${this.getErrorMessage(error)}`);
+      this.logger.error(
+        `Failed to register bot with proxy: ${hostname}`,
+        error,
+      );
+      throw new Error(
+        `Failed to register bot with proxy: ${this.getErrorMessage(error)}`,
+      );
     }
   }
 
@@ -161,9 +166,12 @@ export class KeyringProxyClient implements OnModuleInit {
 
     try {
       await firstValueFrom(
-        this.httpService.delete(`${this.proxyConfig.adminUrl}/admin/bots/${botId}`, {
-          headers: this.getAuthHeaders(),
-        }),
+        this.httpService.delete(
+          `${this.proxyConfig.adminUrl}/admin/bots/${botId}`,
+          {
+            headers: this.getAuthHeaders(),
+          },
+        ),
       );
       this.logger.log(`Bot revoked from proxy: ${botId}`);
     } catch (error) {
@@ -172,7 +180,9 @@ export class KeyringProxyClient implements OnModuleInit {
         return;
       }
       this.logger.error(`Failed to revoke bot from proxy: ${botId}`, error);
-      throw new Error(`Failed to revoke bot from proxy: ${this.getErrorMessage(error)}`);
+      throw new Error(
+        `Failed to revoke bot from proxy: ${this.getErrorMessage(error)}`,
+      );
     }
   }
 
@@ -203,14 +213,19 @@ export class KeyringProxyClient implements OnModuleInit {
 
     try {
       const response = await firstValueFrom(
-        this.httpService.get<ProxyKey[]>(`${this.proxyConfig.adminUrl}/admin/keys`, {
-          headers: this.getAuthHeaders(),
-        }),
+        this.httpService.get<ProxyKey[]>(
+          `${this.proxyConfig.adminUrl}/admin/keys`,
+          {
+            headers: this.getAuthHeaders(),
+          },
+        ),
       );
       return response.data;
     } catch (error) {
       this.logger.error('Failed to list proxy keys', error);
-      throw new Error(`Failed to list proxy keys: ${this.getErrorMessage(error)}`);
+      throw new Error(
+        `Failed to list proxy keys: ${this.getErrorMessage(error)}`,
+      );
     }
   }
 
@@ -234,7 +249,9 @@ export class KeyringProxyClient implements OnModuleInit {
       return response.data;
     } catch (error) {
       this.logger.error(`Failed to add proxy key: ${input.vendor}`, error);
-      throw new Error(`Failed to add proxy key: ${this.getErrorMessage(error)}`);
+      throw new Error(
+        `Failed to add proxy key: ${this.getErrorMessage(error)}`,
+      );
     }
   }
 
@@ -248,9 +265,12 @@ export class KeyringProxyClient implements OnModuleInit {
 
     try {
       await firstValueFrom(
-        this.httpService.delete(`${this.proxyConfig.adminUrl}/admin/keys/${keyId}`, {
-          headers: this.getAuthHeaders(),
-        }),
+        this.httpService.delete(
+          `${this.proxyConfig.adminUrl}/admin/keys/${keyId}`,
+          {
+            headers: this.getAuthHeaders(),
+          },
+        ),
       );
       this.logger.log(`Proxy key deleted: ${keyId}`);
     } catch (error) {
@@ -259,7 +279,9 @@ export class KeyringProxyClient implements OnModuleInit {
         return;
       }
       this.logger.error(`Failed to delete proxy key: ${keyId}`, error);
-      throw new Error(`Failed to delete proxy key: ${this.getErrorMessage(error)}`);
+      throw new Error(
+        `Failed to delete proxy key: ${this.getErrorMessage(error)}`,
+      );
     }
   }
 
@@ -281,7 +303,9 @@ export class KeyringProxyClient implements OnModuleInit {
       return response.data;
     } catch (error) {
       this.logger.error('Failed to get proxy health', error);
-      throw new Error(`Failed to get proxy health: ${this.getErrorMessage(error)}`);
+      throw new Error(
+        `Failed to get proxy health: ${this.getErrorMessage(error)}`,
+      );
     }
   }
 
@@ -312,9 +336,7 @@ export class KeyringProxyClient implements OnModuleInit {
       message?: string;
     };
     return (
-      axiosError.response?.data?.error ||
-      axiosError.message ||
-      'Unknown error'
+      axiosError.response?.data?.error || axiosError.message || 'Unknown error'
     );
   }
 }

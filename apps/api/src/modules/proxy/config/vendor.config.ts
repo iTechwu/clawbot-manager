@@ -5,7 +5,11 @@
  * 支持 60+ 提供商，与 provider.schema.ts 保持同步
  */
 
-import { PROVIDER_CONFIGS, type ProviderVendor, type ProviderApiType } from '@repo/contracts';
+import {
+  PROVIDER_CONFIGS,
+  type ProviderVendor,
+  type ProviderApiType,
+} from '@repo/contracts';
 
 export interface VendorConfig {
   /** API 主机名 */
