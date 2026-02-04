@@ -301,6 +301,11 @@ export function Step4Config() {
               // Get models from fetched data or empty array
               const availableModels =
                 keyId && keyModels[keyId] ? keyModels[keyId] : [];
+              // Deduplicate models by id to avoid React key collisions
+              const uniqueAvailableModels = availableModels.filter(
+                (model, index, array) =>
+                  array.findIndex((item) => item.id === model.id) === index,
+              );
               const isLoadingModels = keyId ? loadingKeys.has(keyId) : false;
               const selectedModels = config.models || [];
               const primaryModel = config.primaryModel;
@@ -355,15 +360,15 @@ export function Step4Config() {
                           {t('loadingModels')}
                         </span>
                       </div>
-                    ) : availableModels.length > 0 ? (
+                    ) : uniqueAvailableModels.length > 0 ? (
                       <div className="border rounded-md max-h-48 overflow-y-auto">
-                        {availableModels.map((model) => {
+                        {uniqueAvailableModels.map((model, index) => {
                           const isSelected = selectedModels.includes(model.id);
                           const isPrimary = primaryModel === model.id;
 
                           return (
                             <div
-                              key={model.id}
+                              key={`${providerId}-${model.id}-${index}`}
                               className={cn(
                                 'flex items-center gap-3 px-3 py-2 hover:bg-muted/50 border-b last:border-b-0',
                                 isSelected && 'bg-muted/30',

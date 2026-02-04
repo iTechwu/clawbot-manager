@@ -49,6 +49,13 @@ export class DockerService implements OnModuleInit {
   private readonly dataDir: string;
   private readonly secretsDir: string;
   private readonly containerPrefix = 'clawbot-manager-';
+  /**
+   * Docker volume names for bot data and secrets.
+   * When running in a container, we need to use volume names instead of host paths
+   * to correctly mount volumes into bot containers.
+   */
+  private readonly dataVolumeName: string | null;
+  private readonly secretsVolumeName: string | null;
 
   constructor(private readonly configService: ConfigService) {
     this.botImage = this.configService.get<string>(
@@ -78,6 +85,13 @@ export class DockerService implements OnModuleInit {
     this.secretsDir = isAbsolute(secretsDir)
       ? secretsDir
       : join(process.cwd(), secretsDir);
+
+    // Volume names for containerized deployment
+    // When set, bot containers will mount from these named volumes instead of host paths
+    this.dataVolumeName =
+      this.configService.get<string>('DATA_VOLUME_NAME') || null;
+    this.secretsVolumeName =
+      this.configService.get<string>('SECRETS_VOLUME_NAME') || null;
   }
 
   async onModuleInit() {
@@ -98,6 +112,39 @@ export class DockerService implements OnModuleInit {
    */
   isAvailable(): boolean {
     return this.docker !== null;
+  }
+
+  /**
+   * Build volume bindings for bot container.
+   * When running in a container with named volumes (DATA_VOLUME_NAME/SECRETS_VOLUME_NAME set),
+   * use volume names to allow bot containers to access the same data.
+   * Otherwise, use host paths for local development.
+   *
+   * @param hostname - Bot hostname (used as subdirectory in volumes)
+   * @param workspacePath - Full workspace path (used in host path mode)
+   * @returns Array of volume bind strings for Docker
+   */
+  private buildVolumeBinds(hostname: string, workspacePath: string): string[] {
+    if (this.dataVolumeName && this.secretsVolumeName) {
+      // Containerized mode: use named volumes with subdirectories
+      // Format: volume_name/subpath:/container/path:mode
+      // Note: Docker doesn't support subpaths in named volumes directly,
+      // so we mount the entire volume and the bot uses hostname as subdirectory
+      this.logger.log(
+        `Using named volumes: data=${this.dataVolumeName}, secrets=${this.secretsVolumeName}`,
+      );
+      return [
+        `${this.dataVolumeName}:/data/bots:rw`,
+        `${this.secretsVolumeName}:/data/secrets:ro`,
+      ];
+    }
+
+    // Local development mode: use host paths
+    this.logger.log(`Using host paths: data=${workspacePath}`);
+    return [
+      `${workspacePath}:/app/workspace:rw`,
+      `${this.secretsDir}/${hostname}:/app/secrets:ro`,
+    ];
   }
 
   /**
@@ -135,6 +182,15 @@ export class DockerService implements OnModuleInit {
       `AI_MODEL=${options.model}`,
       `CHANNEL_TYPE=${options.channelType}`,
     ];
+
+    // When using named volumes, bot needs to know its workspace subdirectory
+    if (this.dataVolumeName) {
+      envVars.push(`BOT_WORKSPACE_DIR=/data/bots/${options.hostname}`);
+      envVars.push(`BOT_SECRETS_DIR=/data/secrets/${options.hostname}`);
+    } else {
+      envVars.push(`BOT_WORKSPACE_DIR=/app/workspace`);
+      envVars.push(`BOT_SECRETS_DIR=/app/secrets`);
+    }
 
     // Add API type if provided
     if (options.apiType) {
@@ -260,6 +316,11 @@ export class DockerService implements OnModuleInit {
     // - In direct mode, use bridge network
     const networkMode = options.proxyUrl ? 'clawbot-network' : 'bridge';
 
+    // Build volume bindings
+    // When running in a container with named volumes, use volume names instead of host paths
+    // This allows bot containers to access the same data volumes as the manager container
+    const binds = this.buildVolumeBinds(options.hostname, options.workspacePath);
+
     const container = await this.docker.createContainer({
       name: containerName,
       Image: this.botImage,
@@ -271,10 +332,7 @@ export class DockerService implements OnModuleInit {
         PortBindings: {
           [`${options.port}/tcp`]: [{ HostPort: String(options.port) }],
         },
-        Binds: [
-          `${options.workspacePath}:/app/workspace:rw`,
-          `${this.secretsDir}/${options.hostname}:/app/secrets:ro`,
-        ],
+        Binds: binds,
         RestartPolicy: { Name: 'unless-stopped' },
         NetworkMode: networkMode,
       },

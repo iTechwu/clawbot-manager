@@ -365,14 +365,14 @@ enum BotStatus {
 model Bot {
   id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name              String    @db.VarChar(255)
-  hostname          String    @unique @db.VarChar(64)
+  hostname          String    @db.VarChar(64)
   aiProvider        String    @map("ai_provider") @db.VarChar(50)
   model             String    @db.VarChar(100)
   channelType       String    @map("channel_type") @db.VarChar(50)
   containerId       String?   @map("container_id") @db.VarChar(255)
   port              Int?
   gatewayToken      String?   @map("gateway_token") @db.VarChar(255)
-  proxyTokenHash    String?   @unique @map("proxy_token_hash") @db.VarChar(64)
+  proxyTokenHash    String?   @map("proxy_token_hash") @db.VarChar(64)
   tags              String[]
   status            BotStatus @default(created)
   createdById       String    @map("created_by_id") @db.Uuid

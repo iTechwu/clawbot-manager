@@ -28449,18 +28449,18 @@ export namespace Prisma {
 
   export type BotWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    hostname?: string
-    proxyTokenHash?: string
     AND?: BotWhereInput | BotWhereInput[]
     OR?: BotWhereInput[]
     NOT?: BotWhereInput | BotWhereInput[]
     name?: StringFilter<"Bot"> | string
+    hostname?: StringFilter<"Bot"> | string
     aiProvider?: StringFilter<"Bot"> | string
     model?: StringFilter<"Bot"> | string
     channelType?: StringFilter<"Bot"> | string
     containerId?: StringNullableFilter<"Bot"> | string | null
     port?: IntNullableFilter<"Bot"> | number | null
     gatewayToken?: StringNullableFilter<"Bot"> | string | null
+    proxyTokenHash?: StringNullableFilter<"Bot"> | string | null
     tags?: StringNullableListFilter<"Bot">
     status?: EnumBotStatusFilter<"Bot"> | $Enums.BotStatus
     createdById?: UuidFilter<"Bot"> | string
@@ -28477,7 +28477,7 @@ export namespace Prisma {
     avatarFile?: XOR<FileSourceNullableScalarRelationFilter, FileSourceWhereInput> | null
     providerKeys?: BotProviderKeyListRelationFilter
     usageLogs?: BotUsageLogListRelationFilter
-  }, "id" | "hostname" | "proxyTokenHash">
+  }, "id">
 
   export type BotOrderByWithAggregationInput = {
     id?: SortOrder

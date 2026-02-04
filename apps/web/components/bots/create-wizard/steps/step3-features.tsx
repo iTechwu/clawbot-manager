@@ -4,12 +4,13 @@ import { useState, useMemo, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useWizard } from '../wizard-context';
-import { POPULAR_CHANNELS, OTHER_CHANNELS, getProvider } from '@/lib/config';
+import { getProvider } from '@/lib/config';
 import { ChannelIcon } from '@/lib/config/channels/channel-icons';
 import { useProviderKeys } from '@/hooks/useProviderKeys';
+import { useChannelDefinitions } from '@/lib/api/queries/channel';
 import { getUser } from '@/lib/storage';
 import { Input, Badge, Button } from '@repo/ui';
-import { ChevronDown, ChevronUp, Key, Plus, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Key, Plus, AlertCircle, Loader2 } from 'lucide-react';
 import type { ProviderKey, UserInfo } from '@repo/contracts';
 
 type SessionScope = 'user' | 'channel' | 'global';
@@ -19,6 +20,11 @@ export function Step3Features() {
   const router = useRouter();
   const { state, dispatch } = useWizard();
   const { keys: providerKeys, loading: keysLoading } = useProviderKeys();
+  const {
+    popularChannels,
+    otherChannels,
+    isLoading: channelsLoading,
+  } = useChannelDefinitions();
   const [showAllChannels, setShowAllChannels] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
 
@@ -221,68 +227,76 @@ export function Step3Features() {
       {/* Channels */}
       <section className="space-y-3">
         <h4 className="text-sm font-medium">{t('channels')}</h4>
-        <div className="grid grid-cols-3 gap-2">
-          {POPULAR_CHANNELS.map((channel) => (
-            <label
-              key={channel.id}
-              className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 transition-colors ${
-                state.enabledChannels.includes(channel.id)
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border hover:border-muted-foreground'
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={state.enabledChannels.includes(channel.id)}
-                onChange={() => handleChannelToggle(channel.id)}
-                className="size-4 rounded border-gray-300"
-              />
-              <ChannelIcon channelId={channel.id} className="size-4 shrink-0" />
-              <span className="text-sm truncate">{channel.label}</span>
-            </label>
-          ))}
-        </div>
-        {OTHER_CHANNELS.length > 0 && (
+        {channelsLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="text-muted-foreground size-6 animate-spin" />
+          </div>
+        ) : (
           <>
-            <button
-              type="button"
-              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
-              onClick={() => setShowAllChannels(!showAllChannels)}
-            >
-              {showAllChannels ? (
-                <>
-                  <ChevronUp className="size-4" />
-                  {t('showLess')}
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="size-4" />
-                  {t('showAll', { count: OTHER_CHANNELS.length })}
-                </>
-              )}
-            </button>
-            {showAllChannels && (
-              <div className="grid grid-cols-4 gap-2">
-                {OTHER_CHANNELS.map((channel) => (
-                  <label
-                    key={channel.id}
-                    className={`flex cursor-pointer items-center gap-2 rounded-lg border p-2 text-sm transition-colors ${
-                      state.enabledChannels.includes(channel.id)
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-muted-foreground'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={state.enabledChannels.includes(channel.id)}
-                      onChange={() => handleChannelToggle(channel.id)}
-                      className="size-3 rounded border-gray-300"
-                    />
-                    <ChannelIcon channelId={channel.id} className="size-3 shrink-0" />
-                    <span className="truncate text-xs">{channel.label}</span>
-                  </label>
-                ))}
-              </div>
+            <div className="grid grid-cols-3 gap-2">
+              {popularChannels.map((channel) => (
+                <label
+                  key={channel.id}
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 transition-colors ${
+                    state.enabledChannels.includes(channel.id)
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-muted-foreground'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={state.enabledChannels.includes(channel.id)}
+                    onChange={() => handleChannelToggle(channel.id)}
+                    className="size-4 rounded border-gray-300"
+                  />
+                  <ChannelIcon channelId={channel.id} className="size-4 shrink-0" />
+                  <span className="text-sm truncate">{channel.label}</span>
+                </label>
+              ))}
+            </div>
+            {otherChannels.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
+                  onClick={() => setShowAllChannels(!showAllChannels)}
+                >
+                  {showAllChannels ? (
+                    <>
+                      <ChevronUp className="size-4" />
+                      {t('showLess')}
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="size-4" />
+                      {t('showAll', { count: otherChannels.length })}
+                    </>
+                  )}
+                </button>
+                {showAllChannels && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {otherChannels.map((channel) => (
+                      <label
+                        key={channel.id}
+                        className={`flex cursor-pointer items-center gap-2 rounded-lg border p-2 text-sm transition-colors ${
+                          state.enabledChannels.includes(channel.id)
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border hover:border-muted-foreground'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={state.enabledChannels.includes(channel.id)}
+                          onChange={() => handleChannelToggle(channel.id)}
+                          className="size-3 rounded border-gray-300"
+                        />
+                        <ChannelIcon channelId={channel.id} className="size-3 shrink-0" />
+                        <span className="truncate text-xs">{channel.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

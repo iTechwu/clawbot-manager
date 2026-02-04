@@ -56,11 +56,24 @@ export class WorkspaceService {
 
   /**
    * Create workspace directory for a bot
+   * If workspace already exists (e.g., from a previously deleted bot), it will be cleaned first
    */
   async createWorkspace(config: BotWorkspaceConfig): Promise<string> {
     const workspacePath = path.join(this.dataDir, config.hostname);
+    const botSecretsPath = path.join(this.secretsDir, config.hostname);
 
     try {
+      // Clean up any existing workspace/secrets from previously deleted bot
+      // This ensures a fresh start when reusing a hostname
+      const workspaceExists = await this.workspaceExists(config.hostname);
+      if (workspaceExists) {
+        this.logger.info(
+          `Cleaning up existing workspace for hostname: ${config.hostname}`,
+        );
+        await fs.rm(workspacePath, { recursive: true, force: true });
+        await fs.rm(botSecretsPath, { recursive: true, force: true });
+      }
+
       // Create workspace directory
       await fs.mkdir(workspacePath, { recursive: true });
 
@@ -80,7 +93,6 @@ export class WorkspaceService {
       );
 
       // Create secrets directory for this bot
-      const botSecretsPath = path.join(this.secretsDir, config.hostname);
       await fs.mkdir(botSecretsPath, { recursive: true });
 
       this.logger.info(`Workspace created for bot: ${config.hostname}`);
