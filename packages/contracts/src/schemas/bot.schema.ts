@@ -70,6 +70,7 @@ export type Bot = z.infer<typeof BotSchema>;
 export const BotProviderConfigSchema = z.object({
   providerId: z.string(),
   model: z.string(),
+  keyId: z.string().uuid().optional(),
 });
 
 export type BotProviderConfig = z.infer<typeof BotProviderConfigSchema>;

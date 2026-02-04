@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useWizard } from '../wizard-context';
 import { getProvider, getModels, getChannel } from '@/lib/config';
-import { Input, Label } from '@repo/ui';
+import { Input, Label, Badge } from '@repo/ui';
 import {
   Select,
   SelectContent,
@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@repo/ui';
+import { Key } from 'lucide-react';
+import { useProviderKeys } from '@/hooks/useProviderKeys';
 
 const TTS_VOICES = [
   { id: 'alloy', label: 'Alloy' },
@@ -24,6 +26,7 @@ const TTS_VOICES = [
 export function Step4Config() {
   const t = useTranslations('bots.wizard.step4');
   const { state, dispatch } = useWizard();
+  const { keys: providerKeys } = useProviderKeys();
 
   const handleModelChange = (providerId: string, model: string) => {
     dispatch({ type: 'SET_PROVIDER_CONFIG', providerId, config: { model } });
@@ -39,6 +42,15 @@ export function Step4Config() {
 
   const handleSandboxTimeoutChange = (timeout: number) => {
     dispatch({ type: 'SET_FEATURE', feature: 'sandboxTimeout', value: timeout });
+  };
+
+  // Get display name for a key
+  const getKeyDisplayName = (keyId: string) => {
+    const key = providerKeys.find((k) => k.id === keyId);
+    if (!key) return keyId.slice(0, 8) + '...';
+    if (key.label) return key.label;
+    if (key.tag) return key.tag;
+    return key.id.slice(0, 8) + '...';
   };
 
   return (
@@ -58,26 +70,36 @@ export function Step4Config() {
             const provider = getProvider(providerId);
             const models = getModels(providerId);
             const config = state.providerConfigs[providerId] || { model: '' };
+            const keyId = config.keyId;
 
             return (
               <div
                 key={providerId}
                 className="rounded-lg border p-4 space-y-3"
               >
-                <div className="flex items-center gap-3">
-                  <div className="bg-muted flex size-10 items-center justify-center rounded-lg text-lg font-semibold">
-                    {provider?.label.charAt(0) || '?'}
-                  </div>
-                  <div>
-                    <div className="font-medium">
-                      {provider?.label || providerId}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-muted flex size-10 items-center justify-center rounded-lg text-lg font-semibold">
+                      {provider?.label.charAt(0) || '?'}
                     </div>
-                    {provider?.baseUrl && (
-                      <div className="text-muted-foreground text-xs">
-                        {provider.baseUrl}
+                    <div>
+                      <div className="font-medium">
+                        {provider?.label || providerId}
                       </div>
-                    )}
+                      {provider?.baseUrl && (
+                        <div className="text-muted-foreground text-xs">
+                          {provider.baseUrl}
+                        </div>
+                      )}
+                    </div>
                   </div>
+                  {/* Show selected API Key */}
+                  {keyId && (
+                    <Badge variant="secondary" className="gap-1.5">
+                      <Key className="size-3" />
+                      {getKeyDisplayName(keyId)}
+                    </Badge>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>{t('model')}</Label>

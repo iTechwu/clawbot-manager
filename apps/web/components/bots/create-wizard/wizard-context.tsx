@@ -32,7 +32,7 @@ export interface WizardState {
     sandboxTimeout: number;
     sessionScope: SessionScope;
   };
-  providerConfigs: Record<string, { model: string }>;
+  providerConfigs: Record<string, { model: string; keyId?: string }>;
   channelConfigs: Record<string, { token: string }>;
 }
 
@@ -58,7 +58,7 @@ type WizardAction =
       feature: keyof WizardState['features'];
       value: unknown;
     }
-  | { type: 'SET_PROVIDER_CONFIG'; providerId: string; config: { model: string } }
+  | { type: 'SET_PROVIDER_CONFIG'; providerId: string; config: { model?: string; keyId?: string } }
   | { type: 'SET_CHANNEL_CONFIG'; channelId: string; config: { token: string } }
   | { type: 'RESET' };
 
@@ -200,17 +200,19 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         },
       };
 
-    case 'SET_PROVIDER_CONFIG':
+    case 'SET_PROVIDER_CONFIG': {
+      const existingConfig = state.providerConfigs[action.providerId] || { model: '' };
       return {
         ...state,
         providerConfigs: {
           ...state.providerConfigs,
           [action.providerId]: {
-            ...state.providerConfigs[action.providerId],
+            ...existingConfig,
             ...action.config,
           },
         },
       };
+    }
 
     case 'SET_CHANNEL_CONFIG':
       return {
@@ -296,6 +298,7 @@ export function buildCreateBotInput(state: WizardState): CreateBotInput {
   const providers = state.enabledProviders.map((providerId) => ({
     providerId,
     model: state.providerConfigs[providerId]?.model || '',
+    keyId: state.providerConfigs[providerId]?.keyId,
   }));
 
   const channels = state.enabledChannels.map((channelType) => ({
