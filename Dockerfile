@@ -36,11 +36,12 @@ RUN npm config set registry ${NPM_REGISTRY} \
     && pnpm config set fetch-timeout 300000 \
     && pnpm config set network-concurrency 4
 
-# Install build dependencies for native modules
+# Install build dependencies for native modules and git (required by Next.js build)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
+    git \
     openssl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
