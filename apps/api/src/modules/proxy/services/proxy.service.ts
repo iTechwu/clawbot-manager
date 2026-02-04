@@ -5,9 +5,13 @@ import { EncryptionService } from '../../bot-api/services/encryption.service';
 import { KeyringService } from './keyring.service';
 import { UpstreamService } from './upstream.service';
 import { QuotaService } from './quota.service';
-import { getVendorConfig, isVendorSupported } from '../config/vendor.config';
+import {
+  getVendorConfigWithCustomUrl,
+  isVendorSupported,
+} from '../config/vendor.config';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { PROVIDER_CONFIGS } from '@repo/contracts';
 
 /**
  * 代理请求参数
@@ -60,14 +64,7 @@ export class ProxyService {
   ): Promise<ProxyResult> {
     const { vendor, path, method, headers, body, botToken } = params;
 
-    // 1. 验证 vendor
-    if (!isVendorSupported(vendor)) {
-      return { success: false, error: `Unknown vendor: ${vendor}` };
-    }
-
-    const vendorConfig = getVendorConfig(vendor)!;
-
-    // 2. 验证 Bot token
+    // 1. 验证 Bot token
     const tokenHash = this.encryptionService.hashToken(botToken);
     const bot = await this.botService.getByProxyTokenHash(tokenHash);
 
@@ -75,23 +72,41 @@ export class ProxyService {
       return { success: false, error: 'Invalid bot token' };
     }
 
-    // 3. 选择 API 密钥
+    // 2. 选择 API 密钥（包含 baseUrl 信息）
     const keySelection = await this.keyringService.selectKeyForBot(vendor, bot.tags);
 
     if (!keySelection) {
       return { success: false, error: `No API keys available for vendor: ${vendor}` };
     }
 
+    // 3. 获取 vendor 配置（支持自定义 URL）
+    // 如果 ProviderKey 有自定义 baseUrl，使用自定义配置
+    const providerConfig = PROVIDER_CONFIGS[vendor as keyof typeof PROVIDER_CONFIGS];
+    const apiType = providerConfig?.apiType;
+    const vendorConfig = getVendorConfigWithCustomUrl(
+      vendor,
+      keySelection.baseUrl,
+      apiType,
+    );
+
+    if (!vendorConfig) {
+      // 如果没有预定义配置且没有自定义 URL，返回错误
+      if (!keySelection.baseUrl) {
+        return { success: false, error: `Unknown vendor: ${vendor}` };
+      }
+    }
+
     // 4. 转发请求到上游
     try {
       const statusCode = await this.upstreamService.forwardToUpstream(
         {
-          vendorConfig,
+          vendorConfig: vendorConfig!,
           path,
           method,
           headers,
           body,
           apiKey: keySelection.secret,
+          customUrl: keySelection.baseUrl || undefined,
         },
         rawResponse,
       );

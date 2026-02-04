@@ -105,13 +105,17 @@ export class ReconciliationService implements OnModuleInit {
 
     // 检查 Docker 是否可用
     if (!this.dockerService.isAvailable()) {
-      this.logger.warn('Docker not available, skipping container reconciliation');
+      this.logger.warn(
+        'Docker not available, skipping container reconciliation',
+      );
       return report;
     }
 
     // 获取所有托管容器
     const managedContainers = await this.getManagedContainers();
-    const containerHostnames = new Set(managedContainers.map((c) => c.hostname));
+    const containerHostnames = new Set(
+      managedContainers.map((c) => c.hostname),
+    );
 
     // 同步每个 Bot 的状态
     for (const bot of bots) {
@@ -131,7 +135,8 @@ export class ReconciliationService implements OnModuleInit {
     }
 
     // 检测孤儿工作空间
-    const workspaceHostnames = await this.workspaceService.listWorkspaceHostnames();
+    const workspaceHostnames =
+      await this.workspaceService.listWorkspaceHostnames();
     for (const hostname of workspaceHostnames) {
       if (!botHostnames.has(hostname)) {
         report.orphanedWorkspaces.push(hostname);
@@ -166,12 +171,15 @@ export class ReconciliationService implements OnModuleInit {
     // 移除孤儿容器
     for (const hostname of reconciliation.orphanedContainers) {
       try {
-        const containerName = `botmaker-${hostname}`;
+        const containerName = `clawbot-manager-${hostname}`;
         await this.dockerService.removeContainer(containerName);
         report.containersRemoved++;
         this.logger.log(`Removed orphaned container: ${hostname}`);
       } catch (error) {
-        this.logger.warn(`Failed to remove orphaned container ${hostname}:`, error);
+        this.logger.warn(
+          `Failed to remove orphaned container ${hostname}:`,
+          error,
+        );
       }
     }
 
@@ -182,7 +190,10 @@ export class ReconciliationService implements OnModuleInit {
         report.workspacesRemoved++;
         this.logger.log(`Removed orphaned workspace: ${hostname}`);
       } catch (error) {
-        this.logger.warn(`Failed to remove orphaned workspace ${hostname}:`, error);
+        this.logger.warn(
+          `Failed to remove orphaned workspace ${hostname}:`,
+          error,
+        );
       }
     }
 
@@ -193,7 +204,10 @@ export class ReconciliationService implements OnModuleInit {
         report.secretsRemoved++;
         this.logger.log(`Removed orphaned secrets: ${hostname}`);
       } catch (error) {
-        this.logger.warn(`Failed to remove orphaned secrets ${hostname}:`, error);
+        this.logger.warn(
+          `Failed to remove orphaned secrets ${hostname}:`,
+          error,
+        );
       }
     }
 
@@ -209,7 +223,12 @@ export class ReconciliationService implements OnModuleInit {
    * @returns 是否更新了状态
    */
   private async syncBotStatus(
-    bot: { id: string; hostname: string; containerId: string | null; status: BotStatus },
+    bot: {
+      id: string;
+      hostname: string;
+      containerId: string | null;
+      status: BotStatus;
+    },
     hasContainer: boolean,
   ): Promise<boolean> {
     if (!hasContainer) {
@@ -255,7 +274,8 @@ export class ReconciliationService implements OnModuleInit {
 
     if (!containerStatus.running && bot.status === 'running') {
       // 容器已停止或退出
-      const newStatus: BotStatus = containerStatus.exitCode !== 0 ? 'error' : 'stopped';
+      const newStatus: BotStatus =
+        containerStatus.exitCode !== 0 ? 'error' : 'stopped';
       await this.botService.update({ id: bot.id }, { status: newStatus });
       this.logger.log(`Bot ${bot.hostname} status synced: ${newStatus}`);
       return true;
@@ -267,7 +287,9 @@ export class ReconciliationService implements OnModuleInit {
   /**
    * 获取所有托管容器
    */
-  private async getManagedContainers(): Promise<{ id: string; hostname: string }[]> {
+  private async getManagedContainers(): Promise<
+    { id: string; hostname: string }[]
+  > {
     try {
       // 使用 DockerService 的方法获取托管容器
       const stats = await this.dockerService.getAllContainerStats();

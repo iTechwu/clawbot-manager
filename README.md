@@ -209,7 +209,7 @@ pnpm dev:api      # 仅后端
 ## 🐳 Docker 部署
 
 ```bash
-./scripts/start-botmaker.sh
+./scripts/start-clawbot.sh
 ```
 
 依赖 `docker-compose.yml`，启动 ClawBotManager 与 `keyring-proxy` 等服务，健康检查通过后访问 `http://localhost:7100`。

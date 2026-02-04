@@ -2,7 +2,12 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Docker from 'dockerode';
 import { isAbsolute, join } from 'node:path';
-import type { ContainerStats, OrphanReport, CleanupReport } from '@repo/contracts';
+import type {
+  ContainerStats,
+  OrphanReport,
+  CleanupReport,
+} from '@repo/contracts';
+import { PROVIDER_CONFIGS, type ProviderVendor } from '@repo/contracts';
 
 export interface ContainerInfo {
   id: string;
@@ -42,19 +47,36 @@ export class DockerService implements OnModuleInit {
   private readonly portStart: number;
   private readonly dataDir: string;
   private readonly secretsDir: string;
-  private readonly containerPrefix = 'botmaker-';
+  private readonly containerPrefix = 'clawbot-manager-';
 
   constructor(private readonly configService: ConfigService) {
-    this.botImage = this.configService.get<string>('BOT_IMAGE', 'openclaw:latest');
+    this.botImage = this.configService.get<string>(
+      'BOT_IMAGE',
+      'openclaw:latest',
+    );
     // 环境变量为字符串，需显式转换为 number，否则 Prisma Int 字段会校验失败
-    const portStartRaw = this.configService.get<string | number>('BOT_PORT_START', 9200);
-    this.portStart = typeof portStartRaw === 'number' ? portStartRaw : Number(portStartRaw) || 9200;
-    const dataDir = this.configService.get<string>('BOT_DATA_DIR', '/data/bots');
-    const secretsDir = this.configService.get<string>('BOT_SECRETS_DIR', '/data/secrets');
+    const portStartRaw = this.configService.get<string | number>(
+      'BOT_PORT_START',
+      9200,
+    );
+    this.portStart =
+      typeof portStartRaw === 'number'
+        ? portStartRaw
+        : Number(portStartRaw) || 9200;
+    const dataDir = this.configService.get<string>(
+      'BOT_DATA_DIR',
+      '/data/bots',
+    );
+    const secretsDir = this.configService.get<string>(
+      'BOT_SECRETS_DIR',
+      '/data/secrets',
+    );
 
     // 统一规范为绝对路径，避免 Docker 把相对路径当作 volume 名称（从而报类似 "includes invalid characters"）
     this.dataDir = isAbsolute(dataDir) ? dataDir : join(process.cwd(), dataDir);
-    this.secretsDir = isAbsolute(secretsDir) ? secretsDir : join(process.cwd(), secretsDir);
+    this.secretsDir = isAbsolute(secretsDir)
+      ? secretsDir
+      : join(process.cwd(), secretsDir);
   }
 
   async onModuleInit() {
@@ -63,7 +85,9 @@ export class DockerService implements OnModuleInit {
       await this.docker.ping();
       this.logger.log('Docker connection established');
     } catch (error) {
-      this.logger.warn('Docker not available, container operations will be simulated');
+      this.logger.warn(
+        'Docker not available, container operations will be simulated',
+      );
       this.docker = null as unknown as Docker;
     }
   }
@@ -91,7 +115,9 @@ export class DockerService implements OnModuleInit {
       const existing = this.docker.getContainer(containerName);
       const info = await existing.inspect();
       if (info) {
-        this.logger.log(`Container ${containerName} already exists, removing...`);
+        this.logger.log(
+          `Container ${containerName} already exists, removing...`,
+        );
         await existing.remove({ force: true });
       }
     } catch {
@@ -114,18 +140,47 @@ export class DockerService implements OnModuleInit {
       envVars.push(`AI_API_TYPE=${options.apiType}`);
     }
 
-    // Zero-trust mode: Use proxy URL and token instead of direct API key
-    if (options.proxyUrl && options.proxyToken) {
-      // Pass proxy configuration to container
-      envVars.push(`PROXY_URL=${options.proxyUrl}`);
-      envVars.push(`PROXY_TOKEN=${options.proxyToken}`);
+    // Get provider config for environment variable naming
+    const providerConfig = PROVIDER_CONFIGS[options.aiProvider as ProviderVendor];
 
-      // Build proxy endpoint based on API type
-      const apiType = options.apiType || 'openai';
-      const proxyEndpoint = `${options.proxyUrl}/v1/${apiType}`;
+    // Helper function to get environment variable name for API key
+    const getApiKeyEnvName = (provider: string): string => {
+      // Standard environment variable names for common providers
+      const providerEnvMap: Record<string, string> = {
+        openai: 'OPENAI_API_KEY',
+        anthropic: 'ANTHROPIC_API_KEY',
+        google: 'GOOGLE_API_KEY',
+        'azure-openai': 'AZURE_OPENAI_API_KEY',
+        groq: 'GROQ_API_KEY',
+        mistral: 'MISTRAL_API_KEY',
+        deepseek: 'DEEPSEEK_API_KEY',
+        venice: 'VENICE_API_KEY',
+        openrouter: 'OPENROUTER_API_KEY',
+        together: 'TOGETHER_API_KEY',
+        fireworks: 'FIREWORKS_API_KEY',
+        perplexity: 'PERPLEXITY_API_KEY',
+        cohere: 'COHERE_API_KEY',
+        ollama: 'OLLAMA_API_KEY',
+        zhipu: 'ZHIPU_API_KEY',
+        moonshot: 'MOONSHOT_API_KEY',
+        baichuan: 'BAICHUAN_API_KEY',
+        dashscope: 'DASHSCOPE_API_KEY',
+        stepfun: 'STEPFUN_API_KEY',
+        doubao: 'DOUBAO_API_KEY',
+        minimax: 'MINIMAX_API_KEY',
+        yi: 'YI_API_KEY',
+        hunyuan: 'HUNYUAN_API_KEY',
+        silicon: 'SILICONFLOW_API_KEY',
+        custom: 'CUSTOM_API_KEY',
+      };
+      return (
+        providerEnvMap[provider] ||
+        `${provider.toUpperCase().replace(/-/g, '_')}_API_KEY`
+      );
+    };
 
-      // Map provider to standard base URL environment variable names
-      // All providers will use the proxy endpoint as their base URL
+    // Helper function to get environment variable name for base URL
+    const getBaseUrlEnvName = (provider: string): string => {
       const baseUrlEnvMap: Record<string, string> = {
         openai: 'OPENAI_BASE_URL',
         anthropic: 'ANTHROPIC_BASE_URL',
@@ -141,63 +196,67 @@ export class DockerService implements OnModuleInit {
         perplexity: 'PERPLEXITY_BASE_URL',
         cohere: 'COHERE_BASE_URL',
         ollama: 'OLLAMA_BASE_URL',
+        zhipu: 'ZHIPU_BASE_URL',
+        moonshot: 'MOONSHOT_BASE_URL',
+        baichuan: 'BAICHUAN_BASE_URL',
+        dashscope: 'DASHSCOPE_BASE_URL',
+        stepfun: 'STEPFUN_BASE_URL',
+        doubao: 'DOUBAO_BASE_URL',
+        minimax: 'MINIMAX_BASE_URL',
+        yi: 'YI_BASE_URL',
+        hunyuan: 'HUNYUAN_BASE_URL',
+        silicon: 'SILICONFLOW_BASE_URL',
+        custom: 'CUSTOM_BASE_URL',
       };
+      return (
+        baseUrlEnvMap[provider] ||
+        `${provider.toUpperCase().replace(/-/g, '_')}_BASE_URL`
+      );
+    };
 
-      const baseUrlEnvName = baseUrlEnvMap[options.aiProvider] || `${options.aiProvider.toUpperCase().replace(/-/g, '_')}_BASE_URL`;
+    // Zero-trust mode: Use proxy URL and token instead of direct API key
+    if (options.proxyUrl && options.proxyToken) {
+      // Pass proxy configuration to container
+      envVars.push(`PROXY_URL=${options.proxyUrl}`);
+      envVars.push(`PROXY_TOKEN=${options.proxyToken}`);
+
+      // Build proxy endpoint based on vendor (the proxy routes by vendor name)
+      // The proxy endpoint format is: {proxyUrl}/v1/{vendor}/*
+      const proxyEndpoint = `${options.proxyUrl}/v1/${options.aiProvider}`;
+
+      // Set the base URL to point to the proxy
+      const baseUrlEnvName = getBaseUrlEnvName(options.aiProvider);
       envVars.push(`${baseUrlEnvName}=${proxyEndpoint}`);
 
-      this.logger.log(`Container ${options.hostname} configured in zero-trust mode with proxy: ${proxyEndpoint}`);
+      this.logger.log(
+        `Container ${options.hostname} configured in zero-trust mode with proxy: ${proxyEndpoint}`,
+      );
     } else {
       // Direct mode: Pass API key and base URL directly
-      // Add provider-specific environment variables based on vendor
       if (options.apiKey) {
-        // Map provider to standard environment variable names
-        const providerEnvMap: Record<string, string> = {
-          openai: 'OPENAI_API_KEY',
-          anthropic: 'ANTHROPIC_API_KEY',
-          google: 'GOOGLE_API_KEY',
-          'azure-openai': 'AZURE_OPENAI_API_KEY',
-          groq: 'GROQ_API_KEY',
-          mistral: 'MISTRAL_API_KEY',
-          deepseek: 'DEEPSEEK_API_KEY',
-          venice: 'VENICE_API_KEY',
-          openrouter: 'OPENROUTER_API_KEY',
-          together: 'TOGETHER_API_KEY',
-          fireworks: 'FIREWORKS_API_KEY',
-          perplexity: 'PERPLEXITY_API_KEY',
-          cohere: 'COHERE_API_KEY',
-          ollama: 'OLLAMA_API_KEY',
-        };
-
-        const envKeyName = providerEnvMap[options.aiProvider] || `${options.aiProvider.toUpperCase().replace(/-/g, '_')}_API_KEY`;
+        const envKeyName = getApiKeyEnvName(options.aiProvider);
         envVars.push(`${envKeyName}=${options.apiKey}`);
       }
 
       // Add custom base URL if provided
       if (options.apiBaseUrl) {
-        const baseUrlEnvMap: Record<string, string> = {
-          openai: 'OPENAI_BASE_URL',
-          anthropic: 'ANTHROPIC_BASE_URL',
-          google: 'GOOGLE_BASE_URL',
-          'azure-openai': 'AZURE_OPENAI_ENDPOINT',
-          groq: 'GROQ_BASE_URL',
-          mistral: 'MISTRAL_BASE_URL',
-          deepseek: 'DEEPSEEK_BASE_URL',
-          venice: 'VENICE_BASE_URL',
-          openrouter: 'OPENROUTER_BASE_URL',
-          together: 'TOGETHER_BASE_URL',
-          fireworks: 'FIREWORKS_BASE_URL',
-          perplexity: 'PERPLEXITY_BASE_URL',
-          cohere: 'COHERE_BASE_URL',
-          ollama: 'OLLAMA_BASE_URL',
-        };
-
-        const baseUrlEnvName = baseUrlEnvMap[options.aiProvider] || `${options.aiProvider.toUpperCase().replace(/-/g, '_')}_BASE_URL`;
+        const baseUrlEnvName = getBaseUrlEnvName(options.aiProvider);
         envVars.push(`${baseUrlEnvName}=${options.apiBaseUrl}`);
+      } else if (providerConfig?.apiHost) {
+        // Use default API host from provider config if no custom URL
+        const baseUrlEnvName = getBaseUrlEnvName(options.aiProvider);
+        envVars.push(`${baseUrlEnvName}=${providerConfig.apiHost}`);
       }
 
-      this.logger.log(`Container ${options.hostname} configured in direct mode`);
+      this.logger.log(
+        `Container ${options.hostname} configured in direct mode`,
+      );
     }
+
+    // Determine network mode:
+    // - In zero-trust mode, connect to bm-internal network to reach keyring-proxy
+    // - In direct mode, use bridge network
+    const networkMode = options.proxyUrl ? 'bm-internal' : 'bridge';
 
     const container = await this.docker.createContainer({
       name: containerName,
@@ -215,11 +274,11 @@ export class DockerService implements OnModuleInit {
           `${this.secretsDir}/${options.hostname}:/app/secrets:ro`,
         ],
         RestartPolicy: { Name: 'unless-stopped' },
-        NetworkMode: 'bridge',
+        NetworkMode: networkMode,
       },
       Labels: {
-        'botmaker.hostname': options.hostname,
-        'botmaker.managed': 'true',
+        'clawbot-manager.hostname': options.hostname,
+        'clawbot-manager.managed': 'true',
       },
     });
 
@@ -303,7 +362,7 @@ export class DockerService implements OnModuleInit {
 
     const containers = await this.docker.listContainers({
       all: true,
-      filters: { label: ['botmaker.managed=true'] },
+      filters: { label: ['clawbot-manager.managed=true'] },
     });
 
     const stats: ContainerStats[] = [];
@@ -312,7 +371,8 @@ export class DockerService implements OnModuleInit {
       try {
         const container = this.docker.getContainer(containerInfo.Id);
         const containerStats = await container.stats({ stream: false });
-        const hostname = containerInfo.Labels['botmaker.hostname'] || 'unknown';
+        const hostname =
+          containerInfo.Labels['clawbot-manager.hostname'] || 'unknown';
 
         // Calculate CPU percentage
         const cpuDelta =
@@ -354,7 +414,10 @@ export class DockerService implements OnModuleInit {
           timestamp: new Date().toISOString(),
         });
       } catch (error) {
-        this.logger.warn(`Failed to get stats for container ${containerInfo.Id}:`, error);
+        this.logger.warn(
+          `Failed to get stats for container ${containerInfo.Id}:`,
+          error,
+        );
       }
     }
 
@@ -371,12 +434,12 @@ export class DockerService implements OnModuleInit {
 
     const containers = await this.docker.listContainers({
       all: true,
-      filters: { label: ['botmaker.managed=true'] },
+      filters: { label: ['clawbot-manager.managed=true'] },
     });
 
     const orphaned: string[] = [];
     for (const container of containers) {
-      const hostname = container.Labels['botmaker.hostname'];
+      const hostname = container.Labels['clawbot-manager.hostname'];
       if (hostname && !knownHostnames.includes(hostname)) {
         orphaned.push(hostname);
       }
@@ -389,7 +452,8 @@ export class DockerService implements OnModuleInit {
    * Get orphan report
    */
   async getOrphanReport(knownHostnames: string[]): Promise<OrphanReport> {
-    const orphanedContainers = await this.findOrphanedContainers(knownHostnames);
+    const orphanedContainers =
+      await this.findOrphanedContainers(knownHostnames);
 
     // TODO: Implement workspace and secrets orphan detection
     const orphanedWorkspaces: string[] = [];
@@ -399,7 +463,10 @@ export class DockerService implements OnModuleInit {
       orphanedContainers,
       orphanedWorkspaces,
       orphanedSecrets,
-      total: orphanedContainers.length + orphanedWorkspaces.length + orphanedSecrets.length,
+      total:
+        orphanedContainers.length +
+        orphanedWorkspaces.length +
+        orphanedSecrets.length,
     };
   }
 
@@ -407,7 +474,8 @@ export class DockerService implements OnModuleInit {
    * Cleanup orphaned resources
    */
   async cleanupOrphans(knownHostnames: string[]): Promise<CleanupReport> {
-    const orphanedContainers = await this.findOrphanedContainers(knownHostnames);
+    const orphanedContainers =
+      await this.findOrphanedContainers(knownHostnames);
 
     let containersRemoved = 0;
     for (const hostname of orphanedContainers) {
@@ -418,7 +486,10 @@ export class DockerService implements OnModuleInit {
         containersRemoved++;
         this.logger.log(`Removed orphaned container: ${containerName}`);
       } catch (error) {
-        this.logger.warn(`Failed to remove orphaned container for ${hostname}:`, error);
+        this.logger.warn(
+          `Failed to remove orphaned container for ${hostname}:`,
+          error,
+        );
       }
     }
 

@@ -1,6 +1,6 @@
 # Extended base image for bot containers with build tools and utilities
 # Build: docker compose build botenv
-# Usage: Automatically used by botmaker when spawning bot containers
+# Usage: Automatically used by clawbot-manager when spawning bot containers
 
 FROM uhub.service.ucloud.cn/pardx/openclaw:latest
 

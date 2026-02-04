@@ -4,37 +4,43 @@ x-common: &common
 services:
   botenv:
     <<: *common
-    profiles: ["build"]
+    profiles: ['build']
     build:
       context: .
       dockerfile: Dockerfile.botenv
       args:
         BASE_IMAGE: ${OPENCLAW_BASE_IMAGE:-openclaw:latest}
-    image: ${BOTENV_IMAGE:-botmaker-env:latest}
+    image: ${BOTENV_IMAGE:-clawbot-manager-env:latest}
 
-  botmaker:
+  clawbot-manager:
     <<: *common
     build: .
-    container_name: botmaker
+    container_name: clawbot-manager
     env_file: .env
     environment:
       PORT: ${PORT:-7100}
       DATA_DIR: /app/data
       SECRETS_DIR: /app/secrets
-      OPENCLAW_IMAGE: ${BOTENV_IMAGE:-botmaker-env:latest}
+      OPENCLAW_IMAGE: ${BOTENV_IMAGE:-clawbot-manager-env:latest}
     ports:
-      - "${PORT:-7100}:${PORT:-7100}"
+      - '${PORT:-7100}:${PORT:-7100}'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - botmaker-data:/app/data
-      - botmaker-secrets:/app/secrets
+      - clawbot-manager-data:/app/data
+      - clawbot-manager-secrets:/app/secrets
       - ./secrets:/secrets:ro
     depends_on:
       - keyring-proxy
     networks: [bm-internal]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:${PORT:-7100}/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:${PORT:-7100}/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -51,7 +57,13 @@ services:
     networks: [bm-internal]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:${ADMIN_PORT:-9100}/admin/health',{headers:{Authorization:'Bearer '+require('fs').readFileSync('/secrets/admin_token','utf8').trim()}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:${ADMIN_PORT:-9100}/admin/health',{headers:{Authorization:'Bearer '+require('fs').readFileSync('/secrets/admin_token','utf8').trim()}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -62,6 +74,6 @@ networks:
     name: bm-internal
 
 volumes:
-  botmaker-data:
-  botmaker-secrets:
+  clawbot-manager-data:
+  clawbot-manager-secrets:
   proxy-data:
