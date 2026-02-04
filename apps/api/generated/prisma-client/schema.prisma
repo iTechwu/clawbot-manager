@@ -404,13 +404,26 @@ model Bot {
 
 /// ProviderKey - AI 提供商 API 密钥
 /// 存储加密的 API 密钥，支持多提供商和标签路由
+/// ProviderKey - API 密钥配置
+/// 存储用户配置的各类 AI 服务商 API 密钥
+/// 支持 OpenAI、Anthropic、Google、DeepSeek 等主流服务商，以及自定义服务商
 model ProviderKey {
+  /// 主键 UUID
   id              String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  vendor          String  @db.VarChar(50) // openai, anthropic, google, venice, deepseek, groq
-  secretEncrypted Bytes   @map("secret_encrypted") // AES-256-GCM encrypted
-  label           String? @db.VarChar(255)
-  tag             String? @db.VarChar(100) // For routing
-  baseUrl         String? @map("base_url") @db.VarChar(500) // Custom API base URL
+  /// 服务商标识：openai, anthropic, google, venice, deepseek, groq, custom 等
+  vendor          String  @db.VarChar(50)
+  /// API 协议类型：openai, anthropic, gemini, azure-openai, aws-bedrock, vertexai, ollama, new-api, gateway 等
+  /// 用于确定 API 调用方式，custom 服务商必填
+  apiType         String? @map("api_type") @db.VarChar(50)
+  /// 加密存储的 API 密钥（AES-256-GCM 加密）
+  secretEncrypted Bytes   @map("secret_encrypted")
+  /// 密钥名称（必填），用于用户识别不同密钥，同一用户下唯一
+  label           String  @db.VarChar(255)
+  /// 路由标签，用于在多密钥场景下进行流量分配
+  tag             String? @db.VarChar(100)
+  /// 自定义 API 地址，用于私有部署或代理服务
+  baseUrl         String? @map("base_url") @db.VarChar(500)
+  /// 创建者用户 ID
   createdById     String  @map("created_by_id") @db.Uuid
 
   isDeleted Boolean   @default(false) @map("is_deleted")
@@ -423,7 +436,9 @@ model ProviderKey {
   botProviderKeys BotProviderKey[]
   usageLogs       BotUsageLog[]
 
+  @@unique([createdById, label], name: "provider_key_user_label_unique")
   @@index([vendor])
+  @@index([apiType])
   @@index([tag])
   @@index([createdById])
   @@index([isDeleted])

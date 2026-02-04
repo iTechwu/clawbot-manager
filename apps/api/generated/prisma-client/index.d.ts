@@ -82,6 +82,9 @@ export type Bot = $Result.DefaultSelection<Prisma.$BotPayload>
  * Model ProviderKey
  * ProviderKey - AI 提供商 API 密钥
  * 存储加密的 API 密钥，支持多提供商和标签路由
+ * ProviderKey - API 密钥配置
+ * 存储用户配置的各类 AI 服务商 API 密钥
+ * 支持 OpenAI、Anthropic、Google、DeepSeek 等主流服务商，以及自定义服务商
  */
 export type ProviderKey = $Result.DefaultSelection<Prisma.$ProviderKeyPayload>
 /**
@@ -17265,6 +17268,7 @@ export namespace Prisma {
   export type ProviderKeyMinAggregateOutputType = {
     id: string | null
     vendor: string | null
+    apiType: string | null
     secretEncrypted: Bytes | null
     label: string | null
     tag: string | null
@@ -17279,6 +17283,7 @@ export namespace Prisma {
   export type ProviderKeyMaxAggregateOutputType = {
     id: string | null
     vendor: string | null
+    apiType: string | null
     secretEncrypted: Bytes | null
     label: string | null
     tag: string | null
@@ -17293,6 +17298,7 @@ export namespace Prisma {
   export type ProviderKeyCountAggregateOutputType = {
     id: number
     vendor: number
+    apiType: number
     secretEncrypted: number
     label: number
     tag: number
@@ -17309,6 +17315,7 @@ export namespace Prisma {
   export type ProviderKeyMinAggregateInputType = {
     id?: true
     vendor?: true
+    apiType?: true
     secretEncrypted?: true
     label?: true
     tag?: true
@@ -17323,6 +17330,7 @@ export namespace Prisma {
   export type ProviderKeyMaxAggregateInputType = {
     id?: true
     vendor?: true
+    apiType?: true
     secretEncrypted?: true
     label?: true
     tag?: true
@@ -17337,6 +17345,7 @@ export namespace Prisma {
   export type ProviderKeyCountAggregateInputType = {
     id?: true
     vendor?: true
+    apiType?: true
     secretEncrypted?: true
     label?: true
     tag?: true
@@ -17424,8 +17433,9 @@ export namespace Prisma {
   export type ProviderKeyGroupByOutputType = {
     id: string
     vendor: string
+    apiType: string | null
     secretEncrypted: Bytes
-    label: string | null
+    label: string
     tag: string | null
     baseUrl: string | null
     createdById: string
@@ -17455,6 +17465,7 @@ export namespace Prisma {
   export type ProviderKeySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     vendor?: boolean
+    apiType?: boolean
     secretEncrypted?: boolean
     label?: boolean
     tag?: boolean
@@ -17473,6 +17484,7 @@ export namespace Prisma {
   export type ProviderKeySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     vendor?: boolean
+    apiType?: boolean
     secretEncrypted?: boolean
     label?: boolean
     tag?: boolean
@@ -17488,6 +17500,7 @@ export namespace Prisma {
   export type ProviderKeySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     vendor?: boolean
+    apiType?: boolean
     secretEncrypted?: boolean
     label?: boolean
     tag?: boolean
@@ -17503,6 +17516,7 @@ export namespace Prisma {
   export type ProviderKeySelectScalar = {
     id?: boolean
     vendor?: boolean
+    apiType?: boolean
     secretEncrypted?: boolean
     label?: boolean
     tag?: boolean
@@ -17514,7 +17528,7 @@ export namespace Prisma {
     deletedAt?: boolean
   }
 
-  export type ProviderKeyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "vendor" | "secretEncrypted" | "label" | "tag" | "baseUrl" | "createdById" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["providerKey"]>
+  export type ProviderKeyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "vendor" | "apiType" | "secretEncrypted" | "label" | "tag" | "baseUrl" | "createdById" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["providerKey"]>
   export type ProviderKeyInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     createdBy?: boolean | UserInfoDefaultArgs<ExtArgs>
     botProviderKeys?: boolean | ProviderKey$botProviderKeysArgs<ExtArgs>
@@ -17536,12 +17550,38 @@ export namespace Prisma {
       usageLogs: Prisma.$BotUsageLogPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
+      /**
+       * 主键 UUID
+       */
       id: string
+      /**
+       * 服务商标识：openai, anthropic, google, venice, deepseek, groq, custom 等
+       */
       vendor: string
+      /**
+       * API 协议类型：openai, anthropic, gemini, azure-openai, aws-bedrock, vertexai, ollama, new-api, gateway 等
+       * 用于确定 API 调用方式，custom 服务商必填
+       */
+      apiType: string | null
+      /**
+       * 加密存储的 API 密钥（AES-256-GCM 加密）
+       */
       secretEncrypted: Prisma.Bytes
-      label: string | null
+      /**
+       * 密钥名称（必填），用于用户识别不同密钥，同一用户下唯一
+       */
+      label: string
+      /**
+       * 路由标签，用于在多密钥场景下进行流量分配
+       */
       tag: string | null
+      /**
+       * 自定义 API 地址，用于私有部署或代理服务
+       */
       baseUrl: string | null
+      /**
+       * 创建者用户 ID
+       */
       createdById: string
       isDeleted: boolean
       createdAt: Date
@@ -17975,6 +18015,7 @@ export namespace Prisma {
   interface ProviderKeyFieldRefs {
     readonly id: FieldRef<"ProviderKey", 'String'>
     readonly vendor: FieldRef<"ProviderKey", 'String'>
+    readonly apiType: FieldRef<"ProviderKey", 'String'>
     readonly secretEncrypted: FieldRef<"ProviderKey", 'Bytes'>
     readonly label: FieldRef<"ProviderKey", 'String'>
     readonly tag: FieldRef<"ProviderKey", 'String'>
@@ -24321,6 +24362,7 @@ export namespace Prisma {
   export const ProviderKeyScalarFieldEnum: {
     id: 'id',
     vendor: 'vendor',
+    apiType: 'apiType',
     secretEncrypted: 'secretEncrypted',
     label: 'label',
     tag: 'tag',
@@ -25856,8 +25898,9 @@ export namespace Prisma {
     NOT?: ProviderKeyWhereInput | ProviderKeyWhereInput[]
     id?: UuidFilter<"ProviderKey"> | string
     vendor?: StringFilter<"ProviderKey"> | string
+    apiType?: StringNullableFilter<"ProviderKey"> | string | null
     secretEncrypted?: BytesFilter<"ProviderKey"> | Bytes
-    label?: StringNullableFilter<"ProviderKey"> | string | null
+    label?: StringFilter<"ProviderKey"> | string
     tag?: StringNullableFilter<"ProviderKey"> | string | null
     baseUrl?: StringNullableFilter<"ProviderKey"> | string | null
     createdById?: UuidFilter<"ProviderKey"> | string
@@ -25873,8 +25916,9 @@ export namespace Prisma {
   export type ProviderKeyOrderByWithRelationInput = {
     id?: SortOrder
     vendor?: SortOrder
+    apiType?: SortOrderInput | SortOrder
     secretEncrypted?: SortOrder
-    label?: SortOrderInput | SortOrder
+    label?: SortOrder
     tag?: SortOrderInput | SortOrder
     baseUrl?: SortOrderInput | SortOrder
     createdById?: SortOrder
@@ -25889,12 +25933,14 @@ export namespace Prisma {
 
   export type ProviderKeyWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    provider_key_user_label_unique?: ProviderKeyProvider_key_user_label_uniqueCompoundUniqueInput
     AND?: ProviderKeyWhereInput | ProviderKeyWhereInput[]
     OR?: ProviderKeyWhereInput[]
     NOT?: ProviderKeyWhereInput | ProviderKeyWhereInput[]
     vendor?: StringFilter<"ProviderKey"> | string
+    apiType?: StringNullableFilter<"ProviderKey"> | string | null
     secretEncrypted?: BytesFilter<"ProviderKey"> | Bytes
-    label?: StringNullableFilter<"ProviderKey"> | string | null
+    label?: StringFilter<"ProviderKey"> | string
     tag?: StringNullableFilter<"ProviderKey"> | string | null
     baseUrl?: StringNullableFilter<"ProviderKey"> | string | null
     createdById?: UuidFilter<"ProviderKey"> | string
@@ -25905,13 +25951,14 @@ export namespace Prisma {
     createdBy?: XOR<UserInfoScalarRelationFilter, UserInfoWhereInput>
     botProviderKeys?: BotProviderKeyListRelationFilter
     usageLogs?: BotUsageLogListRelationFilter
-  }, "id">
+  }, "id" | "provider_key_user_label_unique">
 
   export type ProviderKeyOrderByWithAggregationInput = {
     id?: SortOrder
     vendor?: SortOrder
+    apiType?: SortOrderInput | SortOrder
     secretEncrypted?: SortOrder
-    label?: SortOrderInput | SortOrder
+    label?: SortOrder
     tag?: SortOrderInput | SortOrder
     baseUrl?: SortOrderInput | SortOrder
     createdById?: SortOrder
@@ -25930,8 +25977,9 @@ export namespace Prisma {
     NOT?: ProviderKeyScalarWhereWithAggregatesInput | ProviderKeyScalarWhereWithAggregatesInput[]
     id?: UuidWithAggregatesFilter<"ProviderKey"> | string
     vendor?: StringWithAggregatesFilter<"ProviderKey"> | string
+    apiType?: StringNullableWithAggregatesFilter<"ProviderKey"> | string | null
     secretEncrypted?: BytesWithAggregatesFilter<"ProviderKey"> | Bytes
-    label?: StringNullableWithAggregatesFilter<"ProviderKey"> | string | null
+    label?: StringWithAggregatesFilter<"ProviderKey"> | string
     tag?: StringNullableWithAggregatesFilter<"ProviderKey"> | string | null
     baseUrl?: StringNullableWithAggregatesFilter<"ProviderKey"> | string | null
     createdById?: UuidWithAggregatesFilter<"ProviderKey"> | string
@@ -27700,8 +27748,9 @@ export namespace Prisma {
   export type ProviderKeyCreateInput = {
     id?: string
     vendor: string
+    apiType?: string | null
     secretEncrypted: Bytes
-    label?: string | null
+    label: string
     tag?: string | null
     baseUrl?: string | null
     isDeleted?: boolean
@@ -27716,8 +27765,9 @@ export namespace Prisma {
   export type ProviderKeyUncheckedCreateInput = {
     id?: string
     vendor: string
+    apiType?: string | null
     secretEncrypted: Bytes
-    label?: string | null
+    label: string
     tag?: string | null
     baseUrl?: string | null
     createdById: string
@@ -27732,8 +27782,9 @@ export namespace Prisma {
   export type ProviderKeyUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     vendor?: StringFieldUpdateOperationsInput | string
+    apiType?: NullableStringFieldUpdateOperationsInput | string | null
     secretEncrypted?: BytesFieldUpdateOperationsInput | Bytes
-    label?: NullableStringFieldUpdateOperationsInput | string | null
+    label?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
     baseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -27748,8 +27799,9 @@ export namespace Prisma {
   export type ProviderKeyUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     vendor?: StringFieldUpdateOperationsInput | string
+    apiType?: NullableStringFieldUpdateOperationsInput | string | null
     secretEncrypted?: BytesFieldUpdateOperationsInput | Bytes
-    label?: NullableStringFieldUpdateOperationsInput | string | null
+    label?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
     baseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
@@ -27764,8 +27816,9 @@ export namespace Prisma {
   export type ProviderKeyCreateManyInput = {
     id?: string
     vendor: string
+    apiType?: string | null
     secretEncrypted: Bytes
-    label?: string | null
+    label: string
     tag?: string | null
     baseUrl?: string | null
     createdById: string
@@ -27778,8 +27831,9 @@ export namespace Prisma {
   export type ProviderKeyUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     vendor?: StringFieldUpdateOperationsInput | string
+    apiType?: NullableStringFieldUpdateOperationsInput | string | null
     secretEncrypted?: BytesFieldUpdateOperationsInput | Bytes
-    label?: NullableStringFieldUpdateOperationsInput | string | null
+    label?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
     baseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -27791,8 +27845,9 @@ export namespace Prisma {
   export type ProviderKeyUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     vendor?: StringFieldUpdateOperationsInput | string
+    apiType?: NullableStringFieldUpdateOperationsInput | string | null
     secretEncrypted?: BytesFieldUpdateOperationsInput | Bytes
-    label?: NullableStringFieldUpdateOperationsInput | string | null
+    label?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
     baseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
@@ -29385,9 +29440,15 @@ export namespace Prisma {
     not?: NestedBytesFilter<$PrismaModel> | Bytes
   }
 
+  export type ProviderKeyProvider_key_user_label_uniqueCompoundUniqueInput = {
+    createdById: string
+    label: string
+  }
+
   export type ProviderKeyCountOrderByAggregateInput = {
     id?: SortOrder
     vendor?: SortOrder
+    apiType?: SortOrder
     secretEncrypted?: SortOrder
     label?: SortOrder
     tag?: SortOrder
@@ -29402,6 +29463,7 @@ export namespace Prisma {
   export type ProviderKeyMaxOrderByAggregateInput = {
     id?: SortOrder
     vendor?: SortOrder
+    apiType?: SortOrder
     secretEncrypted?: SortOrder
     label?: SortOrder
     tag?: SortOrder
@@ -29416,6 +29478,7 @@ export namespace Prisma {
   export type ProviderKeyMinOrderByAggregateInput = {
     id?: SortOrder
     vendor?: SortOrder
+    apiType?: SortOrder
     secretEncrypted?: SortOrder
     label?: SortOrder
     tag?: SortOrder
@@ -31708,8 +31771,9 @@ export namespace Prisma {
   export type ProviderKeyCreateWithoutCreatedByInput = {
     id?: string
     vendor: string
+    apiType?: string | null
     secretEncrypted: Bytes
-    label?: string | null
+    label: string
     tag?: string | null
     baseUrl?: string | null
     isDeleted?: boolean
@@ -31723,8 +31787,9 @@ export namespace Prisma {
   export type ProviderKeyUncheckedCreateWithoutCreatedByInput = {
     id?: string
     vendor: string
+    apiType?: string | null
     secretEncrypted: Bytes
-    label?: string | null
+    label: string
     tag?: string | null
     baseUrl?: string | null
     isDeleted?: boolean
@@ -32187,8 +32252,9 @@ export namespace Prisma {
     NOT?: ProviderKeyScalarWhereInput | ProviderKeyScalarWhereInput[]
     id?: UuidFilter<"ProviderKey"> | string
     vendor?: StringFilter<"ProviderKey"> | string
+    apiType?: StringNullableFilter<"ProviderKey"> | string | null
     secretEncrypted?: BytesFilter<"ProviderKey"> | Bytes
-    label?: StringNullableFilter<"ProviderKey"> | string | null
+    label?: StringFilter<"ProviderKey"> | string
     tag?: StringNullableFilter<"ProviderKey"> | string | null
     baseUrl?: StringNullableFilter<"ProviderKey"> | string | null
     createdById?: UuidFilter<"ProviderKey"> | string
@@ -34357,8 +34423,9 @@ export namespace Prisma {
   export type ProviderKeyCreateWithoutBotProviderKeysInput = {
     id?: string
     vendor: string
+    apiType?: string | null
     secretEncrypted: Bytes
-    label?: string | null
+    label: string
     tag?: string | null
     baseUrl?: string | null
     isDeleted?: boolean
@@ -34372,8 +34439,9 @@ export namespace Prisma {
   export type ProviderKeyUncheckedCreateWithoutBotProviderKeysInput = {
     id?: string
     vendor: string
+    apiType?: string | null
     secretEncrypted: Bytes
-    label?: string | null
+    label: string
     tag?: string | null
     baseUrl?: string | null
     createdById: string
@@ -34464,8 +34532,9 @@ export namespace Prisma {
   export type ProviderKeyUpdateWithoutBotProviderKeysInput = {
     id?: StringFieldUpdateOperationsInput | string
     vendor?: StringFieldUpdateOperationsInput | string
+    apiType?: NullableStringFieldUpdateOperationsInput | string | null
     secretEncrypted?: BytesFieldUpdateOperationsInput | Bytes
-    label?: NullableStringFieldUpdateOperationsInput | string | null
+    label?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
     baseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -34479,8 +34548,9 @@ export namespace Prisma {
   export type ProviderKeyUncheckedUpdateWithoutBotProviderKeysInput = {
     id?: StringFieldUpdateOperationsInput | string
     vendor?: StringFieldUpdateOperationsInput | string
+    apiType?: NullableStringFieldUpdateOperationsInput | string | null
     secretEncrypted?: BytesFieldUpdateOperationsInput | Bytes
-    label?: NullableStringFieldUpdateOperationsInput | string | null
+    label?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
     baseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
@@ -34549,8 +34619,9 @@ export namespace Prisma {
   export type ProviderKeyCreateWithoutUsageLogsInput = {
     id?: string
     vendor: string
+    apiType?: string | null
     secretEncrypted: Bytes
-    label?: string | null
+    label: string
     tag?: string | null
     baseUrl?: string | null
     isDeleted?: boolean
@@ -34564,8 +34635,9 @@ export namespace Prisma {
   export type ProviderKeyUncheckedCreateWithoutUsageLogsInput = {
     id?: string
     vendor: string
+    apiType?: string | null
     secretEncrypted: Bytes
-    label?: string | null
+    label: string
     tag?: string | null
     baseUrl?: string | null
     createdById: string
@@ -34656,8 +34728,9 @@ export namespace Prisma {
   export type ProviderKeyUpdateWithoutUsageLogsInput = {
     id?: StringFieldUpdateOperationsInput | string
     vendor?: StringFieldUpdateOperationsInput | string
+    apiType?: NullableStringFieldUpdateOperationsInput | string | null
     secretEncrypted?: BytesFieldUpdateOperationsInput | Bytes
-    label?: NullableStringFieldUpdateOperationsInput | string | null
+    label?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
     baseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -34671,8 +34744,9 @@ export namespace Prisma {
   export type ProviderKeyUncheckedUpdateWithoutUsageLogsInput = {
     id?: StringFieldUpdateOperationsInput | string
     vendor?: StringFieldUpdateOperationsInput | string
+    apiType?: NullableStringFieldUpdateOperationsInput | string | null
     secretEncrypted?: BytesFieldUpdateOperationsInput | Bytes
-    label?: NullableStringFieldUpdateOperationsInput | string | null
+    label?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
     baseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
@@ -35280,8 +35354,9 @@ export namespace Prisma {
   export type ProviderKeyCreateManyCreatedByInput = {
     id?: string
     vendor: string
+    apiType?: string | null
     secretEncrypted: Bytes
-    label?: string | null
+    label: string
     tag?: string | null
     baseUrl?: string | null
     isDeleted?: boolean
@@ -35464,8 +35539,9 @@ export namespace Prisma {
   export type ProviderKeyUpdateWithoutCreatedByInput = {
     id?: StringFieldUpdateOperationsInput | string
     vendor?: StringFieldUpdateOperationsInput | string
+    apiType?: NullableStringFieldUpdateOperationsInput | string | null
     secretEncrypted?: BytesFieldUpdateOperationsInput | Bytes
-    label?: NullableStringFieldUpdateOperationsInput | string | null
+    label?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
     baseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -35479,8 +35555,9 @@ export namespace Prisma {
   export type ProviderKeyUncheckedUpdateWithoutCreatedByInput = {
     id?: StringFieldUpdateOperationsInput | string
     vendor?: StringFieldUpdateOperationsInput | string
+    apiType?: NullableStringFieldUpdateOperationsInput | string | null
     secretEncrypted?: BytesFieldUpdateOperationsInput | Bytes
-    label?: NullableStringFieldUpdateOperationsInput | string | null
+    label?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
     baseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -35494,8 +35571,9 @@ export namespace Prisma {
   export type ProviderKeyUncheckedUpdateManyWithoutCreatedByInput = {
     id?: StringFieldUpdateOperationsInput | string
     vendor?: StringFieldUpdateOperationsInput | string
+    apiType?: NullableStringFieldUpdateOperationsInput | string | null
     secretEncrypted?: BytesFieldUpdateOperationsInput | Bytes
-    label?: NullableStringFieldUpdateOperationsInput | string | null
+    label?: StringFieldUpdateOperationsInput | string
     tag?: NullableStringFieldUpdateOperationsInput | string | null
     baseUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean

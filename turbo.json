@@ -48,6 +48,9 @@
     "db:push": {
       "cache": false
     },
+    "db:seed": {
+      "cache": false
+    },
     "clean": {
       "cache": false
     }

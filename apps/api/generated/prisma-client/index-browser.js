@@ -312,6 +312,7 @@ exports.Prisma.BotScalarFieldEnum = {
 exports.Prisma.ProviderKeyScalarFieldEnum = {
   id: 'id',
   vendor: 'vendor',
+  apiType: 'apiType',
   secretEncrypted: 'secretEncrypted',
   label: 'label',
   tag: 'tag',

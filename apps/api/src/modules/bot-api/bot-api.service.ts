@@ -631,8 +631,9 @@ export class BotApiService {
 
     const key = await this.providerKeyService.create({
       vendor: input.vendor,
+      apiType: input.apiType || null,
       secretEncrypted,
-      label: input.label || null,
+      label: input.label,
       tag: input.tag || null,
       baseUrl: input.baseUrl || null,
       createdBy: { connect: { id: userId } },
