@@ -364,16 +364,32 @@ export class DockerService implements OnModuleInit {
 
   /**
    * Stop a container
+   * @returns true if container was stopped, false if it was already stopped
    */
-  async stopContainer(containerId: string): Promise<void> {
+  async stopContainer(containerId: string): Promise<boolean> {
     if (!this.isAvailable()) {
       this.logger.warn('Docker not available, simulating container stop');
-      return;
+      return true;
     }
 
     const container = this.docker.getContainer(containerId);
-    await container.stop({ t: 10 }); // 10 second timeout
-    this.logger.log(`Container stopped: ${containerId}`);
+    try {
+      await container.stop({ t: 10 }); // 10 second timeout
+      this.logger.log(`Container stopped: ${containerId}`);
+      return true;
+    } catch (error: unknown) {
+      // Handle 304 "container already stopped" - this is not an error
+      if (
+        error &&
+        typeof error === 'object' &&
+        'statusCode' in error &&
+        error.statusCode === 304
+      ) {
+        this.logger.log(`Container already stopped: ${containerId}`);
+        return false;
+      }
+      throw error;
+    }
   }
 
   /**

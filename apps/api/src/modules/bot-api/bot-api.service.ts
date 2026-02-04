@@ -17,7 +17,7 @@ import { KeyringProxyClient } from '@app/clients/internal/keyring-proxy';
 import { EncryptionService } from './services/encryption.service';
 import { DockerService } from './services/docker.service';
 import { WorkspaceService } from './services/workspace.service';
-import type { Bot, ProviderKey } from '@prisma/client';
+import type { Bot, ProviderKey, BotStatus } from '@prisma/client';
 import type {
   CreateBotInput,
   AddProviderKeyInput,
@@ -59,13 +59,32 @@ export class BotApiService {
   async listBots(userId: string): Promise<Bot[]> {
     const { list } = await this.botService.list({ createdById: userId });
 
-    // Enrich with container status
+    // Enrich with container status and sync database status if needed
     const enrichedBots = await Promise.all(
       list.map(async (bot) => {
         if (bot.containerId) {
           const containerStatus = await this.dockerService.getContainerStatus(
             bot.containerId,
           );
+
+          // Sync database status with actual Docker container state
+          if (containerStatus) {
+            const actualStatus: BotStatus = containerStatus.running
+              ? 'running'
+              : 'stopped';
+            if (bot.status !== actualStatus && bot.status !== 'error') {
+              // Update database status to match Docker state
+              await this.botService.update(
+                { id: bot.id },
+                { status: actualStatus },
+              );
+              this.logger.log(
+                `Synced bot ${bot.hostname} status: ${bot.status} -> ${actualStatus}`,
+              );
+              return { ...bot, status: actualStatus, containerStatus };
+            }
+          }
+
           return { ...bot, containerStatus };
         }
         return bot;
