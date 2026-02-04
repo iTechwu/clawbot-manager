@@ -406,9 +406,10 @@ model Bot {
 /// 存储加密的 API 密钥，支持多提供商和标签路由
 model ProviderKey {
   id              String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  vendor          String  @db.VarChar(50) // openai, anthropic, google, venice, deepseek, groq
+  vendor          String  @db.VarChar(50) // openai, anthropic, google, venice, deepseek, groq, custom
+  apiType         String? @map("api_type") @db.VarChar(50) // openai, anthropic, gemini, azure-openai, etc.
   secretEncrypted Bytes   @map("secret_encrypted") // AES-256-GCM encrypted
-  label           String? @db.VarChar(255)
+  label           String  @db.VarChar(255) // 密钥名称（必填）
   tag             String? @db.VarChar(100) // For routing
   baseUrl         String? @map("base_url") @db.VarChar(500) // Custom API base URL
   createdById     String  @map("created_by_id") @db.Uuid
@@ -424,6 +425,7 @@ model ProviderKey {
   usageLogs       BotUsageLog[]
 
   @@index([vendor])
+  @@index([apiType])
   @@index([tag])
   @@index([createdById])
   @@index([isDeleted])

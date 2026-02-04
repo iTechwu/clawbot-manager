@@ -3,6 +3,7 @@ import { BotStatusSchema } from './prisma-enums.generated';
 // 从新的 provider schema 导入
 import {
   ProviderVendorSchema,
+  ProviderApiTypeSchema,
   getEffectiveApiHost,
   isCustomApiHost,
   PROVIDER_DEFAULT_BASE_URLS,
@@ -11,11 +12,12 @@ import {
 // 重新导出 provider 相关类型和函数
 export {
   ProviderVendorSchema,
+  ProviderApiTypeSchema,
   getEffectiveApiHost,
   isCustomApiHost,
   PROVIDER_DEFAULT_BASE_URLS,
 } from './provider.schema';
-export type { ProviderVendor } from './provider.schema';
+export type { ProviderVendor, ProviderApiType } from './provider.schema';
 
 // BotStatus/BotStatusSchema 来自 prisma-enums.generated，由 index 统一导出
 
@@ -171,7 +173,8 @@ export type CleanupReport = z.infer<typeof CleanupReportSchema>;
 export const ProviderKeySchema = z.object({
   id: z.string().uuid(),
   vendor: ProviderVendorSchema,
-  label: z.string().nullable(),
+  apiType: ProviderApiTypeSchema.nullable(),
+  label: z.string(),
   tag: z.string().nullable(),
   baseUrl: z.string().nullable(),
   createdAt: z.coerce.date(),
@@ -185,8 +188,9 @@ export type ProviderKey = z.infer<typeof ProviderKeySchema>;
  */
 export const AddProviderKeyInputSchema = z.object({
   vendor: ProviderVendorSchema,
+  apiType: ProviderApiTypeSchema.optional(),
   secret: z.string().min(1, 'API key is required'),
-  label: z.string().max(255).optional(),
+  label: z.string().min(1, 'Key name is required').max(255),
   tag: z.string().max(100).optional(),
   baseUrl: z
     .string()

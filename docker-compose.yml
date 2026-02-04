@@ -75,8 +75,12 @@ services:
     image: clawbot-api:latest
     container_name: clawbot-api
     env_file:
-      - ./apps/api/.env
-      - ./.env
+      - path: ./apps/api/.env
+        required: true
+      - path: ./apps/api/.env.production
+        required: false
+      - path: ./.env
+        required: false
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3200

@@ -166,6 +166,8 @@ COPY packages/validators/package.json ./packages/validators/
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/generated ./apps/api/generated
 COPY --from=builder /app/apps/api/tsconfig.json ./apps/api/
+# Copy i18n translation files (required at runtime)
+COPY --from=builder /app/apps/api/libs/infra/i18n ./apps/api/libs/infra/i18n
 # Note: config.local.yaml and keys/config.json are mounted at runtime via docker-compose volumes
 # Copy only packages that produce dist output (constants, contracts, utils, validators)
 # Note: @repo/config and @repo/types don't produce dist (they export source files directly, types are erased at runtime)
