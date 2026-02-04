@@ -2,13 +2,24 @@
 # ClawBot Manager - Docker Compose Configuration
 # =============================================================================
 # Services:
-#   - api: NestJS backend (port 3100)
+#   - api: NestJS backend (port 3200)
 #   - web: Next.js frontend (port 3000)
 #   - botenv: Bot environment image (build profile only)
 #
 # Prerequisites:
 #   - PostgreSQL and Redis should be running externally
 #   - Configure DATABASE_URL and REDIS_URL in environment or .env files
+#
+# Build args (在 .env 中配置，不配置则使用默认值):
+#   BASE_NODE_IMAGE: Node 基础镜像
+#   OPENCLAW_BASE_IMAGE: OpenClaw 基础镜像 (botenv)
+#
+# Troubleshooting "connection refused" to 127.0.0.1:7990:
+#   Docker 代理不可用，构建时使用 network: host 尝试绕过。
+#   若仍失败，请:
+#   1. Docker Desktop: Settings -> Resources -> Proxies -> 关闭或修正代理
+#   2. 或在构建前执行: unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+#   3. 或检查 ~/.docker/config.json 中的 "proxies" 并移除
 #
 # Usage:
 #   docker compose up -d              # Start all services
@@ -37,7 +48,9 @@ services:
       context: .
       dockerfile: Dockerfile.botenv
       args:
-        BASE_IMAGE: ${OPENCLAW_BASE_IMAGE:-openclaw:latest}
+        # 来自 .env 中的 OPENCLAW_BASE_IMAGE
+        OPENCLAW_BASE_IMAGE: ${OPENCLAW_BASE_IMAGE:-1panel/openclaw:latest}
+      network: host
     image: ${BOTENV_IMAGE:-clawbot-env:latest}
 
   # ---------------------------------------------------------------------------
@@ -49,17 +62,21 @@ services:
       context: .
       dockerfile: Dockerfile
       target: api
+      args:
+        BASE_NODE_IMAGE: ${BASE_NODE_IMAGE:-node:24.1-slim}
+        # 构建时 prisma generate 需 DATABASE_URL，优先用 apps/api/.env（已放行），或从根 .env 传入
+        DATABASE_URL: ${DATABASE_URL:-}
+      network: host
     image: clawbot-api:latest
     container_name: clawbot-api
     env_file:
       - ./apps/api/.env
+      - ./.env
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      PORT: 3100
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
+      PORT: 3200
     ports:
-      - '${API_PORT:-3100}:3100'
+      - '${API_PORT:-3200}:3200'
     volumes:
       - api-logs:/app/apps/api/logs
     networks:
@@ -68,7 +85,7 @@ services:
       - 'host.docker.internal:host-gateway'
     healthcheck:
       <<: *healthcheck
-      test: ['CMD', 'curl', '-f', 'http://localhost:3100/health']
+      test: ['CMD', 'curl', '-f', 'http://localhost:3200/health']
 
   # ---------------------------------------------------------------------------
   # Web Service - Next.js Frontend
@@ -79,9 +96,14 @@ services:
       context: .
       dockerfile: Dockerfile
       target: web
+      args:
+        # 来自 .env 中的 BASE_NODE_IMAGE
+        BASE_NODE_IMAGE: ${BASE_NODE_IMAGE:-node:24.1-slim}
+      network: host
     image: clawbot-web:latest
     container_name: clawbot-web
     env_file:
+      - ./.env
       - ./apps/web/.env.local
     environment:
       NODE_ENV: ${NODE_ENV:-production}

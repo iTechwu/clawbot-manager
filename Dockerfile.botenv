@@ -3,11 +3,15 @@
 # =============================================================================
 # Extended base image for bot containers with build tools and utilities
 #
+# Build args (由 .env 通过 docker-compose 传入):
+#   OPENCLAW_BASE_IMAGE: OpenClaw 基础镜像
+#
 # Build: docker compose --profile build up botenv
 # Usage: Automatically used by ClawBot Manager when spawning bot containers
 # =============================================================================
 
-FROM uhub.service.ucloud.cn/pardx/openclaw:latest
+ARG OPENCLAW_BASE_IMAGE=1panel/openclaw:latest
+FROM ${OPENCLAW_BASE_IMAGE}
 
 # Switch to root for package installation
 USER root
