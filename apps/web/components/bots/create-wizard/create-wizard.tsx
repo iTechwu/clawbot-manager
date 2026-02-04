@@ -1,7 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { WizardProvider, useWizard } from './wizard-context';
+import {
+  WizardProvider,
+  useWizard,
+  getAvailableSubSteps,
+  getNextSubStep,
+  getPrevSubStep,
+  isLastSubStep,
+  isFirstSubStep,
+} from './wizard-context';
 import {
   Step1Templates,
   Step2Personality,
@@ -40,17 +48,45 @@ function WizardContent({ onClose }: { onClose: () => void }) {
   const { handleCreate, createLoading } = useBots();
   const [error, setError] = useState<string | null>(null);
 
+  // Get sub-step info for step 4
+  const availableSubSteps = getAvailableSubSteps(state);
+  const hasSubSteps = state.step === 4 && availableSubSteps.length > 0;
+
   const handleNext = () => {
     const result = validate(state.step);
-    if (result.valid && state.step < 5) {
-      dispatch({ type: 'SET_STEP', step: state.step + 1 });
-    } else if (!result.valid) {
+    if (!result.valid) {
       setError(result.error || t('wizard.completeStep'));
+      return;
+    }
+
+    // Handle step 4 sub-steps
+    if (state.step === 4 && hasSubSteps && !isLastSubStep(state)) {
+      const nextSubStep = getNextSubStep(state);
+      if (nextSubStep) {
+        dispatch({ type: 'SET_STEP4_SUBSTEP', subStep: nextSubStep });
+        return;
+      }
+    }
+
+    // Normal step navigation
+    if (state.step < 5) {
+      dispatch({ type: 'SET_STEP', step: state.step + 1 });
     }
   };
 
   const handleBack = () => {
     setError(null);
+
+    // Handle step 4 sub-steps
+    if (state.step === 4 && hasSubSteps && !isFirstSubStep(state)) {
+      const prevSubStep = getPrevSubStep(state);
+      if (prevSubStep) {
+        dispatch({ type: 'SET_STEP4_SUBSTEP', subStep: prevSubStep });
+        return;
+      }
+    }
+
+    // Normal step navigation
     if (state.step > 1) {
       dispatch({ type: 'SET_STEP', step: state.step - 1 });
     }
@@ -84,6 +120,9 @@ function WizardContent({ onClose }: { onClose: () => void }) {
         return null;
     }
   };
+
+  // Determine if we should show "Back" or "Cancel"
+  const showCancel = state.step === 1;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -127,7 +166,9 @@ function WizardContent({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Step Content */}
-      <div className="min-h-0 flex-1 overflow-y-auto">{renderStepContent()}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {renderStepContent()}
+      </div>
 
       {/* Error */}
       {error && (
@@ -142,9 +183,9 @@ function WizardContent({ onClose }: { onClose: () => void }) {
         <Button
           type="button"
           variant="outline"
-          onClick={state.step === 1 ? onClose : handleBack}
+          onClick={showCancel ? onClose : handleBack}
         >
-          {state.step === 1
+          {showCancel
             ? t('wizard.actions.cancel')
             : t('wizard.actions.back')}
         </Button>
@@ -169,7 +210,7 @@ export function CreateBotWizard({ isOpen, onClose }: CreateBotWizardProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="flex h-[600px] max-w-2xl flex-col overflow-hidden">
+      <DialogContent className="flex h-[700px] max-w-4xl flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>{t('wizard.title')}</DialogTitle>
         </DialogHeader>

@@ -40,18 +40,34 @@ export class BotService extends TransactionalServiceBase {
     });
   }
 
+  /**
+   * Get bot by hostname (only active bots, not soft-deleted)
+   * Uses findFirst since hostname uniqueness is enforced at database level
+   * with a partial unique index (WHERE isDeleted = false)
+   */
   @HandlePrismaError(DbOperationType.QUERY)
-  async getByHostname(value: string, additional?: { select?: Prisma.BotSelect }): Promise<Bot | null> {
-    return this.getReadClient().bot.findUnique({
-      where: { hostname: value, isDeleted: false },
+  async getByHostname(
+    hostname: string,
+    additional?: { select?: Prisma.BotSelect },
+  ): Promise<Bot | null> {
+    return this.getReadClient().bot.findFirst({
+      where: { hostname, isDeleted: false },
       ...additional,
     });
   }
 
+  /**
+   * Get bot by proxy token hash (only active bots, not soft-deleted)
+   * Uses findFirst since proxyTokenHash uniqueness is enforced at database level
+   * with a partial unique index (WHERE isDeleted = false AND proxyTokenHash IS NOT NULL)
+   */
   @HandlePrismaError(DbOperationType.QUERY)
-  async getByProxyTokenHash(value: string, additional?: { select?: Prisma.BotSelect }): Promise<Bot | null> {
-    return this.getReadClient().bot.findUnique({
-      where: { proxyTokenHash: value, isDeleted: false },
+  async getByProxyTokenHash(
+    proxyTokenHash: string,
+    additional?: { select?: Prisma.BotSelect },
+  ): Promise<Bot | null> {
+    return this.getReadClient().bot.findFirst({
+      where: { proxyTokenHash, isDeleted: false },
       ...additional,
     });
   }

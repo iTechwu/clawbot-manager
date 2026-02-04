@@ -17,7 +17,7 @@ import { KeyringProxyClient } from '@app/clients/internal/keyring-proxy';
 import { EncryptionService } from './services/encryption.service';
 import { DockerService } from './services/docker.service';
 import { WorkspaceService } from './services/workspace.service';
-import type { Bot, ProviderKey } from '@prisma/client';
+import type { Bot, ProviderKey, BotStatus } from '@prisma/client';
 import type {
   CreateBotInput,
   AddProviderKeyInput,
@@ -59,13 +59,32 @@ export class BotApiService {
   async listBots(userId: string): Promise<Bot[]> {
     const { list } = await this.botService.list({ createdById: userId });
 
-    // Enrich with container status
+    // Enrich with container status and sync database status if needed
     const enrichedBots = await Promise.all(
       list.map(async (bot) => {
         if (bot.containerId) {
           const containerStatus = await this.dockerService.getContainerStatus(
             bot.containerId,
           );
+
+          // Sync database status with actual Docker container state
+          if (containerStatus) {
+            const actualStatus: BotStatus = containerStatus.running
+              ? 'running'
+              : 'stopped';
+            if (bot.status !== actualStatus && bot.status !== 'error') {
+              // Update database status to match Docker state
+              await this.botService.update(
+                { id: bot.id },
+                { status: actualStatus },
+              );
+              this.logger.log(
+                `Synced bot ${bot.hostname} status: ${bot.status} -> ${actualStatus}`,
+              );
+              return { ...bot, status: actualStatus, containerStatus };
+            }
+          }
+
           return { ...bot, containerStatus };
         }
         return bot;
@@ -143,14 +162,17 @@ export class BotApiService {
       hostname: input.hostname,
       name: input.name,
       aiProvider: primaryProvider.providerId,
-      model: primaryProvider.model,
+      model: primaryProvider.primaryModel || primaryProvider.models[0],
       channelType: input.channels[0].channelType,
       persona: input.persona,
       features: input.features,
     });
 
     // Determine API type from provider config
-    const providerConfig = PROVIDER_CONFIGS[primaryProvider.providerId as keyof typeof PROVIDER_CONFIGS];
+    const providerConfig =
+      PROVIDER_CONFIGS[
+        primaryProvider.providerId as keyof typeof PROVIDER_CONFIGS
+      ];
     const apiType = providerConfig?.apiType || 'openai';
 
     // Get provider key if keyId is provided
@@ -160,7 +182,8 @@ export class BotApiService {
     let proxyTokenHash: string | undefined;
 
     // Check if zero-trust mode is available (keyring-proxy configured and healthy)
-    const useZeroTrust = this.keyringProxyClient.isConfigured() && this.proxyUrl;
+    const useZeroTrust =
+      this.keyringProxyClient.isConfigured() && this.proxyUrl;
 
     if (primaryProvider.keyId) {
       try {
@@ -171,9 +194,7 @@ export class BotApiService {
           if (useZeroTrust) {
             // Zero-trust mode: Register bot with proxy, don't pass API key to container
             // The proxy will inject the API key at request time
-            this.logger.log(
-              `Using zero-trust mode for bot ${input.hostname}`,
-            );
+            this.logger.log(`Using zero-trust mode for bot ${input.hostname}`);
 
             // Note: In zero-trust mode, the API key is managed by the proxy
             // We need to ensure the key is registered with the proxy
@@ -240,7 +261,10 @@ export class BotApiService {
               );
             }
           } catch (keyError) {
-            this.logger.warn(`Failed to get provider key for fallback:`, keyError);
+            this.logger.warn(
+              `Failed to get provider key for fallback:`,
+              keyError,
+            );
           }
         }
       }
@@ -255,7 +279,7 @@ export class BotApiService {
         port,
         gatewayToken,
         aiProvider: primaryProvider.providerId,
-        model: primaryProvider.model,
+        model: primaryProvider.primaryModel || primaryProvider.models[0],
         channelType: input.channels[0].channelType,
         workspacePath,
         apiKey,
@@ -277,7 +301,7 @@ export class BotApiService {
       name: input.name,
       hostname: input.hostname,
       aiProvider: primaryProvider.providerId,
-      model: primaryProvider.model,
+      model: primaryProvider.primaryModel || primaryProvider.models[0],
       channelType: input.channels[0].channelType,
       containerId,
       port: typeof port === 'number' ? port : Number(port),
@@ -406,7 +430,8 @@ export class BotApiService {
         });
 
         // Check if zero-trust mode is available
-        const useZeroTrust = this.keyringProxyClient.isConfigured() && this.proxyUrl;
+        const useZeroTrust =
+          this.keyringProxyClient.isConfigured() && this.proxyUrl;
 
         if (botProviderKey) {
           try {
@@ -415,23 +440,33 @@ export class BotApiService {
             });
             if (providerKey && providerKey.createdById === userId) {
               // Get API type from provider config
-              const providerConfig = PROVIDER_CONFIGS[providerKey.vendor as keyof typeof PROVIDER_CONFIGS];
+              const providerConfig =
+                PROVIDER_CONFIGS[
+                  providerKey.vendor as keyof typeof PROVIDER_CONFIGS
+                ];
               apiType = providerConfig?.apiType || 'openai';
               apiBaseUrl = providerKey.baseUrl || undefined;
 
               if (useZeroTrust) {
                 // Zero-trust mode: Register bot with proxy
                 try {
-                  const registration = await this.keyringProxyClient.registerBot(
-                    bot.id,
-                    hostname,
-                    bot.tags,
-                  );
+                  const registration =
+                    await this.keyringProxyClient.registerBot(
+                      bot.id,
+                      hostname,
+                      bot.tags,
+                    );
                   proxyToken = registration.token;
                   // Update proxyTokenHash in database
-                  const proxyTokenHash = this.encryptionService.hashToken(proxyToken);
-                  await this.botService.update({ id: bot.id }, { proxyTokenHash });
-                  this.logger.log(`Bot ${hostname} registered with keyring-proxy for start`);
+                  const proxyTokenHash =
+                    this.encryptionService.hashToken(proxyToken);
+                  await this.botService.update(
+                    { id: bot.id },
+                    { proxyTokenHash },
+                  );
+                  this.logger.log(
+                    `Bot ${hostname} registered with keyring-proxy for start`,
+                  );
                 } catch (proxyError) {
                   this.logger.warn(
                     `Failed to register bot with keyring-proxy, falling back to direct mode:`,
@@ -709,6 +744,31 @@ export class BotApiService {
     return this.providerVerifyClient.verify(input);
   }
 
+  /**
+   * Get models for an existing provider key by ID
+   */
+  async getProviderKeyModels(
+    keyId: string,
+    userId: string,
+  ): Promise<VerifyProviderKeyResponse> {
+    const key = await this.providerKeyService.get({ id: keyId });
+    if (!key || key.createdById !== userId) {
+      throw new NotFoundException(`Provider key with id "${keyId}" not found`);
+    }
+
+    // Decrypt the secret
+    const secret = this.encryptionService.decrypt(
+      Buffer.from(key.secretEncrypted),
+    );
+
+    // Use the verify client to get models
+    return this.providerVerifyClient.verify({
+      vendor: key.vendor as VerifyProviderKeyInput['vendor'],
+      secret,
+      baseUrl: key.baseUrl || undefined,
+    });
+  }
+
   // ============================================================================
   // Helper Methods
   // ============================================================================
@@ -717,6 +777,7 @@ export class BotApiService {
     return {
       id: key.id,
       vendor: key.vendor as ProviderKeyDto['vendor'],
+      apiType: (key.apiType as ProviderKeyDto['apiType']) || null,
       label: key.label,
       tag: key.tag,
       baseUrl: key.baseUrl,

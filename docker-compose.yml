@@ -86,6 +86,14 @@ services:
       PORT: 3200
       # Config file name (defaults to config.local.yaml if not set)
       YAML_CONFIG_FILENAME: ${YAML_CONFIG_FILENAME:-config.local.yaml}
+      # Bot runtime configuration
+      BOT_DATA_DIR: /data/bots
+      BOT_SECRETS_DIR: /data/secrets
+      BOTENV_IMAGE: ${BOTENV_IMAGE:-clawbot-env:latest}
+      # Volume names for runtime path discovery (used when creating bot containers)
+      # Format: <project-name>_<volume-name> (docker compose prefixes with project name)
+      DATA_VOLUME_NAME: ${DATA_VOLUME_NAME:-clawbot-manager_clawbot-data}
+      SECRETS_VOLUME_NAME: ${SECRETS_VOLUME_NAME:-clawbot-manager_clawbot-secrets}
     ports:
       - '${API_PORT:-13100}:3200'
     volumes:
@@ -93,6 +101,13 @@ services:
       # Mount config files from host (these are not baked into the image)
       - ./apps/api/config.local.yaml:/app/apps/api/config.local.yaml:ro
       - ./apps/api/keys:/app/apps/api/keys:ro
+      # Docker socket for container management (required for bot lifecycle)
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Bot data and secrets volumes (persistent across container rebuilds)
+      - clawbot-data:/data/bots
+      - clawbot-secrets:/data/secrets
+      # Shared secrets (read-only, for proxy tokens etc.)
+      - ./secrets:/secrets:ro
     networks:
       - common_network
     extra_hosts:
@@ -148,3 +163,9 @@ networks:
 volumes:
   api-logs:
     name: clawbot-api-logs
+  # Bot workspace data (persistent across container rebuilds)
+  clawbot-data:
+    name: ${DATA_VOLUME_NAME:-clawbot-manager_clawbot-data}
+  # Bot secrets (API keys, tokens - persistent across container rebuilds)
+  clawbot-secrets:
+    name: ${SECRETS_VOLUME_NAME:-clawbot-manager_clawbot-secrets}

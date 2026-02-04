@@ -56,7 +56,9 @@ export class UserApiService {
     // Get avatar URL if avatarFileId exists
     let headerImg: string | null = null;
     if (updatedUser.avatarFileId) {
-      const avatarFile = await this.fileSource.getById(updatedUser.avatarFileId);
+      const avatarFile = await this.fileSource.getById(
+        updatedUser.avatarFileId,
+      );
       if (avatarFile) {
         headerImg = await this.fileCdn.getImageVolcengineCdn(
           avatarFile.vendor,

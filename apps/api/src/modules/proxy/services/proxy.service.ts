@@ -73,15 +73,22 @@ export class ProxyService {
     }
 
     // 2. 选择 API 密钥（包含 baseUrl 信息）
-    const keySelection = await this.keyringService.selectKeyForBot(vendor, bot.tags);
+    const keySelection = await this.keyringService.selectKeyForBot(
+      vendor,
+      bot.tags,
+    );
 
     if (!keySelection) {
-      return { success: false, error: `No API keys available for vendor: ${vendor}` };
+      return {
+        success: false,
+        error: `No API keys available for vendor: ${vendor}`,
+      };
     }
 
     // 3. 获取 vendor 配置（支持自定义 URL）
     // 如果 ProviderKey 有自定义 baseUrl，使用自定义配置
-    const providerConfig = PROVIDER_CONFIGS[vendor as keyof typeof PROVIDER_CONFIGS];
+    const providerConfig =
+      PROVIDER_CONFIGS[vendor as keyof typeof PROVIDER_CONFIGS];
     const apiType = providerConfig?.apiType;
     const vendorConfig = getVendorConfigWithCustomUrl(
       vendor,
@@ -121,7 +128,8 @@ export class ProxyService {
 
       return { success: true, statusCode };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Upstream error for bot ${bot.id}:`, error);
 
       // 记录失败日志

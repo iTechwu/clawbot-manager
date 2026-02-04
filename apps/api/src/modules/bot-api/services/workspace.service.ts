@@ -56,11 +56,24 @@ export class WorkspaceService {
 
   /**
    * Create workspace directory for a bot
+   * If workspace already exists (e.g., from a previously deleted bot), it will be cleaned first
    */
   async createWorkspace(config: BotWorkspaceConfig): Promise<string> {
     const workspacePath = path.join(this.dataDir, config.hostname);
+    const botSecretsPath = path.join(this.secretsDir, config.hostname);
 
     try {
+      // Clean up any existing workspace/secrets from previously deleted bot
+      // This ensures a fresh start when reusing a hostname
+      const workspaceExists = await this.workspaceExists(config.hostname);
+      if (workspaceExists) {
+        this.logger.info(
+          `Cleaning up existing workspace for hostname: ${config.hostname}`,
+        );
+        await fs.rm(workspacePath, { recursive: true, force: true });
+        await fs.rm(botSecretsPath, { recursive: true, force: true });
+      }
+
       // Create workspace directory
       await fs.mkdir(workspacePath, { recursive: true });
 
@@ -74,10 +87,12 @@ export class WorkspaceService {
 
       // Create features config
       const featuresPath = path.join(workspacePath, 'features.json');
-      await fs.writeFile(featuresPath, JSON.stringify(config.features, null, 2));
+      await fs.writeFile(
+        featuresPath,
+        JSON.stringify(config.features, null, 2),
+      );
 
       // Create secrets directory for this bot
-      const botSecretsPath = path.join(this.secretsDir, config.hostname);
       await fs.mkdir(botSecretsPath, { recursive: true });
 
       this.logger.info(`Workspace created for bot: ${config.hostname}`);
@@ -94,7 +109,10 @@ export class WorkspaceService {
   /**
    * Update workspace configuration
    */
-  async updateWorkspace(hostname: string, config: Partial<BotWorkspaceConfig>): Promise<void> {
+  async updateWorkspace(
+    hostname: string,
+    config: Partial<BotWorkspaceConfig>,
+  ): Promise<void> {
     const workspacePath = path.join(this.dataDir, hostname);
     const configPath = path.join(workspacePath, 'config.json');
 
@@ -117,15 +135,15 @@ export class WorkspaceService {
       // Update features if changed
       if (config.features) {
         const featuresPath = path.join(workspacePath, 'features.json');
-        await fs.writeFile(featuresPath, JSON.stringify(config.features, null, 2));
+        await fs.writeFile(
+          featuresPath,
+          JSON.stringify(config.features, null, 2),
+        );
       }
 
       this.logger.info(`Workspace updated for bot: ${hostname}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to update workspace for ${hostname}:`,
-        error,
-      );
+      this.logger.error(`Failed to update workspace for ${hostname}:`, error);
       throw error;
     }
   }
@@ -146,10 +164,7 @@ export class WorkspaceService {
 
       this.logger.info(`Workspace deleted for bot: ${hostname}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to delete workspace for ${hostname}:`,
-        error,
-      );
+      this.logger.error(`Failed to delete workspace for ${hostname}:`, error);
       throw error;
     }
   }
@@ -177,7 +192,11 @@ export class WorkspaceService {
   /**
    * Write API key to secrets directory
    */
-  async writeApiKey(hostname: string, vendor: string, apiKey: string): Promise<void> {
+  async writeApiKey(
+    hostname: string,
+    vendor: string,
+    apiKey: string,
+  ): Promise<void> {
     const botSecretsPath = path.join(this.secretsDir, hostname);
     const keyPath = path.join(botSecretsPath, `${vendor}.key`);
 
@@ -233,8 +252,12 @@ export class WorkspaceService {
    */
   async findOrphanedSecrets(knownHostnames: string[]): Promise<string[]> {
     try {
-      const entries = await fs.readdir(this.secretsDir, { withFileTypes: true });
-      const secretDirs = entries.filter((e) => e.isDirectory()).map((e) => e.name);
+      const entries = await fs.readdir(this.secretsDir, {
+        withFileTypes: true,
+      });
+      const secretDirs = entries
+        .filter((e) => e.isDirectory())
+        .map((e) => e.name);
       return secretDirs.filter((s) => !knownHostnames.includes(s));
     } catch {
       return [];
@@ -255,7 +278,9 @@ export class WorkspaceService {
    */
   async listSecretHostnames(): Promise<string[]> {
     try {
-      const entries = await fs.readdir(this.secretsDir, { withFileTypes: true });
+      const entries = await fs.readdir(this.secretsDir, {
+        withFileTypes: true,
+      });
       return entries.filter((e) => e.isDirectory()).map((e) => e.name);
     } catch {
       return [];
@@ -272,10 +297,7 @@ export class WorkspaceService {
       await fs.rm(botSecretsPath, { recursive: true, force: true });
       this.logger.info(`Secrets deleted for bot: ${hostname}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to delete secrets for ${hostname}:`,
-        error,
-      );
+      this.logger.error(`Failed to delete secrets for ${hostname}:`, error);
       throw error;
     }
   }
@@ -284,7 +306,11 @@ export class WorkspaceService {
    * Write a secret file for a bot
    * Used for channel tokens and other secrets
    */
-  async writeSecret(hostname: string, name: string, value: string): Promise<void> {
+  async writeSecret(
+    hostname: string,
+    name: string,
+    value: string,
+  ): Promise<void> {
     const botSecretsPath = path.join(this.secretsDir, hostname);
     const secretPath = path.join(botSecretsPath, name);
 
