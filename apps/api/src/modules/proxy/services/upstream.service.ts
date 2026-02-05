@@ -5,6 +5,10 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import type { VendorConfig } from '../config/vendor.config';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import {
+  TokenExtractorService,
+  TokenUsage,
+} from './token-extractor.service';
 
 /**
  * 上游请求参数
@@ -30,6 +34,14 @@ export interface UpstreamResult {
 }
 
 /**
+ * 流式转发结果
+ */
+export interface StreamForwardResult {
+  statusCode: number;
+  tokenUsage: TokenUsage | null;
+}
+
+/**
  * 解析 URL 获取请求参数
  */
 interface ParsedUrl {
@@ -52,6 +64,7 @@ interface ParsedUrl {
 export class UpstreamService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly tokenExtractor: TokenExtractorService,
   ) {}
 
   /**
@@ -86,12 +99,14 @@ export class UpstreamService {
    *
    * @param req 上游请求参数
    * @param rawResponse 原始响应对象（用于流式传输）
-   * @returns 响应状态码
+   * @param vendor AI 提供商标识（用于 token 提取）
+   * @returns 响应状态码和 token 使用量
    */
   async forwardToUpstream(
     req: UpstreamRequest,
     rawResponse: ServerResponse,
-  ): Promise<number> {
+    vendor?: string,
+  ): Promise<StreamForwardResult> {
     return new Promise((resolve, reject) => {
       const { vendorConfig, path, method, headers, body, apiKey, customUrl } =
         req;
@@ -151,6 +166,9 @@ export class UpstreamService {
         `Forwarding to upstream: ${method} ${useHttps ? 'https' : 'http'}://${targetHost}:${targetPort}${upstreamPath}`,
       );
 
+      // 收集响应数据用于 token 提取
+      const responseChunks: Buffer[] = [];
+
       const httpModule = useHttps ? https : http;
       const proxyReq = httpModule.request(
         options,
@@ -184,6 +202,8 @@ export class UpstreamService {
 
           proxyRes.on('data', (chunk) => {
             rawResponse.write(chunk);
+            // 收集 chunk 用于 token 提取
+            responseChunks.push(chunk);
             // 强制刷新 SSE - 确保事件立即发送
             if (typeof (rawResponse as any).flush === 'function') {
               (rawResponse as any).flush();
@@ -192,7 +212,25 @@ export class UpstreamService {
 
           proxyRes.on('end', () => {
             rawResponse.end();
-            resolve(statusCode);
+
+            // 提取 token 使用量
+            let tokenUsage: TokenUsage | null = null;
+            if (vendor && statusCode >= 200 && statusCode < 300) {
+              try {
+                const responseData = Buffer.concat(responseChunks).toString(
+                  'utf-8',
+                );
+                tokenUsage = this.tokenExtractor.extractFromResponse(
+                  vendor,
+                  responseData,
+                  contentType || '',
+                );
+              } catch (err) {
+                this.logger.debug('Failed to extract token usage:', err);
+              }
+            }
+
+            resolve({ statusCode, tokenUsage });
           });
 
           proxyRes.on('error', (err) => {

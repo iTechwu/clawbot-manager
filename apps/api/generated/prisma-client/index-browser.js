@@ -303,6 +303,8 @@ exports.Prisma.BotScalarFieldEnum = {
   emoji: 'emoji',
   avatarFileId: 'avatarFileId',
   soulMarkdown: 'soulMarkdown',
+  healthStatus: 'healthStatus',
+  lastHealthCheck: 'lastHealthCheck',
   isDeleted: 'isDeleted',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -340,7 +342,11 @@ exports.Prisma.BotUsageLogScalarFieldEnum = {
   statusCode: 'statusCode',
   requestTokens: 'requestTokens',
   responseTokens: 'responseTokens',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  model: 'model',
+  endpoint: 'endpoint',
+  durationMs: 'durationMs',
+  errorMessage: 'errorMessage'
 };
 
 exports.Prisma.ProxyTokenScalarFieldEnum = {
@@ -427,6 +433,38 @@ exports.Prisma.ChannelCredentialFieldScalarFieldEnum = {
   deletedAt: 'deletedAt'
 };
 
+exports.Prisma.PluginScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  description: 'description',
+  version: 'version',
+  author: 'author',
+  category: 'category',
+  configSchema: 'configSchema',
+  defaultConfig: 'defaultConfig',
+  mcpConfig: 'mcpConfig',
+  isOfficial: 'isOfficial',
+  isEnabled: 'isEnabled',
+  downloadUrl: 'downloadUrl',
+  iconEmoji: 'iconEmoji',
+  iconUrl: 'iconUrl',
+  isDeleted: 'isDeleted',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.BotPluginScalarFieldEnum = {
+  id: 'id',
+  botId: 'botId',
+  pluginId: 'pluginId',
+  config: 'config',
+  isEnabled: 'isEnabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -500,6 +538,12 @@ exports.BotStatus = exports.$Enums.BotStatus = {
   error: 'error'
 };
 
+exports.HealthStatus = exports.$Enums.HealthStatus = {
+  HEALTHY: 'HEALTHY',
+  UNHEALTHY: 'UNHEALTHY',
+  UNKNOWN: 'UNKNOWN'
+};
+
 exports.OperateType = exports.$Enums.OperateType = {
   CREATE: 'CREATE',
   UPDATE: 'UPDATE',
@@ -518,6 +562,16 @@ exports.OperateTarget = exports.$Enums.OperateTarget = {
   USER: 'USER',
   PERSONA_TEMPLATE: 'PERSONA_TEMPLATE',
   SYSTEM: 'SYSTEM'
+};
+
+exports.PluginCategory = exports.$Enums.PluginCategory = {
+  BROWSER: 'BROWSER',
+  FILESYSTEM: 'FILESYSTEM',
+  DATABASE: 'DATABASE',
+  API: 'API',
+  COMMUNICATION: 'COMMUNICATION',
+  DEVELOPMENT: 'DEVELOPMENT',
+  CUSTOM: 'CUSTOM'
 };
 
 exports.Prisma.ModelName = {
@@ -541,7 +595,9 @@ exports.Prisma.ModelName = {
   MessageRecipient: 'MessageRecipient',
   OperateLog: 'OperateLog',
   ChannelDefinition: 'ChannelDefinition',
-  ChannelCredentialField: 'ChannelCredentialField'
+  ChannelCredentialField: 'ChannelCredentialField',
+  Plugin: 'Plugin',
+  BotPlugin: 'BotPlugin'
 };
 
 /**

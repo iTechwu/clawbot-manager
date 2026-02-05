@@ -23,3 +23,5 @@ export * from './modules/operate-log';
 export * from './modules/channel-definition';
 export * from './modules/channel-credential-field';
 export * from './modules/proxy-token';
+export * from './modules/plugin';
+export * from './modules/bot-plugin';
