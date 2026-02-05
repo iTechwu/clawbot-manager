@@ -4,7 +4,11 @@ import { useState, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocale } from 'next-intl';
-import { botChannelApi, channelApi } from '@/lib/api/contracts/client';
+import {
+  botChannelApi,
+  channelApi,
+  botChannelClient,
+} from '@/lib/api/contracts/client';
 import {
   Card,
   CardContent,
@@ -44,7 +48,10 @@ import type {
   ChannelConnectionStatus,
   ChannelDefinition,
 } from '@repo/contracts';
-import { ChannelIcon, channelColors } from '@/lib/config/channels/channel-icons';
+import {
+  ChannelIcon,
+  channelColors,
+} from '@/lib/config/channels/channel-icons';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyQueryOptions = any;
@@ -54,7 +61,10 @@ type AnyQueryOptions = any;
  */
 const connectionStatusConfig: Record<
   ChannelConnectionStatus,
-  { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
+  {
+    label: string;
+    variant: 'default' | 'secondary' | 'destructive' | 'outline';
+  }
 > = {
   DISCONNECTED: { label: '未连接', variant: 'secondary' },
   CONNECTING: { label: '连接中', variant: 'outline' },
@@ -82,7 +92,9 @@ function ChannelCard({
   onDelete: (channelId: string) => void;
   isConnecting: boolean;
 }) {
-  const definition = channelDefinitions.find((d) => d.id === channel.channelType);
+  const definition = channelDefinitions.find(
+    (d) => d.id === channel.channelType,
+  );
   const statusConfig = connectionStatusConfig[channel.connectionStatus];
   const accentColor = channelColors[channel.channelType] || '#6B7280';
 
@@ -107,7 +119,9 @@ function ChannelCard({
               <ChannelIcon channelId={channel.channelType} size={28} />
             </div>
             <div>
-              <CardTitle className="text-base font-semibold">{channel.name}</CardTitle>
+              <CardTitle className="text-base font-semibold">
+                {channel.name}
+              </CardTitle>
               <CardDescription className="text-xs">
                 {definition?.label || channel.channelType}
               </CardDescription>
@@ -244,7 +258,11 @@ function AddChannelDialog({
 
   const handleSubmit = () => {
     if (!selectedChannelType || !name.trim()) {
-      toast.error(locale === 'zh-CN' ? '请选择渠道类型并填写名称' : 'Please select a channel type and enter a name');
+      toast.error(
+        locale === 'zh-CN'
+          ? '请选择渠道类型并填写名称'
+          : 'Please select a channel type and enter a name',
+      );
       return;
     }
 
@@ -303,14 +321,17 @@ function AddChannelDialog({
         className={`
           relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all
           hover:shadow-md hover:scale-[1.02]
-          ${isSelected
-            ? 'border-primary bg-primary/5 shadow-md'
-            : 'border-border hover:border-primary/50'
+          ${
+            isSelected
+              ? 'border-primary bg-primary/5 shadow-md'
+              : 'border-border hover:border-primary/50'
           }
         `}
-        style={{
-          '--accent': accentColor,
-        } as React.CSSProperties}
+        style={
+          {
+            '--accent': accentColor,
+          } as React.CSSProperties
+        }
       >
         {/* 选中指示器 */}
         {isSelected && (
@@ -336,7 +357,9 @@ function AddChannelDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{locale === 'zh-CN' ? '添加渠道' : 'Add Channel'}</DialogTitle>
+          <DialogTitle>
+            {locale === 'zh-CN' ? '添加渠道' : 'Add Channel'}
+          </DialogTitle>
           <DialogDescription>
             {locale === 'zh-CN'
               ? '选择渠道类型并配置凭证以接收和回复消息'
@@ -389,7 +412,9 @@ function AddChannelDialog({
                 </Label>
                 <Input
                   id="name"
-                  placeholder={locale === 'zh-CN' ? '例如：我的机器人' : 'e.g., My Bot'}
+                  placeholder={
+                    locale === 'zh-CN' ? '例如：我的机器人' : 'e.g., My Bot'
+                  }
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -406,7 +431,9 @@ function AddChannelDialog({
                     type={field.fieldType === 'password' ? 'password' : 'text'}
                     placeholder={field.placeholder}
                     value={credentials[field.key] || ''}
-                    onChange={(e) => handleCredentialChange(field.key, e.target.value)}
+                    onChange={(e) =>
+                      handleCredentialChange(field.key, e.target.value)
+                    }
                   />
                 </div>
               ))}
@@ -422,7 +449,9 @@ function AddChannelDialog({
                     className="hover:underline"
                   >
                     {selectedDefinition.helpText ||
-                      (locale === 'zh-CN' ? '查看帮助文档' : 'View documentation')}
+                      (locale === 'zh-CN'
+                        ? '查看帮助文档'
+                        : 'View documentation')}
                   </a>
                 </div>
               )}
@@ -440,7 +469,10 @@ function AddChannelDialog({
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
             {locale === 'zh-CN' ? '取消' : 'Cancel'}
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting || !selectedChannelType}>
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !selectedChannelType}
+          >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {locale === 'zh-CN' ? '添加' : 'Add'}
           </Button>
@@ -469,18 +501,19 @@ export default function BotChannelsPage() {
   const { data: channelDefsResponse } = channelApi.list.useQuery(
     ['channel-definitions', locale],
     { query: { locale } },
-    { staleTime: 1000 * 60 * 10 }, // 10 minutes
+    { staleTime: 1000 * 60 * 10 } as AnyQueryOptions, // 10 minutes
   );
 
   const channelDefinitions = channelDefsResponse?.body?.data?.channels || [];
-  const popularChannels = channelDefsResponse?.body?.data?.popularChannels || [];
+  const popularChannels =
+    channelDefsResponse?.body?.data?.popularChannels || [];
   const otherChannels = channelDefsResponse?.body?.data?.otherChannels || [];
 
   // 获取渠道列表
   const { data: channelsResponse, isLoading } = botChannelApi.list.useQuery(
     ['bot-channels', hostname],
     { params: { hostname } },
-    { enabled: !!hostname },
+    { enabled: !!hostname } as AnyQueryOptions,
   );
 
   const channels = channelsResponse?.body?.data?.list || [];
@@ -494,7 +527,7 @@ export default function BotChannelsPage() {
   }) => {
     setIsSubmitting(true);
     try {
-      const response = await botChannelApi.create.mutation({
+      const response = await botChannelClient.create({
         params: { hostname },
         body: data,
       });
@@ -513,7 +546,7 @@ export default function BotChannelsPage() {
   // 切换渠道启用状态
   const handleToggle = async (channelId: string, enabled: boolean) => {
     try {
-      const response = await botChannelApi.update.mutation({
+      const response = await botChannelClient.update({
         params: { hostname, channelId },
         body: { isEnabled: enabled },
       });
@@ -530,7 +563,7 @@ export default function BotChannelsPage() {
   const handleConnect = async (channelId: string) => {
     setConnectingChannelId(channelId);
     try {
-      const response = await botChannelApi.connection.mutation({
+      const response = await botChannelClient.connection({
         params: { hostname, channelId },
         body: { action: 'connect' },
       });
@@ -553,7 +586,7 @@ export default function BotChannelsPage() {
   // 断开渠道
   const handleDisconnect = async (channelId: string) => {
     try {
-      const response = await botChannelApi.connection.mutation({
+      const response = await botChannelClient.connection({
         params: { hostname, channelId },
         body: { action: 'disconnect' },
       });
@@ -571,7 +604,7 @@ export default function BotChannelsPage() {
     if (!confirm('确定要删除此渠道吗？')) return;
 
     try {
-      const response = await botChannelApi.delete.mutation({
+      const response = await botChannelClient.delete({
         params: { hostname, channelId },
       });
       if (response.status === 200) {
