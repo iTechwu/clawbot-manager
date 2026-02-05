@@ -17,7 +17,9 @@
     "start": "Start",
     "stop": "Stop",
     "delete": "Delete",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "usage": "Usage",
+    "plugins": "Plugins"
   },
   "status": {
     "created": "Created",

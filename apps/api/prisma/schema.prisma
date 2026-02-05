@@ -360,6 +360,15 @@ enum BotStatus {
   @@map("bot_status")
 }
 
+/// Bot 健康状态
+enum HealthStatus {
+  HEALTHY
+  UNHEALTHY
+  UNKNOWN
+
+  @@map("health_status")
+}
+
 /// Bot - 机器人实体
 /// 管理 AI 机器人的生命周期和配置
 model Bot {
@@ -381,6 +390,10 @@ model Bot {
   avatarFileId      String?   @map("avatar_file_id") @db.Uuid
   soulMarkdown      String?   @map("soul_markdown") @db.Text
 
+  // 健康检查字段
+  healthStatus    HealthStatus @default(UNKNOWN) @map("health_status")
+  lastHealthCheck DateTime?    @map("last_health_check") @db.Timestamptz(6)
+
   isDeleted Boolean   @default(false) @map("is_deleted")
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -393,6 +406,8 @@ model Bot {
   providerKeys    BotProviderKey[]
   usageLogs       BotUsageLog[]
   proxyToken      ProxyToken?
+  plugins         BotPlugin[]
+  skills          BotSkill[]
 
   @@index([status])
   @@index([hostname])
@@ -400,6 +415,7 @@ model Bot {
   @@index([personaTemplateId])
   @@index([avatarFileId])
   @@index([isDeleted])
+  @@index([healthStatus])
   @@map("b_bot")
 }
 
@@ -474,12 +490,21 @@ model BotUsageLog {
   responseTokens Int?     @map("response_tokens")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
+  // 新增字段 - 用于精细化用量分析
+  model        String?  @db.VarChar(100)                    // AI 模型名称
+  endpoint     String?  @db.VarChar(255)                    // API 端点路径
+  durationMs   Int?     @map("duration_ms")                 // 请求耗时（毫秒）
+  errorMessage String?  @map("error_message") @db.Text      // 错误信息
+
   bot         Bot          @relation(fields: [botId], references: [id], onDelete: Cascade)
   providerKey ProviderKey? @relation(fields: [providerKeyId], references: [id], onDelete: SetNull)
 
   @@index([botId])
   @@index([createdAt])
   @@index([vendor])
+  @@index([botId, createdAt])           // 复合索引：按 Bot 查询时间范围
+  @@index([botId, vendor, createdAt])   // 复合索引：按 Bot+Vendor 查询
+  @@index([model])                      // 按模型查询
   @@map("b_usage_log")
 }
 
@@ -682,4 +707,142 @@ model ChannelCredentialField {
   @@index([sortOrder])
   @@index([isDeleted])
   @@map("b_channel_credential_field")
+}
+
+// ============================================================================
+// Plugin System - 插件系统
+// ============================================================================
+
+/// 插件分类
+enum PluginCategory {
+  BROWSER       // 浏览器自动化
+  FILESYSTEM    // 文件系统
+  DATABASE      // 数据库
+  API           // API 集成
+  COMMUNICATION // 通讯工具
+  DEVELOPMENT   // 开发工具
+  CUSTOM        // 自定义
+
+  @@map("plugin_category")
+}
+
+/// Plugin - 插件定义
+/// 存储插件的元数据和配置模板
+model Plugin {
+  id            String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name          String         @db.VarChar(100)
+  slug          String         @unique @db.VarChar(100)
+  description   String?        @db.Text
+  version       String         @db.VarChar(20)
+  author        String?        @db.VarChar(100)
+  category      PluginCategory
+  region        String         @default("global") @db.VarChar(20) // global, cn, en
+  configSchema  Json?          @map("config_schema")   // JSON Schema for plugin config
+  defaultConfig Json?          @map("default_config")  // Default configuration
+  mcpConfig     Json?          @map("mcp_config")      // MCP server configuration
+  isOfficial    Boolean        @default(false) @map("is_official")
+  isEnabled     Boolean        @default(true) @map("is_enabled")
+  downloadUrl   String?        @map("download_url") @db.VarChar(500)
+  iconEmoji     String?        @map("icon_emoji") @db.VarChar(10)
+  iconUrl       String?        @map("icon_url") @db.VarChar(500)
+
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  installations BotPlugin[]
+
+  @@index([category])
+  @@index([region])
+  @@index([isOfficial])
+  @@index([isEnabled])
+  @@index([isDeleted])
+  @@map("b_plugin")
+}
+
+/// BotPlugin - Bot 与 Plugin 的关联表
+/// 记录 Bot 安装的插件及其配置
+model BotPlugin {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  botId     String   @map("bot_id") @db.Uuid
+  pluginId  String   @map("plugin_id") @db.Uuid
+  config    Json?                                      // Plugin instance configuration
+  isEnabled Boolean  @default(true) @map("is_enabled")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  bot    Bot    @relation(fields: [botId], references: [id], onDelete: Cascade)
+  plugin Plugin @relation(fields: [pluginId], references: [id], onDelete: Cascade)
+
+  @@unique([botId, pluginId])
+  @@index([botId])
+  @@index([pluginId])
+  @@index([isEnabled])
+  @@map("b_bot_plugin")
+}
+
+/// Skill - 自定义技能定义
+/// 用户可以创建自定义技能供 Bot 使用
+model Skill {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String   @db.VarChar(100)
+  slug        String   @db.VarChar(100)
+  description String?  @db.Text
+  version     String   @default("1.0.0") @db.VarChar(20)
+
+  // 技能类型: tool (工具调用), prompt (提示词模板), workflow (工作流)
+  skillType   String   @default("tool") @map("skill_type") @db.VarChar(20)
+
+  // 技能定义 (JSON)
+  // 对于 tool 类型: { name, description, inputSchema, handler }
+  // 对于 prompt 类型: { template, variables }
+  // 对于 workflow 类型: { steps, triggers }
+  definition  Json     @db.JsonB
+
+  // 示例用法
+  examples    Json?    @db.JsonB
+
+  // 是否为系统预设
+  isSystem    Boolean  @default(false) @map("is_system")
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+
+  // 创建者
+  createdById String?  @map("created_by_id") @db.Uuid
+
+  isDeleted   Boolean  @default(false) @map("is_deleted")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  installations BotSkill[]
+
+  @@unique([slug, createdById])
+  @@index([skillType])
+  @@index([isSystem])
+  @@index([isEnabled])
+  @@index([createdById])
+  @@index([isDeleted])
+  @@map("b_skill")
+}
+
+/// BotSkill - Bot 与 Skill 的关联表
+/// 记录 Bot 安装的技能及其配置
+model BotSkill {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  botId     String   @map("bot_id") @db.Uuid
+  skillId   String   @map("skill_id") @db.Uuid
+  config    Json?    // Skill instance configuration overrides
+  isEnabled Boolean  @default(true) @map("is_enabled")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  bot   Bot   @relation(fields: [botId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([botId, skillId])
+  @@index([botId])
+  @@index([skillId])
+  @@index([isEnabled])
+  @@map("b_bot_skill")
 }

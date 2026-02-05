@@ -1,12 +1,16 @@
-import { Controller, Req, VERSION_NEUTRAL } from '@nestjs/common';
+import { Controller, Get, MessageEvent, Req, Sse, VERSION_NEUTRAL } from '@nestjs/common';
 import { TsRestHandler, tsRestHandler } from '@ts-rest/nest';
 import {
   botContract as bc,
   providerKeyContract as pkc,
+  botUsageContract as buc,
 } from '@repo/contracts/api';
 import { success, created } from '@/common/ts-rest/response.helper';
 import { BotApiService } from './bot-api.service';
+import { BotUsageAnalyticsService } from './services/bot-usage-analytics.service';
+import { BotSseService } from './services/bot-sse.service';
 import { AuthenticatedRequest, Auth } from '@app/auth';
+import type { Observable } from 'rxjs';
 
 /**
  * Bot API 控制器
@@ -22,7 +26,11 @@ import { AuthenticatedRequest, Auth } from '@app/auth';
 })
 @Auth()
 export class BotApiController {
-  constructor(private readonly botApiService: BotApiService) {}
+  constructor(
+    private readonly botApiService: BotApiService,
+    private readonly usageAnalyticsService: BotUsageAnalyticsService,
+    private readonly sseService: BotSseService,
+  ) {}
 
   // ============================================================================
   // Bot CRUD
@@ -181,5 +189,78 @@ export class BotApiController {
       );
       return success(result);
     });
+  }
+
+  // ============================================================================
+  // Bot Usage Analytics
+  // ============================================================================
+
+  @TsRestHandler(buc.getStats)
+  async getUsageStats(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(buc.getStats, async ({ params, query }) => {
+      const userId = req.userId;
+      const stats = await this.usageAnalyticsService.getStats(
+        userId,
+        params.hostname,
+        query,
+      );
+      return success(stats);
+    });
+  }
+
+  @TsRestHandler(buc.getTrend)
+  async getUsageTrend(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(buc.getTrend, async ({ params, query }) => {
+      const userId = req.userId;
+      const trend = await this.usageAnalyticsService.getTrend(
+        userId,
+        params.hostname,
+        query,
+      );
+      return success(trend);
+    });
+  }
+
+  @TsRestHandler(buc.getBreakdown)
+  async getUsageBreakdown(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(buc.getBreakdown, async ({ params, query }) => {
+      const userId = req.userId;
+      const breakdown = await this.usageAnalyticsService.getBreakdown(
+        userId,
+        params.hostname,
+        query,
+      );
+      return success(breakdown);
+    });
+  }
+
+  @TsRestHandler(buc.getLogs)
+  async getUsageLogs(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(buc.getLogs, async ({ params, query }) => {
+      const userId = req.userId;
+      const logs = await this.usageAnalyticsService.getLogs(
+        userId,
+        params.hostname,
+        query,
+      );
+      return success(logs);
+    });
+  }
+
+  // ============================================================================
+  // Real-time Status Stream (SSE)
+  // ============================================================================
+
+  /**
+   * SSE 端点：实时推送 Bot 状态变更
+   * 客户端连接后会收到：
+   * - bot-status: Bot 运行状态变更（running, stopped, error）
+   * - bot-health: Bot 健康状态变更（HEALTHY, UNHEALTHY）
+   */
+  @Get('bot/status-stream')
+  @Sse()
+  statusStream(@Req() req: AuthenticatedRequest): Observable<MessageEvent> {
+    const userId = req.userId;
+    return this.sseService.getUserStream(userId);
   }
 }

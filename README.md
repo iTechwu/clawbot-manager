@@ -254,7 +254,11 @@ pnpm dev:api      # 仅后端
 ./scripts/start-clawbot.sh
 ```
 
-依赖 `docker-compose.yml`，启动 ClawBotManager 与 `keyring-proxy` 等服务，健康检查通过后访问 `http://localhost:7100`。
+依赖 `docker-compose.yml`，启动 API 与 Web 服务。健康检查通过后：
+- 前端：<http://localhost:13000>
+- API：<http://localhost:13100/api>
+
+> 注：AI 代理功能（keyring-proxy）已集成到 API 服务中，通过 `/api/v1/:vendor/*` 端点提供。
 
 ---
 

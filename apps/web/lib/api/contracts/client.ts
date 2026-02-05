@@ -13,10 +13,13 @@ import {
   uploaderContract,
   userContract,
   botContract,
+  botUsageContract,
   providerKeyContract,
   systemContract,
   personaTemplateContract,
   channelContract,
+  pluginContract,
+  botPluginContract,
 } from '@repo/contracts';
 import { getHeaders } from '@repo/utils/headers';
 import { API_VERSION_HEADER, APP_BUILD_HEADER } from '@repo/constants';
@@ -399,6 +402,36 @@ export const channelClient = initClient(channelContract, clientOptions);
  */
 export const channelApi = initQueryClient(channelContract, clientOptions);
 
+/**
+ * Bot Usage API - Direct client
+ */
+export const botUsageClient = initClient(botUsageContract, clientOptions);
+
+/**
+ * Bot Usage API - React Query hooks
+ */
+export const botUsageApi = initQueryClient(botUsageContract, clientOptions);
+
+/**
+ * Plugin API - Direct client
+ */
+export const pluginClient = initClient(pluginContract, clientOptions);
+
+/**
+ * Plugin API - React Query hooks
+ */
+export const pluginApi = initQueryClient(pluginContract, clientOptions);
+
+/**
+ * Bot Plugin API - Direct client
+ */
+export const botPluginClient = initClient(botPluginContract, clientOptions);
+
+/**
+ * Bot Plugin API - React Query hooks
+ */
+export const botPluginApi = initQueryClient(botPluginContract, clientOptions);
+
 // ============================================================================
 // Generic ts-rest Client (for custom contracts)
 // ============================================================================
@@ -421,15 +454,21 @@ export const tsRestClient = {
   setting: settingApi,
   download: downloadApi,
   bot: botApi,
+  botUsage: botUsageApi,
   providerKey: providerKeyApi,
   system: systemApi,
   personaTemplate: personaTemplateApi,
   channel: channelApi,
+  plugin: pluginApi,
+  botPlugin: botPluginApi,
   // Direct clients (for imperative calls)
   analyticsClient,
   botClient,
+  botUsageClient,
   providerKeyClient,
   systemClient,
   personaTemplateClient,
   channelClient,
+  pluginClient,
+  botPluginClient,
 };

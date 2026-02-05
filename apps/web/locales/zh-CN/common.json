@@ -32,6 +32,7 @@
     "subtitle": "机器人管理",
     "management": "管理",
     "bots": "机器人",
+    "plugins": "插件市场",
     "templates": "人设模板",
     "secrets": "API密钥",
     "diagnostics": "诊断",

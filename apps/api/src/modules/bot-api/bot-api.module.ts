@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { HttpModule } from '@nestjs/axios';
+import { ScheduleModule } from '@nestjs/schedule';
 import {
   BotModule,
   ProviderKeyModule,
@@ -7,7 +9,9 @@ import {
   UserInfoModule,
   OperateLogModule,
   PersonaTemplateModule,
+  BotUsageLogModule,
 } from '@app/db';
+import { PrismaModule } from '@app/prisma';
 import { AuthModule } from '@app/auth';
 import { JwtModule } from '@app/jwt/jwt.module';
 import { RedisModule } from '@app/redis';
@@ -19,10 +23,16 @@ import { EncryptionService } from './services/encryption.service';
 import { DockerService } from './services/docker.service';
 import { WorkspaceService } from './services/workspace.service';
 import { ReconciliationService } from './services/reconciliation.service';
+import { DockerEventService } from './services/docker-event.service';
+import { BotSseService } from './services/bot-sse.service';
+import { BotUsageAnalyticsService } from './services/bot-usage-analytics.service';
+import { HealthCheckService } from './services/health-check.service';
 
 @Module({
   imports: [
     ConfigModule,
+    HttpModule.register({ timeout: 5000 }),
+    ScheduleModule.forRoot(),
     BotModule,
     ProviderKeyModule,
     BotProviderKeyModule,
@@ -34,6 +44,8 @@ import { ReconciliationService } from './services/reconciliation.service';
     PersonaTemplateModule,
     ProviderVerifyModule,
     ProxyModule,
+    BotUsageLogModule,
+    PrismaModule,
   ],
   controllers: [BotApiController],
   providers: [
@@ -42,12 +54,20 @@ import { ReconciliationService } from './services/reconciliation.service';
     DockerService,
     WorkspaceService,
     ReconciliationService,
+    DockerEventService,
+    BotSseService,
+    BotUsageAnalyticsService,
+    HealthCheckService,
   ],
   exports: [
     BotApiService,
     DockerService,
     WorkspaceService,
     ReconciliationService,
+    DockerEventService,
+    BotSseService,
+    BotUsageAnalyticsService,
+    HealthCheckService,
   ],
 })
 export class BotApiModule {}

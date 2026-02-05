@@ -7,6 +7,7 @@ import { KeyringService } from './keyring.service';
 import { KeyringProxyService } from './keyring-proxy.service';
 import { UpstreamService } from './upstream.service';
 import { QuotaService } from './quota.service';
+import type { TokenUsage } from './token-extractor.service';
 import {
   getVendorConfigWithCustomUrl,
   isVendorSupported,
@@ -141,21 +142,23 @@ export class ProxyService {
 
     // 转发请求到上游
     try {
-      const statusCode = await this.upstreamService.forwardToUpstream(
-        {
-          vendorConfig: vendorConfig!,
-          path,
-          method,
-          headers,
-          body,
-          apiKey,
-          customUrl: baseUrl || undefined,
-        },
-        rawResponse,
-      );
+      const { statusCode, tokenUsage } =
+        await this.upstreamService.forwardToUpstream(
+          {
+            vendorConfig: vendorConfig!,
+            path,
+            method,
+            headers,
+            body,
+            apiKey,
+            customUrl: baseUrl || undefined,
+          },
+          rawResponse,
+          vendor,
+        );
 
-      // 记录使用日志
-      await this.logUsage(botId, vendor, keyId, statusCode);
+      // 记录使用日志（包含 token 使用量）
+      await this.logUsage(botId, vendor, keyId, statusCode, path, tokenUsage);
 
       // 检查配额并发送通知（异步，不阻塞响应）
       this.quotaService.checkAndNotify(botId).catch((err) => {
@@ -169,7 +172,7 @@ export class ProxyService {
       this.logger.error(`Upstream error for bot ${botId}:`, error);
 
       // 记录失败日志
-      await this.logUsage(botId, vendor, keyId, null);
+      await this.logUsage(botId, vendor, keyId, null, path, null, errorMessage);
 
       return { success: false, error: `Upstream error: ${errorMessage}` };
     }
@@ -183,6 +186,9 @@ export class ProxyService {
     vendor: string,
     providerKeyId: string,
     statusCode: number | null,
+    endpoint?: string,
+    tokenUsage?: TokenUsage | null,
+    errorMessage?: string,
   ): Promise<void> {
     try {
       await this.botUsageLogService.create({
@@ -190,6 +196,11 @@ export class ProxyService {
         vendor,
         providerKey: { connect: { id: providerKeyId } },
         statusCode,
+        endpoint: endpoint || null,
+        model: tokenUsage?.model || null,
+        requestTokens: tokenUsage?.requestTokens ?? null,
+        responseTokens: tokenUsage?.responseTokens ?? null,
+        errorMessage: errorMessage || null,
       });
     } catch (error) {
       this.logger.error('Failed to log usage:', error);

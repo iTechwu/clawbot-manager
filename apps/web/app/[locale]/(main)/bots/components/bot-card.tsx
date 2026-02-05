@@ -11,8 +11,9 @@ import {
   Badge,
   Button,
 } from '@repo/ui';
-import { Play, Square, Trash2 } from 'lucide-react';
+import { Play, Square, Trash2, BarChart2, Puzzle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 
 interface BotCardProps {
   bot: Bot;
@@ -70,6 +71,20 @@ export function BotCard({
             <span className="font-medium">{bot.port}</span>
           </div>
         )}
+        <div className="flex gap-2 pt-2">
+          <Link href={`/bots/${bot.hostname}/usage`} className="flex-1">
+            <Button variant="outline" size="sm" className="w-full">
+              <BarChart2 className="mr-1 size-4" />
+              {t('actions.usage')}
+            </Button>
+          </Link>
+          <Link href={`/bots/${bot.hostname}/plugins`} className="flex-1">
+            <Button variant="outline" size="sm" className="w-full">
+              <Puzzle className="mr-1 size-4" />
+              {t('actions.plugins')}
+            </Button>
+          </Link>
+        </div>
       </CardContent>
       <CardFooter className="gap-2">
         {bot.status === 'stopped' || bot.status === 'created' ? (

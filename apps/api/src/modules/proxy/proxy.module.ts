@@ -14,6 +14,7 @@ import { KeyringService } from './services/keyring.service';
 import { KeyringProxyService } from './services/keyring-proxy.service';
 import { UpstreamService } from './services/upstream.service';
 import { QuotaService } from './services/quota.service';
+import { TokenExtractorService } from './services/token-extractor.service';
 import { EncryptionService } from '../bot-api/services/encryption.service';
 
 /**
@@ -44,8 +45,9 @@ import { EncryptionService } from '../bot-api/services/encryption.service';
     KeyringProxyService,
     UpstreamService,
     QuotaService,
+    TokenExtractorService,
     EncryptionService,
   ],
-  exports: [ProxyService, KeyringProxyService, QuotaService],
+  exports: [ProxyService, KeyringProxyService, QuotaService, TokenExtractorService],
 })
 export class ProxyModule {}
