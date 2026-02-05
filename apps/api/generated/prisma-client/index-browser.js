@@ -441,6 +441,7 @@ exports.Prisma.PluginScalarFieldEnum = {
   version: 'version',
   author: 'author',
   category: 'category',
+  region: 'region',
   configSchema: 'configSchema',
   defaultConfig: 'defaultConfig',
   mcpConfig: 'mcpConfig',
@@ -459,6 +460,34 @@ exports.Prisma.BotPluginScalarFieldEnum = {
   id: 'id',
   botId: 'botId',
   pluginId: 'pluginId',
+  config: 'config',
+  isEnabled: 'isEnabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SkillScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  description: 'description',
+  version: 'version',
+  skillType: 'skillType',
+  definition: 'definition',
+  examples: 'examples',
+  isSystem: 'isSystem',
+  isEnabled: 'isEnabled',
+  createdById: 'createdById',
+  isDeleted: 'isDeleted',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.BotSkillScalarFieldEnum = {
+  id: 'id',
+  botId: 'botId',
+  skillId: 'skillId',
   config: 'config',
   isEnabled: 'isEnabled',
   createdAt: 'createdAt',
@@ -597,7 +626,9 @@ exports.Prisma.ModelName = {
   ChannelDefinition: 'ChannelDefinition',
   ChannelCredentialField: 'ChannelCredentialField',
   Plugin: 'Plugin',
-  BotPlugin: 'BotPlugin'
+  BotPlugin: 'BotPlugin',
+  Skill: 'Skill',
+  BotSkill: 'BotSkill'
 };
 
 /**

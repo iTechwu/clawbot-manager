@@ -626,7 +626,7 @@ export class FileTosClient extends FileS3Client {
     if (this.config.isPublic) {
       return `${this.config.domain}/${fileKey}`;
     }
-    console.log('techwu bucket', bucket, fileKey);
+    // console.log('techwu bucket', bucket, fileKey);
 
     const finalBucket = bucket || this.getBucketString();
     const cacheKey = `${finalBucket}:${fileKey}`;

@@ -1,0 +1,22 @@
+{
+  "title": "Plugin Market",
+  "description": "Browse and install plugins to extend your Bot's capabilities",
+  "searchPlaceholder": "Search plugins...",
+  "allCategories": "All Categories",
+  "noPlugins": "No plugins found",
+  "tryOtherKeywords": "Try searching with different keywords",
+  "regions": {
+    "global": "Global",
+    "cn": "China",
+    "en": "International"
+  },
+  "categories": {
+    "BROWSER": "Browser",
+    "FILESYSTEM": "Filesystem",
+    "DATABASE": "Database",
+    "API": "API",
+    "COMMUNICATION": "Communication",
+    "DEVELOPMENT": "Development",
+    "CUSTOM": "Custom"
+  }
+}

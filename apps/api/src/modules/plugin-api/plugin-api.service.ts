@@ -1,11 +1,7 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import {
-  PluginService,
-  BotPluginService,
-  BotService,
-} from '@app/db';
+import { PluginService, BotPluginService, BotService } from '@app/db';
 import type { Prisma } from '@prisma/client';
 import type {
   PluginListQuery,
@@ -31,8 +27,20 @@ export class PluginApiService {
    */
   async listPlugins(
     query: PluginListQuery,
-  ): Promise<{ list: PluginItem[]; total: number; page: number; limit: number }> {
-    const { page = 1, limit = 20, category, isOfficial, search } = query;
+  ): Promise<{
+    list: PluginItem[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const {
+      page = 1,
+      limit = 20,
+      category,
+      region,
+      isOfficial,
+      search,
+    } = query;
 
     const where: Prisma.PluginWhereInput = {
       isEnabled: true,
@@ -40,6 +48,11 @@ export class PluginApiService {
 
     if (category) {
       where.category = category;
+    }
+
+    // 区域过滤：如果指定了区域，返回该区域和 global 的插件
+    if (region) {
+      where.region = { in: [region, 'global'] };
     }
 
     if (isOfficial !== undefined) {
@@ -95,14 +108,20 @@ export class PluginApiService {
       iconUrl: data.iconUrl,
     });
 
-    this.logger.info('Plugin created', { pluginId: plugin.id, slug: plugin.slug });
+    this.logger.info('Plugin created', {
+      pluginId: plugin.id,
+      slug: plugin.slug,
+    });
     return this.mapPluginToItem(plugin);
   }
 
   /**
    * 更新插件（管理员）
    */
-  async updatePlugin(pluginId: string, data: UpdatePluginRequest): Promise<PluginItem> {
+  async updatePlugin(
+    pluginId: string,
+    data: UpdatePluginRequest,
+  ): Promise<PluginItem> {
     const existing = await this.pluginService.getById(pluginId);
     if (!existing) {
       throw new NotFoundException('插件不存在');
@@ -113,15 +132,25 @@ export class PluginApiService {
       {
         ...(data.name && { name: data.name }),
         ...(data.slug && { slug: data.slug }),
-        ...(data.description !== undefined && { description: data.description }),
+        ...(data.description !== undefined && {
+          description: data.description,
+        }),
         ...(data.version && { version: data.version }),
         ...(data.author !== undefined && { author: data.author }),
         ...(data.category && { category: data.category }),
-        ...(data.configSchema !== undefined && { configSchema: data.configSchema as Prisma.InputJsonValue }),
-        ...(data.defaultConfig !== undefined && { defaultConfig: data.defaultConfig as Prisma.InputJsonValue }),
-        ...(data.mcpConfig !== undefined && { mcpConfig: data.mcpConfig as Prisma.InputJsonValue }),
+        ...(data.configSchema !== undefined && {
+          configSchema: data.configSchema as Prisma.InputJsonValue,
+        }),
+        ...(data.defaultConfig !== undefined && {
+          defaultConfig: data.defaultConfig as Prisma.InputJsonValue,
+        }),
+        ...(data.mcpConfig !== undefined && {
+          mcpConfig: data.mcpConfig as Prisma.InputJsonValue,
+        }),
         ...(data.isOfficial !== undefined && { isOfficial: data.isOfficial }),
-        ...(data.downloadUrl !== undefined && { downloadUrl: data.downloadUrl }),
+        ...(data.downloadUrl !== undefined && {
+          downloadUrl: data.downloadUrl,
+        }),
         ...(data.iconEmoji !== undefined && { iconEmoji: data.iconEmoji }),
         ...(data.iconUrl !== undefined && { iconUrl: data.iconUrl }),
       },
@@ -148,7 +177,10 @@ export class PluginApiService {
   /**
    * 获取 Bot 已安装的插件列表
    */
-  async getBotPlugins(userId: string, hostname: string): Promise<BotPluginItem[]> {
+  async getBotPlugins(
+    userId: string,
+    hostname: string,
+  ): Promise<BotPluginItem[]> {
     const bot = await this.botService.get({ hostname, createdById: userId });
     if (!bot) {
       throw new NotFoundException('Bot 不存在');
@@ -157,7 +189,18 @@ export class PluginApiService {
     const botPlugins = await this.botPluginService.list(
       { botId: bot.id },
       { limit: 100 },
-      { select: { id: true, botId: true, pluginId: true, config: true, isEnabled: true, createdAt: true, updatedAt: true, plugin: true } },
+      {
+        select: {
+          id: true,
+          botId: true,
+          pluginId: true,
+          config: true,
+          isEnabled: true,
+          createdAt: true,
+          updatedAt: true,
+          plugin: true,
+        },
+      },
     );
 
     return botPlugins.list.map((bp) => this.mapBotPluginToItem(bp));
@@ -205,7 +248,16 @@ export class PluginApiService {
 
     // 获取完整的 BotPlugin 数据（包含 plugin 关联）
     const fullBotPlugin = await this.botPluginService.getById(botPlugin.id, {
-      select: { id: true, botId: true, pluginId: true, config: true, isEnabled: true, createdAt: true, updatedAt: true, plugin: true },
+      select: {
+        id: true,
+        botId: true,
+        pluginId: true,
+        config: true,
+        isEnabled: true,
+        createdAt: true,
+        updatedAt: true,
+        plugin: true,
+      },
     });
 
     return this.mapBotPluginToItem(fullBotPlugin!);
@@ -236,7 +288,9 @@ export class PluginApiService {
     const updated = await this.botPluginService.update(
       { id: botPlugin.id },
       {
-        ...(data.config !== undefined && { config: data.config as Prisma.InputJsonValue }),
+        ...(data.config !== undefined && {
+          config: data.config as Prisma.InputJsonValue,
+        }),
         ...(data.isEnabled !== undefined && { isEnabled: data.isEnabled }),
       },
     );
@@ -249,7 +303,16 @@ export class PluginApiService {
 
     // 获取完整的 BotPlugin 数据
     const fullBotPlugin = await this.botPluginService.getById(updated.id, {
-      select: { id: true, botId: true, pluginId: true, config: true, isEnabled: true, createdAt: true, updatedAt: true, plugin: true },
+      select: {
+        id: true,
+        botId: true,
+        pluginId: true,
+        config: true,
+        isEnabled: true,
+        createdAt: true,
+        updatedAt: true,
+        plugin: true,
+      },
     });
 
     return this.mapBotPluginToItem(fullBotPlugin!);
@@ -299,6 +362,7 @@ export class PluginApiService {
       version: plugin.version,
       author: plugin.author,
       category: plugin.category,
+      region: plugin.region,
       configSchema: plugin.configSchema as Record<string, unknown> | null,
       defaultConfig: plugin.defaultConfig as Record<string, unknown> | null,
       mcpConfig: plugin.mcpConfig as Record<string, unknown> | null,

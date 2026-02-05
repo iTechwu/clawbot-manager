@@ -32,6 +32,7 @@
     "subtitle": "Bot Management",
     "management": "Management",
     "bots": "Bots",
+    "plugins": "Plugins",
     "templates": "Templates",
     "secrets": "API Keys",
     "diagnostics": "Diagnostics",

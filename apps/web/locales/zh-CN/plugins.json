@@ -1,0 +1,22 @@
+{
+  "title": "插件市场",
+  "description": "浏览和安装插件来扩展 Bot 的能力",
+  "searchPlaceholder": "搜索插件...",
+  "allCategories": "全部分类",
+  "noPlugins": "暂无插件",
+  "tryOtherKeywords": "尝试使用其他关键词搜索",
+  "regions": {
+    "global": "全球",
+    "cn": "国内",
+    "en": "海外"
+  },
+  "categories": {
+    "BROWSER": "浏览器",
+    "FILESYSTEM": "文件系统",
+    "DATABASE": "数据库",
+    "API": "API",
+    "COMMUNICATION": "通讯",
+    "DEVELOPMENT": "开发工具",
+    "CUSTOM": "自定义"
+  }
+}

@@ -17,7 +17,9 @@
     "start": "启动",
     "stop": "停止",
     "delete": "删除",
-    "refresh": "刷新"
+    "refresh": "刷新",
+    "usage": "用量",
+    "plugins": "插件"
   },
   "status": {
     "created": "已创建",

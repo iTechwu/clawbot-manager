@@ -407,6 +407,7 @@ model Bot {
   usageLogs       BotUsageLog[]
   proxyToken      ProxyToken?
   plugins         BotPlugin[]
+  skills          BotSkill[]
 
   @@index([status])
   @@index([hostname])
@@ -735,6 +736,7 @@ model Plugin {
   version       String         @db.VarChar(20)
   author        String?        @db.VarChar(100)
   category      PluginCategory
+  region        String         @default("global") @db.VarChar(20) // global, cn, en
   configSchema  Json?          @map("config_schema") // JSON Schema for plugin config
   defaultConfig Json?          @map("default_config") // Default configuration
   mcpConfig     Json?          @map("mcp_config") // MCP server configuration
@@ -752,6 +754,7 @@ model Plugin {
   installations BotPlugin[]
 
   @@index([category])
+  @@index([region])
   @@index([isOfficial])
   @@index([isEnabled])
   @@index([isDeleted])
@@ -777,4 +780,69 @@ model BotPlugin {
   @@index([pluginId])
   @@index([isEnabled])
   @@map("b_bot_plugin")
+}
+
+/// Skill - 自定义技能定义
+/// 用户可以创建自定义技能供 Bot 使用
+model Skill {
+  id          String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String  @db.VarChar(100)
+  slug        String  @db.VarChar(100)
+  description String? @db.Text
+  version     String  @default("1.0.0") @db.VarChar(20)
+
+  // 技能类型: tool (工具调用), prompt (提示词模板), workflow (工作流)
+  skillType String @default("tool") @map("skill_type") @db.VarChar(20)
+
+  // 技能定义 (JSON)
+  // 对于 tool 类型: { name, description, inputSchema, handler }
+  // 对于 prompt 类型: { template, variables }
+  // 对于 workflow 类型: { steps, triggers }
+  definition Json @db.JsonB
+
+  // 示例用法
+  examples Json? @db.JsonB
+
+  // 是否为系统预设
+  isSystem  Boolean @default(false) @map("is_system")
+  isEnabled Boolean @default(true) @map("is_enabled")
+
+  // 创建者
+  createdById String? @map("created_by_id") @db.Uuid
+
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  installations BotSkill[]
+
+  @@unique([slug, createdById])
+  @@index([skillType])
+  @@index([isSystem])
+  @@index([isEnabled])
+  @@index([createdById])
+  @@index([isDeleted])
+  @@map("b_skill")
+}
+
+/// BotSkill - Bot 与 Skill 的关联表
+/// 记录 Bot 安装的技能及其配置
+model BotSkill {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  botId     String   @map("bot_id") @db.Uuid
+  skillId   String   @map("skill_id") @db.Uuid
+  config    Json? // Skill instance configuration overrides
+  isEnabled Boolean  @default(true) @map("is_enabled")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  bot   Bot   @relation(fields: [botId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([botId, skillId])
+  @@index([botId])
+  @@index([skillId])
+  @@index([isEnabled])
+  @@map("b_bot_skill")
 }

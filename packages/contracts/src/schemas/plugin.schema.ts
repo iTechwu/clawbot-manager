@@ -1,20 +1,18 @@
 import { z } from 'zod';
 import { PaginationQuerySchema } from '../base';
+import { PluginCategorySchema } from './prisma-enums.generated';
+
+// Re-export for convenience
+export type { PluginCategory } from './prisma-enums.generated';
 
 /**
- * 插件分类枚举
+ * 插件区域 Schema
+ * global: 全球可用
+ * cn: 国内优化
+ * en: 海外优化
  */
-export const PluginCategorySchema = z.enum([
-  'BROWSER',
-  'FILESYSTEM',
-  'DATABASE',
-  'API',
-  'COMMUNICATION',
-  'DEVELOPMENT',
-  'CUSTOM',
-]);
-
-export type PluginCategory = z.infer<typeof PluginCategorySchema>;
+export const PluginRegionSchema = z.enum(['global', 'cn', 'en']);
+export type PluginRegion = z.infer<typeof PluginRegionSchema>;
 
 /**
  * 插件基础信息 Schema
@@ -27,6 +25,7 @@ export const PluginItemSchema = z.object({
   version: z.string(),
   author: z.string().nullable(),
   category: PluginCategorySchema,
+  region: PluginRegionSchema,
   configSchema: z.record(z.string(), z.unknown()).nullable(),
   defaultConfig: z.record(z.string(), z.unknown()).nullable(),
   mcpConfig: z.record(z.string(), z.unknown()).nullable(),
@@ -46,6 +45,7 @@ export type PluginItem = z.infer<typeof PluginItemSchema>;
  */
 export const PluginListQuerySchema = PaginationQuerySchema.extend({
   category: PluginCategorySchema.optional(),
+  region: PluginRegionSchema.optional(),
   isOfficial: z.coerce.boolean().optional(),
   search: z.string().optional(),
 });
@@ -100,6 +100,7 @@ export const CreatePluginRequestSchema = z.object({
   version: z.string().min(1).max(20),
   author: z.string().max(100).optional(),
   category: PluginCategorySchema,
+  region: PluginRegionSchema.optional().default('global'),
   configSchema: z.record(z.string(), z.unknown()).optional(),
   defaultConfig: z.record(z.string(), z.unknown()).optional(),
   mcpConfig: z.record(z.string(), z.unknown()).optional(),

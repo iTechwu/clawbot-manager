@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { pluginApi } from '@/lib/api/contracts/client';
 import {
   Card,
@@ -16,6 +17,9 @@ import {
   SelectValue,
   Badge,
   Skeleton,
+  Tabs,
+  TabsList,
+  TabsTrigger,
 } from '@repo/ui';
 import {
   Search,
@@ -27,7 +31,7 @@ import {
   Puzzle,
   FolderOpen,
 } from 'lucide-react';
-import type { PluginCategory } from '@repo/contracts';
+import type { PluginCategory, PluginRegion } from '@repo/contracts';
 
 /**
  * 分类图标映射
@@ -56,6 +60,15 @@ const categoryLabels: Record<PluginCategory, string> = {
 };
 
 /**
+ * 区域标签映射
+ */
+const regionLabels: Record<PluginRegion, string> = {
+  global: '全球',
+  cn: '国内',
+  en: '海外',
+};
+
+/**
  * 插件卡片组件
  */
 function PluginCard({
@@ -69,6 +82,7 @@ function PluginCard({
     version: string;
     author: string | null;
     category: PluginCategory;
+    region: PluginRegion;
     isOfficial: boolean;
     iconEmoji: string | null;
     iconUrl: string | null;
@@ -152,20 +166,31 @@ function PluginCardSkeleton() {
  * 插件市场页面
  */
 export default function PluginsPage() {
+  const locale = useLocale();
+  const t = useTranslations('plugins');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<PluginCategory | 'all'>('all');
+  const [regionFilter, setRegionFilter] = useState<'all' | 'recommended'>(
+    'recommended',
+  );
+
+  // 根据语言确定推荐区域
+  const recommendedRegion: PluginRegion = locale === 'zh-CN' ? 'cn' : 'en';
 
   const { data: response, isLoading } = pluginApi.list.useQuery(
-    ['plugins', { search, category }],
+    ['plugins', { search, category, regionFilter, locale }],
     {
       query: {
         search: search || undefined,
         category: category === 'all' ? undefined : category,
+        // 推荐模式下根据语言过滤，全部模式下不过滤
+        region: regionFilter === 'recommended' ? recommendedRegion : undefined,
         limit: 50,
       },
     },
     {
       staleTime: 60000,
+      queryKey: ['plugins', { search, category, regionFilter, locale }],
     },
   );
 
@@ -175,18 +200,31 @@ export default function PluginsPage() {
     <div className="space-y-6">
       {/* 页面标题 */}
       <div>
-        <h1 className="text-2xl font-bold">插件市场</h1>
-        <p className="text-muted-foreground text-sm">
-          浏览和安装插件来扩展 Bot 的能力
-        </p>
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
+        <p className="text-muted-foreground text-sm">{t('description')}</p>
       </div>
+
+      {/* 区域切换 */}
+      <Tabs
+        value={regionFilter}
+        onValueChange={(v) => setRegionFilter(v as 'all' | 'recommended')}
+      >
+        <TabsList>
+          <TabsTrigger value="recommended">
+            {locale === 'zh-CN' ? '国内推荐' : 'Recommended'}
+          </TabsTrigger>
+          <TabsTrigger value="all">
+            {locale === 'zh-CN' ? '全部插件' : 'All Plugins'}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* 搜索和筛选 */}
       <div className="flex gap-4">
         <div className="relative flex-1">
           <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
           <Input
-            placeholder="搜索插件..."
+            placeholder={t('searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -197,10 +235,10 @@ export default function PluginsPage() {
           onValueChange={(v) => setCategory(v as PluginCategory | 'all')}
         >
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="全部分类" />
+            <SelectValue placeholder={t('allCategories')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">全部分类</SelectItem>
+            <SelectItem value="all">{t('allCategories')}</SelectItem>
             {Object.entries(categoryLabels).map(([key, label]) => (
               <SelectItem key={key} value={key}>
                 {label}
@@ -220,12 +258,8 @@ export default function PluginsPage() {
       ) : plugins.length === 0 ? (
         <div className="text-muted-foreground py-12 text-center">
           <Puzzle className="mx-auto mb-4 h-12 w-12 opacity-50" />
-          <p>暂无插件</p>
-          {search && (
-            <p className="mt-1 text-sm">
-              尝试使用其他关键词搜索
-            </p>
-          )}
+          <p>{t('noPlugins')}</p>
+          {search && <p className="mt-1 text-sm">{t('tryOtherKeywords')}</p>}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

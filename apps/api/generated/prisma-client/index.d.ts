@@ -147,6 +147,18 @@ export type Plugin = $Result.DefaultSelection<Prisma.$PluginPayload>
  * 记录 Bot 安装的插件及其配置
  */
 export type BotPlugin = $Result.DefaultSelection<Prisma.$BotPluginPayload>
+/**
+ * Model Skill
+ * Skill - 自定义技能定义
+ * 用户可以创建自定义技能供 Bot 使用
+ */
+export type Skill = $Result.DefaultSelection<Prisma.$SkillPayload>
+/**
+ * Model BotSkill
+ * BotSkill - Bot 与 Skill 的关联表
+ * 记录 Bot 安装的技能及其配置
+ */
+export type BotSkill = $Result.DefaultSelection<Prisma.$BotSkillPayload>
 
 /**
  * Enums
@@ -649,6 +661,26 @@ export class PrismaClient<
     * ```
     */
   get botPlugin(): Prisma.BotPluginDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.skill`: Exposes CRUD operations for the **Skill** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Skills
+    * const skills = await prisma.skill.findMany()
+    * ```
+    */
+  get skill(): Prisma.SkillDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.botSkill`: Exposes CRUD operations for the **BotSkill** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BotSkills
+    * const botSkills = await prisma.botSkill.findMany()
+    * ```
+    */
+  get botSkill(): Prisma.BotSkillDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1105,7 +1137,9 @@ export namespace Prisma {
     ChannelDefinition: 'ChannelDefinition',
     ChannelCredentialField: 'ChannelCredentialField',
     Plugin: 'Plugin',
-    BotPlugin: 'BotPlugin'
+    BotPlugin: 'BotPlugin',
+    Skill: 'Skill',
+    BotSkill: 'BotSkill'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1121,7 +1155,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "userInfo" | "personaTemplate" | "wechatAuth" | "googleAuth" | "discordAuth" | "mobileAuth" | "emailAuth" | "riskDetectionRecord" | "systemTaskQueue" | "fileSource" | "countryCode" | "bot" | "providerKey" | "botProviderKey" | "botUsageLog" | "proxyToken" | "message" | "messageRecipient" | "operateLog" | "channelDefinition" | "channelCredentialField" | "plugin" | "botPlugin"
+      modelProps: "userInfo" | "personaTemplate" | "wechatAuth" | "googleAuth" | "discordAuth" | "mobileAuth" | "emailAuth" | "riskDetectionRecord" | "systemTaskQueue" | "fileSource" | "countryCode" | "bot" | "providerKey" | "botProviderKey" | "botUsageLog" | "proxyToken" | "message" | "messageRecipient" | "operateLog" | "channelDefinition" | "channelCredentialField" | "plugin" | "botPlugin" | "skill" | "botSkill"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2827,6 +2861,154 @@ export namespace Prisma {
           }
         }
       }
+      Skill: {
+        payload: Prisma.$SkillPayload<ExtArgs>
+        fields: Prisma.SkillFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SkillFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SkillFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillPayload>
+          }
+          findFirst: {
+            args: Prisma.SkillFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SkillFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillPayload>
+          }
+          findMany: {
+            args: Prisma.SkillFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillPayload>[]
+          }
+          create: {
+            args: Prisma.SkillCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillPayload>
+          }
+          createMany: {
+            args: Prisma.SkillCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SkillCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillPayload>[]
+          }
+          delete: {
+            args: Prisma.SkillDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillPayload>
+          }
+          update: {
+            args: Prisma.SkillUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillPayload>
+          }
+          deleteMany: {
+            args: Prisma.SkillDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SkillUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SkillUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillPayload>[]
+          }
+          upsert: {
+            args: Prisma.SkillUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillPayload>
+          }
+          aggregate: {
+            args: Prisma.SkillAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSkill>
+          }
+          groupBy: {
+            args: Prisma.SkillGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SkillGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SkillCountArgs<ExtArgs>
+            result: $Utils.Optional<SkillCountAggregateOutputType> | number
+          }
+        }
+      }
+      BotSkill: {
+        payload: Prisma.$BotSkillPayload<ExtArgs>
+        fields: Prisma.BotSkillFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BotSkillFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotSkillPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BotSkillFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotSkillPayload>
+          }
+          findFirst: {
+            args: Prisma.BotSkillFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotSkillPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BotSkillFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotSkillPayload>
+          }
+          findMany: {
+            args: Prisma.BotSkillFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotSkillPayload>[]
+          }
+          create: {
+            args: Prisma.BotSkillCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotSkillPayload>
+          }
+          createMany: {
+            args: Prisma.BotSkillCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BotSkillCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotSkillPayload>[]
+          }
+          delete: {
+            args: Prisma.BotSkillDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotSkillPayload>
+          }
+          update: {
+            args: Prisma.BotSkillUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotSkillPayload>
+          }
+          deleteMany: {
+            args: Prisma.BotSkillDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BotSkillUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BotSkillUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotSkillPayload>[]
+          }
+          upsert: {
+            args: Prisma.BotSkillUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotSkillPayload>
+          }
+          aggregate: {
+            args: Prisma.BotSkillAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBotSkill>
+          }
+          groupBy: {
+            args: Prisma.BotSkillGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BotSkillGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BotSkillCountArgs<ExtArgs>
+            result: $Utils.Optional<BotSkillCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2958,6 +3140,8 @@ export namespace Prisma {
     channelCredentialField?: ChannelCredentialFieldOmit
     plugin?: PluginOmit
     botPlugin?: BotPluginOmit
+    skill?: SkillOmit
+    botSkill?: BotSkillOmit
   }
 
   /* Types for Logging */
@@ -3197,12 +3381,14 @@ export namespace Prisma {
     providerKeys: number
     usageLogs: number
     plugins: number
+    skills: number
   }
 
   export type BotCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     providerKeys?: boolean | BotCountOutputTypeCountProviderKeysArgs
     usageLogs?: boolean | BotCountOutputTypeCountUsageLogsArgs
     plugins?: boolean | BotCountOutputTypeCountPluginsArgs
+    skills?: boolean | BotCountOutputTypeCountSkillsArgs
   }
 
   // Custom InputTypes
@@ -3235,6 +3421,13 @@ export namespace Prisma {
    */
   export type BotCountOutputTypeCountPluginsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: BotPluginWhereInput
+  }
+
+  /**
+   * BotCountOutputType without action
+   */
+  export type BotCountOutputTypeCountSkillsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BotSkillWhereInput
   }
 
 
@@ -3377,6 +3570,37 @@ export namespace Prisma {
    */
   export type PluginCountOutputTypeCountInstallationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: BotPluginWhereInput
+  }
+
+
+  /**
+   * Count Type SkillCountOutputType
+   */
+
+  export type SkillCountOutputType = {
+    installations: number
+  }
+
+  export type SkillCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    installations?: boolean | SkillCountOutputTypeCountInstallationsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * SkillCountOutputType without action
+   */
+  export type SkillCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillCountOutputType
+     */
+    select?: SkillCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * SkillCountOutputType without action
+   */
+  export type SkillCountOutputTypeCountInstallationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BotSkillWhereInput
   }
 
 
@@ -16763,6 +16987,7 @@ export namespace Prisma {
     usageLogs?: boolean | Bot$usageLogsArgs<ExtArgs>
     proxyToken?: boolean | Bot$proxyTokenArgs<ExtArgs>
     plugins?: boolean | Bot$pluginsArgs<ExtArgs>
+    skills?: boolean | Bot$skillsArgs<ExtArgs>
     _count?: boolean | BotCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["bot"]>
 
@@ -16859,6 +17084,7 @@ export namespace Prisma {
     usageLogs?: boolean | Bot$usageLogsArgs<ExtArgs>
     proxyToken?: boolean | Bot$proxyTokenArgs<ExtArgs>
     plugins?: boolean | Bot$pluginsArgs<ExtArgs>
+    skills?: boolean | Bot$skillsArgs<ExtArgs>
     _count?: boolean | BotCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type BotIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -16882,6 +17108,7 @@ export namespace Prisma {
       usageLogs: Prisma.$BotUsageLogPayload<ExtArgs>[]
       proxyToken: Prisma.$ProxyTokenPayload<ExtArgs> | null
       plugins: Prisma.$BotPluginPayload<ExtArgs>[]
+      skills: Prisma.$BotSkillPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -17308,6 +17535,7 @@ export namespace Prisma {
     usageLogs<T extends Bot$usageLogsArgs<ExtArgs> = {}>(args?: Subset<T, Bot$usageLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotUsageLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     proxyToken<T extends Bot$proxyTokenArgs<ExtArgs> = {}>(args?: Subset<T, Bot$proxyTokenArgs<ExtArgs>>): Prisma__ProxyTokenClient<$Result.GetResult<Prisma.$ProxyTokenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     plugins<T extends Bot$pluginsArgs<ExtArgs> = {}>(args?: Subset<T, Bot$pluginsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotPluginPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    skills<T extends Bot$skillsArgs<ExtArgs> = {}>(args?: Subset<T, Bot$skillsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -17882,6 +18110,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: BotPluginScalarFieldEnum | BotPluginScalarFieldEnum[]
+  }
+
+  /**
+   * Bot.skills
+   */
+  export type Bot$skillsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillInclude<ExtArgs> | null
+    where?: BotSkillWhereInput
+    orderBy?: BotSkillOrderByWithRelationInput | BotSkillOrderByWithRelationInput[]
+    cursor?: BotSkillWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BotSkillScalarFieldEnum | BotSkillScalarFieldEnum[]
   }
 
   /**
@@ -28475,6 +28727,7 @@ export namespace Prisma {
     version: string | null
     author: string | null
     category: $Enums.PluginCategory | null
+    region: string | null
     isOfficial: boolean | null
     isEnabled: boolean | null
     downloadUrl: string | null
@@ -28494,6 +28747,7 @@ export namespace Prisma {
     version: string | null
     author: string | null
     category: $Enums.PluginCategory | null
+    region: string | null
     isOfficial: boolean | null
     isEnabled: boolean | null
     downloadUrl: string | null
@@ -28513,6 +28767,7 @@ export namespace Prisma {
     version: number
     author: number
     category: number
+    region: number
     configSchema: number
     defaultConfig: number
     mcpConfig: number
@@ -28537,6 +28792,7 @@ export namespace Prisma {
     version?: true
     author?: true
     category?: true
+    region?: true
     isOfficial?: true
     isEnabled?: true
     downloadUrl?: true
@@ -28556,6 +28812,7 @@ export namespace Prisma {
     version?: true
     author?: true
     category?: true
+    region?: true
     isOfficial?: true
     isEnabled?: true
     downloadUrl?: true
@@ -28575,6 +28832,7 @@ export namespace Prisma {
     version?: true
     author?: true
     category?: true
+    region?: true
     configSchema?: true
     defaultConfig?: true
     mcpConfig?: true
@@ -28670,6 +28928,7 @@ export namespace Prisma {
     version: string
     author: string | null
     category: $Enums.PluginCategory
+    region: string
     configSchema: JsonValue | null
     defaultConfig: JsonValue | null
     mcpConfig: JsonValue | null
@@ -28709,6 +28968,7 @@ export namespace Prisma {
     version?: boolean
     author?: boolean
     category?: boolean
+    region?: boolean
     configSchema?: boolean
     defaultConfig?: boolean
     mcpConfig?: boolean
@@ -28733,6 +28993,7 @@ export namespace Prisma {
     version?: boolean
     author?: boolean
     category?: boolean
+    region?: boolean
     configSchema?: boolean
     defaultConfig?: boolean
     mcpConfig?: boolean
@@ -28755,6 +29016,7 @@ export namespace Prisma {
     version?: boolean
     author?: boolean
     category?: boolean
+    region?: boolean
     configSchema?: boolean
     defaultConfig?: boolean
     mcpConfig?: boolean
@@ -28777,6 +29039,7 @@ export namespace Prisma {
     version?: boolean
     author?: boolean
     category?: boolean
+    region?: boolean
     configSchema?: boolean
     defaultConfig?: boolean
     mcpConfig?: boolean
@@ -28791,7 +29054,7 @@ export namespace Prisma {
     deletedAt?: boolean
   }
 
-  export type PluginOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "description" | "version" | "author" | "category" | "configSchema" | "defaultConfig" | "mcpConfig" | "isOfficial" | "isEnabled" | "downloadUrl" | "iconEmoji" | "iconUrl" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["plugin"]>
+  export type PluginOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "description" | "version" | "author" | "category" | "region" | "configSchema" | "defaultConfig" | "mcpConfig" | "isOfficial" | "isEnabled" | "downloadUrl" | "iconEmoji" | "iconUrl" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["plugin"]>
   export type PluginInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     installations?: boolean | Plugin$installationsArgs<ExtArgs>
     _count?: boolean | PluginCountOutputTypeDefaultArgs<ExtArgs>
@@ -28812,6 +29075,7 @@ export namespace Prisma {
       version: string
       author: string | null
       category: $Enums.PluginCategory
+      region: string
       configSchema: Prisma.JsonValue | null
       defaultConfig: Prisma.JsonValue | null
       mcpConfig: Prisma.JsonValue | null
@@ -29255,6 +29519,7 @@ export namespace Prisma {
     readonly version: FieldRef<"Plugin", 'String'>
     readonly author: FieldRef<"Plugin", 'String'>
     readonly category: FieldRef<"Plugin", 'PluginCategory'>
+    readonly region: FieldRef<"Plugin", 'String'>
     readonly configSchema: FieldRef<"Plugin", 'Json'>
     readonly defaultConfig: FieldRef<"Plugin", 'Json'>
     readonly mcpConfig: FieldRef<"Plugin", 'Json'>
@@ -30786,6 +31051,2286 @@ export namespace Prisma {
 
 
   /**
+   * Model Skill
+   */
+
+  export type AggregateSkill = {
+    _count: SkillCountAggregateOutputType | null
+    _min: SkillMinAggregateOutputType | null
+    _max: SkillMaxAggregateOutputType | null
+  }
+
+  export type SkillMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    slug: string | null
+    description: string | null
+    version: string | null
+    skillType: string | null
+    isSystem: boolean | null
+    isEnabled: boolean | null
+    createdById: string | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type SkillMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    slug: string | null
+    description: string | null
+    version: string | null
+    skillType: string | null
+    isSystem: boolean | null
+    isEnabled: boolean | null
+    createdById: string | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type SkillCountAggregateOutputType = {
+    id: number
+    name: number
+    slug: number
+    description: number
+    version: number
+    skillType: number
+    definition: number
+    examples: number
+    isSystem: number
+    isEnabled: number
+    createdById: number
+    isDeleted: number
+    createdAt: number
+    updatedAt: number
+    deletedAt: number
+    _all: number
+  }
+
+
+  export type SkillMinAggregateInputType = {
+    id?: true
+    name?: true
+    slug?: true
+    description?: true
+    version?: true
+    skillType?: true
+    isSystem?: true
+    isEnabled?: true
+    createdById?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type SkillMaxAggregateInputType = {
+    id?: true
+    name?: true
+    slug?: true
+    description?: true
+    version?: true
+    skillType?: true
+    isSystem?: true
+    isEnabled?: true
+    createdById?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type SkillCountAggregateInputType = {
+    id?: true
+    name?: true
+    slug?: true
+    description?: true
+    version?: true
+    skillType?: true
+    definition?: true
+    examples?: true
+    isSystem?: true
+    isEnabled?: true
+    createdById?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+    _all?: true
+  }
+
+  export type SkillAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Skill to aggregate.
+     */
+    where?: SkillWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Skills to fetch.
+     */
+    orderBy?: SkillOrderByWithRelationInput | SkillOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SkillWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Skills from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Skills.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Skills
+    **/
+    _count?: true | SkillCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SkillMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SkillMaxAggregateInputType
+  }
+
+  export type GetSkillAggregateType<T extends SkillAggregateArgs> = {
+        [P in keyof T & keyof AggregateSkill]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSkill[P]>
+      : GetScalarType<T[P], AggregateSkill[P]>
+  }
+
+
+
+
+  export type SkillGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SkillWhereInput
+    orderBy?: SkillOrderByWithAggregationInput | SkillOrderByWithAggregationInput[]
+    by: SkillScalarFieldEnum[] | SkillScalarFieldEnum
+    having?: SkillScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SkillCountAggregateInputType | true
+    _min?: SkillMinAggregateInputType
+    _max?: SkillMaxAggregateInputType
+  }
+
+  export type SkillGroupByOutputType = {
+    id: string
+    name: string
+    slug: string
+    description: string | null
+    version: string
+    skillType: string
+    definition: JsonValue
+    examples: JsonValue | null
+    isSystem: boolean
+    isEnabled: boolean
+    createdById: string | null
+    isDeleted: boolean
+    createdAt: Date
+    updatedAt: Date
+    deletedAt: Date | null
+    _count: SkillCountAggregateOutputType | null
+    _min: SkillMinAggregateOutputType | null
+    _max: SkillMaxAggregateOutputType | null
+  }
+
+  type GetSkillGroupByPayload<T extends SkillGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SkillGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SkillGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SkillGroupByOutputType[P]>
+            : GetScalarType<T[P], SkillGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SkillSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    slug?: boolean
+    description?: boolean
+    version?: boolean
+    skillType?: boolean
+    definition?: boolean
+    examples?: boolean
+    isSystem?: boolean
+    isEnabled?: boolean
+    createdById?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+    installations?: boolean | Skill$installationsArgs<ExtArgs>
+    _count?: boolean | SkillCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["skill"]>
+
+  export type SkillSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    slug?: boolean
+    description?: boolean
+    version?: boolean
+    skillType?: boolean
+    definition?: boolean
+    examples?: boolean
+    isSystem?: boolean
+    isEnabled?: boolean
+    createdById?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["skill"]>
+
+  export type SkillSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    slug?: boolean
+    description?: boolean
+    version?: boolean
+    skillType?: boolean
+    definition?: boolean
+    examples?: boolean
+    isSystem?: boolean
+    isEnabled?: boolean
+    createdById?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["skill"]>
+
+  export type SkillSelectScalar = {
+    id?: boolean
+    name?: boolean
+    slug?: boolean
+    description?: boolean
+    version?: boolean
+    skillType?: boolean
+    definition?: boolean
+    examples?: boolean
+    isSystem?: boolean
+    isEnabled?: boolean
+    createdById?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }
+
+  export type SkillOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "description" | "version" | "skillType" | "definition" | "examples" | "isSystem" | "isEnabled" | "createdById" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["skill"]>
+  export type SkillInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    installations?: boolean | Skill$installationsArgs<ExtArgs>
+    _count?: boolean | SkillCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type SkillIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type SkillIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $SkillPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Skill"
+    objects: {
+      installations: Prisma.$BotSkillPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      slug: string
+      description: string | null
+      version: string
+      skillType: string
+      definition: Prisma.JsonValue
+      examples: Prisma.JsonValue | null
+      isSystem: boolean
+      isEnabled: boolean
+      createdById: string | null
+      isDeleted: boolean
+      createdAt: Date
+      updatedAt: Date
+      deletedAt: Date | null
+    }, ExtArgs["result"]["skill"]>
+    composites: {}
+  }
+
+  type SkillGetPayload<S extends boolean | null | undefined | SkillDefaultArgs> = $Result.GetResult<Prisma.$SkillPayload, S>
+
+  type SkillCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SkillFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SkillCountAggregateInputType | true
+    }
+
+  export interface SkillDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Skill'], meta: { name: 'Skill' } }
+    /**
+     * Find zero or one Skill that matches the filter.
+     * @param {SkillFindUniqueArgs} args - Arguments to find a Skill
+     * @example
+     * // Get one Skill
+     * const skill = await prisma.skill.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SkillFindUniqueArgs>(args: SelectSubset<T, SkillFindUniqueArgs<ExtArgs>>): Prisma__SkillClient<$Result.GetResult<Prisma.$SkillPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Skill that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SkillFindUniqueOrThrowArgs} args - Arguments to find a Skill
+     * @example
+     * // Get one Skill
+     * const skill = await prisma.skill.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SkillFindUniqueOrThrowArgs>(args: SelectSubset<T, SkillFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SkillClient<$Result.GetResult<Prisma.$SkillPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Skill that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillFindFirstArgs} args - Arguments to find a Skill
+     * @example
+     * // Get one Skill
+     * const skill = await prisma.skill.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SkillFindFirstArgs>(args?: SelectSubset<T, SkillFindFirstArgs<ExtArgs>>): Prisma__SkillClient<$Result.GetResult<Prisma.$SkillPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Skill that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillFindFirstOrThrowArgs} args - Arguments to find a Skill
+     * @example
+     * // Get one Skill
+     * const skill = await prisma.skill.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SkillFindFirstOrThrowArgs>(args?: SelectSubset<T, SkillFindFirstOrThrowArgs<ExtArgs>>): Prisma__SkillClient<$Result.GetResult<Prisma.$SkillPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Skills that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Skills
+     * const skills = await prisma.skill.findMany()
+     * 
+     * // Get first 10 Skills
+     * const skills = await prisma.skill.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const skillWithIdOnly = await prisma.skill.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SkillFindManyArgs>(args?: SelectSubset<T, SkillFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SkillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Skill.
+     * @param {SkillCreateArgs} args - Arguments to create a Skill.
+     * @example
+     * // Create one Skill
+     * const Skill = await prisma.skill.create({
+     *   data: {
+     *     // ... data to create a Skill
+     *   }
+     * })
+     * 
+     */
+    create<T extends SkillCreateArgs>(args: SelectSubset<T, SkillCreateArgs<ExtArgs>>): Prisma__SkillClient<$Result.GetResult<Prisma.$SkillPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Skills.
+     * @param {SkillCreateManyArgs} args - Arguments to create many Skills.
+     * @example
+     * // Create many Skills
+     * const skill = await prisma.skill.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SkillCreateManyArgs>(args?: SelectSubset<T, SkillCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Skills and returns the data saved in the database.
+     * @param {SkillCreateManyAndReturnArgs} args - Arguments to create many Skills.
+     * @example
+     * // Create many Skills
+     * const skill = await prisma.skill.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Skills and only return the `id`
+     * const skillWithIdOnly = await prisma.skill.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SkillCreateManyAndReturnArgs>(args?: SelectSubset<T, SkillCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SkillPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Skill.
+     * @param {SkillDeleteArgs} args - Arguments to delete one Skill.
+     * @example
+     * // Delete one Skill
+     * const Skill = await prisma.skill.delete({
+     *   where: {
+     *     // ... filter to delete one Skill
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SkillDeleteArgs>(args: SelectSubset<T, SkillDeleteArgs<ExtArgs>>): Prisma__SkillClient<$Result.GetResult<Prisma.$SkillPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Skill.
+     * @param {SkillUpdateArgs} args - Arguments to update one Skill.
+     * @example
+     * // Update one Skill
+     * const skill = await prisma.skill.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SkillUpdateArgs>(args: SelectSubset<T, SkillUpdateArgs<ExtArgs>>): Prisma__SkillClient<$Result.GetResult<Prisma.$SkillPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Skills.
+     * @param {SkillDeleteManyArgs} args - Arguments to filter Skills to delete.
+     * @example
+     * // Delete a few Skills
+     * const { count } = await prisma.skill.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SkillDeleteManyArgs>(args?: SelectSubset<T, SkillDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Skills.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Skills
+     * const skill = await prisma.skill.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SkillUpdateManyArgs>(args: SelectSubset<T, SkillUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Skills and returns the data updated in the database.
+     * @param {SkillUpdateManyAndReturnArgs} args - Arguments to update many Skills.
+     * @example
+     * // Update many Skills
+     * const skill = await prisma.skill.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Skills and only return the `id`
+     * const skillWithIdOnly = await prisma.skill.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SkillUpdateManyAndReturnArgs>(args: SelectSubset<T, SkillUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SkillPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Skill.
+     * @param {SkillUpsertArgs} args - Arguments to update or create a Skill.
+     * @example
+     * // Update or create a Skill
+     * const skill = await prisma.skill.upsert({
+     *   create: {
+     *     // ... data to create a Skill
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Skill we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SkillUpsertArgs>(args: SelectSubset<T, SkillUpsertArgs<ExtArgs>>): Prisma__SkillClient<$Result.GetResult<Prisma.$SkillPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Skills.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillCountArgs} args - Arguments to filter Skills to count.
+     * @example
+     * // Count the number of Skills
+     * const count = await prisma.skill.count({
+     *   where: {
+     *     // ... the filter for the Skills we want to count
+     *   }
+     * })
+    **/
+    count<T extends SkillCountArgs>(
+      args?: Subset<T, SkillCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SkillCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Skill.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SkillAggregateArgs>(args: Subset<T, SkillAggregateArgs>): Prisma.PrismaPromise<GetSkillAggregateType<T>>
+
+    /**
+     * Group by Skill.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SkillGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SkillGroupByArgs['orderBy'] }
+        : { orderBy?: SkillGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SkillGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSkillGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Skill model
+   */
+  readonly fields: SkillFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Skill.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SkillClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    installations<T extends Skill$installationsArgs<ExtArgs> = {}>(args?: Subset<T, Skill$installationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Skill model
+   */
+  interface SkillFieldRefs {
+    readonly id: FieldRef<"Skill", 'String'>
+    readonly name: FieldRef<"Skill", 'String'>
+    readonly slug: FieldRef<"Skill", 'String'>
+    readonly description: FieldRef<"Skill", 'String'>
+    readonly version: FieldRef<"Skill", 'String'>
+    readonly skillType: FieldRef<"Skill", 'String'>
+    readonly definition: FieldRef<"Skill", 'Json'>
+    readonly examples: FieldRef<"Skill", 'Json'>
+    readonly isSystem: FieldRef<"Skill", 'Boolean'>
+    readonly isEnabled: FieldRef<"Skill", 'Boolean'>
+    readonly createdById: FieldRef<"Skill", 'String'>
+    readonly isDeleted: FieldRef<"Skill", 'Boolean'>
+    readonly createdAt: FieldRef<"Skill", 'DateTime'>
+    readonly updatedAt: FieldRef<"Skill", 'DateTime'>
+    readonly deletedAt: FieldRef<"Skill", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Skill findUnique
+   */
+  export type SkillFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Skill
+     */
+    select?: SkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Skill
+     */
+    omit?: SkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillInclude<ExtArgs> | null
+    /**
+     * Filter, which Skill to fetch.
+     */
+    where: SkillWhereUniqueInput
+  }
+
+  /**
+   * Skill findUniqueOrThrow
+   */
+  export type SkillFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Skill
+     */
+    select?: SkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Skill
+     */
+    omit?: SkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillInclude<ExtArgs> | null
+    /**
+     * Filter, which Skill to fetch.
+     */
+    where: SkillWhereUniqueInput
+  }
+
+  /**
+   * Skill findFirst
+   */
+  export type SkillFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Skill
+     */
+    select?: SkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Skill
+     */
+    omit?: SkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillInclude<ExtArgs> | null
+    /**
+     * Filter, which Skill to fetch.
+     */
+    where?: SkillWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Skills to fetch.
+     */
+    orderBy?: SkillOrderByWithRelationInput | SkillOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Skills.
+     */
+    cursor?: SkillWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Skills from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Skills.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Skills.
+     */
+    distinct?: SkillScalarFieldEnum | SkillScalarFieldEnum[]
+  }
+
+  /**
+   * Skill findFirstOrThrow
+   */
+  export type SkillFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Skill
+     */
+    select?: SkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Skill
+     */
+    omit?: SkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillInclude<ExtArgs> | null
+    /**
+     * Filter, which Skill to fetch.
+     */
+    where?: SkillWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Skills to fetch.
+     */
+    orderBy?: SkillOrderByWithRelationInput | SkillOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Skills.
+     */
+    cursor?: SkillWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Skills from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Skills.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Skills.
+     */
+    distinct?: SkillScalarFieldEnum | SkillScalarFieldEnum[]
+  }
+
+  /**
+   * Skill findMany
+   */
+  export type SkillFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Skill
+     */
+    select?: SkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Skill
+     */
+    omit?: SkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillInclude<ExtArgs> | null
+    /**
+     * Filter, which Skills to fetch.
+     */
+    where?: SkillWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Skills to fetch.
+     */
+    orderBy?: SkillOrderByWithRelationInput | SkillOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Skills.
+     */
+    cursor?: SkillWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Skills from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Skills.
+     */
+    skip?: number
+    distinct?: SkillScalarFieldEnum | SkillScalarFieldEnum[]
+  }
+
+  /**
+   * Skill create
+   */
+  export type SkillCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Skill
+     */
+    select?: SkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Skill
+     */
+    omit?: SkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Skill.
+     */
+    data: XOR<SkillCreateInput, SkillUncheckedCreateInput>
+  }
+
+  /**
+   * Skill createMany
+   */
+  export type SkillCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Skills.
+     */
+    data: SkillCreateManyInput | SkillCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Skill createManyAndReturn
+   */
+  export type SkillCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Skill
+     */
+    select?: SkillSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Skill
+     */
+    omit?: SkillOmit<ExtArgs> | null
+    /**
+     * The data used to create many Skills.
+     */
+    data: SkillCreateManyInput | SkillCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Skill update
+   */
+  export type SkillUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Skill
+     */
+    select?: SkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Skill
+     */
+    omit?: SkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Skill.
+     */
+    data: XOR<SkillUpdateInput, SkillUncheckedUpdateInput>
+    /**
+     * Choose, which Skill to update.
+     */
+    where: SkillWhereUniqueInput
+  }
+
+  /**
+   * Skill updateMany
+   */
+  export type SkillUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Skills.
+     */
+    data: XOR<SkillUpdateManyMutationInput, SkillUncheckedUpdateManyInput>
+    /**
+     * Filter which Skills to update
+     */
+    where?: SkillWhereInput
+    /**
+     * Limit how many Skills to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Skill updateManyAndReturn
+   */
+  export type SkillUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Skill
+     */
+    select?: SkillSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Skill
+     */
+    omit?: SkillOmit<ExtArgs> | null
+    /**
+     * The data used to update Skills.
+     */
+    data: XOR<SkillUpdateManyMutationInput, SkillUncheckedUpdateManyInput>
+    /**
+     * Filter which Skills to update
+     */
+    where?: SkillWhereInput
+    /**
+     * Limit how many Skills to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Skill upsert
+   */
+  export type SkillUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Skill
+     */
+    select?: SkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Skill
+     */
+    omit?: SkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Skill to update in case it exists.
+     */
+    where: SkillWhereUniqueInput
+    /**
+     * In case the Skill found by the `where` argument doesn't exist, create a new Skill with this data.
+     */
+    create: XOR<SkillCreateInput, SkillUncheckedCreateInput>
+    /**
+     * In case the Skill was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SkillUpdateInput, SkillUncheckedUpdateInput>
+  }
+
+  /**
+   * Skill delete
+   */
+  export type SkillDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Skill
+     */
+    select?: SkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Skill
+     */
+    omit?: SkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillInclude<ExtArgs> | null
+    /**
+     * Filter which Skill to delete.
+     */
+    where: SkillWhereUniqueInput
+  }
+
+  /**
+   * Skill deleteMany
+   */
+  export type SkillDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Skills to delete
+     */
+    where?: SkillWhereInput
+    /**
+     * Limit how many Skills to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Skill.installations
+   */
+  export type Skill$installationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillInclude<ExtArgs> | null
+    where?: BotSkillWhereInput
+    orderBy?: BotSkillOrderByWithRelationInput | BotSkillOrderByWithRelationInput[]
+    cursor?: BotSkillWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BotSkillScalarFieldEnum | BotSkillScalarFieldEnum[]
+  }
+
+  /**
+   * Skill without action
+   */
+  export type SkillDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Skill
+     */
+    select?: SkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Skill
+     */
+    omit?: SkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BotSkill
+   */
+
+  export type AggregateBotSkill = {
+    _count: BotSkillCountAggregateOutputType | null
+    _min: BotSkillMinAggregateOutputType | null
+    _max: BotSkillMaxAggregateOutputType | null
+  }
+
+  export type BotSkillMinAggregateOutputType = {
+    id: string | null
+    botId: string | null
+    skillId: string | null
+    isEnabled: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BotSkillMaxAggregateOutputType = {
+    id: string | null
+    botId: string | null
+    skillId: string | null
+    isEnabled: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BotSkillCountAggregateOutputType = {
+    id: number
+    botId: number
+    skillId: number
+    config: number
+    isEnabled: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type BotSkillMinAggregateInputType = {
+    id?: true
+    botId?: true
+    skillId?: true
+    isEnabled?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BotSkillMaxAggregateInputType = {
+    id?: true
+    botId?: true
+    skillId?: true
+    isEnabled?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BotSkillCountAggregateInputType = {
+    id?: true
+    botId?: true
+    skillId?: true
+    config?: true
+    isEnabled?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type BotSkillAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BotSkill to aggregate.
+     */
+    where?: BotSkillWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotSkills to fetch.
+     */
+    orderBy?: BotSkillOrderByWithRelationInput | BotSkillOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BotSkillWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotSkills from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotSkills.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BotSkills
+    **/
+    _count?: true | BotSkillCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BotSkillMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BotSkillMaxAggregateInputType
+  }
+
+  export type GetBotSkillAggregateType<T extends BotSkillAggregateArgs> = {
+        [P in keyof T & keyof AggregateBotSkill]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBotSkill[P]>
+      : GetScalarType<T[P], AggregateBotSkill[P]>
+  }
+
+
+
+
+  export type BotSkillGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BotSkillWhereInput
+    orderBy?: BotSkillOrderByWithAggregationInput | BotSkillOrderByWithAggregationInput[]
+    by: BotSkillScalarFieldEnum[] | BotSkillScalarFieldEnum
+    having?: BotSkillScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BotSkillCountAggregateInputType | true
+    _min?: BotSkillMinAggregateInputType
+    _max?: BotSkillMaxAggregateInputType
+  }
+
+  export type BotSkillGroupByOutputType = {
+    id: string
+    botId: string
+    skillId: string
+    config: JsonValue | null
+    isEnabled: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: BotSkillCountAggregateOutputType | null
+    _min: BotSkillMinAggregateOutputType | null
+    _max: BotSkillMaxAggregateOutputType | null
+  }
+
+  type GetBotSkillGroupByPayload<T extends BotSkillGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BotSkillGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BotSkillGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BotSkillGroupByOutputType[P]>
+            : GetScalarType<T[P], BotSkillGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BotSkillSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    botId?: boolean
+    skillId?: boolean
+    config?: boolean
+    isEnabled?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+    skill?: boolean | SkillDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["botSkill"]>
+
+  export type BotSkillSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    botId?: boolean
+    skillId?: boolean
+    config?: boolean
+    isEnabled?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+    skill?: boolean | SkillDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["botSkill"]>
+
+  export type BotSkillSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    botId?: boolean
+    skillId?: boolean
+    config?: boolean
+    isEnabled?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+    skill?: boolean | SkillDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["botSkill"]>
+
+  export type BotSkillSelectScalar = {
+    id?: boolean
+    botId?: boolean
+    skillId?: boolean
+    config?: boolean
+    isEnabled?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type BotSkillOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "botId" | "skillId" | "config" | "isEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["botSkill"]>
+  export type BotSkillInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+    skill?: boolean | SkillDefaultArgs<ExtArgs>
+  }
+  export type BotSkillIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+    skill?: boolean | SkillDefaultArgs<ExtArgs>
+  }
+  export type BotSkillIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+    skill?: boolean | SkillDefaultArgs<ExtArgs>
+  }
+
+  export type $BotSkillPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BotSkill"
+    objects: {
+      bot: Prisma.$BotPayload<ExtArgs>
+      skill: Prisma.$SkillPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      botId: string
+      skillId: string
+      config: Prisma.JsonValue | null
+      isEnabled: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["botSkill"]>
+    composites: {}
+  }
+
+  type BotSkillGetPayload<S extends boolean | null | undefined | BotSkillDefaultArgs> = $Result.GetResult<Prisma.$BotSkillPayload, S>
+
+  type BotSkillCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BotSkillFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BotSkillCountAggregateInputType | true
+    }
+
+  export interface BotSkillDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BotSkill'], meta: { name: 'BotSkill' } }
+    /**
+     * Find zero or one BotSkill that matches the filter.
+     * @param {BotSkillFindUniqueArgs} args - Arguments to find a BotSkill
+     * @example
+     * // Get one BotSkill
+     * const botSkill = await prisma.botSkill.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BotSkillFindUniqueArgs>(args: SelectSubset<T, BotSkillFindUniqueArgs<ExtArgs>>): Prisma__BotSkillClient<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BotSkill that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BotSkillFindUniqueOrThrowArgs} args - Arguments to find a BotSkill
+     * @example
+     * // Get one BotSkill
+     * const botSkill = await prisma.botSkill.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BotSkillFindUniqueOrThrowArgs>(args: SelectSubset<T, BotSkillFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BotSkillClient<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BotSkill that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotSkillFindFirstArgs} args - Arguments to find a BotSkill
+     * @example
+     * // Get one BotSkill
+     * const botSkill = await prisma.botSkill.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BotSkillFindFirstArgs>(args?: SelectSubset<T, BotSkillFindFirstArgs<ExtArgs>>): Prisma__BotSkillClient<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BotSkill that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotSkillFindFirstOrThrowArgs} args - Arguments to find a BotSkill
+     * @example
+     * // Get one BotSkill
+     * const botSkill = await prisma.botSkill.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BotSkillFindFirstOrThrowArgs>(args?: SelectSubset<T, BotSkillFindFirstOrThrowArgs<ExtArgs>>): Prisma__BotSkillClient<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BotSkills that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotSkillFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BotSkills
+     * const botSkills = await prisma.botSkill.findMany()
+     * 
+     * // Get first 10 BotSkills
+     * const botSkills = await prisma.botSkill.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const botSkillWithIdOnly = await prisma.botSkill.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BotSkillFindManyArgs>(args?: SelectSubset<T, BotSkillFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BotSkill.
+     * @param {BotSkillCreateArgs} args - Arguments to create a BotSkill.
+     * @example
+     * // Create one BotSkill
+     * const BotSkill = await prisma.botSkill.create({
+     *   data: {
+     *     // ... data to create a BotSkill
+     *   }
+     * })
+     * 
+     */
+    create<T extends BotSkillCreateArgs>(args: SelectSubset<T, BotSkillCreateArgs<ExtArgs>>): Prisma__BotSkillClient<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BotSkills.
+     * @param {BotSkillCreateManyArgs} args - Arguments to create many BotSkills.
+     * @example
+     * // Create many BotSkills
+     * const botSkill = await prisma.botSkill.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BotSkillCreateManyArgs>(args?: SelectSubset<T, BotSkillCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BotSkills and returns the data saved in the database.
+     * @param {BotSkillCreateManyAndReturnArgs} args - Arguments to create many BotSkills.
+     * @example
+     * // Create many BotSkills
+     * const botSkill = await prisma.botSkill.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BotSkills and only return the `id`
+     * const botSkillWithIdOnly = await prisma.botSkill.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BotSkillCreateManyAndReturnArgs>(args?: SelectSubset<T, BotSkillCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BotSkill.
+     * @param {BotSkillDeleteArgs} args - Arguments to delete one BotSkill.
+     * @example
+     * // Delete one BotSkill
+     * const BotSkill = await prisma.botSkill.delete({
+     *   where: {
+     *     // ... filter to delete one BotSkill
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BotSkillDeleteArgs>(args: SelectSubset<T, BotSkillDeleteArgs<ExtArgs>>): Prisma__BotSkillClient<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BotSkill.
+     * @param {BotSkillUpdateArgs} args - Arguments to update one BotSkill.
+     * @example
+     * // Update one BotSkill
+     * const botSkill = await prisma.botSkill.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BotSkillUpdateArgs>(args: SelectSubset<T, BotSkillUpdateArgs<ExtArgs>>): Prisma__BotSkillClient<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BotSkills.
+     * @param {BotSkillDeleteManyArgs} args - Arguments to filter BotSkills to delete.
+     * @example
+     * // Delete a few BotSkills
+     * const { count } = await prisma.botSkill.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BotSkillDeleteManyArgs>(args?: SelectSubset<T, BotSkillDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BotSkills.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotSkillUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BotSkills
+     * const botSkill = await prisma.botSkill.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BotSkillUpdateManyArgs>(args: SelectSubset<T, BotSkillUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BotSkills and returns the data updated in the database.
+     * @param {BotSkillUpdateManyAndReturnArgs} args - Arguments to update many BotSkills.
+     * @example
+     * // Update many BotSkills
+     * const botSkill = await prisma.botSkill.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BotSkills and only return the `id`
+     * const botSkillWithIdOnly = await prisma.botSkill.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BotSkillUpdateManyAndReturnArgs>(args: SelectSubset<T, BotSkillUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BotSkill.
+     * @param {BotSkillUpsertArgs} args - Arguments to update or create a BotSkill.
+     * @example
+     * // Update or create a BotSkill
+     * const botSkill = await prisma.botSkill.upsert({
+     *   create: {
+     *     // ... data to create a BotSkill
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BotSkill we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BotSkillUpsertArgs>(args: SelectSubset<T, BotSkillUpsertArgs<ExtArgs>>): Prisma__BotSkillClient<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BotSkills.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotSkillCountArgs} args - Arguments to filter BotSkills to count.
+     * @example
+     * // Count the number of BotSkills
+     * const count = await prisma.botSkill.count({
+     *   where: {
+     *     // ... the filter for the BotSkills we want to count
+     *   }
+     * })
+    **/
+    count<T extends BotSkillCountArgs>(
+      args?: Subset<T, BotSkillCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BotSkillCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BotSkill.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotSkillAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BotSkillAggregateArgs>(args: Subset<T, BotSkillAggregateArgs>): Prisma.PrismaPromise<GetBotSkillAggregateType<T>>
+
+    /**
+     * Group by BotSkill.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotSkillGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BotSkillGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BotSkillGroupByArgs['orderBy'] }
+        : { orderBy?: BotSkillGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BotSkillGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBotSkillGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BotSkill model
+   */
+  readonly fields: BotSkillFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BotSkill.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BotSkillClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    bot<T extends BotDefaultArgs<ExtArgs> = {}>(args?: Subset<T, BotDefaultArgs<ExtArgs>>): Prisma__BotClient<$Result.GetResult<Prisma.$BotPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    skill<T extends SkillDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SkillDefaultArgs<ExtArgs>>): Prisma__SkillClient<$Result.GetResult<Prisma.$SkillPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BotSkill model
+   */
+  interface BotSkillFieldRefs {
+    readonly id: FieldRef<"BotSkill", 'String'>
+    readonly botId: FieldRef<"BotSkill", 'String'>
+    readonly skillId: FieldRef<"BotSkill", 'String'>
+    readonly config: FieldRef<"BotSkill", 'Json'>
+    readonly isEnabled: FieldRef<"BotSkill", 'Boolean'>
+    readonly createdAt: FieldRef<"BotSkill", 'DateTime'>
+    readonly updatedAt: FieldRef<"BotSkill", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BotSkill findUnique
+   */
+  export type BotSkillFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillInclude<ExtArgs> | null
+    /**
+     * Filter, which BotSkill to fetch.
+     */
+    where: BotSkillWhereUniqueInput
+  }
+
+  /**
+   * BotSkill findUniqueOrThrow
+   */
+  export type BotSkillFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillInclude<ExtArgs> | null
+    /**
+     * Filter, which BotSkill to fetch.
+     */
+    where: BotSkillWhereUniqueInput
+  }
+
+  /**
+   * BotSkill findFirst
+   */
+  export type BotSkillFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillInclude<ExtArgs> | null
+    /**
+     * Filter, which BotSkill to fetch.
+     */
+    where?: BotSkillWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotSkills to fetch.
+     */
+    orderBy?: BotSkillOrderByWithRelationInput | BotSkillOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BotSkills.
+     */
+    cursor?: BotSkillWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotSkills from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotSkills.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BotSkills.
+     */
+    distinct?: BotSkillScalarFieldEnum | BotSkillScalarFieldEnum[]
+  }
+
+  /**
+   * BotSkill findFirstOrThrow
+   */
+  export type BotSkillFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillInclude<ExtArgs> | null
+    /**
+     * Filter, which BotSkill to fetch.
+     */
+    where?: BotSkillWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotSkills to fetch.
+     */
+    orderBy?: BotSkillOrderByWithRelationInput | BotSkillOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BotSkills.
+     */
+    cursor?: BotSkillWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotSkills from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotSkills.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BotSkills.
+     */
+    distinct?: BotSkillScalarFieldEnum | BotSkillScalarFieldEnum[]
+  }
+
+  /**
+   * BotSkill findMany
+   */
+  export type BotSkillFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillInclude<ExtArgs> | null
+    /**
+     * Filter, which BotSkills to fetch.
+     */
+    where?: BotSkillWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotSkills to fetch.
+     */
+    orderBy?: BotSkillOrderByWithRelationInput | BotSkillOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BotSkills.
+     */
+    cursor?: BotSkillWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotSkills from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotSkills.
+     */
+    skip?: number
+    distinct?: BotSkillScalarFieldEnum | BotSkillScalarFieldEnum[]
+  }
+
+  /**
+   * BotSkill create
+   */
+  export type BotSkillCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BotSkill.
+     */
+    data: XOR<BotSkillCreateInput, BotSkillUncheckedCreateInput>
+  }
+
+  /**
+   * BotSkill createMany
+   */
+  export type BotSkillCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BotSkills.
+     */
+    data: BotSkillCreateManyInput | BotSkillCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BotSkill createManyAndReturn
+   */
+  export type BotSkillCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * The data used to create many BotSkills.
+     */
+    data: BotSkillCreateManyInput | BotSkillCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BotSkill update
+   */
+  export type BotSkillUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BotSkill.
+     */
+    data: XOR<BotSkillUpdateInput, BotSkillUncheckedUpdateInput>
+    /**
+     * Choose, which BotSkill to update.
+     */
+    where: BotSkillWhereUniqueInput
+  }
+
+  /**
+   * BotSkill updateMany
+   */
+  export type BotSkillUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BotSkills.
+     */
+    data: XOR<BotSkillUpdateManyMutationInput, BotSkillUncheckedUpdateManyInput>
+    /**
+     * Filter which BotSkills to update
+     */
+    where?: BotSkillWhereInput
+    /**
+     * Limit how many BotSkills to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BotSkill updateManyAndReturn
+   */
+  export type BotSkillUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * The data used to update BotSkills.
+     */
+    data: XOR<BotSkillUpdateManyMutationInput, BotSkillUncheckedUpdateManyInput>
+    /**
+     * Filter which BotSkills to update
+     */
+    where?: BotSkillWhereInput
+    /**
+     * Limit how many BotSkills to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BotSkill upsert
+   */
+  export type BotSkillUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BotSkill to update in case it exists.
+     */
+    where: BotSkillWhereUniqueInput
+    /**
+     * In case the BotSkill found by the `where` argument doesn't exist, create a new BotSkill with this data.
+     */
+    create: XOR<BotSkillCreateInput, BotSkillUncheckedCreateInput>
+    /**
+     * In case the BotSkill was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BotSkillUpdateInput, BotSkillUncheckedUpdateInput>
+  }
+
+  /**
+   * BotSkill delete
+   */
+  export type BotSkillDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillInclude<ExtArgs> | null
+    /**
+     * Filter which BotSkill to delete.
+     */
+    where: BotSkillWhereUniqueInput
+  }
+
+  /**
+   * BotSkill deleteMany
+   */
+  export type BotSkillDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BotSkills to delete
+     */
+    where?: BotSkillWhereInput
+    /**
+     * Limit how many BotSkills to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BotSkill without action
+   */
+  export type BotSkillDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotSkill
+     */
+    select?: BotSkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotSkill
+     */
+    omit?: BotSkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotSkillInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -31183,6 +33728,7 @@ export namespace Prisma {
     version: 'version',
     author: 'author',
     category: 'category',
+    region: 'region',
     configSchema: 'configSchema',
     defaultConfig: 'defaultConfig',
     mcpConfig: 'mcpConfig',
@@ -31211,6 +33757,40 @@ export namespace Prisma {
   };
 
   export type BotPluginScalarFieldEnum = (typeof BotPluginScalarFieldEnum)[keyof typeof BotPluginScalarFieldEnum]
+
+
+  export const SkillScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    slug: 'slug',
+    description: 'description',
+    version: 'version',
+    skillType: 'skillType',
+    definition: 'definition',
+    examples: 'examples',
+    isSystem: 'isSystem',
+    isEnabled: 'isEnabled',
+    createdById: 'createdById',
+    isDeleted: 'isDeleted',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    deletedAt: 'deletedAt'
+  };
+
+  export type SkillScalarFieldEnum = (typeof SkillScalarFieldEnum)[keyof typeof SkillScalarFieldEnum]
+
+
+  export const BotSkillScalarFieldEnum: {
+    id: 'id',
+    botId: 'botId',
+    skillId: 'skillId',
+    config: 'config',
+    isEnabled: 'isEnabled',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type BotSkillScalarFieldEnum = (typeof BotSkillScalarFieldEnum)[keyof typeof BotSkillScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -32569,6 +35149,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogListRelationFilter
     proxyToken?: XOR<ProxyTokenNullableScalarRelationFilter, ProxyTokenWhereInput> | null
     plugins?: BotPluginListRelationFilter
+    skills?: BotSkillListRelationFilter
   }
 
   export type BotOrderByWithRelationInput = {
@@ -32602,6 +35183,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogOrderByRelationAggregateInput
     proxyToken?: ProxyTokenOrderByWithRelationInput
     plugins?: BotPluginOrderByRelationAggregateInput
+    skills?: BotSkillOrderByRelationAggregateInput
   }
 
   export type BotWhereUniqueInput = Prisma.AtLeast<{
@@ -32638,6 +35220,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogListRelationFilter
     proxyToken?: XOR<ProxyTokenNullableScalarRelationFilter, ProxyTokenWhereInput> | null
     plugins?: BotPluginListRelationFilter
+    skills?: BotSkillListRelationFilter
   }, "id">
 
   export type BotOrderByWithAggregationInput = {
@@ -33492,6 +36075,7 @@ export namespace Prisma {
     version?: StringFilter<"Plugin"> | string
     author?: StringNullableFilter<"Plugin"> | string | null
     category?: EnumPluginCategoryFilter<"Plugin"> | $Enums.PluginCategory
+    region?: StringFilter<"Plugin"> | string
     configSchema?: JsonNullableFilter<"Plugin">
     defaultConfig?: JsonNullableFilter<"Plugin">
     mcpConfig?: JsonNullableFilter<"Plugin">
@@ -33515,6 +36099,7 @@ export namespace Prisma {
     version?: SortOrder
     author?: SortOrderInput | SortOrder
     category?: SortOrder
+    region?: SortOrder
     configSchema?: SortOrderInput | SortOrder
     defaultConfig?: SortOrderInput | SortOrder
     mcpConfig?: SortOrderInput | SortOrder
@@ -33541,6 +36126,7 @@ export namespace Prisma {
     version?: StringFilter<"Plugin"> | string
     author?: StringNullableFilter<"Plugin"> | string | null
     category?: EnumPluginCategoryFilter<"Plugin"> | $Enums.PluginCategory
+    region?: StringFilter<"Plugin"> | string
     configSchema?: JsonNullableFilter<"Plugin">
     defaultConfig?: JsonNullableFilter<"Plugin">
     mcpConfig?: JsonNullableFilter<"Plugin">
@@ -33564,6 +36150,7 @@ export namespace Prisma {
     version?: SortOrder
     author?: SortOrderInput | SortOrder
     category?: SortOrder
+    region?: SortOrder
     configSchema?: SortOrderInput | SortOrder
     defaultConfig?: SortOrderInput | SortOrder
     mcpConfig?: SortOrderInput | SortOrder
@@ -33592,6 +36179,7 @@ export namespace Prisma {
     version?: StringWithAggregatesFilter<"Plugin"> | string
     author?: StringNullableWithAggregatesFilter<"Plugin"> | string | null
     category?: EnumPluginCategoryWithAggregatesFilter<"Plugin"> | $Enums.PluginCategory
+    region?: StringWithAggregatesFilter<"Plugin"> | string
     configSchema?: JsonNullableWithAggregatesFilter<"Plugin">
     defaultConfig?: JsonNullableWithAggregatesFilter<"Plugin">
     mcpConfig?: JsonNullableWithAggregatesFilter<"Plugin">
@@ -33673,6 +36261,181 @@ export namespace Prisma {
     isEnabled?: BoolWithAggregatesFilter<"BotPlugin"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"BotPlugin"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"BotPlugin"> | Date | string
+  }
+
+  export type SkillWhereInput = {
+    AND?: SkillWhereInput | SkillWhereInput[]
+    OR?: SkillWhereInput[]
+    NOT?: SkillWhereInput | SkillWhereInput[]
+    id?: UuidFilter<"Skill"> | string
+    name?: StringFilter<"Skill"> | string
+    slug?: StringFilter<"Skill"> | string
+    description?: StringNullableFilter<"Skill"> | string | null
+    version?: StringFilter<"Skill"> | string
+    skillType?: StringFilter<"Skill"> | string
+    definition?: JsonFilter<"Skill">
+    examples?: JsonNullableFilter<"Skill">
+    isSystem?: BoolFilter<"Skill"> | boolean
+    isEnabled?: BoolFilter<"Skill"> | boolean
+    createdById?: UuidNullableFilter<"Skill"> | string | null
+    isDeleted?: BoolFilter<"Skill"> | boolean
+    createdAt?: DateTimeFilter<"Skill"> | Date | string
+    updatedAt?: DateTimeFilter<"Skill"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"Skill"> | Date | string | null
+    installations?: BotSkillListRelationFilter
+  }
+
+  export type SkillOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    description?: SortOrderInput | SortOrder
+    version?: SortOrder
+    skillType?: SortOrder
+    definition?: SortOrder
+    examples?: SortOrderInput | SortOrder
+    isSystem?: SortOrder
+    isEnabled?: SortOrder
+    createdById?: SortOrderInput | SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    installations?: BotSkillOrderByRelationAggregateInput
+  }
+
+  export type SkillWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    slug_createdById?: SkillSlugCreatedByIdCompoundUniqueInput
+    AND?: SkillWhereInput | SkillWhereInput[]
+    OR?: SkillWhereInput[]
+    NOT?: SkillWhereInput | SkillWhereInput[]
+    name?: StringFilter<"Skill"> | string
+    slug?: StringFilter<"Skill"> | string
+    description?: StringNullableFilter<"Skill"> | string | null
+    version?: StringFilter<"Skill"> | string
+    skillType?: StringFilter<"Skill"> | string
+    definition?: JsonFilter<"Skill">
+    examples?: JsonNullableFilter<"Skill">
+    isSystem?: BoolFilter<"Skill"> | boolean
+    isEnabled?: BoolFilter<"Skill"> | boolean
+    createdById?: UuidNullableFilter<"Skill"> | string | null
+    isDeleted?: BoolFilter<"Skill"> | boolean
+    createdAt?: DateTimeFilter<"Skill"> | Date | string
+    updatedAt?: DateTimeFilter<"Skill"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"Skill"> | Date | string | null
+    installations?: BotSkillListRelationFilter
+  }, "id" | "slug_createdById">
+
+  export type SkillOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    description?: SortOrderInput | SortOrder
+    version?: SortOrder
+    skillType?: SortOrder
+    definition?: SortOrder
+    examples?: SortOrderInput | SortOrder
+    isSystem?: SortOrder
+    isEnabled?: SortOrder
+    createdById?: SortOrderInput | SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    _count?: SkillCountOrderByAggregateInput
+    _max?: SkillMaxOrderByAggregateInput
+    _min?: SkillMinOrderByAggregateInput
+  }
+
+  export type SkillScalarWhereWithAggregatesInput = {
+    AND?: SkillScalarWhereWithAggregatesInput | SkillScalarWhereWithAggregatesInput[]
+    OR?: SkillScalarWhereWithAggregatesInput[]
+    NOT?: SkillScalarWhereWithAggregatesInput | SkillScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"Skill"> | string
+    name?: StringWithAggregatesFilter<"Skill"> | string
+    slug?: StringWithAggregatesFilter<"Skill"> | string
+    description?: StringNullableWithAggregatesFilter<"Skill"> | string | null
+    version?: StringWithAggregatesFilter<"Skill"> | string
+    skillType?: StringWithAggregatesFilter<"Skill"> | string
+    definition?: JsonWithAggregatesFilter<"Skill">
+    examples?: JsonNullableWithAggregatesFilter<"Skill">
+    isSystem?: BoolWithAggregatesFilter<"Skill"> | boolean
+    isEnabled?: BoolWithAggregatesFilter<"Skill"> | boolean
+    createdById?: UuidNullableWithAggregatesFilter<"Skill"> | string | null
+    isDeleted?: BoolWithAggregatesFilter<"Skill"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"Skill"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Skill"> | Date | string
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"Skill"> | Date | string | null
+  }
+
+  export type BotSkillWhereInput = {
+    AND?: BotSkillWhereInput | BotSkillWhereInput[]
+    OR?: BotSkillWhereInput[]
+    NOT?: BotSkillWhereInput | BotSkillWhereInput[]
+    id?: UuidFilter<"BotSkill"> | string
+    botId?: UuidFilter<"BotSkill"> | string
+    skillId?: UuidFilter<"BotSkill"> | string
+    config?: JsonNullableFilter<"BotSkill">
+    isEnabled?: BoolFilter<"BotSkill"> | boolean
+    createdAt?: DateTimeFilter<"BotSkill"> | Date | string
+    updatedAt?: DateTimeFilter<"BotSkill"> | Date | string
+    bot?: XOR<BotScalarRelationFilter, BotWhereInput>
+    skill?: XOR<SkillScalarRelationFilter, SkillWhereInput>
+  }
+
+  export type BotSkillOrderByWithRelationInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    skillId?: SortOrder
+    config?: SortOrderInput | SortOrder
+    isEnabled?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    bot?: BotOrderByWithRelationInput
+    skill?: SkillOrderByWithRelationInput
+  }
+
+  export type BotSkillWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    botId_skillId?: BotSkillBotIdSkillIdCompoundUniqueInput
+    AND?: BotSkillWhereInput | BotSkillWhereInput[]
+    OR?: BotSkillWhereInput[]
+    NOT?: BotSkillWhereInput | BotSkillWhereInput[]
+    botId?: UuidFilter<"BotSkill"> | string
+    skillId?: UuidFilter<"BotSkill"> | string
+    config?: JsonNullableFilter<"BotSkill">
+    isEnabled?: BoolFilter<"BotSkill"> | boolean
+    createdAt?: DateTimeFilter<"BotSkill"> | Date | string
+    updatedAt?: DateTimeFilter<"BotSkill"> | Date | string
+    bot?: XOR<BotScalarRelationFilter, BotWhereInput>
+    skill?: XOR<SkillScalarRelationFilter, SkillWhereInput>
+  }, "id" | "botId_skillId">
+
+  export type BotSkillOrderByWithAggregationInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    skillId?: SortOrder
+    config?: SortOrderInput | SortOrder
+    isEnabled?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: BotSkillCountOrderByAggregateInput
+    _max?: BotSkillMaxOrderByAggregateInput
+    _min?: BotSkillMinOrderByAggregateInput
+  }
+
+  export type BotSkillScalarWhereWithAggregatesInput = {
+    AND?: BotSkillScalarWhereWithAggregatesInput | BotSkillScalarWhereWithAggregatesInput[]
+    OR?: BotSkillScalarWhereWithAggregatesInput[]
+    NOT?: BotSkillScalarWhereWithAggregatesInput | BotSkillScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"BotSkill"> | string
+    botId?: UuidWithAggregatesFilter<"BotSkill"> | string
+    skillId?: UuidWithAggregatesFilter<"BotSkill"> | string
+    config?: JsonNullableWithAggregatesFilter<"BotSkill">
+    isEnabled?: BoolWithAggregatesFilter<"BotSkill"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"BotSkill"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"BotSkill"> | Date | string
   }
 
   export type UserInfoCreateInput = {
@@ -34910,6 +37673,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
     plugins?: BotPluginCreateNestedManyWithoutBotInput
+    skills?: BotSkillCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateInput = {
@@ -34940,6 +37704,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUncheckedCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
+    skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotUpdateInput = {
@@ -34970,6 +37735,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateInput = {
@@ -35000,6 +37766,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUncheckedUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type BotCreateManyInput = {
@@ -35947,6 +38714,7 @@ export namespace Prisma {
     version: string
     author?: string | null
     category: $Enums.PluginCategory
+    region?: string
     configSchema?: NullableJsonNullValueInput | InputJsonValue
     defaultConfig?: NullableJsonNullValueInput | InputJsonValue
     mcpConfig?: NullableJsonNullValueInput | InputJsonValue
@@ -35970,6 +38738,7 @@ export namespace Prisma {
     version: string
     author?: string | null
     category: $Enums.PluginCategory
+    region?: string
     configSchema?: NullableJsonNullValueInput | InputJsonValue
     defaultConfig?: NullableJsonNullValueInput | InputJsonValue
     mcpConfig?: NullableJsonNullValueInput | InputJsonValue
@@ -35993,6 +38762,7 @@ export namespace Prisma {
     version?: StringFieldUpdateOperationsInput | string
     author?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumPluginCategoryFieldUpdateOperationsInput | $Enums.PluginCategory
+    region?: StringFieldUpdateOperationsInput | string
     configSchema?: NullableJsonNullValueInput | InputJsonValue
     defaultConfig?: NullableJsonNullValueInput | InputJsonValue
     mcpConfig?: NullableJsonNullValueInput | InputJsonValue
@@ -36016,6 +38786,7 @@ export namespace Prisma {
     version?: StringFieldUpdateOperationsInput | string
     author?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumPluginCategoryFieldUpdateOperationsInput | $Enums.PluginCategory
+    region?: StringFieldUpdateOperationsInput | string
     configSchema?: NullableJsonNullValueInput | InputJsonValue
     defaultConfig?: NullableJsonNullValueInput | InputJsonValue
     mcpConfig?: NullableJsonNullValueInput | InputJsonValue
@@ -36039,6 +38810,7 @@ export namespace Prisma {
     version: string
     author?: string | null
     category: $Enums.PluginCategory
+    region?: string
     configSchema?: NullableJsonNullValueInput | InputJsonValue
     defaultConfig?: NullableJsonNullValueInput | InputJsonValue
     mcpConfig?: NullableJsonNullValueInput | InputJsonValue
@@ -36061,6 +38833,7 @@ export namespace Prisma {
     version?: StringFieldUpdateOperationsInput | string
     author?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumPluginCategoryFieldUpdateOperationsInput | $Enums.PluginCategory
+    region?: StringFieldUpdateOperationsInput | string
     configSchema?: NullableJsonNullValueInput | InputJsonValue
     defaultConfig?: NullableJsonNullValueInput | InputJsonValue
     mcpConfig?: NullableJsonNullValueInput | InputJsonValue
@@ -36083,6 +38856,7 @@ export namespace Prisma {
     version?: StringFieldUpdateOperationsInput | string
     author?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumPluginCategoryFieldUpdateOperationsInput | $Enums.PluginCategory
+    region?: StringFieldUpdateOperationsInput | string
     configSchema?: NullableJsonNullValueInput | InputJsonValue
     defaultConfig?: NullableJsonNullValueInput | InputJsonValue
     mcpConfig?: NullableJsonNullValueInput | InputJsonValue
@@ -36159,6 +38933,204 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     botId?: StringFieldUpdateOperationsInput | string
     pluginId?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SkillCreateInput = {
+    id?: string
+    name: string
+    slug: string
+    description?: string | null
+    version?: string
+    skillType?: string
+    definition: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: boolean
+    isEnabled?: boolean
+    createdById?: string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    installations?: BotSkillCreateNestedManyWithoutSkillInput
+  }
+
+  export type SkillUncheckedCreateInput = {
+    id?: string
+    name: string
+    slug: string
+    description?: string | null
+    version?: string
+    skillType?: string
+    definition: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: boolean
+    isEnabled?: boolean
+    createdById?: string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    installations?: BotSkillUncheckedCreateNestedManyWithoutSkillInput
+  }
+
+  export type SkillUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    version?: StringFieldUpdateOperationsInput | string
+    skillType?: StringFieldUpdateOperationsInput | string
+    definition?: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: BoolFieldUpdateOperationsInput | boolean
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    installations?: BotSkillUpdateManyWithoutSkillNestedInput
+  }
+
+  export type SkillUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    version?: StringFieldUpdateOperationsInput | string
+    skillType?: StringFieldUpdateOperationsInput | string
+    definition?: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: BoolFieldUpdateOperationsInput | boolean
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    installations?: BotSkillUncheckedUpdateManyWithoutSkillNestedInput
+  }
+
+  export type SkillCreateManyInput = {
+    id?: string
+    name: string
+    slug: string
+    description?: string | null
+    version?: string
+    skillType?: string
+    definition: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: boolean
+    isEnabled?: boolean
+    createdById?: string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type SkillUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    version?: StringFieldUpdateOperationsInput | string
+    skillType?: StringFieldUpdateOperationsInput | string
+    definition?: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: BoolFieldUpdateOperationsInput | boolean
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type SkillUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    version?: StringFieldUpdateOperationsInput | string
+    skillType?: StringFieldUpdateOperationsInput | string
+    definition?: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: BoolFieldUpdateOperationsInput | boolean
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BotSkillCreateInput = {
+    id?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bot: BotCreateNestedOneWithoutSkillsInput
+    skill: SkillCreateNestedOneWithoutInstallationsInput
+  }
+
+  export type BotSkillUncheckedCreateInput = {
+    id?: string
+    botId: string
+    skillId: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BotSkillUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bot?: BotUpdateOneRequiredWithoutSkillsNestedInput
+    skill?: SkillUpdateOneRequiredWithoutInstallationsNestedInput
+  }
+
+  export type BotSkillUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    botId?: StringFieldUpdateOperationsInput | string
+    skillId?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BotSkillCreateManyInput = {
+    id?: string
+    botId: string
+    skillId: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BotSkillUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BotSkillUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    botId?: StringFieldUpdateOperationsInput | string
+    skillId?: StringFieldUpdateOperationsInput | string
     config?: NullableJsonNullValueInput | InputJsonValue
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -37252,6 +40224,12 @@ export namespace Prisma {
     none?: BotPluginWhereInput
   }
 
+  export type BotSkillListRelationFilter = {
+    every?: BotSkillWhereInput
+    some?: BotSkillWhereInput
+    none?: BotSkillWhereInput
+  }
+
   export type BotProviderKeyOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -37261,6 +40239,10 @@ export namespace Prisma {
   }
 
   export type BotPluginOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type BotSkillOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -37960,6 +40942,7 @@ export namespace Prisma {
     version?: SortOrder
     author?: SortOrder
     category?: SortOrder
+    region?: SortOrder
     configSchema?: SortOrder
     defaultConfig?: SortOrder
     mcpConfig?: SortOrder
@@ -37982,6 +40965,7 @@ export namespace Prisma {
     version?: SortOrder
     author?: SortOrder
     category?: SortOrder
+    region?: SortOrder
     isOfficial?: SortOrder
     isEnabled?: SortOrder
     downloadUrl?: SortOrder
@@ -38001,6 +40985,7 @@ export namespace Prisma {
     version?: SortOrder
     author?: SortOrder
     category?: SortOrder
+    region?: SortOrder
     isOfficial?: SortOrder
     isEnabled?: SortOrder
     downloadUrl?: SortOrder
@@ -38055,6 +41040,99 @@ export namespace Prisma {
     id?: SortOrder
     botId?: SortOrder
     pluginId?: SortOrder
+    isEnabled?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SkillSlugCreatedByIdCompoundUniqueInput = {
+    slug: string
+    createdById: string
+  }
+
+  export type SkillCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    description?: SortOrder
+    version?: SortOrder
+    skillType?: SortOrder
+    definition?: SortOrder
+    examples?: SortOrder
+    isSystem?: SortOrder
+    isEnabled?: SortOrder
+    createdById?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type SkillMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    description?: SortOrder
+    version?: SortOrder
+    skillType?: SortOrder
+    isSystem?: SortOrder
+    isEnabled?: SortOrder
+    createdById?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type SkillMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    slug?: SortOrder
+    description?: SortOrder
+    version?: SortOrder
+    skillType?: SortOrder
+    isSystem?: SortOrder
+    isEnabled?: SortOrder
+    createdById?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type SkillScalarRelationFilter = {
+    is?: SkillWhereInput
+    isNot?: SkillWhereInput
+  }
+
+  export type BotSkillBotIdSkillIdCompoundUniqueInput = {
+    botId: string
+    skillId: string
+  }
+
+  export type BotSkillCountOrderByAggregateInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    skillId?: SortOrder
+    config?: SortOrder
+    isEnabled?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BotSkillMaxOrderByAggregateInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    skillId?: SortOrder
+    isEnabled?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BotSkillMinOrderByAggregateInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    skillId?: SortOrder
     isEnabled?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -38872,6 +41950,13 @@ export namespace Prisma {
     connect?: BotPluginWhereUniqueInput | BotPluginWhereUniqueInput[]
   }
 
+  export type BotSkillCreateNestedManyWithoutBotInput = {
+    create?: XOR<BotSkillCreateWithoutBotInput, BotSkillUncheckedCreateWithoutBotInput> | BotSkillCreateWithoutBotInput[] | BotSkillUncheckedCreateWithoutBotInput[]
+    connectOrCreate?: BotSkillCreateOrConnectWithoutBotInput | BotSkillCreateOrConnectWithoutBotInput[]
+    createMany?: BotSkillCreateManyBotInputEnvelope
+    connect?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+  }
+
   export type BotProviderKeyUncheckedCreateNestedManyWithoutBotInput = {
     create?: XOR<BotProviderKeyCreateWithoutBotInput, BotProviderKeyUncheckedCreateWithoutBotInput> | BotProviderKeyCreateWithoutBotInput[] | BotProviderKeyUncheckedCreateWithoutBotInput[]
     connectOrCreate?: BotProviderKeyCreateOrConnectWithoutBotInput | BotProviderKeyCreateOrConnectWithoutBotInput[]
@@ -38897,6 +41982,13 @@ export namespace Prisma {
     connectOrCreate?: BotPluginCreateOrConnectWithoutBotInput | BotPluginCreateOrConnectWithoutBotInput[]
     createMany?: BotPluginCreateManyBotInputEnvelope
     connect?: BotPluginWhereUniqueInput | BotPluginWhereUniqueInput[]
+  }
+
+  export type BotSkillUncheckedCreateNestedManyWithoutBotInput = {
+    create?: XOR<BotSkillCreateWithoutBotInput, BotSkillUncheckedCreateWithoutBotInput> | BotSkillCreateWithoutBotInput[] | BotSkillUncheckedCreateWithoutBotInput[]
+    connectOrCreate?: BotSkillCreateOrConnectWithoutBotInput | BotSkillCreateOrConnectWithoutBotInput[]
+    createMany?: BotSkillCreateManyBotInputEnvelope
+    connect?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
   }
 
   export type NullableIntFieldUpdateOperationsInput = {
@@ -39000,6 +42092,20 @@ export namespace Prisma {
     deleteMany?: BotPluginScalarWhereInput | BotPluginScalarWhereInput[]
   }
 
+  export type BotSkillUpdateManyWithoutBotNestedInput = {
+    create?: XOR<BotSkillCreateWithoutBotInput, BotSkillUncheckedCreateWithoutBotInput> | BotSkillCreateWithoutBotInput[] | BotSkillUncheckedCreateWithoutBotInput[]
+    connectOrCreate?: BotSkillCreateOrConnectWithoutBotInput | BotSkillCreateOrConnectWithoutBotInput[]
+    upsert?: BotSkillUpsertWithWhereUniqueWithoutBotInput | BotSkillUpsertWithWhereUniqueWithoutBotInput[]
+    createMany?: BotSkillCreateManyBotInputEnvelope
+    set?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    disconnect?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    delete?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    connect?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    update?: BotSkillUpdateWithWhereUniqueWithoutBotInput | BotSkillUpdateWithWhereUniqueWithoutBotInput[]
+    updateMany?: BotSkillUpdateManyWithWhereWithoutBotInput | BotSkillUpdateManyWithWhereWithoutBotInput[]
+    deleteMany?: BotSkillScalarWhereInput | BotSkillScalarWhereInput[]
+  }
+
   export type BotProviderKeyUncheckedUpdateManyWithoutBotNestedInput = {
     create?: XOR<BotProviderKeyCreateWithoutBotInput, BotProviderKeyUncheckedCreateWithoutBotInput> | BotProviderKeyCreateWithoutBotInput[] | BotProviderKeyUncheckedCreateWithoutBotInput[]
     connectOrCreate?: BotProviderKeyCreateOrConnectWithoutBotInput | BotProviderKeyCreateOrConnectWithoutBotInput[]
@@ -39050,6 +42156,20 @@ export namespace Prisma {
     update?: BotPluginUpdateWithWhereUniqueWithoutBotInput | BotPluginUpdateWithWhereUniqueWithoutBotInput[]
     updateMany?: BotPluginUpdateManyWithWhereWithoutBotInput | BotPluginUpdateManyWithWhereWithoutBotInput[]
     deleteMany?: BotPluginScalarWhereInput | BotPluginScalarWhereInput[]
+  }
+
+  export type BotSkillUncheckedUpdateManyWithoutBotNestedInput = {
+    create?: XOR<BotSkillCreateWithoutBotInput, BotSkillUncheckedCreateWithoutBotInput> | BotSkillCreateWithoutBotInput[] | BotSkillUncheckedCreateWithoutBotInput[]
+    connectOrCreate?: BotSkillCreateOrConnectWithoutBotInput | BotSkillCreateOrConnectWithoutBotInput[]
+    upsert?: BotSkillUpsertWithWhereUniqueWithoutBotInput | BotSkillUpsertWithWhereUniqueWithoutBotInput[]
+    createMany?: BotSkillCreateManyBotInputEnvelope
+    set?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    disconnect?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    delete?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    connect?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    update?: BotSkillUpdateWithWhereUniqueWithoutBotInput | BotSkillUpdateWithWhereUniqueWithoutBotInput[]
+    updateMany?: BotSkillUpdateManyWithWhereWithoutBotInput | BotSkillUpdateManyWithWhereWithoutBotInput[]
+    deleteMany?: BotSkillScalarWhereInput | BotSkillScalarWhereInput[]
   }
 
   export type UserInfoCreateNestedOneWithoutProviderKeysInput = {
@@ -39527,6 +42647,76 @@ export namespace Prisma {
     upsert?: PluginUpsertWithoutInstallationsInput
     connect?: PluginWhereUniqueInput
     update?: XOR<XOR<PluginUpdateToOneWithWhereWithoutInstallationsInput, PluginUpdateWithoutInstallationsInput>, PluginUncheckedUpdateWithoutInstallationsInput>
+  }
+
+  export type BotSkillCreateNestedManyWithoutSkillInput = {
+    create?: XOR<BotSkillCreateWithoutSkillInput, BotSkillUncheckedCreateWithoutSkillInput> | BotSkillCreateWithoutSkillInput[] | BotSkillUncheckedCreateWithoutSkillInput[]
+    connectOrCreate?: BotSkillCreateOrConnectWithoutSkillInput | BotSkillCreateOrConnectWithoutSkillInput[]
+    createMany?: BotSkillCreateManySkillInputEnvelope
+    connect?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+  }
+
+  export type BotSkillUncheckedCreateNestedManyWithoutSkillInput = {
+    create?: XOR<BotSkillCreateWithoutSkillInput, BotSkillUncheckedCreateWithoutSkillInput> | BotSkillCreateWithoutSkillInput[] | BotSkillUncheckedCreateWithoutSkillInput[]
+    connectOrCreate?: BotSkillCreateOrConnectWithoutSkillInput | BotSkillCreateOrConnectWithoutSkillInput[]
+    createMany?: BotSkillCreateManySkillInputEnvelope
+    connect?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+  }
+
+  export type BotSkillUpdateManyWithoutSkillNestedInput = {
+    create?: XOR<BotSkillCreateWithoutSkillInput, BotSkillUncheckedCreateWithoutSkillInput> | BotSkillCreateWithoutSkillInput[] | BotSkillUncheckedCreateWithoutSkillInput[]
+    connectOrCreate?: BotSkillCreateOrConnectWithoutSkillInput | BotSkillCreateOrConnectWithoutSkillInput[]
+    upsert?: BotSkillUpsertWithWhereUniqueWithoutSkillInput | BotSkillUpsertWithWhereUniqueWithoutSkillInput[]
+    createMany?: BotSkillCreateManySkillInputEnvelope
+    set?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    disconnect?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    delete?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    connect?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    update?: BotSkillUpdateWithWhereUniqueWithoutSkillInput | BotSkillUpdateWithWhereUniqueWithoutSkillInput[]
+    updateMany?: BotSkillUpdateManyWithWhereWithoutSkillInput | BotSkillUpdateManyWithWhereWithoutSkillInput[]
+    deleteMany?: BotSkillScalarWhereInput | BotSkillScalarWhereInput[]
+  }
+
+  export type BotSkillUncheckedUpdateManyWithoutSkillNestedInput = {
+    create?: XOR<BotSkillCreateWithoutSkillInput, BotSkillUncheckedCreateWithoutSkillInput> | BotSkillCreateWithoutSkillInput[] | BotSkillUncheckedCreateWithoutSkillInput[]
+    connectOrCreate?: BotSkillCreateOrConnectWithoutSkillInput | BotSkillCreateOrConnectWithoutSkillInput[]
+    upsert?: BotSkillUpsertWithWhereUniqueWithoutSkillInput | BotSkillUpsertWithWhereUniqueWithoutSkillInput[]
+    createMany?: BotSkillCreateManySkillInputEnvelope
+    set?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    disconnect?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    delete?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    connect?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+    update?: BotSkillUpdateWithWhereUniqueWithoutSkillInput | BotSkillUpdateWithWhereUniqueWithoutSkillInput[]
+    updateMany?: BotSkillUpdateManyWithWhereWithoutSkillInput | BotSkillUpdateManyWithWhereWithoutSkillInput[]
+    deleteMany?: BotSkillScalarWhereInput | BotSkillScalarWhereInput[]
+  }
+
+  export type BotCreateNestedOneWithoutSkillsInput = {
+    create?: XOR<BotCreateWithoutSkillsInput, BotUncheckedCreateWithoutSkillsInput>
+    connectOrCreate?: BotCreateOrConnectWithoutSkillsInput
+    connect?: BotWhereUniqueInput
+  }
+
+  export type SkillCreateNestedOneWithoutInstallationsInput = {
+    create?: XOR<SkillCreateWithoutInstallationsInput, SkillUncheckedCreateWithoutInstallationsInput>
+    connectOrCreate?: SkillCreateOrConnectWithoutInstallationsInput
+    connect?: SkillWhereUniqueInput
+  }
+
+  export type BotUpdateOneRequiredWithoutSkillsNestedInput = {
+    create?: XOR<BotCreateWithoutSkillsInput, BotUncheckedCreateWithoutSkillsInput>
+    connectOrCreate?: BotCreateOrConnectWithoutSkillsInput
+    upsert?: BotUpsertWithoutSkillsInput
+    connect?: BotWhereUniqueInput
+    update?: XOR<XOR<BotUpdateToOneWithWhereWithoutSkillsInput, BotUpdateWithoutSkillsInput>, BotUncheckedUpdateWithoutSkillsInput>
+  }
+
+  export type SkillUpdateOneRequiredWithoutInstallationsNestedInput = {
+    create?: XOR<SkillCreateWithoutInstallationsInput, SkillUncheckedCreateWithoutInstallationsInput>
+    connectOrCreate?: SkillCreateOrConnectWithoutInstallationsInput
+    upsert?: SkillUpsertWithoutInstallationsInput
+    connect?: SkillWhereUniqueInput
+    update?: XOR<XOR<SkillUpdateToOneWithWhereWithoutInstallationsInput, SkillUpdateWithoutInstallationsInput>, SkillUncheckedUpdateWithoutInstallationsInput>
   }
 
   export type NestedUuidFilter<$PrismaModel = never> = {
@@ -40326,6 +43516,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
     plugins?: BotPluginCreateNestedManyWithoutBotInput
+    skills?: BotSkillCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutCreatedByInput = {
@@ -40355,6 +43546,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUncheckedCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
+    skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutCreatedByInput = {
@@ -41097,6 +44289,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
     plugins?: BotPluginCreateNestedManyWithoutBotInput
+    skills?: BotSkillCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutPersonaTemplateInput = {
@@ -41126,6 +44319,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUncheckedCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
+    skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutPersonaTemplateInput = {
@@ -42165,6 +45359,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
     plugins?: BotPluginCreateNestedManyWithoutBotInput
+    skills?: BotSkillCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutAvatarFileInput = {
@@ -42194,6 +45389,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUncheckedCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
+    skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutAvatarFileInput = {
@@ -42575,6 +45771,34 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type BotSkillCreateWithoutBotInput = {
+    id?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    skill: SkillCreateNestedOneWithoutInstallationsInput
+  }
+
+  export type BotSkillUncheckedCreateWithoutBotInput = {
+    id?: string
+    skillId: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BotSkillCreateOrConnectWithoutBotInput = {
+    where: BotSkillWhereUniqueInput
+    create: XOR<BotSkillCreateWithoutBotInput, BotSkillUncheckedCreateWithoutBotInput>
+  }
+
+  export type BotSkillCreateManyBotInputEnvelope = {
+    data: BotSkillCreateManyBotInput | BotSkillCreateManyBotInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserInfoUpsertWithoutBotsInput = {
     update: XOR<UserInfoUpdateWithoutBotsInput, UserInfoUncheckedUpdateWithoutBotsInput>
     create: XOR<UserInfoCreateWithoutBotsInput, UserInfoUncheckedCreateWithoutBotsInput>
@@ -42893,6 +46117,35 @@ export namespace Prisma {
     isEnabled?: BoolFilter<"BotPlugin"> | boolean
     createdAt?: DateTimeFilter<"BotPlugin"> | Date | string
     updatedAt?: DateTimeFilter<"BotPlugin"> | Date | string
+  }
+
+  export type BotSkillUpsertWithWhereUniqueWithoutBotInput = {
+    where: BotSkillWhereUniqueInput
+    update: XOR<BotSkillUpdateWithoutBotInput, BotSkillUncheckedUpdateWithoutBotInput>
+    create: XOR<BotSkillCreateWithoutBotInput, BotSkillUncheckedCreateWithoutBotInput>
+  }
+
+  export type BotSkillUpdateWithWhereUniqueWithoutBotInput = {
+    where: BotSkillWhereUniqueInput
+    data: XOR<BotSkillUpdateWithoutBotInput, BotSkillUncheckedUpdateWithoutBotInput>
+  }
+
+  export type BotSkillUpdateManyWithWhereWithoutBotInput = {
+    where: BotSkillScalarWhereInput
+    data: XOR<BotSkillUpdateManyMutationInput, BotSkillUncheckedUpdateManyWithoutBotInput>
+  }
+
+  export type BotSkillScalarWhereInput = {
+    AND?: BotSkillScalarWhereInput | BotSkillScalarWhereInput[]
+    OR?: BotSkillScalarWhereInput[]
+    NOT?: BotSkillScalarWhereInput | BotSkillScalarWhereInput[]
+    id?: UuidFilter<"BotSkill"> | string
+    botId?: UuidFilter<"BotSkill"> | string
+    skillId?: UuidFilter<"BotSkill"> | string
+    config?: JsonNullableFilter<"BotSkill">
+    isEnabled?: BoolFilter<"BotSkill"> | boolean
+    createdAt?: DateTimeFilter<"BotSkill"> | Date | string
+    updatedAt?: DateTimeFilter<"BotSkill"> | Date | string
   }
 
   export type UserInfoCreateWithoutProviderKeysInput = {
@@ -43232,6 +46485,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
     plugins?: BotPluginCreateNestedManyWithoutBotInput
+    skills?: BotSkillCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutProviderKeysInput = {
@@ -43261,6 +46515,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUncheckedCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
+    skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutProviderKeysInput = {
@@ -43345,6 +46600,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutProviderKeysInput = {
@@ -43374,6 +46630,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUncheckedUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type ProviderKeyUpsertWithoutBotProviderKeysInput = {
@@ -43448,6 +46705,7 @@ export namespace Prisma {
     providerKeys?: BotProviderKeyCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
     plugins?: BotPluginCreateNestedManyWithoutBotInput
+    skills?: BotSkillCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutUsageLogsInput = {
@@ -43477,6 +46735,7 @@ export namespace Prisma {
     providerKeys?: BotProviderKeyUncheckedCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
+    skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutUsageLogsInput = {
@@ -43561,6 +46820,7 @@ export namespace Prisma {
     providerKeys?: BotProviderKeyUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutUsageLogsInput = {
@@ -43590,6 +46850,7 @@ export namespace Prisma {
     providerKeys?: BotProviderKeyUncheckedUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type ProviderKeyUpsertWithoutUsageLogsInput = {
@@ -43664,6 +46925,7 @@ export namespace Prisma {
     providerKeys?: BotProviderKeyCreateNestedManyWithoutBotInput
     usageLogs?: BotUsageLogCreateNestedManyWithoutBotInput
     plugins?: BotPluginCreateNestedManyWithoutBotInput
+    skills?: BotSkillCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutProxyTokenInput = {
@@ -43693,6 +46955,7 @@ export namespace Prisma {
     providerKeys?: BotProviderKeyUncheckedCreateNestedManyWithoutBotInput
     usageLogs?: BotUsageLogUncheckedCreateNestedManyWithoutBotInput
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
+    skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutProxyTokenInput = {
@@ -43777,6 +47040,7 @@ export namespace Prisma {
     providerKeys?: BotProviderKeyUpdateManyWithoutBotNestedInput
     usageLogs?: BotUsageLogUpdateManyWithoutBotNestedInput
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutProxyTokenInput = {
@@ -43806,6 +47070,7 @@ export namespace Prisma {
     providerKeys?: BotProviderKeyUncheckedUpdateManyWithoutBotNestedInput
     usageLogs?: BotUsageLogUncheckedUpdateManyWithoutBotNestedInput
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type ProviderKeyUpsertWithoutProxyTokensInput = {
@@ -44624,6 +47889,7 @@ export namespace Prisma {
     providerKeys?: BotProviderKeyCreateNestedManyWithoutBotInput
     usageLogs?: BotUsageLogCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
+    skills?: BotSkillCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutPluginsInput = {
@@ -44653,6 +47919,7 @@ export namespace Prisma {
     providerKeys?: BotProviderKeyUncheckedCreateNestedManyWithoutBotInput
     usageLogs?: BotUsageLogUncheckedCreateNestedManyWithoutBotInput
     proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
+    skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutPluginsInput = {
@@ -44668,6 +47935,7 @@ export namespace Prisma {
     version: string
     author?: string | null
     category: $Enums.PluginCategory
+    region?: string
     configSchema?: NullableJsonNullValueInput | InputJsonValue
     defaultConfig?: NullableJsonNullValueInput | InputJsonValue
     mcpConfig?: NullableJsonNullValueInput | InputJsonValue
@@ -44690,6 +47958,7 @@ export namespace Prisma {
     version: string
     author?: string | null
     category: $Enums.PluginCategory
+    region?: string
     configSchema?: NullableJsonNullValueInput | InputJsonValue
     defaultConfig?: NullableJsonNullValueInput | InputJsonValue
     mcpConfig?: NullableJsonNullValueInput | InputJsonValue
@@ -44747,6 +48016,7 @@ export namespace Prisma {
     providerKeys?: BotProviderKeyUpdateManyWithoutBotNestedInput
     usageLogs?: BotUsageLogUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
+    skills?: BotSkillUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutPluginsInput = {
@@ -44776,6 +48046,7 @@ export namespace Prisma {
     providerKeys?: BotProviderKeyUncheckedUpdateManyWithoutBotNestedInput
     usageLogs?: BotUsageLogUncheckedUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
+    skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type PluginUpsertWithoutInstallationsInput = {
@@ -44797,6 +48068,7 @@ export namespace Prisma {
     version?: StringFieldUpdateOperationsInput | string
     author?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumPluginCategoryFieldUpdateOperationsInput | $Enums.PluginCategory
+    region?: StringFieldUpdateOperationsInput | string
     configSchema?: NullableJsonNullValueInput | InputJsonValue
     defaultConfig?: NullableJsonNullValueInput | InputJsonValue
     mcpConfig?: NullableJsonNullValueInput | InputJsonValue
@@ -44819,6 +48091,7 @@ export namespace Prisma {
     version?: StringFieldUpdateOperationsInput | string
     author?: NullableStringFieldUpdateOperationsInput | string | null
     category?: EnumPluginCategoryFieldUpdateOperationsInput | $Enums.PluginCategory
+    region?: StringFieldUpdateOperationsInput | string
     configSchema?: NullableJsonNullValueInput | InputJsonValue
     defaultConfig?: NullableJsonNullValueInput | InputJsonValue
     mcpConfig?: NullableJsonNullValueInput | InputJsonValue
@@ -44827,6 +48100,274 @@ export namespace Prisma {
     downloadUrl?: NullableStringFieldUpdateOperationsInput | string | null
     iconEmoji?: NullableStringFieldUpdateOperationsInput | string | null
     iconUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BotSkillCreateWithoutSkillInput = {
+    id?: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bot: BotCreateNestedOneWithoutSkillsInput
+  }
+
+  export type BotSkillUncheckedCreateWithoutSkillInput = {
+    id?: string
+    botId: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BotSkillCreateOrConnectWithoutSkillInput = {
+    where: BotSkillWhereUniqueInput
+    create: XOR<BotSkillCreateWithoutSkillInput, BotSkillUncheckedCreateWithoutSkillInput>
+  }
+
+  export type BotSkillCreateManySkillInputEnvelope = {
+    data: BotSkillCreateManySkillInput | BotSkillCreateManySkillInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type BotSkillUpsertWithWhereUniqueWithoutSkillInput = {
+    where: BotSkillWhereUniqueInput
+    update: XOR<BotSkillUpdateWithoutSkillInput, BotSkillUncheckedUpdateWithoutSkillInput>
+    create: XOR<BotSkillCreateWithoutSkillInput, BotSkillUncheckedCreateWithoutSkillInput>
+  }
+
+  export type BotSkillUpdateWithWhereUniqueWithoutSkillInput = {
+    where: BotSkillWhereUniqueInput
+    data: XOR<BotSkillUpdateWithoutSkillInput, BotSkillUncheckedUpdateWithoutSkillInput>
+  }
+
+  export type BotSkillUpdateManyWithWhereWithoutSkillInput = {
+    where: BotSkillScalarWhereInput
+    data: XOR<BotSkillUpdateManyMutationInput, BotSkillUncheckedUpdateManyWithoutSkillInput>
+  }
+
+  export type BotCreateWithoutSkillsInput = {
+    id?: string
+    name: string
+    hostname: string
+    aiProvider: string
+    model: string
+    channelType: string
+    containerId?: string | null
+    port?: number | null
+    gatewayToken?: string | null
+    proxyTokenHash?: string | null
+    tags?: BotCreatetagsInput | string[]
+    status?: $Enums.BotStatus
+    emoji?: string | null
+    soulMarkdown?: string | null
+    healthStatus?: $Enums.HealthStatus
+    lastHealthCheck?: Date | string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    createdBy: UserInfoCreateNestedOneWithoutBotsInput
+    personaTemplate?: PersonaTemplateCreateNestedOneWithoutBotsInput
+    avatarFile?: FileSourceCreateNestedOneWithoutBotAvatarsInput
+    providerKeys?: BotProviderKeyCreateNestedManyWithoutBotInput
+    usageLogs?: BotUsageLogCreateNestedManyWithoutBotInput
+    proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
+    plugins?: BotPluginCreateNestedManyWithoutBotInput
+  }
+
+  export type BotUncheckedCreateWithoutSkillsInput = {
+    id?: string
+    name: string
+    hostname: string
+    aiProvider: string
+    model: string
+    channelType: string
+    containerId?: string | null
+    port?: number | null
+    gatewayToken?: string | null
+    proxyTokenHash?: string | null
+    tags?: BotCreatetagsInput | string[]
+    status?: $Enums.BotStatus
+    createdById: string
+    personaTemplateId?: string | null
+    emoji?: string | null
+    avatarFileId?: string | null
+    soulMarkdown?: string | null
+    healthStatus?: $Enums.HealthStatus
+    lastHealthCheck?: Date | string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    providerKeys?: BotProviderKeyUncheckedCreateNestedManyWithoutBotInput
+    usageLogs?: BotUsageLogUncheckedCreateNestedManyWithoutBotInput
+    proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
+    plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
+  }
+
+  export type BotCreateOrConnectWithoutSkillsInput = {
+    where: BotWhereUniqueInput
+    create: XOR<BotCreateWithoutSkillsInput, BotUncheckedCreateWithoutSkillsInput>
+  }
+
+  export type SkillCreateWithoutInstallationsInput = {
+    id?: string
+    name: string
+    slug: string
+    description?: string | null
+    version?: string
+    skillType?: string
+    definition: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: boolean
+    isEnabled?: boolean
+    createdById?: string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type SkillUncheckedCreateWithoutInstallationsInput = {
+    id?: string
+    name: string
+    slug: string
+    description?: string | null
+    version?: string
+    skillType?: string
+    definition: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: boolean
+    isEnabled?: boolean
+    createdById?: string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type SkillCreateOrConnectWithoutInstallationsInput = {
+    where: SkillWhereUniqueInput
+    create: XOR<SkillCreateWithoutInstallationsInput, SkillUncheckedCreateWithoutInstallationsInput>
+  }
+
+  export type BotUpsertWithoutSkillsInput = {
+    update: XOR<BotUpdateWithoutSkillsInput, BotUncheckedUpdateWithoutSkillsInput>
+    create: XOR<BotCreateWithoutSkillsInput, BotUncheckedCreateWithoutSkillsInput>
+    where?: BotWhereInput
+  }
+
+  export type BotUpdateToOneWithWhereWithoutSkillsInput = {
+    where?: BotWhereInput
+    data: XOR<BotUpdateWithoutSkillsInput, BotUncheckedUpdateWithoutSkillsInput>
+  }
+
+  export type BotUpdateWithoutSkillsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    aiProvider?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    channelType?: StringFieldUpdateOperationsInput | string
+    containerId?: NullableStringFieldUpdateOperationsInput | string | null
+    port?: NullableIntFieldUpdateOperationsInput | number | null
+    gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
+    proxyTokenHash?: NullableStringFieldUpdateOperationsInput | string | null
+    tags?: BotUpdatetagsInput | string[]
+    status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
+    emoji?: NullableStringFieldUpdateOperationsInput | string | null
+    soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
+    lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: UserInfoUpdateOneRequiredWithoutBotsNestedInput
+    personaTemplate?: PersonaTemplateUpdateOneWithoutBotsNestedInput
+    avatarFile?: FileSourceUpdateOneWithoutBotAvatarsNestedInput
+    providerKeys?: BotProviderKeyUpdateManyWithoutBotNestedInput
+    usageLogs?: BotUsageLogUpdateManyWithoutBotNestedInput
+    proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
+    plugins?: BotPluginUpdateManyWithoutBotNestedInput
+  }
+
+  export type BotUncheckedUpdateWithoutSkillsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    aiProvider?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    channelType?: StringFieldUpdateOperationsInput | string
+    containerId?: NullableStringFieldUpdateOperationsInput | string | null
+    port?: NullableIntFieldUpdateOperationsInput | number | null
+    gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
+    proxyTokenHash?: NullableStringFieldUpdateOperationsInput | string | null
+    tags?: BotUpdatetagsInput | string[]
+    status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
+    createdById?: StringFieldUpdateOperationsInput | string
+    personaTemplateId?: NullableStringFieldUpdateOperationsInput | string | null
+    emoji?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
+    soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
+    lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    providerKeys?: BotProviderKeyUncheckedUpdateManyWithoutBotNestedInput
+    usageLogs?: BotUsageLogUncheckedUpdateManyWithoutBotNestedInput
+    proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
+    plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
+  }
+
+  export type SkillUpsertWithoutInstallationsInput = {
+    update: XOR<SkillUpdateWithoutInstallationsInput, SkillUncheckedUpdateWithoutInstallationsInput>
+    create: XOR<SkillCreateWithoutInstallationsInput, SkillUncheckedCreateWithoutInstallationsInput>
+    where?: SkillWhereInput
+  }
+
+  export type SkillUpdateToOneWithWhereWithoutInstallationsInput = {
+    where?: SkillWhereInput
+    data: XOR<SkillUpdateWithoutInstallationsInput, SkillUncheckedUpdateWithoutInstallationsInput>
+  }
+
+  export type SkillUpdateWithoutInstallationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    version?: StringFieldUpdateOperationsInput | string
+    skillType?: StringFieldUpdateOperationsInput | string
+    definition?: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: BoolFieldUpdateOperationsInput | boolean
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type SkillUncheckedUpdateWithoutInstallationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    version?: StringFieldUpdateOperationsInput | string
+    skillType?: StringFieldUpdateOperationsInput | string
+    definition?: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: BoolFieldUpdateOperationsInput | boolean
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -45020,6 +48561,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutCreatedByInput = {
@@ -45049,6 +48591,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUncheckedUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateManyWithoutCreatedByInput = {
@@ -45259,6 +48802,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutPersonaTemplateInput = {
@@ -45288,6 +48832,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUncheckedUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateManyWithoutPersonaTemplateInput = {
@@ -45535,6 +49080,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutAvatarFileInput = {
@@ -45564,6 +49110,7 @@ export namespace Prisma {
     usageLogs?: BotUsageLogUncheckedUpdateManyWithoutBotNestedInput
     proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateManyWithoutAvatarFileInput = {
@@ -45615,6 +49162,15 @@ export namespace Prisma {
   export type BotPluginCreateManyBotInput = {
     id?: string
     pluginId: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BotSkillCreateManyBotInput = {
+    id?: string
+    skillId: string
     config?: NullableJsonNullValueInput | InputJsonValue
     isEnabled?: boolean
     createdAt?: Date | string
@@ -45705,6 +49261,33 @@ export namespace Prisma {
   export type BotPluginUncheckedUpdateManyWithoutBotInput = {
     id?: StringFieldUpdateOperationsInput | string
     pluginId?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BotSkillUpdateWithoutBotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    skill?: SkillUpdateOneRequiredWithoutInstallationsNestedInput
+  }
+
+  export type BotSkillUncheckedUpdateWithoutBotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    skillId?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BotSkillUncheckedUpdateManyWithoutBotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    skillId?: StringFieldUpdateOperationsInput | string
     config?: NullableJsonNullValueInput | InputJsonValue
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -45979,6 +49562,42 @@ export namespace Prisma {
   }
 
   export type BotPluginUncheckedUpdateManyWithoutPluginInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    botId?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BotSkillCreateManySkillInput = {
+    id?: string
+    botId: string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BotSkillUpdateWithoutSkillInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bot?: BotUpdateOneRequiredWithoutSkillsNestedInput
+  }
+
+  export type BotSkillUncheckedUpdateWithoutSkillInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    botId?: StringFieldUpdateOperationsInput | string
+    config?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BotSkillUncheckedUpdateManyWithoutSkillInput = {
     id?: StringFieldUpdateOperationsInput | string
     botId?: StringFieldUpdateOperationsInput | string
     config?: NullableJsonNullValueInput | InputJsonValue

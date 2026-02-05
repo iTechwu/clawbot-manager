@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
@@ -18,6 +18,9 @@ import { codeOfCountries } from '../scripts/country-codes.data';
 
 // Channel definitions data
 import { CHANNEL_DEFINITIONS } from '../scripts/channel-definitions.data';
+
+// Plugin definitions data
+import { PLUGIN_DEFINITIONS } from '../scripts/plugin-definitions.data';
 
 // ============================================================================
 // System Persona Templates
@@ -455,12 +458,84 @@ async function seedChannelDefinitions() {
   );
 }
 
+async function seedPlugins() {
+  console.log('\n🔌 Seeding plugins...');
+
+  for (const pluginData of PLUGIN_DEFINITIONS) {
+    const existing = await prisma.plugin.findUnique({
+      where: { slug: pluginData.slug },
+    });
+
+    if (existing) {
+      // Update existing plugin
+      await prisma.plugin.update({
+        where: { slug: pluginData.slug },
+        data: {
+          name: pluginData.name,
+          description: pluginData.description,
+          version: pluginData.version,
+          author: pluginData.author,
+          category: pluginData.category,
+          region: pluginData.region,
+          configSchema: pluginData.configSchema as Prisma.InputJsonValue,
+          defaultConfig: pluginData.defaultConfig as Prisma.InputJsonValue,
+          mcpConfig: pluginData.mcpConfig,
+          isOfficial: pluginData.isOfficial,
+          iconEmoji: pluginData.iconEmoji,
+          downloadUrl: pluginData.downloadUrl,
+          isDeleted: false,
+        },
+      });
+      console.log(
+        `  ⏭️  Updated existing: ${pluginData.name} (${pluginData.region})`,
+      );
+    } else {
+      // Create new plugin
+      await prisma.plugin.create({
+        data: {
+          name: pluginData.name,
+          slug: pluginData.slug,
+          description: pluginData.description,
+          version: pluginData.version,
+          author: pluginData.author,
+          category: pluginData.category,
+          region: pluginData.region,
+          configSchema: pluginData.configSchema as Prisma.InputJsonValue,
+          defaultConfig: pluginData.defaultConfig as Prisma.InputJsonValue,
+          mcpConfig: pluginData.mcpConfig,
+          isOfficial: pluginData.isOfficial,
+          iconEmoji: pluginData.iconEmoji,
+          downloadUrl: pluginData.downloadUrl,
+        },
+      });
+      console.log(`  ✅ Created: ${pluginData.name} (${pluginData.region})`);
+    }
+  }
+
+  const count = await prisma.plugin.count({
+    where: { isDeleted: false },
+  });
+  const cnCount = await prisma.plugin.count({
+    where: { isDeleted: false, region: 'cn' },
+  });
+  const enCount = await prisma.plugin.count({
+    where: { isDeleted: false, region: 'en' },
+  });
+  const globalCount = await prisma.plugin.count({
+    where: { isDeleted: false, region: 'global' },
+  });
+  console.log(
+    `🔌 Plugins seeding completed! (${count} total: ${globalCount} global, ${cnCount} cn, ${enCount} en)`,
+  );
+}
+
 async function main() {
   console.log('🌱 Starting database seeding...\n');
 
   await seedPersonaTemplates();
   await seedCountryCodes();
   await seedChannelDefinitions();
+  await seedPlugins();
 
   console.log('\n✅ Database seeding completed successfully!');
 }

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Bot, Key, Activity, Sparkles } from 'lucide-react';
+import { Bot, Key, Activity, Sparkles, Puzzle } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +27,11 @@ const navItems = [
     href: '/bots',
     icon: Bot,
     badgeKey: 'runningBots',
+  },
+  {
+    titleKey: 'plugins',
+    href: '/plugins',
+    icon: Puzzle,
   },
   {
     titleKey: 'templates',
@@ -56,7 +61,9 @@ export function AppSidebar() {
   const currentPath = pathname.replace(/^\/[a-z]{2}(-[a-z]{2})?/i, '') || '/';
 
   // Calculate activity badges
-  const runningBotsCount = bots.filter((bot) => bot.status === 'running').length;
+  const runningBotsCount = bots.filter(
+    (bot) => bot.status === 'running',
+  ).length;
 
   const getBadgeValue = (badgeKey?: string): number | undefined => {
     if (!badgeKey) return undefined;

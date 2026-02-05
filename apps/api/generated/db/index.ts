@@ -25,3 +25,5 @@ export * from './modules/channel-credential-field';
 export * from './modules/proxy-token';
 export * from './modules/plugin';
 export * from './modules/bot-plugin';
+export * from './modules/skill';
+export * from './modules/bot-skill';
