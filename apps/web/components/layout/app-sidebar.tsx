@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Bot, Key, Activity, Sparkles, Puzzle, Wrench } from 'lucide-react';
+import { Bot, Activity, Sparkles, Puzzle, Wrench } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +18,7 @@ import {
   SidebarRail,
   SidebarTrigger,
 } from '@repo/ui';
+import { cn } from '@repo/ui/lib/utils';
 import { useBots } from '@/hooks/useBots';
 import { usePersonaTemplates } from '@/hooks/usePersonaTemplates';
 
@@ -45,11 +46,6 @@ const navItems = [
     badgeKey: 'userTemplates',
   },
   {
-    titleKey: 'secrets',
-    href: '/secrets',
-    icon: Key,
-  },
-  {
     titleKey: 'diagnostics',
     href: '/diagnostics',
     icon: Activity,
@@ -63,7 +59,8 @@ export function AppSidebar() {
   const { userCount } = usePersonaTemplates();
 
   // Remove locale prefix from pathname for comparison
-  const currentPath = pathname.replace(/^\/[a-z]{2}(-[a-z]{2})?/i, '') || '/';
+  // Only match valid locales: 'en' or 'zh-CN' (case insensitive)
+  const currentPath = pathname.replace(/^\/(en|zh-CN)(?=\/|$)/i, '') || '/';
 
   // Calculate activity badges
   const runningBotsCount = bots.filter(
@@ -84,13 +81,13 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarContent className="pt-2">
+      <SidebarContent className="pt-4">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase tracking-wider text-[10px] font-medium">
+          <SidebarGroupLabel className="text-sidebar-foreground/40 uppercase tracking-widest text-[10px] font-medium px-3 mb-1">
             {t('management')}
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1 px-2">
               {navItems.map((item) => {
                 const isActive =
                   currentPath === item.href ||
@@ -103,15 +100,41 @@ export function AppSidebar() {
                       asChild
                       isActive={isActive}
                       tooltip={title}
-                      className="transition-colors"
+                      className={cn(
+                        'relative h-9 rounded-md transition-all duration-150',
+                        isActive
+                          ? [
+                              'bg-sidebar-accent/80',
+                              'text-sidebar-foreground',
+                              'font-medium',
+                              'shadow-sm',
+                            ]
+                          : [
+                              'text-sidebar-foreground/70',
+                              'hover:text-sidebar-foreground',
+                              'hover:bg-sidebar-accent/50',
+                            ],
+                      )}
                     >
                       <Link href={item.href}>
-                        <item.icon className="size-4" />
-                        <span className="font-medium">{title}</span>
+                        <item.icon
+                          className={cn(
+                            'size-4 shrink-0',
+                            isActive
+                              ? 'text-sidebar-foreground'
+                              : 'text-sidebar-foreground/60',
+                          )}
+                        />
+                        <span className="truncate">{title}</span>
+                        {isActive && (
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-sidebar-foreground rounded-r-full" />
+                        )}
                       </Link>
                     </SidebarMenuButton>
                     {badgeValue !== undefined && (
-                      <SidebarMenuBadge>{badgeValue}</SidebarMenuBadge>
+                      <SidebarMenuBadge className="bg-sidebar-accent text-sidebar-foreground/80 text-[10px] min-w-5 h-5">
+                        {badgeValue}
+                      </SidebarMenuBadge>
                     )}
                   </SidebarMenuItem>
                 );
@@ -121,10 +144,9 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        {/* Sidebar Toggle Button - positioned at right when expanded */}
-        <div className="flex justify-end group-data-[collapsible=icon]:justify-center">
-          <SidebarTrigger className="size-8" />
+      <SidebarFooter className="border-t border-sidebar-border/50">
+        <div className="flex justify-end p-2 group-data-[collapsible=icon]:justify-center">
+          <SidebarTrigger className="size-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50" />
         </div>
       </SidebarFooter>
 

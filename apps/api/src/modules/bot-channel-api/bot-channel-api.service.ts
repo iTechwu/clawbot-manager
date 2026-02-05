@@ -29,6 +29,8 @@ import type {
   CreateBotChannelRequest,
   UpdateBotChannelRequest,
   ChannelConnectionStatus,
+  ChannelTestRequest,
+  ChannelTestResponse,
 } from '@repo/contracts';
 
 @Injectable()
@@ -312,6 +314,263 @@ export class BotChannelApiService {
   }
 
   /**
+   * 快速测试渠道配置
+   */
+  async testChannel(
+    userId: string,
+    hostname: string,
+    channelId: string,
+    request: ChannelTestRequest,
+  ): Promise<ChannelTestResponse> {
+    const bot = await this.getBotByHostname(userId, hostname);
+    const channel = await this.botChannelDb.get({
+      id: channelId,
+      botId: bot.id,
+    });
+
+    if (!channel) {
+      throw new NotFoundException('Channel not found');
+    }
+
+    const startTime = Date.now();
+
+    try {
+      // 解密凭证
+      const credentialsJson = this.cryptClient.decrypt(
+        channel.credentialsEncrypted.toString(),
+      );
+      const credentials = JSON.parse(credentialsJson);
+
+      // 根据渠道类型执行测试
+      const testResult = await this.executeChannelTest(
+        channel.channelType,
+        credentials,
+        channel.config as Record<string, unknown> | null,
+        request.message,
+      );
+
+      const latency = Date.now() - startTime;
+
+      this.logger.info('Channel test completed', {
+        botId: bot.id,
+        channelId,
+        channelType: channel.channelType,
+        status: testResult.status,
+        latency,
+      });
+
+      return {
+        ...testResult,
+        latency,
+      };
+    } catch (error) {
+      const latency = Date.now() - startTime;
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+
+      this.logger.error('Channel test failed', {
+        botId: bot.id,
+        channelId,
+        channelType: channel.channelType,
+        error: errorMessage,
+        latency,
+      });
+
+      return {
+        status: 'error',
+        message: `Test failed: ${errorMessage}`,
+        latency,
+      };
+    }
+  }
+
+  /**
+   * 执行渠道测试
+   */
+  private async executeChannelTest(
+    channelType: string,
+    credentials: Record<string, string>,
+    config: Record<string, unknown> | null,
+    _message?: string,
+  ): Promise<Omit<ChannelTestResponse, 'latency'>> {
+    switch (channelType) {
+      case 'feishu':
+        return this.testFeishuChannel(credentials, config);
+      case 'telegram':
+        return this.testTelegramChannel(credentials);
+      case 'discord':
+        return this.testDiscordChannel(credentials);
+      default:
+        return {
+          status: 'warning',
+          message: `Channel type '${channelType}' does not support quick test yet`,
+        };
+    }
+  }
+
+  /**
+   * 测试飞书渠道
+   */
+  private async testFeishuChannel(
+    credentials: Record<string, string>,
+    config: Record<string, unknown> | null,
+  ): Promise<Omit<ChannelTestResponse, 'latency'>> {
+    const { appId, appSecret } = credentials;
+
+    if (!appId || !appSecret) {
+      return {
+        status: 'error',
+        message: 'Missing required credentials: App ID or App Secret',
+      };
+    }
+
+    try {
+      // 尝试获取 tenant_access_token 来验证凭证
+      const domain = (config?.domain as 'feishu' | 'lark') ?? 'feishu';
+      const baseUrl =
+        domain === 'lark'
+          ? 'https://open.larksuite.com'
+          : 'https://open.feishu.cn';
+
+      const response = await fetch(
+        `${baseUrl}/open-apis/auth/v3/tenant_access_token/internal`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ app_id: appId, app_secret: appSecret }),
+        },
+      );
+
+      const data = (await response.json()) as {
+        code: number;
+        msg: string;
+        tenant_access_token?: string;
+        expire?: number;
+      };
+
+      if (data.code === 0 && data.tenant_access_token) {
+        return {
+          status: 'success',
+          message: 'Feishu credentials verified successfully',
+          details: {
+            tokenExpire: data.expire,
+            domain,
+          },
+        };
+      } else {
+        return {
+          status: 'error',
+          message: `Feishu API error: ${data.msg || 'Unknown error'}`,
+          details: { code: data.code },
+        };
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: `Failed to connect to Feishu API: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
+    }
+  }
+
+  /**
+   * 测试 Telegram 渠道
+   */
+  private async testTelegramChannel(
+    credentials: Record<string, string>,
+  ): Promise<Omit<ChannelTestResponse, 'latency'>> {
+    const { botToken } = credentials;
+
+    if (!botToken) {
+      return {
+        status: 'error',
+        message: 'Missing required credential: Bot Token',
+      };
+    }
+
+    try {
+      const response = await fetch(
+        `https://api.telegram.org/bot${botToken}/getMe`,
+      );
+      const data = (await response.json()) as {
+        ok: boolean;
+        result?: { username: string; first_name: string };
+        description?: string;
+      };
+
+      if (data.ok && data.result) {
+        return {
+          status: 'success',
+          message: `Telegram bot verified: @${data.result.username}`,
+          details: {
+            username: data.result.username,
+            firstName: data.result.first_name,
+          },
+        };
+      } else {
+        return {
+          status: 'error',
+          message: `Telegram API error: ${data.description || 'Unknown error'}`,
+        };
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: `Failed to connect to Telegram API: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
+    }
+  }
+
+  /**
+   * 测试 Discord 渠道
+   */
+  private async testDiscordChannel(
+    credentials: Record<string, string>,
+  ): Promise<Omit<ChannelTestResponse, 'latency'>> {
+    const { botToken } = credentials;
+
+    if (!botToken) {
+      return {
+        status: 'error',
+        message: 'Missing required credential: Bot Token',
+      };
+    }
+
+    try {
+      const response = await fetch('https://discord.com/api/v10/users/@me', {
+        headers: { Authorization: `Bot ${botToken}` },
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as {
+          username: string;
+          discriminator: string;
+          id: string;
+        };
+        return {
+          status: 'success',
+          message: `Discord bot verified: ${data.username}#${data.discriminator}`,
+          details: {
+            username: data.username,
+            discriminator: data.discriminator,
+            id: data.id,
+          },
+        };
+      } else {
+        const errorData = (await response.json()) as { message?: string };
+        return {
+          status: 'error',
+          message: `Discord API error: ${errorData.message || response.statusText}`,
+        };
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: `Failed to connect to Discord API: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
+    }
+  }
+
+  /**
    * 连接飞书渠道
    */
   private async connectFeishuChannel(channel: any): Promise<void> {
@@ -378,7 +637,11 @@ export class BotChannelApiService {
     )) as unknown as {
       id: string;
       label: string;
-      credentialFields: Array<{ key: string; label: string; required: boolean }>;
+      credentialFields: Array<{
+        key: string;
+        label: string;
+        required: boolean;
+      }>;
     } | null;
 
     if (!channelDefinition) {
@@ -427,8 +690,7 @@ export class BotChannelApiService {
       name: channel.name,
       config: channel.config as Record<string, unknown> | null,
       isEnabled: channel.isEnabled,
-      connectionStatus:
-        channel.connectionStatus as ChannelConnectionStatus,
+      connectionStatus: channel.connectionStatus as ChannelConnectionStatus,
       lastConnectedAt: channel.lastConnectedAt?.toISOString() ?? null,
       lastError: channel.lastError,
       createdAt: channel.createdAt.toISOString(),

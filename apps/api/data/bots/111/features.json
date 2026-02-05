@@ -1,8 +1,0 @@
-{
-  "commands": true,
-  "tts": true,
-  "ttsVoice": "alloy",
-  "sandbox": true,
-  "sandboxTimeout": 30,
-  "sessionScope": "user"
-}

@@ -9,6 +9,7 @@ import {
 import {
   BotSchema,
   CreateBotInputSchema,
+  SimpleCreateBotInputSchema,
   ContainerStatsSchema,
   OrphanReportSchema,
   CleanupReportSchema,
@@ -17,6 +18,11 @@ import {
   ProviderKeyHealthSchema,
   VerifyProviderKeyInputSchema,
   VerifyProviderKeyResponseSchema,
+  BotProviderDetailSchema,
+  AddBotProviderInputSchema,
+  SetPrimaryModelInputSchema,
+  BotDiagnoseInputSchema,
+  BotDiagnoseResponseSchema,
 } from '../schemas/bot.schema';
 
 const c = initContract();
@@ -58,7 +64,7 @@ export const botContract = c.router(
     },
 
     /**
-     * POST /bot - 创建 bot
+     * POST /bot - 创建 bot（完整版，保留兼容）
      */
     create: {
       method: 'POST',
@@ -69,7 +75,23 @@ export const botContract = c.router(
         400: ApiResponseSchema(z.object({ error: z.string() })),
         409: ApiResponseSchema(z.object({ error: z.string() })),
       },
-      summary: '创建 bot',
+      summary: '创建 bot（完整版）',
+    },
+
+    /**
+     * POST /bot/simple - 简化创建 bot
+     * 只需要基本信息和人设，Provider 和 Channel 在创建后配置
+     */
+    createSimple: {
+      method: 'POST',
+      path: '/simple',
+      body: SimpleCreateBotInputSchema,
+      responses: {
+        201: ApiResponseSchema(BotSchema),
+        400: ApiResponseSchema(z.object({ error: z.string() })),
+        409: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '简化创建 bot',
     },
 
     /**
@@ -166,6 +188,97 @@ export const botContract = c.router(
         200: ApiResponseSchema(CleanupReportSchema),
       },
       summary: '清理孤立资源',
+    },
+
+    // ============================================================================
+    // Bot Provider Management
+    // ============================================================================
+
+    /**
+     * GET /bot/:hostname/providers - 获取 Bot 的 Provider 列表
+     */
+    getProviders: {
+      method: 'GET',
+      path: '/:hostname/providers',
+      pathParams: z.object({ hostname: z.string() }),
+      responses: {
+        200: ApiResponseSchema(
+          z.object({ providers: z.array(BotProviderDetailSchema) }),
+        ),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '获取 Bot 的 Provider 列表',
+    },
+
+    /**
+     * POST /bot/:hostname/providers - 添加 Provider 到 Bot
+     */
+    addProvider: {
+      method: 'POST',
+      path: '/:hostname/providers',
+      pathParams: z.object({ hostname: z.string() }),
+      body: AddBotProviderInputSchema,
+      responses: {
+        201: ApiResponseSchema(BotProviderDetailSchema),
+        400: ApiResponseSchema(z.object({ error: z.string() })),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '添加 Provider 到 Bot',
+    },
+
+    /**
+     * DELETE /bot/:hostname/providers/:keyId - 从 Bot 移除 Provider
+     */
+    removeProvider: {
+      method: 'DELETE',
+      path: '/:hostname/providers/:keyId',
+      pathParams: z.object({
+        hostname: z.string(),
+        keyId: z.string().uuid(),
+      }),
+      body: z.object({}).optional(),
+      responses: {
+        200: ApiResponseSchema(z.object({ ok: z.boolean() })),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '从 Bot 移除 Provider',
+    },
+
+    /**
+     * PUT /bot/:hostname/providers/:keyId/primary-model - 设置主模型
+     */
+    setPrimaryModel: {
+      method: 'PUT',
+      path: '/:hostname/providers/:keyId/primary-model',
+      pathParams: z.object({
+        hostname: z.string(),
+        keyId: z.string().uuid(),
+      }),
+      body: SetPrimaryModelInputSchema,
+      responses: {
+        200: ApiResponseSchema(z.object({ ok: z.boolean() })),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '设置主模型',
+    },
+
+    // ============================================================================
+    // Bot Diagnostics
+    // ============================================================================
+
+    /**
+     * POST /bot/:hostname/diagnose - 运行 Bot 诊断
+     */
+    diagnose: {
+      method: 'POST',
+      path: '/:hostname/diagnose',
+      pathParams: z.object({ hostname: z.string() }),
+      body: BotDiagnoseInputSchema,
+      responses: {
+        200: ApiResponseSchema(BotDiagnoseResponseSchema),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '运行 Bot 诊断',
     },
   },
   {

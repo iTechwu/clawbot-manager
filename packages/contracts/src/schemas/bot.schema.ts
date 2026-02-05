@@ -88,7 +88,9 @@ export const BotProviderKeyResponseSchema = z.object({
   createdAt: z.coerce.date(),
 });
 
-export type BotProviderKeyResponse = z.infer<typeof BotProviderKeyResponseSchema>;
+export type BotProviderKeyResponse = z.infer<
+  typeof BotProviderKeyResponseSchema
+>;
 
 /** @deprecated 使用 BotProviderConfigSchema 代替 */
 export const ProviderConfigSchema = BotProviderConfigSchema;
@@ -137,6 +139,27 @@ export const CreateBotInputSchema = z.object({
 });
 
 export type CreateBotInput = z.infer<typeof CreateBotInputSchema>;
+
+// ============================================================================
+// Simple Create Bot Schema - 简化创建
+// ============================================================================
+
+/**
+ * 简化创建 Bot 输入 Schema
+ * 只需要基本信息和人设，Provider 和 Channel 在创建后配置
+ */
+export const SimpleCreateBotInputSchema = z.object({
+  name: z.string().min(1).max(255),
+  hostname: z.string().regex(/^[a-z0-9-]{1,64}$/, {
+    message:
+      'Hostname must be lowercase alphanumeric with hyphens, max 64 chars',
+  }),
+  persona: PersonaSchema,
+  personaTemplateId: z.string().uuid().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+export type SimpleCreateBotInput = z.infer<typeof SimpleCreateBotInputSchema>;
 
 // ============================================================================
 // Container Stats Schema
@@ -282,3 +305,102 @@ export const VerifyProviderKeyResponseSchema = z.object({
 export type VerifyProviderKeyResponse = z.infer<
   typeof VerifyProviderKeyResponseSchema
 >;
+
+// ============================================================================
+// Bot Provider Management Schemas
+// ============================================================================
+
+/**
+ * Bot Provider 详情 Schema - 用于 API 响应
+ */
+export const BotProviderDetailSchema = z.object({
+  id: z.string().uuid(),
+  providerKeyId: z.string().uuid(),
+  vendor: ProviderVendorSchema,
+  label: z.string(),
+  apiKeyMasked: z.string(),
+  baseUrl: z.string().nullable(),
+  isPrimary: z.boolean(),
+  allowedModels: z.array(z.string()),
+  primaryModel: z.string().nullable(),
+  createdAt: z.coerce.date(),
+});
+
+export type BotProviderDetail = z.infer<typeof BotProviderDetailSchema>;
+
+/**
+ * 添加 Bot Provider 输入 Schema
+ */
+export const AddBotProviderInputSchema = z.object({
+  keyId: z.string().uuid(),
+  models: z.array(z.string()).min(1, 'At least one model is required'),
+  primaryModel: z.string().optional(),
+  isPrimary: z.boolean().optional().default(false),
+});
+
+export type AddBotProviderInput = z.infer<typeof AddBotProviderInputSchema>;
+
+/**
+ * 设置主模型输入 Schema
+ */
+export const SetPrimaryModelInputSchema = z.object({
+  modelId: z.string(),
+});
+
+export type SetPrimaryModelInput = z.infer<typeof SetPrimaryModelInputSchema>;
+
+// ============================================================================
+// Bot Diagnostics Schemas
+// ============================================================================
+
+/**
+ * 诊断检查类型
+ */
+export const DiagnosticCheckTypeSchema = z.enum([
+  'provider_key',
+  'model_access',
+  'channel_tokens',
+  'container',
+  'network',
+]);
+
+export type DiagnosticCheckType = z.infer<typeof DiagnosticCheckTypeSchema>;
+
+/**
+ * 诊断状态
+ */
+export const DiagnosticStatusSchema = z.enum(['pass', 'warning', 'fail']);
+
+export type DiagnosticStatus = z.infer<typeof DiagnosticStatusSchema>;
+
+/**
+ * 单个诊断检查结果
+ */
+export const DiagnosticCheckResultSchema = z.object({
+  name: z.string(),
+  status: DiagnosticStatusSchema,
+  message: z.string(),
+  latency: z.number().optional(),
+});
+
+export type DiagnosticCheckResult = z.infer<typeof DiagnosticCheckResultSchema>;
+
+/**
+ * 诊断请求输入 Schema
+ */
+export const BotDiagnoseInputSchema = z.object({
+  checks: z.array(DiagnosticCheckTypeSchema).optional(),
+});
+
+export type BotDiagnoseInput = z.infer<typeof BotDiagnoseInputSchema>;
+
+/**
+ * 诊断响应 Schema
+ */
+export const BotDiagnoseResponseSchema = z.object({
+  overall: z.enum(['healthy', 'warning', 'error']),
+  checks: z.array(DiagnosticCheckResultSchema),
+  recommendations: z.array(z.string()),
+});
+
+export type BotDiagnoseResponse = z.infer<typeof BotDiagnoseResponseSchema>;

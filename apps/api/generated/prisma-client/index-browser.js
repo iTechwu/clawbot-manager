@@ -580,6 +580,7 @@ exports.FileBucketVendor = exports.$Enums.FileBucketVendor = {
 };
 
 exports.BotStatus = exports.$Enums.BotStatus = {
+  draft: 'draft',
   created: 'created',
   starting: 'starting',
   running: 'running',

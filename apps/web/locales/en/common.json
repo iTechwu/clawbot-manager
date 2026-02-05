@@ -21,6 +21,7 @@
       "settings": "Settings"
     },
     "user": {
+      "apiKeys": "API Keys",
       "profile": "Profile",
       "settings": "Settings",
       "logout": "Log out",

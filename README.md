@@ -1,95 +1,154 @@
 # ClawBotManager
 
-> AI Bot 全生命周期管理与 API 密钥编排平台，解决多 Bot、多提供商场景下的密钥安全、请求代理与运维难题。
+> AI Bot lifecycle management and API key orchestration platform, solving key security, request proxy, and operations challenges in multi-Bot, multi-provider scenarios.
 
-## 📌 项目定位
+[中文文档](./README.zh-CN.md)
 
-### 用途与目标
+## 📋 Table of Contents
 
-ClawBotManager 面向**需要部署和管理多个 AI Bot** 的团队与开发者，提供：
-
-- **Bot 生命周期管理**：创建、启动、停止、删除，基于 Docker 容器化运行
-- **API 密钥安全编排**：加密存储、标签路由、Round-robin 负载均衡
-- **统一 AI 请求代理**：单入口对接多 AI 提供商，按 Bot Token 鉴权
-- **多租户隔离**：按用户划分 Bot 与密钥，支持团队协作
-
-### 解决的问题
-
-| 痛点                                                 | 方案                                                 |
-| ---------------------------------------------------- | ---------------------------------------------------- |
-| 多 Bot 场景下 API Key 分散、易泄露                   | 集中加密存储（AES-256-GCM），统一通过 Bot Token 访问 |
-| 多 AI 提供商（OpenAI、Anthropic、Google 等）接入复杂 | 统一 `/v1/:vendor/*` 代理，自动认证与转发            |
-| Bot 与密钥的映射、配额、故障切换                     | Provider Key 标签路由 + Round-robin 轮询             |
-| 容器与数据库状态不一致                               | reconcile 对账、孤立资源检测与清理                   |
-
-### 目标用户
-
-- 需要运行多个 AI Bot 的产品/研发团队
-- 希望统一管理 OpenAI、Anthropic、DeepSeek 等 API 密钥的开发者
-- 需要 Bot 与 API 调用审计、使用日志的运营方
+- [Project Overview](#-project-overview)
+- [Project Status](#-project-status)
+- [Tech Stack](#-tech-stack)
+- [Architecture](#️-architecture)
+- [Core Features](#-core-features)
+- [Supported Channels](#-supported-channels)
+- [Quick Start](#-quick-start)
+- [Environment Variables](#-environment-variables)
+- [Docker Deployment](#-docker-deployment)
+- [API Overview](#-api-overview)
+- [Development Guide](#-development-guide)
+- [Roadmap](#️-roadmap)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
-## 🧩 项目阶段
+## 📌 Project Overview
 
-**当前阶段：MVP / 生产可用**
+### Purpose & Goals
 
-### 已完成 ✅
+ClawBotManager is designed for **teams and developers who need to deploy and manage multiple AI Bots**, providing:
 
-- **核心能力**：Bot CRUD、Provider Key 管理、AI 代理、Docker 容器编排
-- **插件系统**：MCP 插件管理、22 个预置插件（搜索、文件、数据库、开发工具等）、按区域过滤
-- **技能系统**：自定义工具（tool）、提示词模板（prompt）、工作流（workflow）、技能安装到 Bot
-- **基础设施**：用户认证、多登录方式、文件上传、短信、国际化（中/英）
-- **诊断运维**：容器统计、孤立资源检测与清理、启动对账
-- **安全机制**：零信任代理模式（Bot 容器不接触 API 密钥）、AES-256-GCM 加密
-- **配额管理**：日/月 Token 限制、80% 阈值警告、超额系统消息
-- **模板系统**：Persona 模板（系统模板 + 用户模板）、Bot 创建向导
-- **审计日志**：操作日志记录（CREATE、START、STOP、DELETE）
+- **Bot Lifecycle Management**: Create, start, stop, delete - containerized with Docker
+- **API Key Security Orchestration**: Encrypted storage, tag-based routing, round-robin load balancing
+- **Unified AI Request Proxy**: Single entry point for multiple AI providers, authenticated via Bot Token
+- **Multi-tenant Isolation**: User-based Bot and key separation, supporting team collaboration
 
-### 待实施 ⏳
+### Problems Solved
 
-- **渠道集成**：飞书机器人、企业微信、钉钉等 IM 渠道接入
-- **Analytics 分析**：契约已定义，后端实现待完成
-- **通知系统 UI**：后端配额通知已实现，前端 UI 待完成
-- **Webhook 处理器**：契约已定义，处理器待实现
-- **权限系统**：细粒度权限控制待实现
-- **限流验证**：配置已存在，实现待验证
+| Pain Point | Solution |
+| --- | --- |
+| API Keys scattered and prone to leakage in multi-Bot scenarios | Centralized encrypted storage (AES-256-GCM), unified access via Bot Token |
+| Complex integration with multiple AI providers (OpenAI, Anthropic, Google, etc.) | Unified `/v1/:vendor/*` proxy with automatic authentication and forwarding |
+| Bot-to-key mapping, quotas, failover | Provider Key tag routing + round-robin |
+| Container and database state inconsistency | Reconciliation, orphan resource detection and cleanup |
 
-### 生产部署注意 ⚠️
+### Target Users
 
-- 密钥备份策略
-- 高可用部署方案
-- 资源限流配置
+- Product/development teams running multiple AI Bots
+- Developers wanting unified management of OpenAI, Anthropic, DeepSeek API keys
+- Operations teams needing Bot and API call auditing and usage logs
 
 ---
 
-## 🏗️ 架构设计
+## 🧩 Project Status
 
-### 设计原则
+**Current Stage: MVP / Production Ready**
 
-1. **分层架构**：API 层 → Service 层 → DB 层 / Client 层，严格禁止跨层访问
-2. **Zod-first**：所有 API 请求/响应通过 Zod Schema 校验，类型安全
-3. **契约驱动**：ts-rest 定义前后端契约，编译时类型 + 运行时校验
-4. **infra / domain 边界**：infra 不依赖 domain，domain 可依赖 infra，便于复用与测试
-5. **密钥零明文**：API 密钥 AES-256-GCM 加密存储，仅运行时解密
+### Completed ✅
 
-### 整体架构
+- **Core Capabilities**: Bot CRUD, Provider Key management, AI proxy, Docker container orchestration
+- **Plugin System**: MCP plugin management, 22 preset plugins (search, file, database, dev tools, etc.), region filtering
+- **Skill System**: Custom tools, prompt templates, workflows, skill installation to Bots
+- **Channel System**: 10 channel definitions (Feishu, Telegram, Slack, WeChat, Discord, WhatsApp, X, Instagram, Teams, LINE), credential management, locale-based recommendations
+- **Infrastructure**: User authentication, multiple login methods, file upload, SMS, i18n (Chinese/English)
+- **Diagnostics & Ops**: Container stats, orphan resource detection and cleanup, startup reconciliation
+- **Security**: Zero-trust proxy mode (Bot containers don't touch API keys), AES-256-GCM encryption
+- **Quota Management**: Daily/monthly token limits, 80% threshold warnings, over-quota notifications
+- **Template System**: Persona templates (system + user), 5-step creation wizard
+- **Audit Logs**: Operation logging (CREATE, START, STOP, DELETE)
+
+### Pending ⏳
+
+- **Channel Connectors**: Actual message send/receive connectors for Feishu, Telegram, WeChat, etc.
+- **Analytics**: Contract defined, backend implementation pending
+- **Notification UI**: Backend quota notifications implemented, frontend UI pending
+- **Webhook Handlers**: Contract defined, handlers pending
+- **Permission System**: Fine-grained access control pending
+- **Rate Limiting**: Configuration exists, implementation verification pending
+
+### Production Deployment Notes ⚠️
+
+- Key backup strategy
+- High availability deployment plan
+- Resource rate limiting configuration
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+| Technology | Version | Purpose |
+| --- | --- | --- |
+| Next.js | 16 | React framework with App Router |
+| React | 19 | UI library |
+| TypeScript | 5.x | Type safety |
+| Tailwind CSS | 4 | Styling |
+| shadcn/ui | Latest | UI components |
+| TanStack Query | 5.x | Server state management |
+| ts-rest | 3.53.x | Type-safe API client |
+| next-intl | Latest | Internationalization |
+
+### Backend
+| Technology | Version | Purpose |
+| --- | --- | --- |
+| NestJS | 11 | Node.js framework |
+| Fastify | 5.x | HTTP server |
+| Prisma | 7.x | ORM |
+| PostgreSQL | 14+ | Primary database |
+| Redis | 7+ | Caching & queues |
+| BullMQ | Latest | Job queue |
+| Zod | 4.x | Schema validation |
+| ts-rest | 3.53.x | API contracts |
+
+### Infrastructure
+| Technology | Purpose |
+| --- | --- |
+| Docker | Bot containerization |
+| RabbitMQ | Message queue |
+| Winston | Logging |
+| Passport | Authentication (JWT, OAuth2) |
+
+---
+
+## 🏗️ Architecture
+
+### Design Principles
+
+1. **Layered Architecture**: API Layer → Service Layer → DB Layer / Client Layer, strict no cross-layer access
+2. **Zod-first**: All API requests/responses validated via Zod Schema, type-safe
+3. **Contract-driven**: ts-rest defines frontend-backend contracts, compile-time types + runtime validation
+4. **infra / domain boundary**: infra doesn't depend on domain, domain can depend on infra, enabling reuse and testing
+5. **Zero plaintext keys**: API keys encrypted with AES-256-GCM, decrypted only at runtime
+
+### Overall Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                            ClawBotManager                                │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  Web (Next.js 16)          │  API (NestJS 11 + Fastify)                 │
-│  - Bot 管理 / 创建向导      │  - Bot API（CRUD、生命周期）                 │
-│  - Provider Key 管理       │  - Proxy（/v1/:vendor/* 代理）              │
-│  - 诊断与运维               │  - Sign / SMS / Uploader                    │
+│  - Bot Management/Wizard   │  - Bot API (CRUD, lifecycle)               │
+│  - Provider Key Management │  - Proxy (/v1/:vendor/* proxy)             │
+│  - Diagnostics & Ops       │  - Sign / SMS / Uploader                   │
 └─────────────────────────────────────────────────────────────────────────┘
                                         │
                     ┌───────────────────┼───────────────────┐
                     ▼                   ▼                   ▼
             ┌───────────────┐   ┌───────────────┐   ┌───────────────┐
             │  PostgreSQL   │   │  Redis        │   │  Docker       │
-            │  Prisma ORM   │   │  BullMQ       │   │  Bot 容器      │
+            │  Prisma ORM   │   │  BullMQ       │   │  Bot Containers│
             └───────────────┘   └───────────────┘   └───────────────┘
                                         │
                     ┌───────────────────┴───────────────────┐
@@ -100,304 +159,569 @@ ClawBotManager 面向**需要部署和管理多个 AI Bot** 的团队与开发�
             └───────────────────┘                   └───────────────────┘
 ```
 
-### 数据流（简化）
+### Data Flow (Simplified)
 
-1. **创建 Bot**：用户填写配置 → 分配端口 → 创建 Workspace（config.json、soul.md、features.json）→ 启动 Docker 容器 → 写入 DB，生成 Gateway Token
-2. **代理请求**：客户端带 `Authorization: Bearer <gateway_token>` 访问 `/api/v1/openai/...` → 校验 Token → 选择 Provider Key（标签 + Round-robin）→ 解密密钥 → 转发至上游 API → 记录 BotUsageLog
-3. **密钥管理**：用户添加 Provider Key → AES-256-GCM 加密 → 写入 ProviderKey 表，支持 tag、baseUrl 等
+1. **Create Bot**: User fills config → Assign port → Create Workspace (config.json, soul.md, features.json) → Start Docker container → Write to DB, generate Gateway Token
+2. **Proxy Request**: Client with `Authorization: Bearer <gateway_token>` accesses `/api/v1/openai/...` → Validate Token → Select Provider Key (tag + round-robin) → Decrypt key → Forward to upstream API → Log to BotUsageLog
+3. **Key Management**: User adds Provider Key → AES-256-GCM encrypt → Write to ProviderKey table, supports tag, baseUrl, etc.
 
-### 目录结构
+### Directory Structure
 
 ```
 clawbotmanager/
 ├── apps/
-│   ├── web/                    # Next.js 16 前端
-│   │   ├── app/[locale]/       # 路由（auth、main、bots、diagnostics）
-│   │   ├── components/         # 通用组件
+│   ├── web/                    # Next.js 16 Frontend
+│   │   ├── app/[locale]/       # Routes (auth, main, bots, diagnostics)
+│   │   ├── components/         # Common components
 │   │   ├── hooks/              # React Hooks
-│   │   └── lib/                # API 客户端、配置
+│   │   └── lib/                # API client, config
 │   │
-│   └── api/                    # NestJS 11 后端
-│       ├── src/modules/        # 功能模块
-│       │   ├── bot-api/        # Bot CRUD、Provider Key、Docker、Workspace
-│       │   ├── plugin-api/     # MCP 插件管理
-│       │   ├── skill-api/      # 技能管理（tool、prompt、workflow）
-│       │   ├── proxy/          # AI 请求代理、Keyring、Upstream
-│       │   ├── sign-api/       # 登录注册
-│       │   ├── sms-api/        # 短信
-│       │   └── uploader/       # 文件上传
+│   └── api/                    # NestJS 11 Backend
+│       ├── src/modules/        # Feature modules
+│       │   ├── bot-api/        # Bot CRUD, Provider Key, Docker, Workspace
+│       │   ├── plugin-api/     # MCP plugin management
+│       │   ├── skill-api/      # Skill management (tool, prompt, workflow)
+│       │   ├── channel-api/    # Channel definitions and Bot channels
+│       │   ├── proxy/          # AI request proxy, Keyring, Upstream
+│       │   ├── sign-api/       # Login/register
+│       │   ├── sms-api/        # SMS
+│       │   └── uploader/       # File upload
 │       ├── libs/
-│       │   ├── infra/          # 基础设施（prisma、redis、jwt、clients…）
-│       │   └── domain/         # 领域（auth、db）
-│       └── prisma/             # Schema、迁移
+│       │   ├── infra/          # Infrastructure (prisma, redis, jwt, clients…)
+│       │   └── domain/         # Domain (auth, db)
+│       └── prisma/             # Schema, migrations
 │
-├── packages/                   # 共享包
-│   ├── contracts/              # ts-rest 契约 + Zod Schema
-│   ├── ui/                     # shadcn/ui 组件
-│   ├── utils/                  # 工具函数
-│   ├── validators/             # Zod 校验
-│   ├── constants/              # 常量
-│   ├── types/                  # 类型定义
-│   └── config/                 # ESLint、Prettier、TS 配置
+├── packages/                   # Shared packages
+│   ├── contracts/              # ts-rest contracts + Zod Schema
+│   ├── ui/                     # shadcn/ui components
+│   ├── utils/                  # Utility functions
+│   ├── validators/             # Zod validators
+│   ├── constants/              # Constants
+│   ├── types/                  # Type definitions
+│   └── config/                 # ESLint, Prettier, TS config
 │
-└── scripts/                    # 初始化与运维脚本
+└── scripts/                    # Init and ops scripts
 ```
 
-### 支持的 AI 提供商
+### Supported AI Providers
 
-| 类别 | Vendor | 说明 |
+| Category | Vendor | Description |
 | ---- | ------ | ---- |
-| **主流** | `openai` | OpenAI API |
+| **Mainstream** | `openai` | OpenAI API |
 | | `anthropic` | Anthropic Claude |
 | | `google` | Google Generative AI |
 | | `deepseek` | DeepSeek API |
 | | `groq` | Groq API |
-| **云服务** | `azure-openai` | Azure OpenAI |
+| **Cloud Services** | `azure-openai` | Azure OpenAI |
 | | `mistral` | Mistral AI |
 | | `openrouter` | OpenRouter |
 | | `together` | Together AI |
 | | `fireworks` | Fireworks AI |
 | | `perplexity` | Perplexity AI |
 | | `cohere` | Cohere |
-| **国内** | `zhipu` | 智谱 AI |
+| **China** | `zhipu` | Zhipu AI |
 | | `moonshot` | Moonshot AI |
-| | `baichuan` | 百川 AI |
-| | `dashscope` | 阿里通义 |
-| | `stepfun` | 阶跃星辰 |
-| | `doubao` | 字节豆包 |
+| | `baichuan` | Baichuan AI |
+| | `dashscope` | Alibaba Tongyi |
+| | `stepfun` | StepFun |
+| | `doubao` | ByteDance Doubao |
 | | `minimax` | MiniMax |
-| | `yi` | 零一万物 |
-| | `hunyuan` | 腾讯混元 |
-| | `siliconflow` | 硅基流动 |
-| **其他** | `venice` | Venice AI |
-| | `ollama` | Ollama (本地) |
-| | `custom` | 自定义端点 |
+| | `yi` | 01.AI |
+| | `hunyuan` | Tencent Hunyuan |
+| | `siliconflow` | SiliconFlow |
+| **Other** | `venice` | Venice AI |
+| | `ollama` | Ollama (local) |
+| | `custom` | Custom endpoint |
 
 ---
 
-## ✨ 核心能力
+## ✨ Core Features
 
-- **Bot 生命周期**：创建、启动、停止、删除，Docker 容器 + 工作区（config.json、soul.md、features.json）
-- **Provider Key 管理**：加密存储（AES-256-GCM）、标签路由、Round-robin、自定义 baseUrl
-- **AI 请求代理**：`/v1/:vendor/*` 统一入口，Bot Token 鉴权，流式响应（SSE）
-- **插件系统（MCP）**：22 个预置插件（搜索、文件、数据库、开发工具等）、按区域过滤、一键安装到 Bot
-- **技能系统**：自定义工具（tool）、提示词模板（prompt）、工作流（workflow）、技能安装与配置
-- **零信任模式**：Bot 容器不接触 API 密钥，代理层注入密钥
-- **配额管理**：日/月 Token 限制、阈值警告、超额通知
-- **模板系统**：Persona 模板（系统/用户）、5 步创建向导
-- **诊断与运维**：容器统计、孤立资源检测与清理、启动对账
-- **审计日志**：操作日志记录，支持合规审计
-- **多租户**：按用户隔离 Bot 与 Key，JWT 认证
-- **国际化**：支持中文、英文切换
+- **Bot Lifecycle**: Create, start, stop, delete - Docker containers + workspace (config.json, soul.md, features.json)
+- **Provider Key Management**: Encrypted storage (AES-256-GCM), tag routing, round-robin, custom baseUrl
+- **AI Request Proxy**: `/v1/:vendor/*` unified entry, Bot Token auth, streaming response (SSE)
+- **Plugin System (MCP)**: 22 preset plugins (search, file, database, dev tools, etc.), region filtering, one-click install to Bot
+- **Skill System**: Custom tools, prompt templates, workflows, skill installation and configuration
+- **Channel System**: 10 channel definitions, locale-based recommendations, credential management
+- **Zero-trust Mode**: Bot containers don't touch API keys, proxy layer injects keys
+- **Quota Management**: Daily/monthly token limits, threshold warnings, over-quota notifications
+- **Template System**: Persona templates (system/user), 5-step creation wizard
+- **Diagnostics & Ops**: Container stats, orphan resource detection and cleanup, startup reconciliation
+- **Audit Logs**: Operation logging, compliance audit support
+- **Multi-tenant**: User-isolated Bots and Keys, JWT authentication
+- **Internationalization**: Chinese and English support
 
 ---
 
-## 🚀 快速开始
+## 📱 Supported Channels
 
-### 1. 环境要求
+ClawBotManager supports 10 messaging channels with locale-based recommendations:
+
+| Channel | ID | Recommended For | Credentials Required |
+| --- | --- | --- | --- |
+| **Feishu/Lark** | `feishu` | 🇨🇳 Chinese, 🌍 English | App ID, App Secret |
+| **Telegram** | `telegram` | 🌍 English | Bot Token |
+| **Slack** | `slack` | 🌍 English | Bot Token, App Token, Signing Secret |
+| **WeChat** | `wechat` | 🇨🇳 Chinese, 🌍 English | App ID, App Secret, Token, Encoding AES Key |
+| **Discord** | `discord` | - | Bot Token, Application ID |
+| **WhatsApp** | `whatsapp` | - | Access Token, Phone Number ID, Business Account ID |
+| **Twitter/X** | `twitter` | - | API Key, API Secret, Access Token, Access Token Secret |
+| **Instagram** | `instagram` | - | Access Token, App Secret |
+| **Microsoft Teams** | `teams` | - | App ID, App Password, Tenant ID |
+| **LINE** | `line` | - | Channel Access Token, Channel Secret |
+
+> **Note**: Channel definitions are stored in the database and can be customized. The `popularLocales` field determines which channels are recommended for each locale.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Requirements
 
 - Node.js >= 18
 - pnpm >= 9
-- PostgreSQL、Redis、RabbitMQ
-- Docker（用于 Bot 容器）
+- PostgreSQL, Redis, RabbitMQ
+- Docker (for Bot containers)
 
-### 2. 安装依赖
+### 2. Install Dependencies
 
 ```bash
 pnpm install
 ```
 
-### 3. 初始化密钥（首次必做）
+### 3. Initialize Secrets (Required for First Run)
 
 ```bash
 ./scripts/init-env-secrets.sh
 ```
 
-会生成 `BOT_MASTER_KEY`、`PROXY_ADMIN_TOKEN`，写入 `secrets/` 与 `apps/api/.env`。
+Generates `BOT_MASTER_KEY` and writes to `secrets/` and `apps/api/.env`.
 
-### 4. 配置环境变量
+### 4. Configure Environment Variables
 
-**后端** `apps/api/.env`：
+**Backend** `apps/api/.env`:
 
 ```env
+# Required
 DATABASE_URL=postgresql://user:password@localhost:5432/clawbotmanager?schema=public
-READ_DATABASE_URL=postgresql://user:password@localhost:5432/clawbotmanager?schema=public
 REDIS_URL=redis://localhost:6379
 RABBITMQ_URL=amqp://localhost:5672
-BOT_MASTER_KEY=<generated>
-PROXY_ADMIN_TOKEN=<generated>
+
+# Optional (with defaults)
+READ_DATABASE_URL=postgresql://user:password@localhost:5432/clawbotmanager?schema=public
+BOT_MASTER_KEY=<generated by init-env-secrets.sh>
 ```
 
-**前端** `apps/web/.env.local`：
+**Frontend** `apps/web/.env.local`:
 
 ```env
 NEXT_PUBLIC_SERVER_BASE_URL=http://localhost:3100
 ```
 
-### 5. 数据库
+### 5. Database
 
 ```bash
 pnpm db:generate
 pnpm db:migrate:dev
-# 在项目根目录用户将默认数据写入到数据库
+# Seed default data from project root
 pnpm db:seed:api
 ```
 
-### 6. 启动
+### 6. Start
 
 ```bash
-pnpm dev          # 全量
-pnpm dev:web      # 仅前端
-pnpm dev:api      # 仅后端
+pnpm dev          # All
+pnpm dev:web      # Frontend only
+pnpm dev:api      # Backend only
 ```
 
-- 前端：<http://localhost:3000>
-- 后端 API：<http://localhost:3100/api>
+- Frontend: <http://localhost:3000>
+- Backend API: <http://localhost:3100/api>
 
 ---
 
-## 🐳 Docker 部署
+## 🔧 Environment Variables
+
+### Backend (`apps/api/.env`)
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `DATABASE_URL` | ✅ | PostgreSQL connection string (write) |
+| `REDIS_URL` | ✅ | Redis connection string |
+| `RABBITMQ_URL` | ✅ | RabbitMQ connection string |
+| `READ_DATABASE_URL` | ❌ | PostgreSQL read replica (defaults to DATABASE_URL) |
+| `BOT_MASTER_KEY` | ❌ | Master key for API key encryption (auto-generated if not set) |
+| `BOT_IMAGE` | ❌ | Docker image for Bot containers (default: `openclaw:latest`) |
+| `BOT_PORT_START` | ❌ | Starting port for Bot containers (default: `9200`) |
+| `BOT_DATA_DIR` | ❌ | Bot data directory (default: `/data/bots`) |
+| `BOT_SECRETS_DIR` | ❌ | Bot secrets directory (default: `/data/secrets`) |
+| `ZERO_TRUST_MODE` | ❌ | Enable zero-trust mode (default: `false`) |
+| `PROXY_TOKEN_TTL` | ❌ | Proxy token TTL in seconds (default: `86400`) |
+
+> **Note**: JWT configuration (`secret`, `expireIn`) is in `config.local.yaml`, not environment variables.
+
+### Frontend (`apps/web/.env.local`)
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SERVER_BASE_URL` | ✅ | Backend API base URL |
+| `NEXT_PUBLIC_API_BASE_URL` | ❌ | API base URL (defaults to server URL + `/api`) |
+
+---
+
+## 🐳 Docker Deployment
 
 ```bash
 ./scripts/start-clawbot.sh
 ```
 
-依赖 `docker-compose.yml`，启动 API 与 Web 服务。健康检查通过后：
-- 前端：<http://localhost:13000>
-- API：<http://localhost:13100/api>
+Uses `docker-compose.yml`, starts API and Web services. After health check passes:
+- Frontend: <http://localhost:13000>
+- API: <http://localhost:13100/api>
 
-> 注：AI 代理功能（keyring-proxy）已集成到 API 服务中，通过 `/api/v1/:vendor/*` 端点提供。
-
----
-
-## 📡 API 概览
-
-### Bot（需 JWT）
-
-| 方法   | 路径                       | 说明             |
-| ------ | -------------------------- | ---------------- |
-| GET    | `/api/bot`                 | 列出当前用户 Bot |
-| POST   | `/api/bot`                 | 创建 Bot         |
-| GET    | `/api/bot/:hostname`       | 获取单个 Bot     |
-| POST   | `/api/bot/:hostname/start` | 启动             |
-| POST   | `/api/bot/:hostname/stop`  | 停止             |
-| DELETE | `/api/bot/:hostname`       | 删除             |
-| GET    | `/api/bot/stats`           | 容器统计         |
-| GET    | `/api/bot/admin/orphans`   | 孤立资源         |
-| POST   | `/api/bot/admin/cleanup`   | 清理孤立资源     |
-
-### Provider Key（需 JWT）
-
-| 方法   | 路径                       | 说明          |
-| ------ | -------------------------- | ------------- |
-| GET    | `/api/provider-key`        | 列出 API Keys |
-| POST   | `/api/provider-key`        | 添加 Key      |
-| DELETE | `/api/provider-key/:id`    | 删除 Key      |
-| GET    | `/api/provider-key/health` | 健康检查      |
-
-### Plugin 插件（需 JWT）
-
-| 方法   | 路径                              | 说明                 |
-| ------ | --------------------------------- | -------------------- |
-| GET    | `/api/plugin`                     | 列出所有插件         |
-| GET    | `/api/plugin/:id`                 | 获取插件详情         |
-| GET    | `/api/bot/:hostname/plugins`      | 获取 Bot 已安装插件  |
-| POST   | `/api/bot/:hostname/plugins`      | 安装插件到 Bot       |
-| DELETE | `/api/bot/:hostname/plugins/:id`  | 从 Bot 卸载插件      |
-
-### Skill 技能（需 JWT）
-
-| 方法   | 路径                              | 说明                 |
-| ------ | --------------------------------- | -------------------- |
-| GET    | `/api/skill`                      | 列出所有技能         |
-| GET    | `/api/skill/:id`                  | 获取技能详情         |
-| POST   | `/api/skill`                      | 创建自定义技能       |
-| PUT    | `/api/skill/:id`                  | 更新技能             |
-| DELETE | `/api/skill/:id`                  | 删除技能             |
-| GET    | `/api/bot/:hostname/skills`       | 获取 Bot 已安装技能  |
-| POST   | `/api/bot/:hostname/skills`       | 安装技能到 Bot       |
-| PUT    | `/api/bot/:hostname/skills/:id`   | 更新技能配置         |
-| DELETE | `/api/bot/:hostname/skills/:id`   | 从 Bot 卸载技能      |
-
-### AI 代理（Bearer Bot Token）
-
-| 方法 | 路径                | 说明                                         |
-| ---- | ------------------- | -------------------------------------------- |
-| ALL  | `/api/v1/:vendor/*` | 转发至对应 AI 提供商（openai、anthropic 等） |
-
-更多示例见 `https/rest-client.http`。
+> Note: AI proxy functionality (keyring-proxy) is integrated into the API service, available via `/api/v1/:vendor/*` endpoints.
 
 ---
 
-## 🗺️ 路线图
+## 📡 API Overview
 
-### 近期目标
+### Bot (JWT Required)
 
-| 功能 | 状态 | 说明 |
-| ---- | ---- | ---- |
-| 飞书机器人渠道 | 🚧 进行中 | 接入飞书开放平台，支持飞书群聊/私聊 Bot |
-| Analytics 分析后端 | 📋 契约已定义 | 实现 `/analytics/track` 端点，支持使用量统计 |
-| 通知系统 UI | 📋 后端已实现 | 完成前端通知中心、实时推送 |
-| Webhook 处理器 | 📋 契约已定义 | 实现 transcode、audio-transcribe 等回调处理 |
-| 权限系统 | 📋 待设计 | 细粒度权限控制（RBAC） |
-| 限流实现 | 📋 配置已存在 | 验证并完善 @fastify/rate-limit 集成 |
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| GET    | `/api/bot` | List current user's Bots |
+| POST   | `/api/bot` | Create Bot |
+| GET    | `/api/bot/:hostname` | Get single Bot |
+| POST   | `/api/bot/:hostname/start` | Start |
+| POST   | `/api/bot/:hostname/stop` | Stop |
+| DELETE | `/api/bot/:hostname` | Delete |
+| GET    | `/api/bot/stats` | Container stats |
+| GET    | `/api/bot/admin/orphans` | Orphan resources |
+| POST   | `/api/bot/admin/cleanup` | Cleanup orphans |
 
-### 中期目标
+### Provider Key (JWT Required)
 
-- **更多 IM 渠道**：企业微信、钉钉、Slack、Discord 等
-- **监控告警**：集成 Prometheus/Grafana，Bot 健康监控
-- **高级路由策略**：基于延迟、成本的智能路由
-- **团队协作**：团队空间、成员管理、权限分配
-- **API 用量分析**：Token 消耗统计、成本分析、趋势图表
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| GET    | `/api/provider-key` | List API Keys |
+| POST   | `/api/provider-key` | Add Key |
+| DELETE | `/api/provider-key/:id` | Delete Key |
+| GET    | `/api/provider-key/health` | Health check |
 
-### 长期愿景
+### Plugin (JWT Required)
 
-- **多集群部署**：跨区域 Bot 调度
-- **渠道市场**：更多第三方渠道集成
-- **Marketplace**：模板市场、Bot 分享
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| GET    | `/api/plugin` | List all plugins |
+| GET    | `/api/plugin/:id` | Get plugin details |
+| GET    | `/api/bot/:hostname/plugins` | Get Bot's installed plugins |
+| POST   | `/api/bot/:hostname/plugins` | Install plugin to Bot |
+| DELETE | `/api/bot/:hostname/plugins/:id` | Uninstall plugin from Bot |
+
+### Skill (JWT Required)
+
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| GET    | `/api/skill` | List all skills |
+| GET    | `/api/skill/:id` | Get skill details |
+| POST   | `/api/skill` | Create custom skill |
+| PUT    | `/api/skill/:id` | Update skill |
+| DELETE | `/api/skill/:id` | Delete skill |
+| GET    | `/api/bot/:hostname/skills` | Get Bot's installed skills |
+| POST   | `/api/bot/:hostname/skills` | Install skill to Bot |
+| PUT    | `/api/bot/:hostname/skills/:id` | Update skill config |
+| DELETE | `/api/bot/:hostname/skills/:id` | Uninstall skill from Bot |
+
+### Channel (JWT Required)
+
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| GET    | `/api/channel` | List all channel definitions |
+| GET    | `/api/channel/:id` | Get channel definition details |
+| GET    | `/api/bot/:hostname/channels` | Get Bot's configured channels |
+| POST   | `/api/bot/:hostname/channels` | Add channel to Bot |
+| PUT    | `/api/bot/:hostname/channels/:id` | Update channel config |
+| DELETE | `/api/bot/:hostname/channels/:id` | Delete channel |
+| POST   | `/api/bot/:hostname/channels/:id/connection` | Connect/disconnect channel |
+
+### AI Proxy (Bearer Bot Token)
+
+| Method | Path | Description |
+| ---- | ---- | ----------- |
+| ALL  | `/api/v1/:vendor/*` | Forward to corresponding AI provider (openai, anthropic, etc.) |
+
+More examples in `https/rest-client.http`.
 
 ---
 
-## 📝 常用命令
+## 👨‍💻 Development Guide
+
+### Project Structure
+
+This is a **pnpm monorepo** managed with **Turborepo**:
 
 ```bash
-pnpm dev              # 开发
-pnpm build            # 构建
-pnpm db:generate      # 生成 Prisma Client
-pnpm db:migrate:dev   # 开发迁移
-pnpm db:migrate:deploy # 生产迁移
-pnpm db:push          # 推送 schema
+# Install dependencies
+pnpm install
+
+# Development (all apps)
+pnpm dev
+
+# Development (specific apps)
+pnpm dev:web          # Next.js frontend only
+pnpm dev:api          # NestJS backend only
+
+# Build
+pnpm build
+pnpm build:web        # Build web only
+pnpm build:api        # Build api only
+
+# Lint & Type Check
+pnpm lint
+pnpm type-check
+
+# Test
+pnpm test
+pnpm test:api
+```
+
+### Adding New Features
+
+#### 1. Define API Contract (packages/contracts)
+
+```typescript
+// packages/contracts/src/api/example.contract.ts
+import { initContract } from '@ts-rest/core';
+import { z } from 'zod';
+
+const c = initContract();
+
+export const exampleContract = c.router({
+  list: {
+    method: 'GET',
+    path: '/example',
+    responses: {
+      200: z.object({ items: z.array(z.string()) }),
+    },
+  },
+});
+```
+
+#### 2. Implement Backend (apps/api)
+
+```bash
+# Generate NestJS module
+cd apps/api
+npx nest g module example src/modules
+npx nest g controller example src/modules
+npx nest g service example src/modules
+```
+
+#### 3. Consume in Frontend (apps/web)
+
+```typescript
+// Use ts-rest React Query hooks
+const { data } = exampleApi.list.useQuery(['example'], {});
+```
+
+### Database Operations
+
+```bash
+# Generate Prisma Client after schema changes
+pnpm db:generate
+
+# Create migration
+pnpm db:migrate:dev --name <migration_name>
+
+# Apply migrations (production)
+pnpm db:migrate:deploy
+
+# Push schema without migration
+pnpm db:push
+
+# Seed database
+pnpm db:seed:api
+```
+
+### Code Style
+
+- **TypeScript**: Strict mode enabled
+- **ESLint**: Configured in `packages/config`
+- **Prettier**: Auto-formatting
+- **Zod 4**: For all validation (NOT Zod 3)
+- **Winston Logger**: Use instead of `console.log`
+
+---
+
+## 🗺️ Roadmap
+
+### Near-term Goals
+
+| Feature | Status | Description |
+| ---- | ---- | ---- |
+| Channel Connectors | 🚧 In Progress | Implement message send/receive connectors for Feishu, Telegram, WeChat, etc. |
+| Analytics Backend | 📋 Contract Defined | Implement `/analytics/track` endpoint, usage statistics |
+| Notification UI | 📋 Backend Done | Complete frontend notification center, real-time push |
+| Webhook Handlers | 📋 Contract Defined | Implement transcode, audio-transcribe callbacks |
+| Permission System | 📋 To Design | Fine-grained access control (RBAC) |
+| Rate Limiting | 📋 Config Exists | Verify and improve @fastify/rate-limit integration |
+
+### Mid-term Goals
+
+- **More IM Channels**: WeCom, DingTalk, Slack, Discord, etc.
+- **Monitoring & Alerts**: Prometheus/Grafana integration, Bot health monitoring
+- **Advanced Routing**: Latency and cost-based intelligent routing
+- **Team Collaboration**: Team spaces, member management, permission assignment
+- **API Usage Analytics**: Token consumption stats, cost analysis, trend charts
+
+### Long-term Vision
+
+- **Multi-cluster Deployment**: Cross-region Bot scheduling
+- **Channel Marketplace**: More third-party channel integrations
+- **Marketplace**: Template market, Bot sharing
+
+---
+
+## 📝 Common Commands
+
+```bash
+pnpm dev              # Development
+pnpm build            # Build
+pnpm db:generate      # Generate Prisma Client
+pnpm db:migrate:dev   # Development migration
+pnpm db:migrate:deploy # Production migration
+pnpm db:push          # Push schema
 pnpm lint             # Lint
-pnpm type-check       # 类型检查
-pnpm test             # 测试
+pnpm type-check       # Type check
+pnpm test             # Test
 ```
 
 ---
 
-## 🙏 致谢与项目缘起
+## 🔍 Troubleshooting
 
-### 致谢
+### Common Issues
 
-我们由衷感谢 [BotMaker](https://github.com/jgarzik/botmaker) 这一优秀的开源项目。BotMaker 提出的零信任 API 密钥架构、keyring-proxy 设计理念以及容器化 Bot 管理思路，为本项目的设计与实现带来了重要启发和借鉴。
+#### Database Connection Failed
 
-### 为何仍有 ClawBotManager
+```bash
+# Check PostgreSQL is running
+docker ps | grep postgres
 
-在开源 ClawBotManager 之前，我们已在内部团队也实施了类似的多用户、多团队 Bot 管理与 API 密钥编排系统。彼时我们发现了 BotMaker 项目，从中借鉴了许多思路与实现细节。
+# Verify connection string
+psql $DATABASE_URL -c "SELECT 1"
+```
 
-尽管 BotMaker 已能很好地解决同类问题，我们仍决定将 ClawBotManager 开源，主要出于以下考量：
+#### Docker Permission Denied
 
-1. **补充能力**：我在服务 [psylos1.com](https://psylos1.com) AI-Native化的过程中中沉淀了多租户、团队协作、Provider Key 标签路由与 Round-robin、Prisma + PostgreSQL 等企业级能力，希望为社区提供另一种技术选型与实现路径。
-2. **回馈社区**：BotMaker 启发了我们的设计，我们希望通过开源自己的实现，将我们在多人多团队管理场景下的实践经验分享出去，给有类似需求的团队更多参考与帮助。
-3. **共同推进**：AI Bot 管理与密钥编排仍是一个快速演进的领域，我们期待与 BotMaker 及更多开源项目一起，为社区提供更多选择与更完善的解决方案。
+```bash
+# Add user to docker group
+sudo usermod -aG docker $USER
+
+# Restart Docker daemon
+sudo systemctl restart docker
+```
+
+#### Port Already in Use
+
+```bash
+# Find process using port
+lsof -i :3000
+
+# Kill process
+kill -9 <PID>
+```
+
+#### Prisma Client Out of Sync
+
+```bash
+# Regenerate Prisma Client
+pnpm db:generate
+
+# If schema changed, create migration
+pnpm db:migrate:dev
+```
+
+#### Bot Container Won't Start
+
+1. Check Docker is running: `docker info`
+2. Verify port range is available
+3. Check workspace directory permissions
+4. Review container logs: `docker logs <container_id>`
 
 ---
 
-## 📂 文档与规范
+## 🤝 Contributing
 
-- **架构与规范**：`CLAUDE.md`、`.cursorrules`
-- **API 契约**：`packages/contracts/src/api/`
-- **后端规范**：`apps/api/docs/`（如存在）
-- **前端规范**：`apps/web/docs/`（如存在）
+We welcome contributions! Please follow these steps:
+
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
+3. **Follow** the coding standards in `CLAUDE.md`
+4. **Write** tests for new features
+5. **Commit** with clear messages
+6. **Push** to your fork
+7. **Open** a Pull Request
+
+### Development Standards
+
+- Read `CLAUDE.md` for architecture guidelines
+- Follow the layered architecture (API → Service → DB/Client)
+- Use Zod schemas for all API validation
+- Write Winston logs, not console.log
+- Keep infra and domain layers separate
+
+---
+
+## 🙏 Acknowledgments & Project Origins
+
+### Acknowledgments
+
+We sincerely thank [BotMaker](https://github.com/jgarzik/botmaker), an excellent open-source project. BotMaker's zero-trust API key architecture, keyring-proxy design philosophy, and containerized Bot management approach provided important inspiration and reference for this project's design and implementation.
+
+### Why ClawBotManager Still Exists
+
+Before open-sourcing ClawBotManager, we had already implemented a similar multi-user, multi-team Bot management and API key orchestration system internally. At that time, we discovered the BotMaker project and borrowed many ideas and implementation details from it.
+
+Although BotMaker already solves similar problems well, we decided to open-source ClawBotManager for the following reasons:
+
+1. **Supplementary Capabilities**: During the AI-Native transformation of [psylos1.com](https://psylos1.com), we accumulated enterprise-grade capabilities like multi-tenancy, team collaboration, Provider Key tag routing and round-robin, Prisma + PostgreSQL, etc. We hope to provide the community with alternative technology choices and implementation paths.
+2. **Giving Back**: BotMaker inspired our design. We hope to share our practical experience in multi-user, multi-team management scenarios through open-sourcing our implementation, providing more reference and help to teams with similar needs.
+3. **Joint Progress**: AI Bot management and key orchestration is still a rapidly evolving field. We look forward to working with BotMaker and more open-source projects to provide the community with more choices and better solutions.
+
+---
+
+## 🔒 Security Considerations
+
+### API Key Protection
+
+- All API keys are encrypted with **AES-256-GCM** before storage
+- Keys are only decrypted at runtime in the proxy layer
+- Bot containers **never** have direct access to API keys (zero-trust)
+- `BOT_MASTER_KEY` should be stored securely and backed up
+
+### Authentication
+
+- JWT-based authentication with configurable expiration
+- Support for multiple login methods (email, mobile, OAuth)
+- Token refresh mechanism for long-lived sessions
+
+### Best Practices
+
+1. **Never commit** `.env` files or secrets
+2. **Rotate** `BOT_MASTER_KEY` periodically (requires re-encryption)
+3. **Use** read replicas for database scaling
+4. **Enable** rate limiting in production
+5. **Monitor** audit logs for suspicious activity
+
+---
+
+## 📂 Documentation & Standards
+
+- **Architecture & Standards**: `CLAUDE.md`, `.cursorrules`
+- **API Contracts**: `packages/contracts/src/api/`
+- **Backend Standards**: `apps/api/docs/` (if exists)
+- **Frontend Standards**: `apps/web/docs/` (if exists)
 
 ---
 

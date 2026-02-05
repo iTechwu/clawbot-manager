@@ -6,9 +6,9 @@
 #   ./scripts/init-env-secrets.sh
 #
 # This script will:
-# 1. Generate BOT_MASTER_KEY, admin_token, proxy_admin_token
-# 2. Store them in secrets/ directory
-# 3. Update apps/api/.env with BOT_MASTER_KEY and PROXY_ADMIN_TOKEN
+# 1. Generate BOT_MASTER_KEY for API key encryption
+# 2. Store it in secrets/ directory
+# 3. Update apps/api/.env with BOT_MASTER_KEY
 
 set -e
 
@@ -65,8 +65,8 @@ update_env_file() {
     fi
 }
 
-# 1. Generate BOT_MASTER_KEY
-echo -e "${YELLOW}[1/3]${NC} Generating BOT_MASTER_KEY..."
+# Generate BOT_MASTER_KEY
+echo -e "${YELLOW}[1/1]${NC} Generating BOT_MASTER_KEY..."
 if [ -f "$SECRETS_DIR/master_key" ]; then
     BOT_MASTER_KEY=$(cat "$SECRETS_DIR/master_key")
     echo -e "  ${GREEN}✓${NC} Using existing master_key from secrets/"
@@ -74,29 +74,6 @@ else
     BOT_MASTER_KEY=$(generate_key)
     echo "$BOT_MASTER_KEY" > "$SECRETS_DIR/master_key"
     echo -e "  ${GREEN}✓${NC} Generated new master_key"
-fi
-
-# 2. Generate admin_token
-echo -e "${YELLOW}[2/3]${NC} Generating admin_token..."
-if [ -f "$SECRETS_DIR/admin_token" ]; then
-    ADMIN_TOKEN=$(cat "$SECRETS_DIR/admin_token")
-    echo -e "  ${GREEN}✓${NC} Using existing admin_token from secrets/"
-else
-    ADMIN_TOKEN=$(generate_key)
-    echo "$ADMIN_TOKEN" > "$SECRETS_DIR/admin_token"
-    echo -e "  ${GREEN}✓${NC} Generated new admin_token"
-fi
-
-# 3. Generate proxy_admin_token (same as admin_token for consistency)
-echo -e "${YELLOW}[3/3]${NC} Generating proxy_admin_token..."
-if [ -f "$SECRETS_DIR/proxy_admin_token" ]; then
-    PROXY_ADMIN_TOKEN=$(cat "$SECRETS_DIR/proxy_admin_token")
-    echo -e "  ${GREEN}✓${NC} Using existing proxy_admin_token from secrets/"
-else
-    # Use the same token as admin_token for proxy
-    PROXY_ADMIN_TOKEN="$ADMIN_TOKEN"
-    echo "$PROXY_ADMIN_TOKEN" > "$SECRETS_DIR/proxy_admin_token"
-    echo -e "  ${GREEN}✓${NC} Generated new proxy_admin_token"
 fi
 
 echo ""
@@ -109,15 +86,12 @@ echo ""
 if [ -f "$API_ENV_FILE" ]; then
     echo -e "Updating ${YELLOW}$API_ENV_FILE${NC}..."
     update_env_file "$API_ENV_FILE" "BOT_MASTER_KEY" "$BOT_MASTER_KEY"
-    update_env_file "$API_ENV_FILE" "PROXY_ADMIN_TOKEN" "$PROXY_ADMIN_TOKEN"
     echo -e "  ${GREEN}✓${NC} Updated BOT_MASTER_KEY"
-    echo -e "  ${GREEN}✓${NC} Updated PROXY_ADMIN_TOKEN"
 else
     echo -e "${RED}Warning:${NC} $API_ENV_FILE not found"
     echo "  Creating new .env file..."
     cp "$API_ENV_EXAMPLE" "$API_ENV_FILE" 2>/dev/null || touch "$API_ENV_FILE"
     update_env_file "$API_ENV_FILE" "BOT_MASTER_KEY" "$BOT_MASTER_KEY"
-    update_env_file "$API_ENV_FILE" "PROXY_ADMIN_TOKEN" "$PROXY_ADMIN_TOKEN"
     echo -e "  ${GREEN}✓${NC} Created $API_ENV_FILE with secrets"
 fi
 
@@ -128,8 +102,6 @@ echo "=========================================="
 echo ""
 echo -e "Secrets stored in: ${GREEN}$SECRETS_DIR/${NC}"
 echo "  - master_key (BOT_MASTER_KEY)"
-echo "  - admin_token"
-echo "  - proxy_admin_token (PROXY_ADMIN_TOKEN)"
 echo ""
 echo -e "Environment file updated: ${GREEN}$API_ENV_FILE${NC}"
 echo ""

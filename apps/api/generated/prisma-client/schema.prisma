@@ -351,6 +351,7 @@ model CountryCode {
 // ============================================================================
 
 enum BotStatus {
+  draft // 草稿状态，未配置完成
   created
   starting
   running

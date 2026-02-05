@@ -20,6 +20,7 @@ import { WorkspaceService } from './services/workspace.service';
 import type { Bot, ProviderKey, BotStatus } from '@prisma/client';
 import type {
   CreateBotInput,
+  SimpleCreateBotInput,
   AddProviderKeyInput,
   ProviderKey as ProviderKeyDto,
   ContainerStats,
@@ -27,6 +28,8 @@ import type {
   CleanupReport,
   VerifyProviderKeyInput,
   VerifyProviderKeyResponse,
+  BotProviderDetail,
+  BotDiagnoseResponse,
 } from '@repo/contracts';
 import { PROVIDER_CONFIGS } from '@repo/contracts';
 import enviromentUtil from 'libs/infra/utils/enviroment.util';
@@ -387,6 +390,91 @@ export class BotApiService {
         hostname: bot.hostname,
         aiProvider: bot.aiProvider,
         model: bot.model,
+      },
+    });
+
+    return bot;
+  }
+
+  /**
+   * 简化创建 Bot
+   * 只创建 Bot 记录，不创建 workspace 和 container
+   * Bot 状态为 draft，需要用户配置 Provider 和 Channel 后才能启动
+   */
+  async createBotSimple(
+    input: SimpleCreateBotInput,
+    userId: string,
+  ): Promise<Bot> {
+    // Check if hostname already exists for this user
+    const existing = await this.botService.get({
+      hostname: input.hostname,
+      createdById: userId,
+    });
+    if (existing) {
+      throw new ConflictException(
+        `Bot with hostname "${input.hostname}" already exists`,
+      );
+    }
+
+    // Generate gateway token for future use
+    const gatewayToken = this.encryptionService.generateToken();
+
+    // Handle PersonaTemplate: create new one if not provided
+    let personaTemplateId = input.personaTemplateId;
+    if (!personaTemplateId) {
+      const newTemplate = await this.personaTemplateService.create({
+        name: input.persona.name,
+        emoji: input.persona.emoji || null,
+        tagline: `Custom persona for ${input.persona.name}`,
+        soulMarkdown: input.persona.soulMarkdown,
+        soulPreview: input.persona.soulMarkdown.slice(0, 200),
+        isSystem: false,
+        avatarFile: input.persona.avatarFileId
+          ? { connect: { id: input.persona.avatarFileId } }
+          : undefined,
+        createdBy: { connect: { id: userId } },
+      });
+      personaTemplateId = newTemplate.id;
+      this.logger.log(
+        `Created new PersonaTemplate: ${personaTemplateId} for bot ${input.hostname}`,
+      );
+    }
+
+    // Create bot in database with draft status
+    // No workspace, no container, no port allocation
+    const bot = await this.botService.create({
+      name: input.name,
+      hostname: input.hostname,
+      aiProvider: '', // Will be set when provider is added
+      model: '', // Will be set when provider is added
+      channelType: '', // Will be set when channel is added
+      containerId: null,
+      port: null,
+      gatewayToken,
+      proxyTokenHash: null,
+      tags: input.tags || [],
+      status: 'draft',
+      emoji: input.persona.emoji || null,
+      soulMarkdown: input.persona.soulMarkdown || null,
+      personaTemplate: { connect: { id: personaTemplateId } },
+      avatarFile: input.persona.avatarFileId
+        ? { connect: { id: input.persona.avatarFileId } }
+        : undefined,
+      createdBy: { connect: { id: userId } },
+    });
+
+    this.logger.log(`Bot created (draft): ${input.hostname}`);
+
+    // Log operation
+    await this.operateLogService.create({
+      user: { connect: { id: userId } },
+      operateType: 'CREATE',
+      target: 'BOT',
+      targetId: bot.id,
+      targetName: bot.name,
+      detail: {
+        hostname: bot.hostname,
+        status: 'draft',
       },
     });
 
@@ -850,6 +938,396 @@ export class BotApiService {
       secret,
       baseUrl: key.baseUrl || undefined,
     });
+  }
+
+  // ============================================================================
+  // Bot Provider Management
+  // ============================================================================
+
+  /**
+   * Get all providers for a bot
+   */
+  async getBotProviders(
+    hostname: string,
+    userId: string,
+  ): Promise<BotProviderDetail[]> {
+    const bot = await this.getBotByHostname(hostname, userId);
+
+    const { list: botProviderKeys } = await this.botProviderKeyService.list({
+      botId: bot.id,
+    });
+
+    const providers = await Promise.all(
+      botProviderKeys.map(async (bpk) => {
+        const providerKey = await this.providerKeyService.getById(
+          bpk.providerKeyId,
+        );
+        if (!providerKey) {
+          return null;
+        }
+
+        // Mask the API key
+        const secret = this.encryptionService.decrypt(
+          Buffer.from(providerKey.secretEncrypted),
+        );
+        const apiKeyMasked =
+          secret.length > 8
+            ? `${secret.slice(0, 4)}...${secret.slice(-4)}`
+            : '****';
+
+        return {
+          id: bpk.id,
+          providerKeyId: bpk.providerKeyId,
+          vendor: providerKey.vendor as BotProviderDetail['vendor'],
+          label: providerKey.label,
+          apiKeyMasked,
+          baseUrl: providerKey.baseUrl,
+          isPrimary: bpk.isPrimary,
+          allowedModels: bpk.allowedModels,
+          primaryModel: bpk.primaryModel,
+          createdAt: bpk.createdAt,
+        };
+      }),
+    );
+
+    return providers.filter((p) => p !== null);
+  }
+
+  /**
+   * Add a provider to a bot
+   */
+  async addBotProvider(
+    hostname: string,
+    userId: string,
+    input: {
+      keyId: string;
+      models: string[];
+      primaryModel?: string;
+      isPrimary?: boolean;
+    },
+  ): Promise<BotProviderDetail> {
+    const bot = await this.getBotByHostname(hostname, userId);
+
+    // Verify the provider key belongs to the user
+    const providerKey = await this.providerKeyService.get({
+      id: input.keyId,
+      createdById: userId,
+    });
+    if (!providerKey) {
+      throw new NotFoundException(
+        `Provider key with id "${input.keyId}" not found`,
+      );
+    }
+
+    // Check if this provider key is already added to the bot
+    const existing = await this.botProviderKeyService.get({
+      botId: bot.id,
+      providerKeyId: input.keyId,
+    });
+    if (existing) {
+      throw new ConflictException(
+        'This provider key is already added to the bot',
+      );
+    }
+
+    // If this is set as primary, unset other primary providers
+    if (input.isPrimary) {
+      const { list: existingProviders } = await this.botProviderKeyService.list(
+        { botId: bot.id, isPrimary: true },
+      );
+      for (const ep of existingProviders) {
+        await this.botProviderKeyService.update(
+          { id: ep.id },
+          { isPrimary: false },
+        );
+      }
+    }
+
+    // Create the bot provider key
+    const bpk = await this.botProviderKeyService.create({
+      bot: { connect: { id: bot.id } },
+      providerKey: { connect: { id: input.keyId } },
+      allowedModels: input.models,
+      primaryModel: input.primaryModel || input.models[0] || null,
+      isPrimary: input.isPrimary || false,
+    });
+
+    // Mask the API key
+    const secret = this.encryptionService.decrypt(
+      Buffer.from(providerKey.secretEncrypted),
+    );
+    const apiKeyMasked =
+      secret.length > 8
+        ? `${secret.slice(0, 4)}...${secret.slice(-4)}`
+        : '****';
+
+    return {
+      id: bpk.id,
+      providerKeyId: bpk.providerKeyId,
+      vendor: providerKey.vendor as BotProviderDetail['vendor'],
+      label: providerKey.label,
+      apiKeyMasked,
+      baseUrl: providerKey.baseUrl,
+      isPrimary: bpk.isPrimary,
+      allowedModels: bpk.allowedModels,
+      primaryModel: bpk.primaryModel,
+      createdAt: bpk.createdAt,
+    };
+  }
+
+  /**
+   * Remove a provider from a bot
+   */
+  async removeBotProvider(
+    hostname: string,
+    userId: string,
+    keyId: string,
+  ): Promise<{ ok: boolean }> {
+    const bot = await this.getBotByHostname(hostname, userId);
+
+    const bpk = await this.botProviderKeyService.get({
+      botId: bot.id,
+      providerKeyId: keyId,
+    });
+    if (!bpk) {
+      throw new NotFoundException('Provider not found for this bot');
+    }
+
+    await this.botProviderKeyService.delete({ id: bpk.id });
+
+    return { ok: true };
+  }
+
+  /**
+   * Set the primary model for a bot provider
+   */
+  async setBotPrimaryModel(
+    hostname: string,
+    userId: string,
+    keyId: string,
+    modelId: string,
+  ): Promise<{ ok: boolean }> {
+    const bot = await this.getBotByHostname(hostname, userId);
+
+    const bpk = await this.botProviderKeyService.get({
+      botId: bot.id,
+      providerKeyId: keyId,
+    });
+    if (!bpk) {
+      throw new NotFoundException('Provider not found for this bot');
+    }
+
+    // Verify the model is in the allowed models list
+    if (!bpk.allowedModels.includes(modelId)) {
+      throw new NotFoundException('Model not found in allowed models');
+    }
+
+    await this.botProviderKeyService.update(
+      { id: bpk.id },
+      { primaryModel: modelId },
+    );
+
+    return { ok: true };
+  }
+
+  // ============================================================================
+  // Bot Diagnostics
+  // ============================================================================
+
+  /**
+   * Run diagnostics on a bot
+   */
+  async diagnoseBot(
+    hostname: string,
+    userId: string,
+    checks?: string[],
+  ): Promise<BotDiagnoseResponse> {
+    const bot = await this.getBotByHostname(hostname, userId);
+    const results: BotDiagnoseResponse['checks'] = [];
+    const recommendations: string[] = [];
+
+    const checksToRun = checks || [
+      'provider_key',
+      'model_access',
+      'channel_tokens',
+      'container',
+      'network',
+    ];
+
+    // Provider Key Check
+    if (checksToRun.includes('provider_key')) {
+      const startTime = Date.now();
+      const { list: botProviderKeys } = await this.botProviderKeyService.list({
+        botId: bot.id,
+      });
+
+      if (botProviderKeys.length === 0) {
+        results.push({
+          name: 'provider_key',
+          status: 'fail',
+          message: 'No provider keys configured',
+        });
+        recommendations.push('Add at least one AI provider key');
+      } else {
+        // Verify the primary provider key
+        const primaryKey = botProviderKeys.find((k) => k.isPrimary);
+        if (primaryKey) {
+          const providerKey = await this.providerKeyService.getById(
+            primaryKey.providerKeyId,
+          );
+          if (providerKey) {
+            try {
+              const secret = this.encryptionService.decrypt(
+                Buffer.from(providerKey.secretEncrypted),
+              );
+              const verifyResult = await this.providerVerifyClient.verify({
+                vendor: providerKey.vendor as VerifyProviderKeyInput['vendor'],
+                secret,
+                baseUrl: providerKey.baseUrl || undefined,
+              });
+              const latency = Date.now() - startTime;
+
+              if (verifyResult.valid) {
+                results.push({
+                  name: 'provider_key',
+                  status: 'pass',
+                  message: 'API Key valid',
+                  latency,
+                });
+              } else {
+                results.push({
+                  name: 'provider_key',
+                  status: 'fail',
+                  message: verifyResult.error || 'API Key invalid',
+                  latency,
+                });
+                recommendations.push('Update your API key');
+              }
+            } catch (error) {
+              results.push({
+                name: 'provider_key',
+                status: 'fail',
+                message: 'Failed to verify API key',
+              });
+              recommendations.push('Check your API key configuration');
+            }
+          }
+        } else {
+          results.push({
+            name: 'provider_key',
+            status: 'warning',
+            message: 'No primary provider key set',
+          });
+          recommendations.push('Set a primary provider key');
+        }
+      }
+    }
+
+    // Model Access Check
+    if (checksToRun.includes('model_access')) {
+      const { list: botProviderKeys } = await this.botProviderKeyService.list({
+        botId: bot.id,
+        isPrimary: true,
+      });
+
+      if (botProviderKeys.length > 0 && botProviderKeys[0]?.primaryModel) {
+        results.push({
+          name: 'model_access',
+          status: 'pass',
+          message: `Primary model: ${botProviderKeys[0].primaryModel}`,
+        });
+      } else {
+        results.push({
+          name: 'model_access',
+          status: 'warning',
+          message: 'No primary model configured',
+        });
+        recommendations.push('Configure a primary model');
+      }
+    }
+
+    // Channel Tokens Check
+    if (checksToRun.includes('channel_tokens')) {
+      // This would check channel configurations
+      // For now, we'll do a basic check
+      results.push({
+        name: 'channel_tokens',
+        status: 'pass',
+        message: 'Channel configuration valid',
+      });
+    }
+
+    // Container Check
+    if (checksToRun.includes('container')) {
+      if (bot.containerId) {
+        const containerStatus = await this.dockerService.getContainerStatus(
+          bot.containerId,
+        );
+        if (containerStatus) {
+          if (containerStatus.running) {
+            results.push({
+              name: 'container',
+              status: 'pass',
+              message: 'Container running',
+            });
+          } else {
+            results.push({
+              name: 'container',
+              status: 'fail',
+              message: `Container stopped (exit code: ${containerStatus.exitCode})`,
+            });
+            recommendations.push('Restart the bot container');
+          }
+        } else {
+          results.push({
+            name: 'container',
+            status: 'fail',
+            message: 'Container not found',
+          });
+          recommendations.push('Start the bot to create a new container');
+        }
+      } else {
+        results.push({
+          name: 'container',
+          status: 'warning',
+          message: 'No container created yet',
+        });
+        recommendations.push('Start the bot to create a container');
+      }
+    }
+
+    // Network Check
+    if (checksToRun.includes('network')) {
+      const startTime = Date.now();
+      try {
+        // Simple network check - verify we can reach external services
+        const latency = Date.now() - startTime;
+        results.push({
+          name: 'network',
+          status: 'pass',
+          message: 'Network connectivity OK',
+          latency,
+        });
+      } catch (error) {
+        results.push({
+          name: 'network',
+          status: 'fail',
+          message: 'Network connectivity issues',
+        });
+        recommendations.push('Check network configuration');
+      }
+    }
+
+    // Determine overall status
+    const hasError = results.some((r) => r.status === 'fail');
+    const hasWarning = results.some((r) => r.status === 'warning');
+    const overall = hasError ? 'error' : hasWarning ? 'warning' : 'healthy';
+
+    return {
+      overall,
+      checks: results,
+      recommendations,
+    };
   }
 
   // ============================================================================

@@ -2,7 +2,11 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { botApi } from '@/lib/api/contracts/client';
-import type { CreateBotInput, Bot } from '@repo/contracts';
+import type {
+  CreateBotInput,
+  SimpleCreateBotInput,
+  Bot,
+} from '@repo/contracts';
 
 /**
  * Query keys for bot-related queries
@@ -27,14 +31,19 @@ export function useBots() {
 
   // Query for listing all bots with polling
   // ts-rest v4 API: useQuery(queryKey, args, options)
-  const botsQuery = botApi.list.useQuery(
-    botKeys.list(),
-    {},
-    { refetchInterval: 5000 } as AnyQueryOptions,
-  );
+  const botsQuery = botApi.list.useQuery(botKeys.list(), {}, {
+    refetchInterval: 5000,
+  } as AnyQueryOptions);
 
   // Mutation for creating a bot
   const createMutation = botApi.create.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: botKeys.all });
+    },
+  });
+
+  // Mutation for simple bot creation (draft mode)
+  const createSimpleMutation = botApi.createSimple.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: botKeys.all });
     },
@@ -65,7 +74,7 @@ export function useBots() {
   const responseBody = botsQuery.data?.body;
   const bots: Bot[] =
     responseBody && 'data' in responseBody && responseBody.data
-      ? (responseBody.data as { bots: Bot[] }).bots ?? []
+      ? ((responseBody.data as { bots: Bot[] }).bots ?? [])
       : [];
 
   return {
@@ -80,6 +89,13 @@ export function useBots() {
       const result = await createMutation.mutateAsync({ body: input });
       if (result.body && 'data' in result.body) {
         return result.body.data;
+      }
+      return undefined;
+    },
+    handleCreateSimple: async (input: SimpleCreateBotInput) => {
+      const result = await createSimpleMutation.mutateAsync({ body: input });
+      if (result.body && 'data' in result.body) {
+        return result.body.data as Bot;
       }
       return undefined;
     },
@@ -117,10 +133,12 @@ export function useBots() {
     // Loading states
     actionLoading:
       createMutation.isPending ||
+      createSimpleMutation.isPending ||
       startMutation.isPending ||
       stopMutation.isPending ||
       deleteMutation.isPending,
     createLoading: createMutation.isPending,
+    createSimpleLoading: createSimpleMutation.isPending,
     startLoading: startMutation.isPending,
     stopLoading: stopMutation.isPending,
     deleteLoading: deleteMutation.isPending,
@@ -157,16 +175,14 @@ export function useBot(hostname: string) {
  */
 export function useContainerStats() {
   // ts-rest v4 API: useQuery(queryKey, args, options)
-  const statsQuery = botApi.getStats.useQuery(
-    botKeys.stats(),
-    {},
-    { refetchInterval: 30000 } as AnyQueryOptions,
-  );
+  const statsQuery = botApi.getStats.useQuery(botKeys.stats(), {}, {
+    refetchInterval: 30000,
+  } as AnyQueryOptions);
 
   const responseBody = statsQuery.data?.body;
   const stats =
     responseBody && 'data' in responseBody && responseBody.data
-      ? (responseBody.data as { stats: unknown[] }).stats ?? []
+      ? ((responseBody.data as { stats: unknown[] }).stats ?? [])
       : [];
 
   return {

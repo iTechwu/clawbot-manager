@@ -224,6 +224,7 @@ export type FileEnvType = (typeof FileEnvType)[keyof typeof FileEnvType]
 
 
 export const BotStatus: {
+  draft: 'draft',
   created: 'created',
   starting: 'starting',
   running: 'running',

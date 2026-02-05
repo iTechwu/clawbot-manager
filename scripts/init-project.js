@@ -47,6 +47,7 @@ const config = {
   authorEmail: '',
   databaseUrl: '',
   redisUrl: '',
+  rabbitmqUrl: '',
   apiPort: '',
   webPort: '',
 };
@@ -106,6 +107,11 @@ async function main() {
     );
     config.redisUrl = config.redisUrl.trim() || 'redis://localhost:6379';
 
+    config.rabbitmqUrl = await question(
+      `${colors.cyan}RabbitMQ URL${colors.reset} [amqp://localhost:5672]: `,
+    );
+    config.rabbitmqUrl = config.rabbitmqUrl.trim() || 'amqp://localhost:5672';
+
     rl.close();
 
     // Display configuration summary
@@ -121,6 +127,7 @@ async function main() {
     console.log(`  Web Port:        ${config.webPort}`);
     console.log(`  Database:        ${config.databaseUrl}`);
     console.log(`  Redis:           ${config.redisUrl}`);
+    console.log(`  RabbitMQ:        ${config.rabbitmqUrl}`);
 
     // Apply configuration
     log.header('\n🔧 Applying Configuration');
@@ -138,8 +145,9 @@ async function main() {
     console.log(
       `  3. ${colors.cyan}pnpm db:migrate:dev${colors.reset}   - Run database migrations`,
     );
+    console.log(`  4. ${colors.cyan}pnpm db:seed      - Seed default data`);
     console.log(
-      `  4. ${colors.cyan}pnpm dev${colors.reset}              - Start development servers`,
+      `  5. ${colors.cyan}pnpm dev${colors.reset}              - Start development servers`,
     );
     console.log('');
   } catch (error) {
@@ -180,14 +188,11 @@ async function applyConfiguration() {
     NEXT_PUBLIC_SERVER_BASE_URL: `http://localhost:${config.apiPort}`,
   });
   createEnvFile(path.join(rootDir, 'apps/api/.env'), {
-    NODE_ENV: 'development',
-    PORT: config.apiPort,
-    HOST: '0.0.0.0',
+    NODE_ENV: 'dev',
     DATABASE_URL: config.databaseUrl,
     REDIS_URL: config.redisUrl,
-    JWT_SECRET: generateRandomSecret(),
-    JWT_EXPIRES_IN: '7d',
-    CORS_ORIGIN: `http://localhost:${config.webPort}`,
+    RABBITMQ_URL: config.rabbitmqUrl,
+    BOT_MASTER_KEY: generateRandomSecret(),
   });
   log.success('Environment files created');
 

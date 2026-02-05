@@ -24,6 +24,7 @@ import {
   Settings,
   LogOut,
   User,
+  Key,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useTranslations } from 'next-intl';
@@ -124,9 +125,16 @@ export function AppNavbar() {
         >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8 rounded-full">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 rounded-full"
+              >
                 <Avatar className="size-8">
-                  <AvatarImage src={user?.headerImg || ''} alt={user?.nickname || 'User'} />
+                  <AvatarImage
+                    src={user?.headerImg || ''}
+                    alt={user?.nickname || 'User'}
+                  />
                   <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                     {initials || <User className="size-4" />}
                   </AvatarFallback>
@@ -138,6 +146,12 @@ export function AppNavbar() {
                 {user?.nickname || t('user.account')}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/secrets">
+                  <Key className="mr-2 size-4" />
+                  {t('user.apiKeys')}
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/settings/account">
                   <User className="mr-2 size-4" />

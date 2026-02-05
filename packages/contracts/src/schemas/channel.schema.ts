@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  ChannelConnectionStatusSchema,
+  type ChannelConnectionStatus,
+} from './prisma-enums.generated';
 
 // ============================================================================
 // Channel Credential Field Schema
@@ -57,16 +61,7 @@ export type ChannelDefinitionListResponse = z.infer<
 // Bot Channel Schema - Bot 渠道配置
 // ============================================================================
 
-export const ChannelConnectionStatusSchema = z.enum([
-  'DISCONNECTED',
-  'CONNECTING',
-  'CONNECTED',
-  'ERROR',
-]);
-
-export type ChannelConnectionStatus = z.infer<
-  typeof ChannelConnectionStatusSchema
->;
+// Channel connection status enum now comes from prisma-enums.generated
 
 // Bot Channel Item Schema (返回给前端，不包含加密凭证)
 export const BotChannelItemSchema = z.object({
@@ -129,3 +124,40 @@ export const BotChannelConnectionActionSchema = z.enum([
 export type BotChannelConnectionAction = z.infer<
   typeof BotChannelConnectionActionSchema
 >;
+
+// ============================================================================
+// Channel Test Schemas - 渠道快速测试
+// ============================================================================
+
+/**
+ * 渠道测试请求 Schema
+ */
+export const ChannelTestRequestSchema = z.object({
+  message: z
+    .string()
+    .min(1)
+    .max(1000)
+    .optional()
+    .default('Hello from ClawBot!'),
+});
+
+export type ChannelTestRequest = z.infer<typeof ChannelTestRequestSchema>;
+
+/**
+ * 渠道测试结果状态
+ */
+export const ChannelTestStatusSchema = z.enum(['success', 'warning', 'error']);
+
+export type ChannelTestStatus = z.infer<typeof ChannelTestStatusSchema>;
+
+/**
+ * 渠道测试响应 Schema
+ */
+export const ChannelTestResponseSchema = z.object({
+  status: ChannelTestStatusSchema,
+  message: z.string(),
+  latency: z.number().optional(),
+  details: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type ChannelTestResponse = z.infer<typeof ChannelTestResponseSchema>;

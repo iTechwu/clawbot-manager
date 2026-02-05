@@ -97,4 +97,17 @@ export class BotChannelApiController {
       return success(result);
     });
   }
+
+  @TsRestHandler(c.test)
+  async test(req: AuthenticatedRequest) {
+    return tsRestHandler(c.test, async ({ params, body }) => {
+      const result = await this.botChannelApiService.testChannel(
+        req.userId,
+        params.hostname,
+        params.channelId,
+        body,
+      );
+      return success(result);
+    });
+  }
 }
