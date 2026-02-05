@@ -5,6 +5,10 @@
   "allCategories": "All Categories",
   "noPlugins": "No plugins found",
   "tryOtherKeywords": "Try searching with different keywords",
+  "official": "Official",
+  "noDescription": "No description",
+  "recommended": "Recommended",
+  "allPlugins": "All Plugins",
   "regions": {
     "global": "Global",
     "cn": "China",

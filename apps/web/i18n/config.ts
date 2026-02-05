@@ -33,6 +33,7 @@ export const namespaces = [
   'errors',
   'forms',
   'navigation',
+  'plugins',
   'secrets',
   'settings',
   'templates',

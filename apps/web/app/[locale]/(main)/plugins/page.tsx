@@ -47,32 +47,24 @@ const categoryIcons: Record<PluginCategory, React.ElementType> = {
 };
 
 /**
- * 分类标签映射
+ * 分类键列表
  */
-const categoryLabels: Record<PluginCategory, string> = {
-  BROWSER: '浏览器',
-  FILESYSTEM: '文件系统',
-  DATABASE: '数据库',
-  API: 'API',
-  COMMUNICATION: '通讯',
-  DEVELOPMENT: '开发工具',
-  CUSTOM: '自定义',
-};
-
-/**
- * 区域标签映射
- */
-const regionLabels: Record<PluginRegion, string> = {
-  global: '全球',
-  cn: '国内',
-  en: '海外',
-};
+const categoryKeys: PluginCategory[] = [
+  'BROWSER',
+  'FILESYSTEM',
+  'DATABASE',
+  'API',
+  'COMMUNICATION',
+  'DEVELOPMENT',
+  'CUSTOM',
+];
 
 /**
  * 插件卡片组件
  */
 function PluginCard({
   plugin,
+  t,
 }: {
   plugin: {
     id: string;
@@ -87,6 +79,7 @@ function PluginCard({
     iconEmoji: string | null;
     iconUrl: string | null;
   };
+  t: (key: string) => string;
 }) {
   const CategoryIcon = categoryIcons[plugin.category];
 
@@ -119,18 +112,18 @@ function PluginCard({
           <div className="flex gap-1">
             {plugin.isOfficial && (
               <Badge variant="secondary" className="text-xs">
-                官方
+                {t('official')}
               </Badge>
             )}
             <Badge variant="outline" className="text-xs">
-              {categoryLabels[plugin.category]}
+              {t(`categories.${plugin.category}`)}
             </Badge>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground line-clamp-2 text-sm">
-          {plugin.description || '暂无描述'}
+          {plugin.description || t('noDescription')}
         </p>
       </CardContent>
     </Card>
@@ -211,10 +204,10 @@ export default function PluginsPage() {
       >
         <TabsList>
           <TabsTrigger value="recommended">
-            {locale === 'zh-CN' ? '国内推荐' : 'Recommended'}
+            {t('recommended')}
           </TabsTrigger>
           <TabsTrigger value="all">
-            {locale === 'zh-CN' ? '全部插件' : 'All Plugins'}
+            {t('allPlugins')}
           </TabsTrigger>
         </TabsList>
       </Tabs>
@@ -239,9 +232,9 @@ export default function PluginsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t('allCategories')}</SelectItem>
-            {Object.entries(categoryLabels).map(([key, label]) => (
+            {categoryKeys.map((key) => (
               <SelectItem key={key} value={key}>
-                {label}
+                {t(`categories.${key}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -264,7 +257,7 @@ export default function PluginsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {plugins.map((plugin) => (
-            <PluginCard key={plugin.id} plugin={plugin} />
+            <PluginCard key={plugin.id} plugin={plugin} t={t} />
           ))}
         </div>
       )}
