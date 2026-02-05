@@ -104,8 +104,13 @@
     },
     "step3": {
       "title": "功能",
-      "description": "配置 LLM 提供商、渠道和 Bot 功能",
-      "llmProviders": "LLM 提供商 *",
+      "description": "选择 API 密钥、渠道和 Bot 功能",
+      "apiKeys": "API 密钥 *",
+      "addApiKey": "添加密钥",
+      "loadingKeys": "加载密钥中...",
+      "noApiKeysConfigured": "尚未配置任何 API 密钥。请先添加 API 密钥才能创建 Bot。",
+      "goToSettings": "前往配置密钥",
+      "selectedKeys": "已选择的密钥",
       "showLess": "收起",
       "showAll": "显示全部（还有 {count} 个）",
       "channels": "渠道 *",
@@ -129,11 +134,24 @@
     "step4": {
       "title": "配置",
       "description": "配置模型设置和渠道令牌",
-      "llmConfig": "LLM 提供商配置",
+      "llmConfig": "LLM 配置",
+      "apiKey": "API 密钥",
+      "selectApiKey": "选择 API 密钥",
+      "autoSelectKey": "自动选择",
+      "loadingKeys": "加载密钥中...",
+      "loadingModels": "加载模型中...",
+      "noKeysConfigured": "未配置此提供商的 API 密钥，请先在设置中添加",
       "model": "模型",
       "selectModel": "选择模型",
+      "selectModels": "选择模型",
+      "selectedCount": "已选择 {count} 个",
+      "enterModelId": "输入模型 ID",
+      "enterModelIds": "输入模型 ID（逗号分隔）",
+      "primaryModel": "主模型",
+      "setAsPrimary": "设为主模型",
       "channelConfig": "渠道配置",
       "botToken": "Bot 令牌 *",
+      "getCredentials": "获取凭证",
       "featureSettings": "功能设置",
       "tts": "文字转语音",
       "voice": "语音",
@@ -141,7 +159,10 @@
       "sandboxMode": "沙箱模式",
       "timeout": "超时时间（秒）",
       "emptyState": "未选择提供商或渠道。",
-      "emptyStateHint": "请返回上一步至少启用一个提供商和一个渠道。"
+      "emptyStateHint": "请返回上一步至少启用一个提供商和一个渠道。",
+      "prevSubStep": "上一步",
+      "nextSubStep": "下一步",
+      "subStepProgress": "{current} / {total}"
     },
     "step5": {
       "title": "审核您的 Bot",
@@ -274,6 +295,12 @@
     "addKeySuccess": "API 密钥添加成功",
     "deleteKeySuccess": "API 密钥删除成功",
     "error": "操作失败"
+  },
+  "noApiKeysDialog": {
+    "title": "尚未配置 API 密钥",
+    "description": "创建 Bot 需要至少配置一个 API 密钥。是否先前往配置 API 密钥？",
+    "goToSecrets": "前往配置",
+    "continueAnyway": "稍后配置"
   },
   "diagnostics": {
     "title": "诊断",

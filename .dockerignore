@@ -20,10 +20,11 @@ pnpm-debug.log*
 coverage
 **/.coverage
 
-# 环境变量
+# 环境变量（构建 API 镜像时需 DATABASE_URL 则放行 apps/api/.env）
 .env
 .env.local
 .env.*.local
+!apps/api/.env
 
 # IDE
 .vscode

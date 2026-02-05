@@ -83,11 +83,14 @@ export class UploaderService {
       }
       signatureData = JSON.parse(jsonString);
     } catch (e) {
-      this.logger.error('[Signature Validation] Decryption or parsing failed:', {
-        error: e.message || e,
-        signature: cmd.signature?.substring(0, 50) + '...',
-        userId,
-      });
+      this.logger.error(
+        '[Signature Validation] Decryption or parsing failed:',
+        {
+          error: e.message || e,
+          signature: cmd.signature?.substring(0, 50) + '...',
+          userId,
+        },
+      );
       throw apiError(CommonErrorCode.SignatureError);
     }
     const uploaderUserId = !signatureData?.userId

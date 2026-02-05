@@ -3,11 +3,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import bcryptUtil from '@/utils/bcrypt.util';
 import { apiError } from '@/filter/exception/api.exception';
-import {
-  UserInfoService,
-  EmailAuthService,
-  MobileAuthService,
-} from '@app/db';
+import { UserInfoService, EmailAuthService, MobileAuthService } from '@app/db';
 import stringUtil from '@/utils/string.util';
 import { UserErrorCode } from '@repo/contracts/errors';
 import { EmailRegister, MobileRegister } from '@repo/contracts';

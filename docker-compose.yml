@@ -1,67 +1,178 @@
+# =============================================================================
+# ClawBot Manager - Docker Compose Configuration
+# =============================================================================
+# Services:
+#   - api: NestJS backend (internal: 3200, external: 13100)
+#   - web: Next.js frontend (internal: 3000, external: 13000)
+#   - botenv: Bot environment image (build profile only)
+#
+# Prerequisites:
+#   - PostgreSQL and Redis should be running externally
+#   - Configure DATABASE_URL and REDIS_URL in environment or .env files
+#
+# Zero-Trust Mode:
+#   Bot containers access AI APIs through the proxy endpoint:
+#   - Bot containers must be on the same network (common_network)
+#   - INTERNAL_API_BASE_URL should be set to http://clawbot-api:3200/api
+#   - Bot containers use proxy tokens instead of real API keys
+#   - Proxy endpoint: /proxy/v1/{vendor}/*
+#
+# Build args (在 .env 中配置，不配置则使用默认值):
+#   BASE_NODE_IMAGE: Node 基础镜像
+#   OPENCLAW_BASE_IMAGE: OpenClaw 基础镜像 (botenv)
+#   NPM_REGISTRY: npm 镜像源 (默认 npmmirror.com)
+#
+# Troubleshooting network issues during build:
+#   1. 如果遇到 ECONNRESET 错误，Dockerfile 会自动重试并回退到官方 npm registry
+#   2. 可以手动设置 NPM_REGISTRY=https://registry.npmjs.org 使用官方源
+#   3. Docker Desktop: Settings -> Resources -> Proxies -> 关闭或修正代理
+#   4. 或在构建前执行: unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy
+#
+# Usage:
+#   docker compose build                 # Build images only
+#   docker compose up -d                 # Start all services (builds if needed)
+#   docker compose up -d api web         # Start only api and web
+#   docker compose --profile build up    # Build botenv image
+# =============================================================================
+
 x-common: &common
   platform: ${DOCKER_PLATFORM:-linux/arm64}
+  restart: unless-stopped
+  dns:
+    - 8.8.8.8
+    - 114.114.114.114
+
+x-healthcheck: &healthcheck
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 10s
 
 services:
+  # ---------------------------------------------------------------------------
+  # Bot Environment Image (build only)
+  # ---------------------------------------------------------------------------
   botenv:
     <<: *common
-    profiles: ["build"]
+    profiles: ['build']
     build:
       context: .
       dockerfile: Dockerfile.botenv
       args:
-        BASE_IMAGE: ${OPENCLAW_BASE_IMAGE:-openclaw:latest}
-    image: ${BOTENV_IMAGE:-botmaker-env:latest}
+        # 来自 .env 中的 OPENCLAW_BASE_IMAGE
+        OPENCLAW_BASE_IMAGE: ${OPENCLAW_BASE_IMAGE:-1panel/openclaw:latest}
+      network: host
+    image: ${BOTENV_IMAGE:-clawbot-env:latest}
 
-  botmaker:
+  # ---------------------------------------------------------------------------
+  # API Service - NestJS Backend
+  # ---------------------------------------------------------------------------
+  api:
     <<: *common
-    build: .
-    container_name: botmaker
-    env_file: .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+      args:
+        BASE_NODE_IMAGE: ${BASE_NODE_IMAGE:-node:24.1-slim}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+        # 构建时 prisma generate 需 DATABASE_URL，优先用 apps/api/.env（已放行），或从根 .env 传入
+        DATABASE_URL: ${DATABASE_URL:-}
+      network: host
+    image: clawbot-api:latest
+    container_name: clawbot-api
+    env_file:
+      - path: ./apps/api/.env
+        required: true
+      - path: ./apps/api/.env.production
+        required: false
+      - path: ./.env
+        required: false
     environment:
-      PORT: ${PORT:-7100}
-      DATA_DIR: /app/data
-      SECRETS_DIR: /app/secrets
-      OPENCLAW_IMAGE: ${BOTENV_IMAGE:-botmaker-env:latest}
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3200
+      # Config file name (defaults to config.local.yaml if not set)
+      YAML_CONFIG_FILENAME: ${YAML_CONFIG_FILENAME:-config.local.yaml}
+      # Bot runtime configuration
+      BOT_DATA_DIR: /data/bots
+      BOT_SECRETS_DIR: /data/secrets
+      BOTENV_IMAGE: ${BOTENV_IMAGE:-clawbot-env:latest}
+      # Volume names for runtime path discovery (used when creating bot containers)
+      # Format: <project-name>_<volume-name> (docker compose prefixes with project name)
+      DATA_VOLUME_NAME: ${DATA_VOLUME_NAME:-clawbot-manager_clawbot-data}
+      SECRETS_VOLUME_NAME: ${SECRETS_VOLUME_NAME:-clawbot-manager_clawbot-secrets}
     ports:
-      - "${PORT:-7100}:${PORT:-7100}"
+      - '${API_PORT:-13100}:3200'
     volumes:
+      - api-logs:/app/apps/api/logs
+      # Mount config files from host (these are not baked into the image)
+      - ./apps/api/config.local.yaml:/app/apps/api/config.local.yaml:ro
+      - ./apps/api/keys:/app/apps/api/keys:ro
+      # Docker socket for container management (required for bot lifecycle)
       - /var/run/docker.sock:/var/run/docker.sock
-      - botmaker-data:/app/data
-      - botmaker-secrets:/app/secrets
+      # Bot data and secrets volumes (persistent across container rebuilds)
+      - clawbot-data:/data/bots
+      - clawbot-secrets:/data/secrets
+      # Shared secrets (read-only, for proxy tokens etc.)
       - ./secrets:/secrets:ro
-    depends_on:
-      - keyring-proxy
-    networks: [bm-internal]
-    restart: unless-stopped
+    networks:
+      - common_network
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:${PORT:-7100}/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      <<: *healthcheck
+      test: ['CMD', 'curl', '-f', 'http://localhost:3200/health']
 
-  keyring-proxy:
+  # ---------------------------------------------------------------------------
+  # Web Service - Next.js Frontend
+  # ---------------------------------------------------------------------------
+  web:
     <<: *common
-    build: ./proxy
-    container_name: keyring-proxy
-    env_file: .env
-    volumes:
-      - proxy-data:/data
-      - ./secrets:/secrets:ro
-    networks: [bm-internal]
-    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+      args:
+        # 来自 .env 中的 BASE_NODE_IMAGE
+        BASE_NODE_IMAGE: ${BASE_NODE_IMAGE:-node:24.1-slim}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+      network: host
+    image: clawbot-web:latest
+    container_name: clawbot-web
+    env_file:
+      - ./.env
+      - ./apps/web/.env.local
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://api:3200/api}
+    ports:
+      - '${WEB_PORT:-13000}:3000'
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - common_network
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:${ADMIN_PORT:-9100}/admin/health',{headers:{Authorization:'Bearer '+require('fs').readFileSync('/secrets/admin_token','utf8').trim()}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      <<: *healthcheck
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000']
 
+# =============================================================================
+# Networks
+# =============================================================================
 networks:
-  bm-internal:
-    name: bm-internal
+  common_network:
+    external: true
 
+# =============================================================================
+# Volumes
+# =============================================================================
 volumes:
-  botmaker-data:
-  botmaker-secrets:
-  proxy-data:
+  api-logs:
+    name: clawbot-api-logs
+  # Bot workspace data (persistent across container rebuilds)
+  clawbot-data:
+    name: ${DATA_VOLUME_NAME:-clawbot-manager_clawbot-data}
+  # Bot secrets (API keys, tokens - persistent across container rebuilds)
+  clawbot-secrets:
+    name: ${SECRETS_VOLUME_NAME:-clawbot-manager_clawbot-secrets}

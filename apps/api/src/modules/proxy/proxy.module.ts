@@ -1,9 +1,17 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ProviderKeyModule, BotModule, BotUsageLogModule, MessageDbModule } from '@app/db';
+import {
+  ProviderKeyModule,
+  BotModule,
+  BotUsageLogModule,
+  MessageDbModule,
+  ProxyTokenModule,
+} from '@app/db';
 import { ProxyController } from './proxy.controller';
+import { ProxyAdminController } from './proxy-admin.controller';
 import { ProxyService } from './services/proxy.service';
 import { KeyringService } from './services/keyring.service';
+import { KeyringProxyService } from './services/keyring-proxy.service';
 import { UpstreamService } from './services/upstream.service';
 import { QuotaService } from './services/quota.service';
 import { EncryptionService } from '../bot-api/services/encryption.service';
@@ -18,6 +26,7 @@ import { EncryptionService } from '../bot-api/services/encryption.service';
  * - SSE 流式响应支持
  * - 使用日志记录
  * - Token 配额检查和通知
+ * - Zero-Trust Mode 支持
  */
 @Module({
   imports: [
@@ -26,15 +35,17 @@ import { EncryptionService } from '../bot-api/services/encryption.service';
     BotModule,
     BotUsageLogModule,
     MessageDbModule,
+    ProxyTokenModule,
   ],
-  controllers: [ProxyController],
+  controllers: [ProxyController, ProxyAdminController],
   providers: [
     ProxyService,
     KeyringService,
+    KeyringProxyService,
     UpstreamService,
     QuotaService,
     EncryptionService,
   ],
-  exports: [ProxyService, QuotaService],
+  exports: [ProxyService, KeyringProxyService, QuotaService],
 })
 export class ProxyModule {}

@@ -3,6 +3,7 @@ import { BotStatusSchema } from './prisma-enums.generated';
 // 从新的 provider schema 导入
 import {
   ProviderVendorSchema,
+  ProviderApiTypeSchema,
   getEffectiveApiHost,
   isCustomApiHost,
   PROVIDER_DEFAULT_BASE_URLS,
@@ -11,11 +12,12 @@ import {
 // 重新导出 provider 相关类型和函数
 export {
   ProviderVendorSchema,
+  ProviderApiTypeSchema,
   getEffectiveApiHost,
   isCustomApiHost,
   PROVIDER_DEFAULT_BASE_URLS,
 } from './provider.schema';
-export type { ProviderVendor } from './provider.schema';
+export type { ProviderVendor, ProviderApiType } from './provider.schema';
 
 // BotStatus/BotStatusSchema 来自 prisma-enums.generated，由 index 统一导出
 
@@ -69,7 +71,9 @@ export type Bot = z.infer<typeof BotSchema>;
 
 export const BotProviderConfigSchema = z.object({
   providerId: z.string(),
-  model: z.string(),
+  models: z.array(z.string()).min(1, 'At least one model is required'),
+  primaryModel: z.string().optional(),
+  keyId: z.string().uuid().optional(),
 });
 
 export type BotProviderConfig = z.infer<typeof BotProviderConfigSchema>;
@@ -79,16 +83,16 @@ export const ProviderConfigSchema = BotProviderConfigSchema;
 
 export const ChannelConfigSchema = z.object({
   channelType: z.string(),
-  token: z.string(),
+  credentials: z.record(z.string(), z.string()),
 });
 
 export type ChannelConfig = z.infer<typeof ChannelConfigSchema>;
 
 export const WizardFeaturesSchema = z.object({
-  commands: z.boolean().default(false),
-  tts: z.boolean().default(false),
+  commands: z.boolean().default(true),
+  tts: z.boolean().default(true),
   ttsVoice: z.string().optional(),
-  sandbox: z.boolean().default(false),
+  sandbox: z.boolean().default(true),
   sandboxTimeout: z.number().optional(),
   sessionScope: z.enum(['user', 'channel', 'global']).default('user'),
 });
@@ -108,7 +112,8 @@ export type Persona = z.infer<typeof PersonaSchema>;
 export const CreateBotInputSchema = z.object({
   name: z.string().min(1).max(255),
   hostname: z.string().regex(/^[a-z0-9-]{1,64}$/, {
-    message: 'Hostname must be lowercase alphanumeric with hyphens, max 64 chars',
+    message:
+      'Hostname must be lowercase alphanumeric with hyphens, max 64 chars',
   }),
   providers: z.array(BotProviderConfigSchema).min(1),
   primaryProvider: z.string().optional(),
@@ -170,7 +175,8 @@ export type CleanupReport = z.infer<typeof CleanupReportSchema>;
 export const ProviderKeySchema = z.object({
   id: z.string().uuid(),
   vendor: ProviderVendorSchema,
-  label: z.string().nullable(),
+  apiType: ProviderApiTypeSchema.nullable(),
+  label: z.string(),
   tag: z.string().nullable(),
   baseUrl: z.string().nullable(),
   createdAt: z.coerce.date(),
@@ -184,8 +190,9 @@ export type ProviderKey = z.infer<typeof ProviderKeySchema>;
  */
 export const AddProviderKeyInputSchema = z.object({
   vendor: ProviderVendorSchema,
+  apiType: ProviderApiTypeSchema.optional(),
   secret: z.string().min(1, 'API key is required'),
-  label: z.string().max(255).optional(),
+  label: z.string().min(1, 'Key name is required').max(255),
   tag: z.string().max(100).optional(),
   baseUrl: z
     .string()
@@ -215,3 +222,51 @@ export const ProviderKeyHealthSchema = z.object({
 });
 
 export type ProviderKeyHealth = z.infer<typeof ProviderKeyHealthSchema>;
+
+// ============================================================================
+// Provider Key Verify Schemas
+// ============================================================================
+
+/**
+ * Schema for verifying a provider key.
+ * Used to test if an API key is valid and get available models.
+ */
+export const VerifyProviderKeyInputSchema = z.object({
+  vendor: ProviderVendorSchema,
+  secret: z.string().min(1, 'API key is required'),
+  baseUrl: z
+    .string()
+    .url({ message: 'Must be a valid URL' })
+    .optional()
+    .transform((val) => (val?.trim() === '' ? undefined : val)),
+});
+
+export type VerifyProviderKeyInput = z.infer<
+  typeof VerifyProviderKeyInputSchema
+>;
+
+/**
+ * Model info returned from provider API
+ */
+export const ProviderModelSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  created: z.number().optional(),
+  owned_by: z.string().optional(),
+});
+
+export type ProviderModel = z.infer<typeof ProviderModelSchema>;
+
+/**
+ * Response from verify endpoint
+ */
+export const VerifyProviderKeyResponseSchema = z.object({
+  valid: z.boolean(),
+  latency: z.number().optional(),
+  models: z.array(ProviderModelSchema).optional(),
+  error: z.string().optional(),
+});
+
+export type VerifyProviderKeyResponse = z.infer<
+  typeof VerifyProviderKeyResponseSchema
+>;

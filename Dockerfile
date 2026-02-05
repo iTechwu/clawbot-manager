@@ -1,51 +1,229 @@
-# Build stage
-FROM uhub.service.ucloud.cn/pardx/node:24.1-slim AS builder
+# =============================================================================
+# ClawBot Manager - Multi-stage Dockerfile for pnpm Monorepo
+# =============================================================================
+# Build targets:
+#   - api: NestJS backend service
+#   - web: Next.js frontend service
+#
+# Build args (由 .env 通过 docker-compose 传入):
+#   BASE_NODE_IMAGE: Node.js 基础镜像
+#   NPM_REGISTRY: npm 镜像源 (默认使用 npmmirror.com)
+#
+# Usage:
+#   docker build --target api -t clawbot-api .
+#   docker build --target web -t clawbot-web .
+# =============================================================================
+
+ARG BASE_NODE_IMAGE=node:24.1-slim
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+
+# -----------------------------------------------------------------------------
+# Base stage: Common dependencies and pnpm setup
+# -----------------------------------------------------------------------------
+FROM ${BASE_NODE_IMAGE} AS base
+
+ARG NPM_REGISTRY
+
+# Install pnpm globally
+RUN corepack enable && corepack prepare pnpm@10.28.2 --activate
+
+# Configure npm/pnpm registry with retry and timeout settings for reliability
+RUN npm config set registry ${NPM_REGISTRY} \
+    && pnpm config set registry ${NPM_REGISTRY} \
+    && pnpm config set fetch-retries 5 \
+    && pnpm config set fetch-retry-mintimeout 20000 \
+    && pnpm config set fetch-retry-maxtimeout 120000 \
+    && pnpm config set fetch-timeout 300000 \
+    && pnpm config set network-concurrency 4
+
+# Install build dependencies for native modules and git (required by Next.js build)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install build dependencies for native modules (better-sqlite3)
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+# -----------------------------------------------------------------------------
+# Dependencies stage: Install all dependencies
+# -----------------------------------------------------------------------------
+FROM base AS deps
 
-# Copy package files
-COPY package*.json ./
-COPY dashboard/package*.json ./dashboard/
+# Copy package files for dependency installation
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY turbo.json ./
 
-# Install dependencies
-RUN npm ci
-RUN cd dashboard && npm ci
+# Copy all package.json files from workspaces
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY packages/config/package.json ./packages/config/
+COPY packages/constants/package.json ./packages/constants/
+COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/types/package.json ./packages/types/
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/utils/package.json ./packages/utils/
+COPY packages/validators/package.json ./packages/validators/
 
-# Copy source
+# Install all dependencies with retry logic
+# If npmmirror fails, fallback to official registry
+RUN pnpm install --ignore-scripts || \
+    (echo "Retrying with official npm registry..." && \
+     pnpm config set registry https://registry.npmjs.org && \
+     pnpm install --ignore-scripts)
+
+# -----------------------------------------------------------------------------
+# Builder stage: Build all packages and apps
+# -----------------------------------------------------------------------------
+FROM deps AS builder
+
+# Copy source code (including pre-generated Prisma client in apps/api/generated/)
 COPY . .
 
-# Build
-RUN npm run build
-RUN cd dashboard && npm run build
+# Build shared packages that produce dist output
+# Note: @repo/config, @repo/types, @repo/ui don't have build scripts (they export source files directly)
+RUN pnpm turbo run build --filter=@repo/validators --filter=@repo/constants --filter=@repo/utils --filter=@repo/contracts
 
-# Production stage
-FROM uhub.service.ucloud.cn/pardx/node:24.1-slim
+# Build API (uses pre-generated Prisma client)
+RUN cd apps/api && pnpm run build
+
+# Build web app
+RUN pnpm turbo run build --filter=@repo/web
+
+# -----------------------------------------------------------------------------
+# Production runtime base: Common runtime setup for production stages
+# -----------------------------------------------------------------------------
+FROM ${BASE_NODE_IMAGE} AS prod-runtime
+
+ARG NPM_REGISTRY
+
+RUN corepack enable && corepack prepare pnpm@10.28.2 --activate
+
+# Configure npm/pnpm registry with retry and timeout settings
+RUN npm config set registry ${NPM_REGISTRY} \
+    && pnpm config set registry ${NPM_REGISTRY} \
+    && pnpm config set fetch-retries 5 \
+    && pnpm config set fetch-retry-mintimeout 20000 \
+    && pnpm config set fetch-retry-maxtimeout 120000 \
+    && pnpm config set fetch-timeout 300000 \
+    && pnpm config set network-concurrency 4
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install build dependencies for native modules (better-sqlite3) and debugging tools
-RUN apt-get update && apt-get install -y python3 make g++ curl && rm -rf /var/lib/apt/lists/*
+# -----------------------------------------------------------------------------
+# Production dependencies stage: Install prod deps once, reuse for api/web
+# -----------------------------------------------------------------------------
+FROM prod-runtime AS prod-deps
 
-# Install only production dependencies
-COPY package*.json ./
-RUN npm ci --only=production
+# Copy package files for dependency installation
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY turbo.json ./
 
-# Copy built files
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/dashboard/dist ./dashboard/dist
+# Copy all package.json files from workspaces
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY packages/config/package.json ./packages/config/
+COPY packages/constants/package.json ./packages/constants/
+COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/types/package.json ./packages/types/
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/utils/package.json ./packages/utils/
+COPY packages/validators/package.json ./packages/validators/
 
-# Create data directories
-RUN mkdir -p /app/data /app/secrets
+# Install production dependencies with retry logic
+# Use shamefully-hoist to ensure all deps are in root node_modules for easier copying
+RUN pnpm install --ignore-scripts --prod --shamefully-hoist || \
+    (echo "Retrying with official npm registry..." && \
+     pnpm config set registry https://registry.npmjs.org && \
+     pnpm install --ignore-scripts --prod --shamefully-hoist)
+
+# -----------------------------------------------------------------------------
+# API Production stage: NestJS backend
+# -----------------------------------------------------------------------------
+FROM prod-runtime AS api
+
+# Copy production dependencies from prod-deps stage
+# Only copy root node_modules since we use shamefully-hoist
+COPY --from=prod-deps /app/node_modules ./node_modules
+
+# Copy package.json files for pnpm workspace resolution
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY turbo.json ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/config/package.json ./packages/config/
+COPY packages/constants/package.json ./packages/constants/
+COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/types/package.json ./packages/types/
+COPY packages/utils/package.json ./packages/utils/
+COPY packages/validators/package.json ./packages/validators/
+
+# Copy built files from builder (including generated Prisma client)
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/apps/api/generated ./apps/api/generated
+COPY --from=builder /app/apps/api/tsconfig.json ./apps/api/
+# Copy i18n translation files (required at runtime)
+COPY --from=builder /app/apps/api/libs/infra/i18n ./apps/api/libs/infra/i18n
+# Note: config.local.yaml and keys/config.json are mounted at runtime via docker-compose volumes
+# Copy only packages that produce dist output (constants, contracts, utils, validators)
+# Note: @repo/config and @repo/types don't produce dist (they export source files directly, types are erased at runtime)
+COPY --from=builder /app/packages/constants/dist ./packages/constants/dist
+COPY --from=builder /app/packages/contracts/dist ./packages/contracts/dist
+COPY --from=builder /app/packages/utils/dist ./packages/utils/dist
+COPY --from=builder /app/packages/validators/dist ./packages/validators/dist
 
 # Environment
 ENV NODE_ENV=production
-ENV PORT=7100
-ENV DATA_DIR=/app/data
-ENV SECRETS_DIR=/app/secrets
+ENV PORT=3200
 
-EXPOSE 7100
+EXPOSE 3200
 
-CMD ["node", "dist/index.js"]
+WORKDIR /app/apps/api
+
+CMD ["node", "-r", "tsconfig-paths/register", "dist/apps/api/src/main"]
+
+# -----------------------------------------------------------------------------
+# Web Production stage: Next.js frontend
+# -----------------------------------------------------------------------------
+FROM prod-runtime AS web
+
+# Copy production dependencies from prod-deps stage
+# Only copy root node_modules since we use shamefully-hoist
+COPY --from=prod-deps /app/node_modules ./node_modules
+
+# Copy package.json files for pnpm workspace resolution
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY turbo.json ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/config/package.json ./packages/config/
+COPY packages/constants/package.json ./packages/constants/
+COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/types/package.json ./packages/types/
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/utils/package.json ./packages/utils/
+COPY packages/validators/package.json ./packages/validators/
+
+# Copy built files from builder
+COPY --from=builder /app/apps/web/.next ./apps/web/.next
+COPY --from=builder /app/apps/web/public ./apps/web/public
+# Copy only packages that produce dist output (constants, contracts, utils, validators)
+# Note: @repo/config, @repo/types, @repo/ui don't produce dist (they export source files directly)
+# UI components are bundled into .next during build, types are erased at runtime
+COPY --from=builder /app/packages/constants/dist ./packages/constants/dist
+COPY --from=builder /app/packages/contracts/dist ./packages/contracts/dist
+COPY --from=builder /app/packages/utils/dist ./packages/utils/dist
+COPY --from=builder /app/packages/validators/dist ./packages/validators/dist
+
+# Environment
+ENV NODE_ENV=production
+ENV PORT=3000
+
+EXPOSE 3000
+
+WORKDIR /app/apps/web
+
+CMD ["pnpm", "start"]

@@ -109,7 +109,7 @@ clawbotmanager/
 │
 ├── scripts/                    # 初始化和运维脚本
 │   ├── init-env-secrets.sh     # 生成 BOT_MASTER_KEY, admin tokens
-│   └── start-botmaker.sh       # Docker 部署
+│   └── start-clawbot.sh         # Docker 部署
 │
 └── docker-compose.yml          # Docker 部署配置
 ```
@@ -297,7 +297,7 @@ pnpm test
 
 # 脚本
 ./scripts/init-env-secrets.sh    # 生成 secrets (首次设置)
-./scripts/start-botmaker.sh      # Docker 部署
+./scripts/start-clawbot.sh       # Docker 部署
 ```
 
 ## 数据流示例
@@ -437,10 +437,10 @@ const { data } = tsRestClient.bot.list.useQuery({
 ### docker-compose.yml 服务
 
 1. **botenv** (profile: build): Bot 环境镜像构建器
-2. **botmaker**: 主应用容器
+2. **clawbot-manager**: 主应用容器
    - 暴露端口 7100
    - 挂载 Docker socket 用于容器管理
-   - Volumes: botmaker-data, botmaker-secrets
+   - Volumes: clawbot-data, clawbot-secrets
 
 ### 快速启动
 

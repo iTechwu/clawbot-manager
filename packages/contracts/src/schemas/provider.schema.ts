@@ -119,6 +119,44 @@ export const ProviderCategorySchema = z.enum([
 export type ProviderCategory = z.infer<typeof ProviderCategorySchema>;
 
 // ============================================================================
+// Model Type Schema - 模型类型 (Dify-style)
+// ============================================================================
+
+export const ModelTypeSchema = z.enum([
+  'llm', // 大语言模型
+  'text-embedding', // 文本嵌入
+  'speech2text', // 语音转文字
+  'tts', // 文字转语音
+  'moderation', // 内容审核
+  'rerank', // 重排序
+  'image', // 图像生成
+]);
+
+export type ModelType = z.infer<typeof ModelTypeSchema>;
+
+// ============================================================================
+// Credential Form Schema - 凭证表单配置 (Dify-style)
+// ============================================================================
+
+export const CredentialFieldTypeSchema = z.enum([
+  'secret-input', // 密码输入框
+  'text-input', // 文本输入框
+  'select', // 下拉选择
+]);
+
+export type CredentialFieldType = z.infer<typeof CredentialFieldTypeSchema>;
+
+export interface CredentialFieldSchema {
+  variable: string;
+  label: string;
+  type: CredentialFieldType;
+  required: boolean;
+  placeholder?: string;
+  default?: string;
+  options?: Array<{ value: string; label: string }>;
+}
+
+// ============================================================================
 // Provider Configuration - 提供商配置信息
 // ============================================================================
 
@@ -128,6 +166,8 @@ export interface ProviderConfig {
   apiType: ProviderApiType;
   category: ProviderCategory;
   apiHost: string;
+  /** 提供商 Logo 路径 (相对于 /images/providers/) */
+  logo?: string;
   websites?: {
     official?: string;
     apiKey?: string;
@@ -138,6 +178,12 @@ export interface ProviderConfig {
   requiresExtraConfig?: boolean;
   /** 是否为本地服务 */
   isLocal?: boolean;
+  /** 支持的模型类型 (Dify-style) */
+  supportedModelTypes?: ModelType[];
+  /** 凭证表单配置 (Dify-style) */
+  credentialFormSchemas?: CredentialFieldSchema[];
+  /** 提供商描述 */
+  description?: string;
 }
 
 /**
@@ -154,6 +200,25 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'openai-response',
     category: 'international',
     apiHost: 'https://api.openai.com/v1',
+    logo: 'openai.svg',
+    description: 'OpenAI 提供 GPT-4、GPT-3.5 等先进的大语言模型',
+    supportedModelTypes: ['llm', 'text-embedding', 'speech2text', 'tts', 'image', 'moderation'],
+    credentialFormSchemas: [
+      {
+        variable: 'api_key',
+        label: 'API Key',
+        type: 'secret-input',
+        required: true,
+        placeholder: 'sk-...',
+      },
+      {
+        variable: 'organization',
+        label: 'Organization ID',
+        type: 'text-input',
+        required: false,
+        placeholder: 'org-...',
+      },
+    ],
     websites: {
       official: 'https://openai.com/',
       apiKey: 'https://platform.openai.com/api-keys',
@@ -167,6 +232,18 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'anthropic',
     category: 'international',
     apiHost: 'https://api.anthropic.com',
+    logo: 'anthropic.svg',
+    description: 'Anthropic 提供 Claude 系列模型，以安全性和有用性著称',
+    supportedModelTypes: ['llm'],
+    credentialFormSchemas: [
+      {
+        variable: 'api_key',
+        label: 'API Key',
+        type: 'secret-input',
+        required: true,
+        placeholder: 'sk-ant-...',
+      },
+    ],
     websites: {
       official: 'https://anthropic.com/',
       apiKey: 'https://console.anthropic.com/settings/keys',
@@ -180,6 +257,18 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'gemini',
     category: 'international',
     apiHost: 'https://generativelanguage.googleapis.com/v1beta',
+    logo: 'google.svg',
+    description: 'Google Gemini 是 Google 最新的多模态 AI 模型',
+    supportedModelTypes: ['llm', 'text-embedding', 'image'],
+    credentialFormSchemas: [
+      {
+        variable: 'api_key',
+        label: 'API Key',
+        type: 'secret-input',
+        required: true,
+        placeholder: 'AIza...',
+      },
+    ],
     websites: {
       official: 'https://gemini.google.com/',
       apiKey: 'https://aistudio.google.com/app/apikey',
@@ -193,6 +282,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'azure-openai',
     category: 'international',
     apiHost: '',
+    logo: 'azure.svg',
     requiresExtraConfig: true,
     websites: {
       official:
@@ -210,6 +300,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'aws-bedrock',
     category: 'international',
     apiHost: '',
+    logo: 'aws.svg',
     requiresExtraConfig: true,
     websites: {
       official: 'https://aws.amazon.com/bedrock/',
@@ -226,6 +317,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'vertexai',
     category: 'international',
     apiHost: '',
+    logo: 'google-cloud.svg',
     requiresExtraConfig: true,
     websites: {
       official: 'https://cloud.google.com/vertex-ai',
@@ -241,6 +333,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'openai',
     category: 'international',
     apiHost: 'https://api.mistral.ai/v1',
+    logo: 'mistral.svg',
     websites: {
       official: 'https://mistral.ai',
       apiKey: 'https://console.mistral.ai/api-keys/',
@@ -255,6 +348,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'openai',
     category: 'international',
     apiHost: 'https://api.groq.com/openai/v1',
+    logo: 'groq.svg',
     websites: {
       official: 'https://groq.com/',
       apiKey: 'https://console.groq.com/keys',
@@ -437,6 +531,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'openai',
     category: 'domestic',
     apiHost: 'https://api.deepseek.com/v1',
+    logo: 'deepseek.svg',
     websites: {
       official: 'https://deepseek.com/',
       apiKey: 'https://platform.deepseek.com/api_keys',
@@ -450,6 +545,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'openai',
     category: 'domestic',
     apiHost: 'https://open.bigmodel.cn/api/paas/v4',
+    logo: 'zhipu.svg',
     websites: {
       official: 'https://open.bigmodel.cn/',
       apiKey: 'https://open.bigmodel.cn/usercenter/apikeys',
@@ -463,6 +559,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'openai',
     category: 'domestic',
     apiHost: 'https://api.moonshot.cn/v1',
+    logo: 'moonshot.svg',
     websites: {
       official: 'https://www.moonshot.cn/',
       apiKey: 'https://platform.moonshot.cn/console/api-keys',
@@ -476,6 +573,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'openai',
     category: 'domestic',
     apiHost: 'https://api.baichuan-ai.com/v1',
+    logo: 'baichuan.svg',
     websites: {
       official: 'https://www.baichuan-ai.com/',
       apiKey: 'https://platform.baichuan-ai.com/console/apikey',
@@ -489,6 +587,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'openai',
     category: 'domestic',
     apiHost: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    logo: 'aliyun.svg',
     websites: {
       official: 'https://www.aliyun.com/product/bailian',
       apiKey: 'https://bailian.console.aliyun.com/?tab=model#/api-key',
@@ -515,6 +614,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'openai',
     category: 'domestic',
     apiHost: 'https://ark.cn-beijing.volces.com/api/v3',
+    logo: 'doubao.svg',
     websites: {
       official: 'https://console.volcengine.com/ark/',
       apiKey: 'https://www.volcengine.com/experience/ark',
@@ -555,6 +655,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'openai',
     category: 'domestic',
     apiHost: 'https://api.hunyuan.cloud.tencent.com/v1',
+    logo: 'tencent.svg',
     websites: {
       official: 'https://cloud.tencent.com/product/hunyuan',
       apiKey: 'https://console.cloud.tencent.com/hunyuan/api-key',
@@ -650,6 +751,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'openai',
     category: 'aggregator',
     apiHost: 'https://openrouter.ai/api/v1',
+    logo: 'openrouter.svg',
     websites: {
       official: 'https://openrouter.ai/',
       apiKey: 'https://openrouter.ai/settings/keys',
@@ -663,6 +765,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'openai',
     category: 'aggregator',
     apiHost: 'https://api.siliconflow.cn/v1',
+    logo: 'siliconflow.svg',
     websites: {
       official: 'https://www.siliconflow.cn',
       apiKey: 'https://cloud.siliconflow.cn/i/d1nTBKXU',
@@ -912,6 +1015,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiType: 'ollama',
     category: 'local',
     apiHost: 'http://localhost:11434/v1',
+    logo: 'ollama.svg',
     isLocal: true,
     websites: {
       official: 'https://ollama.com/',

@@ -7,12 +7,18 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
-import type { CreateBotInput, SessionScope } from '@repo/contracts';
+import type { CreateBotInput } from '@repo/contracts';
 import { SCRATCH_TEMPLATE } from '@/lib/config';
 import { getDefaultModel } from '@/lib/config';
 
+type SessionScope = 'user' | 'channel' | 'global';
+
+// Step 4 sub-steps
+export type Step4SubStep = 'llm' | 'channels' | 'features';
+
 export interface WizardState {
   step: number;
+  step4SubStep: Step4SubStep;
   selectedTemplateId: string | null;
   botName: string;
   hostname: string;
@@ -32,8 +38,11 @@ export interface WizardState {
     sandboxTimeout: number;
     sessionScope: SessionScope;
   };
-  providerConfigs: Record<string, { model: string }>;
-  channelConfigs: Record<string, { token: string }>;
+  providerConfigs: Record<
+    string,
+    { models: string[]; primaryModel?: string; keyId?: string }
+  >;
+  channelConfigs: Record<string, Record<string, string>>;
 }
 
 export interface ValidationResult {
@@ -43,7 +52,12 @@ export interface ValidationResult {
 
 type WizardAction =
   | { type: 'SET_STEP'; step: number }
-  | { type: 'SELECT_TEMPLATE'; templateId: string; template?: { emoji?: string; avatarUrl?: string; soulMarkdown: string } }
+  | { type: 'SET_STEP4_SUBSTEP'; subStep: Step4SubStep }
+  | {
+      type: 'SELECT_TEMPLATE';
+      templateId: string;
+      template?: { emoji?: string; avatarUrl?: string; soulMarkdown: string };
+    }
   | { type: 'SET_BOT_NAME'; name: string }
   | { type: 'SET_HOSTNAME'; hostname: string }
   | { type: 'SET_EMOJI'; emoji: string }
@@ -58,12 +72,27 @@ type WizardAction =
       feature: keyof WizardState['features'];
       value: unknown;
     }
-  | { type: 'SET_PROVIDER_CONFIG'; providerId: string; config: { model: string } }
-  | { type: 'SET_CHANNEL_CONFIG'; channelId: string; config: { token: string } }
+  | {
+      type: 'SET_PROVIDER_CONFIG';
+      providerId: string;
+      config: { models?: string[]; primaryModel?: string; keyId?: string };
+    }
+  | {
+      type: 'SET_CHANNEL_CONFIG';
+      channelId: string;
+      config: Record<string, string>;
+    }
+  | {
+      type: 'SET_CHANNEL_CREDENTIAL';
+      channelId: string;
+      key: string;
+      value: string;
+    }
   | { type: 'RESET' };
 
 const initialState: WizardState = {
   step: 1,
+  step4SubStep: 'llm',
   selectedTemplateId: null,
   botName: '',
   hostname: '',
@@ -73,18 +102,20 @@ const initialState: WizardState = {
   avatarPreviewUrl: '',
   soulMarkdown: '',
   enabledProviders: [],
-  enabledChannels: [],
+  enabledChannels: ['feishu'],
   routingTags: [],
   features: {
     commands: true,
-    tts: false,
+    tts: true,
     ttsVoice: 'alloy',
-    sandbox: false,
+    sandbox: true,
     sandboxTimeout: 30,
     sessionScope: 'user',
   },
   providerConfigs: {},
-  channelConfigs: {},
+  channelConfigs: {
+    feishu: {},
+  },
 };
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
@@ -92,18 +123,20 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
     case 'SET_STEP':
       return { ...state, step: action.step };
 
+    case 'SET_STEP4_SUBSTEP':
+      return { ...state, step4SubStep: action.subStep };
+
     case 'SELECT_TEMPLATE': {
       // Use provided template data or fallback to SCRATCH_TEMPLATE for 'scratch'
       const template =
-        action.templateId === 'scratch'
-          ? SCRATCH_TEMPLATE
-          : action.template;
+        action.templateId === 'scratch' ? SCRATCH_TEMPLATE : action.template;
       if (!template) return state;
       return {
         ...state,
         selectedTemplateId: action.templateId,
         emoji: template.emoji || '',
-        avatarPreviewUrl: template.avatarUrl || '',
+        avatarPreviewUrl:
+          'avatarUrl' in template ? (template.avatarUrl ?? '') : '',
         avatarFileId: '',
         soulMarkdown: template.soulMarkdown,
       };
@@ -150,17 +183,21 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         return {
           ...state,
           enabledProviders: state.enabledProviders.filter(
-            (p) => p !== providerId
+            (p) => p !== providerId,
           ),
           providerConfigs: remainingConfigs,
         };
       } else {
+        const defaultModel = getDefaultModel(providerId);
         return {
           ...state,
           enabledProviders: [...state.enabledProviders, providerId],
           providerConfigs: {
             ...state.providerConfigs,
-            [providerId]: { model: getDefaultModel(providerId) },
+            [providerId]: {
+              models: defaultModel ? [defaultModel] : [],
+              primaryModel: defaultModel || undefined,
+            },
           },
         };
       }
@@ -182,7 +219,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
           enabledChannels: [...state.enabledChannels, channelId],
           channelConfigs: {
             ...state.channelConfigs,
-            [channelId]: { token: '' },
+            [channelId]: {},
           },
         };
       }
@@ -200,17 +237,21 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         },
       };
 
-    case 'SET_PROVIDER_CONFIG':
+    case 'SET_PROVIDER_CONFIG': {
+      const existingConfig = state.providerConfigs[action.providerId] || {
+        models: [],
+      };
       return {
         ...state,
         providerConfigs: {
           ...state.providerConfigs,
           [action.providerId]: {
-            ...state.providerConfigs[action.providerId],
+            ...existingConfig,
             ...action.config,
           },
         },
       };
+    }
 
     case 'SET_CHANNEL_CONFIG':
       return {
@@ -220,6 +261,20 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
           [action.channelId]: action.config,
         },
       };
+
+    case 'SET_CHANNEL_CREDENTIAL': {
+      const existingConfig = state.channelConfigs[action.channelId] || {};
+      return {
+        ...state,
+        channelConfigs: {
+          ...state.channelConfigs,
+          [action.channelId]: {
+            ...existingConfig,
+            [action.key]: action.value,
+          },
+        },
+      };
+    }
 
     case 'RESET':
       return initialState;
@@ -231,7 +286,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 
 export function validateStep(
   step: number,
-  state: WizardState
+  state: WizardState,
 ): ValidationResult {
   switch (step) {
     case 1:
@@ -249,11 +304,15 @@ export function validateStep(
       if (!/^[a-z0-9-]+$/.test(state.hostname)) {
         return {
           valid: false,
-          error: 'Hostname must be lowercase letters, numbers, and hyphens only',
+          error:
+            'Hostname must be lowercase letters, numbers, and hyphens only',
         };
       }
       if (state.hostname.length < 2) {
-        return { valid: false, error: 'Hostname must be at least 2 characters' };
+        return {
+          valid: false,
+          error: 'Hostname must be at least 2 characters',
+        };
       }
       if (state.hostname.length > 64) {
         return {
@@ -274,13 +333,8 @@ export function validateStep(
       return { valid: true };
 
     case 4:
-      // Config details
-      for (const channelId of state.enabledChannels) {
-        const config = state.channelConfigs[channelId];
-        if (!config?.token?.trim()) {
-          return { valid: false, error: `Token required for ${channelId}` };
-        }
-      }
+      // Config details - validation is now optional since credentials vary by channel
+      // The actual validation will be done on the backend
       return { valid: true };
 
     case 5:
@@ -292,15 +346,85 @@ export function validateStep(
   }
 }
 
+/**
+ * Get available sub-steps for step 4 based on current state
+ */
+export function getAvailableSubSteps(state: WizardState): Step4SubStep[] {
+  const subSteps: Step4SubStep[] = [];
+
+  if (state.enabledProviders.length > 0) {
+    subSteps.push('llm');
+  }
+  if (state.enabledChannels.length > 0) {
+    subSteps.push('channels');
+  }
+  if (state.features.tts || state.features.sandbox) {
+    subSteps.push('features');
+  }
+
+  return subSteps;
+}
+
+/**
+ * Get the next sub-step in step 4
+ */
+export function getNextSubStep(state: WizardState): Step4SubStep | null {
+  const available = getAvailableSubSteps(state);
+  const currentIndex = available.indexOf(state.step4SubStep);
+
+  if (currentIndex === -1 || currentIndex >= available.length - 1) {
+    return null;
+  }
+
+  return available[currentIndex + 1] ?? null;
+}
+
+/**
+ * Get the previous sub-step in step 4
+ */
+export function getPrevSubStep(state: WizardState): Step4SubStep | null {
+  const available = getAvailableSubSteps(state);
+  const currentIndex = available.indexOf(state.step4SubStep);
+
+  if (currentIndex <= 0) {
+    return null;
+  }
+
+  return available[currentIndex - 1] ?? null;
+}
+
+/**
+ * Check if current sub-step is the last one
+ */
+export function isLastSubStep(state: WizardState): boolean {
+  const available = getAvailableSubSteps(state);
+  const currentIndex = available.indexOf(state.step4SubStep);
+  return currentIndex === available.length - 1;
+}
+
+/**
+ * Check if current sub-step is the first one
+ */
+export function isFirstSubStep(state: WizardState): boolean {
+  const available = getAvailableSubSteps(state);
+  const currentIndex = available.indexOf(state.step4SubStep);
+  return currentIndex === 0;
+}
+
 export function buildCreateBotInput(state: WizardState): CreateBotInput {
-  const providers = state.enabledProviders.map((providerId) => ({
-    providerId,
-    model: state.providerConfigs[providerId]?.model || '',
-  }));
+  const providers = state.enabledProviders.map((providerId) => {
+    const config = state.providerConfigs[providerId];
+    return {
+      providerId,
+      models: config?.models || [],
+      primaryModel: config?.primaryModel,
+      keyId: config?.keyId,
+    };
+  });
 
   const channels = state.enabledChannels.map((channelType) => ({
     channelType,
-    token: state.channelConfigs[channelType]?.token || '',
+    credentials: state.channelConfigs[channelType] || {},
   }));
 
   return {
@@ -308,9 +432,10 @@ export function buildCreateBotInput(state: WizardState): CreateBotInput {
     hostname: state.hostname,
     providers,
     channels,
-    personaTemplateId: state.selectedTemplateId && state.selectedTemplateId !== 'scratch'
-      ? state.selectedTemplateId
-      : undefined,
+    personaTemplateId:
+      state.selectedTemplateId && state.selectedTemplateId !== 'scratch'
+        ? state.selectedTemplateId
+        : undefined,
     persona: {
       name: state.botName,
       soulMarkdown: state.soulMarkdown,
@@ -347,7 +472,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
 
   const validate = useCallback(
     (step: number) => validateStep(step, state),
-    [state]
+    [state],
   );
 
   const buildInput = useCallback(() => buildCreateBotInput(state), [state]);

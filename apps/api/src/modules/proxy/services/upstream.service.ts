@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import * as https from 'https';
+import * as http from 'http';
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { VendorConfig } from '../config/vendor.config';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
@@ -15,6 +16,8 @@ export interface UpstreamRequest {
   headers: Record<string, string>;
   body: Buffer | null;
   apiKey: string;
+  /** 自定义 URL（如果提供，将覆盖 vendorConfig 的 host 和 basePath） */
+  customUrl?: string;
 }
 
 /**
@@ -27,18 +30,56 @@ export interface UpstreamResult {
 }
 
 /**
+ * 解析 URL 获取请求参数
+ */
+interface ParsedUrl {
+  protocol: 'http' | 'https';
+  hostname: string;
+  port: number;
+  basePath: string;
+}
+
+/**
  * UpstreamService - 上游转发服务
  *
  * 负责将请求转发到 AI 提供商的 API：
  * - 处理 HTTP/HTTPS 请求
  * - 支持 SSE 流式响应
  * - 处理认证头替换
+ * - 支持自定义 endpoint URL
  */
 @Injectable()
 export class UpstreamService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
   ) {}
+
+  /**
+   * 解析 URL 获取协议、主机名、端口和路径
+   */
+  private parseUrl(url: string): ParsedUrl {
+    try {
+      const parsed = new URL(url);
+      return {
+        protocol: parsed.protocol === 'http:' ? 'http' : 'https',
+        hostname: parsed.hostname,
+        port: parsed.port
+          ? parseInt(parsed.port, 10)
+          : parsed.protocol === 'http:'
+            ? 80
+            : 443,
+        basePath: parsed.pathname === '/' ? '' : parsed.pathname,
+      };
+    } catch {
+      // 默认 HTTPS
+      return {
+        protocol: 'https',
+        hostname: url,
+        port: 443,
+        basePath: '',
+      };
+    }
+  }
 
   /**
    * 转发请求到上游服务（流式响应）
@@ -52,10 +93,30 @@ export class UpstreamService {
     rawResponse: ServerResponse,
   ): Promise<number> {
     return new Promise((resolve, reject) => {
-      const { vendorConfig, path, method, headers, body, apiKey } = req;
+      const { vendorConfig, path, method, headers, body, apiKey, customUrl } =
+        req;
+
+      // 解析目标 URL
+      let targetHost: string;
+      let targetPort: number;
+      let targetBasePath: string;
+      let useHttps: boolean;
+
+      if (customUrl) {
+        const parsed = this.parseUrl(customUrl);
+        targetHost = parsed.hostname;
+        targetPort = parsed.port;
+        targetBasePath = parsed.basePath;
+        useHttps = parsed.protocol === 'https';
+      } else {
+        targetHost = vendorConfig.host;
+        targetPort = 443;
+        targetBasePath = vendorConfig.basePath;
+        useHttps = true;
+      }
 
       // 构建上游路径
-      const upstreamPath = vendorConfig.basePath + path;
+      const upstreamPath = targetBasePath + path;
 
       // 克隆并修改请求头
       const upstreamHeaders: Record<string, string> = { ...headers };
@@ -67,7 +128,7 @@ export class UpstreamService {
       delete upstreamHeaders['content-length'];
 
       // 设置正确的 host
-      upstreamHeaders['host'] = vendorConfig.host;
+      upstreamHeaders['host'] = targetHost;
 
       // 设置认证头（使用真实 API key）
       upstreamHeaders[vendorConfig.authHeader.toLowerCase()] =
@@ -79,60 +140,68 @@ export class UpstreamService {
       }
 
       const options = {
-        hostname: vendorConfig.host,
-        port: 443,
+        hostname: targetHost,
+        port: targetPort,
         path: upstreamPath,
         method,
         headers: upstreamHeaders,
       };
 
-      this.logger.debug(`Forwarding to upstream: ${method} ${vendorConfig.host}${upstreamPath}`);
+      this.logger.debug(
+        `Forwarding to upstream: ${method} ${useHttps ? 'https' : 'http'}://${targetHost}:${targetPort}${upstreamPath}`,
+      );
 
-      const proxyReq = https.request(options, (proxyRes: IncomingMessage) => {
-        const statusCode = proxyRes.statusCode ?? 500;
+      const httpModule = useHttps ? https : http;
+      const proxyReq = httpModule.request(
+        options,
+        (proxyRes: IncomingMessage) => {
+          const statusCode = proxyRes.statusCode ?? 500;
 
-        // 构建转发的响应头（排除 hop-by-hop 头）
-        const forwardHeaders: Record<string, string | string[]> = {};
-        for (const [key, value] of Object.entries(proxyRes.headers)) {
-          const lowerKey = key.toLowerCase();
-          if (
-            value &&
-            !['connection', 'transfer-encoding', 'content-length'].includes(lowerKey)
-          ) {
-            forwardHeaders[key] = value;
+          // 构建转发的响应头（排除 hop-by-hop 头）
+          const forwardHeaders: Record<string, string | string[]> = {};
+          for (const [key, value] of Object.entries(proxyRes.headers)) {
+            const lowerKey = key.toLowerCase();
+            if (
+              value &&
+              !['connection', 'transfer-encoding', 'content-length'].includes(
+                lowerKey,
+              )
+            ) {
+              forwardHeaders[key] = value;
+            }
           }
-        }
 
-        // 对于 SSE 响应，确保正确的流式头
-        const contentType = proxyRes.headers['content-type'];
-        if (contentType?.includes('text/event-stream')) {
-          forwardHeaders['cache-control'] = 'no-cache';
-          forwardHeaders['connection'] = 'keep-alive';
-        }
-
-        // 使用原始响应绕过 Fastify/NestJS 缓冲
-        // 这对于 SSE 流式传输正常工作至关重要
-        rawResponse.writeHead(statusCode, forwardHeaders);
-
-        proxyRes.on('data', (chunk) => {
-          rawResponse.write(chunk);
-          // 强制刷新 SSE - 确保事件立即发送
-          if (typeof (rawResponse as any).flush === 'function') {
-            (rawResponse as any).flush();
+          // 对于 SSE 响应，确保正确的流式头
+          const contentType = proxyRes.headers['content-type'];
+          if (contentType?.includes('text/event-stream')) {
+            forwardHeaders['cache-control'] = 'no-cache';
+            forwardHeaders['connection'] = 'keep-alive';
           }
-        });
 
-        proxyRes.on('end', () => {
-          rawResponse.end();
-          resolve(statusCode);
-        });
+          // 使用原始响应绕过 Fastify/NestJS 缓冲
+          // 这对于 SSE 流式传输正常工作至关重要
+          rawResponse.writeHead(statusCode, forwardHeaders);
 
-        proxyRes.on('error', (err) => {
-          this.logger.error('Upstream response error:', err);
-          rawResponse.end();
-          reject(err);
-        });
-      });
+          proxyRes.on('data', (chunk) => {
+            rawResponse.write(chunk);
+            // 强制刷新 SSE - 确保事件立即发送
+            if (typeof (rawResponse as any).flush === 'function') {
+              (rawResponse as any).flush();
+            }
+          });
+
+          proxyRes.on('end', () => {
+            rawResponse.end();
+            resolve(statusCode);
+          });
+
+          proxyRes.on('error', (err) => {
+            this.logger.error('Upstream response error:', err);
+            rawResponse.end();
+            reject(err);
+          });
+        },
+      );
 
       proxyReq.on('error', (err) => {
         this.logger.error('Upstream request error:', err);
@@ -156,11 +225,33 @@ export class UpstreamService {
    *
    * 用于非流式请求，返回完整响应
    */
-  async forwardToUpstreamBuffered(req: UpstreamRequest): Promise<UpstreamResult> {
+  async forwardToUpstreamBuffered(
+    req: UpstreamRequest,
+  ): Promise<UpstreamResult> {
     return new Promise((resolve, reject) => {
-      const { vendorConfig, path, method, headers, body, apiKey } = req;
+      const { vendorConfig, path, method, headers, body, apiKey, customUrl } =
+        req;
 
-      const upstreamPath = vendorConfig.basePath + path;
+      // 解析目标 URL
+      let targetHost: string;
+      let targetPort: number;
+      let targetBasePath: string;
+      let useHttps: boolean;
+
+      if (customUrl) {
+        const parsed = this.parseUrl(customUrl);
+        targetHost = parsed.hostname;
+        targetPort = parsed.port;
+        targetBasePath = parsed.basePath;
+        useHttps = parsed.protocol === 'https';
+      } else {
+        targetHost = vendorConfig.host;
+        targetPort = 443;
+        targetBasePath = vendorConfig.basePath;
+        useHttps = true;
+      }
+
+      const upstreamPath = targetBasePath + path;
 
       const upstreamHeaders: Record<string, string> = { ...headers };
       delete upstreamHeaders['host'];
@@ -168,7 +259,7 @@ export class UpstreamService {
       delete upstreamHeaders['authorization'];
       delete upstreamHeaders['content-length'];
 
-      upstreamHeaders['host'] = vendorConfig.host;
+      upstreamHeaders['host'] = targetHost;
       upstreamHeaders[vendorConfig.authHeader.toLowerCase()] =
         vendorConfig.authFormat(apiKey);
 
@@ -177,40 +268,44 @@ export class UpstreamService {
       }
 
       const options = {
-        hostname: vendorConfig.host,
-        port: 443,
+        hostname: targetHost,
+        port: targetPort,
         path: upstreamPath,
         method,
         headers: upstreamHeaders,
       };
 
-      const proxyReq = https.request(options, (proxyRes: IncomingMessage) => {
-        const statusCode = proxyRes.statusCode ?? 500;
-        const chunks: Buffer[] = [];
+      const httpModule = useHttps ? https : http;
+      const proxyReq = httpModule.request(
+        options,
+        (proxyRes: IncomingMessage) => {
+          const statusCode = proxyRes.statusCode ?? 500;
+          const chunks: Buffer[] = [];
 
-        const responseHeaders: Record<string, string | string[]> = {};
-        for (const [key, value] of Object.entries(proxyRes.headers)) {
-          if (value) {
-            responseHeaders[key] = value;
+          const responseHeaders: Record<string, string | string[]> = {};
+          for (const [key, value] of Object.entries(proxyRes.headers)) {
+            if (value) {
+              responseHeaders[key] = value;
+            }
           }
-        }
 
-        proxyRes.on('data', (chunk) => {
-          chunks.push(chunk);
-        });
-
-        proxyRes.on('end', () => {
-          resolve({
-            statusCode,
-            headers: responseHeaders,
-            body: Buffer.concat(chunks),
+          proxyRes.on('data', (chunk) => {
+            chunks.push(chunk);
           });
-        });
 
-        proxyRes.on('error', (err) => {
-          reject(err);
-        });
-      });
+          proxyRes.on('end', () => {
+            resolve({
+              statusCode,
+              headers: responseHeaders,
+              body: Buffer.concat(chunks),
+            });
+          });
+
+          proxyRes.on('error', (err) => {
+            reject(err);
+          });
+        },
+      );
 
       proxyReq.on('error', (err) => {
         reject(err);

@@ -10,6 +10,10 @@ import { Logger } from 'winston';
 export interface KeySelection {
   keyId: string;
   secret: string;
+  /** 自定义 API 基础 URL（如果配置了） */
+  baseUrl?: string | null;
+  /** 提供商 vendor */
+  vendor: string;
 }
 
 /**
@@ -35,7 +39,12 @@ export class KeyringService {
    * secretEncrypted 可能为 Prisma Bytes 返回的 Buffer 或 Uint8Array
    */
   private selectFromKeys(
-    keys: Array<{ id: string; secretEncrypted: Buffer | Uint8Array }>,
+    keys: Array<{
+      id: string;
+      secretEncrypted: Buffer | Uint8Array;
+      baseUrl?: string | null;
+      vendor: string;
+    }>,
     cacheKey: string,
   ): KeySelection | null {
     if (keys.length === 0) {
@@ -47,12 +56,16 @@ export class KeyringService {
     this.roundRobinIndex.set(cacheKey, currentIndex + 1);
 
     try {
-      const raw =
-        Buffer.isBuffer(key.secretEncrypted) ?
-          key.secretEncrypted
+      const raw = Buffer.isBuffer(key.secretEncrypted)
+        ? key.secretEncrypted
         : Buffer.from(key.secretEncrypted);
       const secret = this.encryptionService.decrypt(raw);
-      return { keyId: key.id, secret };
+      return {
+        keyId: key.id,
+        secret,
+        baseUrl: key.baseUrl,
+        vendor: key.vendor,
+      };
     } catch (error) {
       this.logger.error(`Failed to decrypt key ${key.id}:`, error);
       return null;
@@ -71,6 +84,8 @@ export class KeyringService {
     const keysWithSecret = keys.map((k) => ({
       id: k.id,
       secretEncrypted: k.secretEncrypted,
+      baseUrl: k.baseUrl,
+      vendor: k.vendor,
     }));
 
     return this.selectFromKeys(keysWithSecret, vendor);
@@ -100,6 +115,8 @@ export class KeyringService {
           const keysWithSecret = taggedKeys.map((k) => ({
             id: k.id,
             secretEncrypted: k.secretEncrypted,
+            baseUrl: k.baseUrl,
+            vendor: k.vendor,
           }));
           return this.selectFromKeys(keysWithSecret, `${vendor}:${tag}`);
         }
@@ -116,6 +133,8 @@ export class KeyringService {
       const keysWithSecret = defaultKeys.map((k) => ({
         id: k.id,
         secretEncrypted: k.secretEncrypted,
+        baseUrl: k.baseUrl,
+        vendor: k.vendor,
       }));
       return this.selectFromKeys(keysWithSecret, `${vendor}:default`);
     }
@@ -130,6 +149,8 @@ export class KeyringService {
       const keysWithSecret = allKeys.map((k) => ({
         id: k.id,
         secretEncrypted: k.secretEncrypted,
+        baseUrl: k.baseUrl,
+        vendor: k.vendor,
       }));
       return this.selectFromKeys(keysWithSecret, vendor);
     }

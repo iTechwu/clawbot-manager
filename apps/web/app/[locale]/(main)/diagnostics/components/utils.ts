@@ -7,5 +7,5 @@ export function formatBytes(bytes: number): string {
 }
 
 export function extractBotName(containerName: string): string {
-  return containerName.replace('botmaker-', '').substring(0, 12);
+  return containerName.replace('clawbot-manager-', '').substring(0, 12);
 }

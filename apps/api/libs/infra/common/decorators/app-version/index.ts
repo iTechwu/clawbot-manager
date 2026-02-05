@@ -3,9 +3,9 @@
  */
 
 export {
-    AppVersionService,
-    AppVersionInfo,
-    VersionCheckResult,
+  AppVersionService,
+  AppVersionInfo,
+  VersionCheckResult,
 } from './app-version.service';
 
 export { AppVersionController } from './app-version.controller';

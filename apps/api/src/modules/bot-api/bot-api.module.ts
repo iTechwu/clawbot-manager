@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import {
   BotModule,
   ProviderKeyModule,
+  BotProviderKeyModule,
   UserInfoModule,
   OperateLogModule,
   PersonaTemplateModule,
@@ -10,6 +11,8 @@ import {
 import { AuthModule } from '@app/auth';
 import { JwtModule } from '@app/jwt/jwt.module';
 import { RedisModule } from '@app/redis';
+import { ProviderVerifyModule } from '@app/clients/internal/provider-verify';
+import { ProxyModule } from '../proxy/proxy.module';
 import { BotApiController } from './bot-api.controller';
 import { BotApiService } from './bot-api.service';
 import { EncryptionService } from './services/encryption.service';
@@ -22,12 +25,15 @@ import { ReconciliationService } from './services/reconciliation.service';
     ConfigModule,
     BotModule,
     ProviderKeyModule,
+    BotProviderKeyModule,
     UserInfoModule,
     OperateLogModule,
     AuthModule,
     JwtModule,
     RedisModule,
     PersonaTemplateModule,
+    ProviderVerifyModule,
+    ProxyModule,
   ],
   controllers: [BotApiController],
   providers: [

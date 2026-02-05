@@ -162,4 +162,24 @@ export class BotApiController {
       return success(health);
     });
   }
+
+  @TsRestHandler(pkc.verify)
+  async verifyProviderKey(): Promise<any> {
+    return tsRestHandler(pkc.verify, async ({ body }) => {
+      const result = await this.botApiService.verifyProviderKey(body);
+      return success(result);
+    });
+  }
+
+  @TsRestHandler(pkc.getModels)
+  async getProviderKeyModels(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(pkc.getModels, async ({ params }) => {
+      const userId = req.userId;
+      const result = await this.botApiService.getProviderKeyModels(
+        params.id,
+        userId,
+      );
+      return success(result);
+    });
+  }
 }
