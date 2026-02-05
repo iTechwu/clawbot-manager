@@ -188,7 +188,6 @@ async function bootstrap() {
     credentials: true,
     optionsSuccessStatus: 204,
   };
-  console.log('techwu corsOptions', corsOptions);
   app.enableCors(corsOptions);
 
   // 设置全局前缀（排除监控端点）
