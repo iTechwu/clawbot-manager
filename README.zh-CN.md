@@ -1,11 +1,39 @@
 # ClawBotManager
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-11-red.svg)](https://nestjs.com/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
 > AI Bot 全生命周期管理与 API 密钥编排平台，解决多 Bot、多提供商场景下的密钥安全、请求代理与运维难题。
 
-[English](./README.md)
+[English](./README.md) | [演示](#-演示) | [快速开始](#-快速开始) | [文档](#-文档与规范)
+
+## 🎬 演示
+
+<!-- 在此添加截图或 GIF -->
+> 截图和演示视频即将推出。Star 本仓库以获取更新通知！
+
+---
+
+## 🆕 最新更新
+
+### v1.0.0 (2026-02)
+
+- **Bot 配置解析器**：运行时配置现从 `BotProviderKey` 和 `BotChannel` 表派生，确保数据一致性
+- **零信任架构**：Bot 容器永不直接接触 API 密钥 - 所有密钥在代理层注入
+- **10 个渠道集成**：支持飞书、Telegram、Slack、微信、Discord、WhatsApp、X、Instagram、Teams 和 LINE
+- **22 个 MCP 插件**：预置搜索、文件操作、数据库访问和开发工具等插件
+- **技能系统**：自定义工具、提示词模板和工作流，一键安装到 Bot
+
+---
 
 ## 📋 目录
 
+- [演示](#-演示)
+- [最新更新](#-最新更新)
 - [项目定位](#-项目定位)
 - [项目阶段](#-项目阶段)
 - [技术栈](#️-技术栈)
@@ -724,3 +752,13 @@ pnpm db:migrate:dev
 ## 📄 License
 
 MIT License
+
+---
+
+<p align="center">
+  由 ClawBotManager 团队用 ❤️ 打造
+  <br>
+  <a href="https://github.com/xica-ai/clawbot-manager/issues">报告 Bug</a>
+  ·
+  <a href="https://github.com/xica-ai/clawbot-manager/issues">功能建议</a>
+</p>

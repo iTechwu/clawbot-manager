@@ -344,19 +344,13 @@ export class DockerService implements OnModuleInit {
         # Determine the provider for auth configuration and model prefix
         PROVIDER="${options.aiProvider}"
         if [ "$PROVIDER" = "custom" ] && [ -n "$AI_API_TYPE" ]; then
-          # For custom provider, use the API type as the auth provider
-          # Map common API types to their provider names
+          # For custom provider, use the API type as the auth provider and model provider
+          # OpenClaw uses standard provider names (openai, anthropic, etc.) for model prefixes
           case "$AI_API_TYPE" in
-            openai) AUTH_PROVIDER="openai" ;;
-            anthropic) AUTH_PROVIDER="anthropic" ;;
-            *) AUTH_PROVIDER="$AI_API_TYPE" ;;
+            openai) AUTH_PROVIDER="openai"; MODEL_PROVIDER="openai" ;;
+            anthropic) AUTH_PROVIDER="anthropic"; MODEL_PROVIDER="anthropic" ;;
+            *) AUTH_PROVIDER="$AI_API_TYPE"; MODEL_PROVIDER="$AI_API_TYPE" ;;
           esac
-          # For OpenClaw model setting, use openai-compatible for custom OpenAI endpoints
-          if [ "$AI_API_TYPE" = "openai" ]; then
-            MODEL_PROVIDER="openai-compatible"
-          else
-            MODEL_PROVIDER="$AUTH_PROVIDER"
-          fi
         else
           AUTH_PROVIDER="$PROVIDER"
           MODEL_PROVIDER="$PROVIDER"
@@ -377,28 +371,45 @@ export class DockerService implements OnModuleInit {
         fi
 
         # Configure API key based on provider
-        # Check for provider-specific API key environment variables
+        # In zero-trust mode, use PROXY_TOKEN as the API key
+        # Otherwise, check for provider-specific API key environment variables
         API_KEY=""
-        case "$AUTH_PROVIDER" in
-          openai) API_KEY="$OPENAI_API_KEY" ;;
-          anthropic) API_KEY="$ANTHROPIC_API_KEY" ;;
-          google) API_KEY="$GOOGLE_API_KEY" ;;
-          groq) API_KEY="$GROQ_API_KEY" ;;
-          mistral) API_KEY="$MISTRAL_API_KEY" ;;
-          deepseek) API_KEY="$DEEPSEEK_API_KEY" ;;
-          zhipu) API_KEY="$ZHIPU_API_KEY" ;;
-          moonshot) API_KEY="$MOONSHOT_API_KEY" ;;
-          dashscope) API_KEY="$DASHSCOPE_API_KEY" ;;
-          doubao) API_KEY="$DOUBAO_API_KEY" ;;
-          silicon) API_KEY="$SILICONFLOW_API_KEY" ;;
-          custom) API_KEY="$CUSTOM_API_KEY" ;;
-          *) API_KEY="" ;;
-        esac
+        if [ -n "$PROXY_TOKEN" ]; then
+          # Zero-trust mode: use proxy token as API key
+          API_KEY="$PROXY_TOKEN"
+          echo "Using proxy token for authentication"
+        else
+          # Direct mode: use provider-specific API key
+          case "$AUTH_PROVIDER" in
+            openai) API_KEY="$OPENAI_API_KEY" ;;
+            anthropic) API_KEY="$ANTHROPIC_API_KEY" ;;
+            google) API_KEY="$GOOGLE_API_KEY" ;;
+            groq) API_KEY="$GROQ_API_KEY" ;;
+            mistral) API_KEY="$MISTRAL_API_KEY" ;;
+            deepseek) API_KEY="$DEEPSEEK_API_KEY" ;;
+            zhipu) API_KEY="$ZHIPU_API_KEY" ;;
+            moonshot) API_KEY="$MOONSHOT_API_KEY" ;;
+            dashscope) API_KEY="$DASHSCOPE_API_KEY" ;;
+            doubao) API_KEY="$DOUBAO_API_KEY" ;;
+            silicon) API_KEY="$SILICONFLOW_API_KEY" ;;
+            custom) API_KEY="$CUSTOM_API_KEY" ;;
+            *) API_KEY="" ;;
+          esac
+        fi
 
-        # Add API key to auth-profiles.json if available
+        # Export API key as environment variable for OpenClaw
+        # OpenClaw reads API keys from standard environment variables
         if [ -n "$API_KEY" ]; then
-          echo "Configuring API key for provider: $AUTH_PROVIDER"
-          echo "$API_KEY" | node /app/openclaw.mjs models auth paste-token --provider "$AUTH_PROVIDER" 2>/dev/null || true
+          case "$AUTH_PROVIDER" in
+            openai) export OPENAI_API_KEY="$API_KEY" ;;
+            anthropic) export ANTHROPIC_API_KEY="$API_KEY" ;;
+            google) export GOOGLE_API_KEY="$API_KEY" ;;
+            groq) export GROQ_API_KEY="$API_KEY" ;;
+            mistral) export MISTRAL_API_KEY="$API_KEY" ;;
+            deepseek) export DEEPSEEK_API_KEY="$API_KEY" ;;
+            *) export OPENAI_API_KEY="$API_KEY" ;;
+          esac
+          echo "Configured API key for provider: $AUTH_PROVIDER"
         fi
 
         # Start the gateway (bind to lan to accept external connections)

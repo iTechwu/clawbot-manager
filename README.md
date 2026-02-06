@@ -1,11 +1,39 @@
 # ClawBotManager
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-11-red.svg)](https://nestjs.com/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
 > AI Bot lifecycle management and API key orchestration platform, solving key security, request proxy, and operations challenges in multi-Bot, multi-provider scenarios.
 
-[中文文档](./README.zh-CN.md)
+[中文文档](./README.zh-CN.md) | [Demo](#-demo) | [Quick Start](#-quick-start) | [Documentation](#-documentation--standards)
+
+## 🎬 Demo
+
+<!-- Add screenshots or GIFs here -->
+> Screenshots and demo videos coming soon. Star this repo to stay updated!
+
+---
+
+## 🆕 What's New
+
+### v1.0.0 (2026-02)
+
+- **Bot Configuration Resolver**: Runtime configuration now derived from `BotProviderKey` and `BotChannel` tables for better data consistency
+- **Zero-Trust Architecture**: Bot containers never touch API keys directly - all keys are injected at the proxy layer
+- **10 Channel Integrations**: Support for Feishu, Telegram, Slack, WeChat, Discord, WhatsApp, X, Instagram, Teams, and LINE
+- **22 MCP Plugins**: Pre-built plugins for search, file operations, database access, and development tools
+- **Skill System**: Custom tools, prompt templates, and workflows with one-click installation to Bots
+
+---
 
 ## 📋 Table of Contents
 
+- [Demo](#-demo)
+- [What's New](#-whats-new)
 - [Project Overview](#-project-overview)
 - [Project Status](#-project-status)
 - [Tech Stack](#-tech-stack)
@@ -728,3 +756,13 @@ Although BotMaker already solves similar problems well, we decided to open-sourc
 ## 📄 License
 
 MIT License
+
+---
+
+<p align="center">
+  Made with ❤️ by the ClawBotManager Team
+  <br>
+  <a href="https://github.com/xica-ai/clawbot-manager/issues">Report Bug</a>
+  ·
+  <a href="https://github.com/xica-ai/clawbot-manager/issues">Request Feature</a>
+</p>
