@@ -145,11 +145,33 @@ export class FeishuSdkClient {
     // 注册消息接收事件处理器
     this.eventDispatcher.register({
       'im.message.receive_v1': async (data: FeishuSdkMessageEvent) => {
-        this.logger.info('Received Feishu message via SDK', {
+        // 解析消息内容
+        let messageText = '';
+        try {
+          if (data.message?.content) {
+            const content = JSON.parse(data.message.content);
+            messageText = content.text || JSON.stringify(content);
+          }
+        } catch {
+          messageText = data.message?.content || '';
+        }
+
+        // 详细日志输出，用于测试连接
+        this.logger.info('========== 收到飞书消息 ==========');
+        this.logger.info('Feishu Message Received', {
           messageId: data.message?.message_id,
           chatId: data.message?.chat_id,
           chatType: data.message?.chat_type,
+          messageType: data.message?.message_type,
+          senderId: data.sender?.sender_id?.open_id,
+          senderType: data.sender?.sender_type,
+          messageContent: messageText,
+          rawContent: data.message?.content,
+          mentions: data.message?.mentions?.map((m) => m.name),
+          eventId: data.event_id,
+          createTime: data.create_time,
         });
+        this.logger.info('===================================');
 
         if (this.messageHandler) {
           try {

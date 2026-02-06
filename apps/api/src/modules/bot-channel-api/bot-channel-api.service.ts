@@ -750,10 +750,9 @@ export class BotChannelApiService {
    * 连接飞书渠道
    */
   private async connectFeishuChannel(channel: any): Promise<void> {
-    // 解密凭证
-    const credentialsJson = this.cryptClient.decrypt(
-      channel.credentialsEncrypted.toString(),
-    );
+    // 解密凭证 - 需要先将 Buffer 转换为 UTF-8 字符串
+    const encryptedStr = Buffer.from(channel.credentialsEncrypted).toString('utf8');
+    const credentialsJson = this.cryptClient.decrypt(encryptedStr);
     const credentials = JSON.parse(credentialsJson);
 
     const config = (channel.config as Record<string, unknown>) || {};

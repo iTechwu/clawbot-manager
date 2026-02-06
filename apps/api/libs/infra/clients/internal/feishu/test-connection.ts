@@ -11,8 +11,9 @@
  */
 import * as lark from '@larksuiteoapi/node-sdk';
 
-const appId = process.env.FEISHU_APP_ID;
-const appSecret = process.env.FEISHU_APP_SECRET;
+const appId = process.env.FEISHU_APP_ID || 'cli_a90efcbf2239dbb6';
+const appSecret =
+  process.env.FEISHU_APP_SECRET || 'oWpyZp0N33Aw34r7pvFtefHkad3HDzn7';
 const domain = process.env.FEISHU_DOMAIN || 'feishu'; // 'feishu' 或 'lark'
 
 if (!appId || !appSecret) {
@@ -42,8 +43,44 @@ const wsClient = new lark.WSClient({
 const eventDispatcher = new lark.EventDispatcher({});
 
 eventDispatcher.register({
-  'im.message.receive_v1': async (data) => {
-    console.log('收到消息:', JSON.stringify(data, null, 2));
+  'im.message.receive_v1': async (data: any) => {
+    // 解析消息内容
+    let messageText = '';
+    try {
+      if (data.message?.content) {
+        const content = JSON.parse(data.message.content);
+        messageText = content.text || JSON.stringify(content);
+      }
+    } catch {
+      messageText = data.message?.content || '';
+    }
+
+    console.log('');
+    console.log('='.repeat(60));
+    console.log('📩 收到飞书消息');
+    console.log('='.repeat(60));
+    console.log(`消息ID: ${data.message?.message_id}`);
+    console.log(`会话ID: ${data.message?.chat_id}`);
+    console.log(
+      `会话类型: ${data.message?.chat_type === 'p2p' ? '私聊' : '群聊'}`,
+    );
+    console.log(`消息类型: ${data.message?.message_type}`);
+    console.log(`发送者ID: ${data.sender?.sender_id?.open_id}`);
+    console.log(`发送者类型: ${data.sender?.sender_type}`);
+    console.log(`消息内容: ${messageText}`);
+    if (data.message?.mentions?.length > 0) {
+      console.log(
+        `@提及: ${data.message.mentions.map((m: any) => m.name).join(', ')}`,
+      );
+    }
+    console.log(
+      `事件时间: ${new Date(parseInt(data.message?.create_time || '0')).toLocaleString()}`,
+    );
+    console.log('='.repeat(60));
+    console.log('');
+    console.log('原始数据:');
+    console.log(JSON.stringify(data, null, 2));
+    console.log('');
   },
 });
 
@@ -55,14 +92,11 @@ wsClient
     console.log('✅ WebSocket 连接成功！');
     console.log('='.repeat(60));
     console.log('');
-    console.log('现在请在飞书开发者后台执行以下操作：');
-    console.log('1. 进入 事件订阅 页面');
-    console.log('2. 在 请求方式 中选择 长连接');
-    console.log('3. 添加需要订阅的事件（如 im.message.receive_v1）');
-    console.log('4. 点击 保存');
+    console.log('连接已建立，等待接收消息...');
+    console.log('请在飞书中向机器人发送消息进行测试');
     console.log('');
-    console.log('保持此脚本运行，直到配置保存成功...');
     console.log('按 Ctrl+C 退出');
+    console.log('');
   })
   .catch((error) => {
     console.error('');
