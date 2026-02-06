@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { providerKeyApi, providerKeyClient } from '@/lib/api/contracts/client';
 import type {
@@ -143,32 +143,33 @@ export function useProviderKeyModels() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getModels = async (
-    keyId: string,
-  ): Promise<VerifyProviderKeyResponse | null> => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await providerKeyClient.getModels({
-        params: { id: keyId },
-      });
-      if (
-        result.body &&
-        typeof result.body === 'object' &&
-        'data' in result.body
-      ) {
-        return result.body.data as VerifyProviderKeyResponse;
+  const getModels = useCallback(
+    async (keyId: string): Promise<VerifyProviderKeyResponse | null> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await providerKeyClient.getModels({
+          params: { id: keyId },
+        });
+        if (
+          result.body &&
+          typeof result.body === 'object' &&
+          'data' in result.body
+        ) {
+          return result.body.data as VerifyProviderKeyResponse;
+        }
+        return null;
+      } catch (err) {
+        const errorMsg =
+          err instanceof Error ? err.message : 'Failed to fetch models';
+        setError(errorMsg);
+        return null;
+      } finally {
+        setLoading(false);
       }
-      return null;
-    } catch (err) {
-      const errorMsg =
-        err instanceof Error ? err.message : 'Failed to fetch models';
-      setError(errorMsg);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [],
+  );
 
   return {
     getModels,

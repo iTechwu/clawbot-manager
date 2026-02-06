@@ -164,6 +164,9 @@ export default function BotDashboardPage() {
       <QuickActions
         isRunning={isRunning}
         loading={loading}
+        hasProvider={hasProvider}
+        hasChannel={hasChannel}
+        configLoading={configLoading}
         onStart={onStart}
         onStop={onStop}
         onRestart={onRestart}

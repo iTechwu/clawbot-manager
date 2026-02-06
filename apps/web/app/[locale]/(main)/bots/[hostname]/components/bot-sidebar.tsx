@@ -5,13 +5,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@repo/ui/lib/utils';
 import { Badge } from '@repo/ui';
-import {
-  ArrowLeft,
-  ChevronDown,
-  ChevronUp,
-  CheckCircle2,
-  Circle,
-} from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Circle } from 'lucide-react';
 import { useState } from 'react';
 import { botNavItems, botNavExtendedItems } from '@/lib/config/bot-nav';
 
@@ -72,7 +66,6 @@ export function BotSidebar({
 
   const basePath = `/bots/${hostname}`;
   const statusInfo = statusConfig[status] ?? statusConfig.stopped;
-  const isDraft = status === 'draft';
 
   const isActive = (href: string) => {
     const fullPath = href ? `${basePath}${href}` : basePath;
@@ -81,27 +74,16 @@ export function BotSidebar({
   };
 
   // 获取导航项的配置状态标记
+  // 只要配置未完成就显示，不仅限于 draft 状态
   const getNavItemBadge = (itemId: string) => {
-    if (!isDraft || configLoading) return null;
-    if (itemId === 'ai' && !hasProvider) {
-      return (
-        <Circle className="size-3 text-amber-500 ml-auto flex-shrink-0" />
-      );
+    if (configLoading) return null;
+
+    // 只在未配置时显示警告标记
+    if (itemId === 'ai' && hasProvider === false) {
+      return <Circle className="size-3 text-amber-500 ml-auto flex-shrink-0" />;
     }
-    if (itemId === 'channels' && !hasChannel) {
-      return (
-        <Circle className="size-3 text-amber-500 ml-auto flex-shrink-0" />
-      );
-    }
-    if (itemId === 'ai' && hasProvider) {
-      return (
-        <CheckCircle2 className="size-3 text-green-500 ml-auto flex-shrink-0" />
-      );
-    }
-    if (itemId === 'channels' && hasChannel) {
-      return (
-        <CheckCircle2 className="size-3 text-green-500 ml-auto flex-shrink-0" />
-      );
+    if (itemId === 'channels' && hasChannel === false) {
+      return <Circle className="size-3 text-amber-500 ml-auto flex-shrink-0" />;
     }
     return null;
   };

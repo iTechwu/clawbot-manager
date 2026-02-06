@@ -4,10 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui';
 import { Play, Square, RotateCcw, Stethoscope, Loader2 } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 
 interface QuickActionsProps {
   isRunning: boolean;
   loading?: boolean;
+  hasProvider?: boolean;
+  hasChannel?: boolean;
+  configLoading?: boolean;
   onStart: () => void;
   onStop: () => void;
   onRestart: () => void;
@@ -17,6 +21,9 @@ interface QuickActionsProps {
 export function QuickActions({
   isRunning,
   loading,
+  hasProvider,
+  hasChannel,
+  configLoading,
   onStart,
   onStop,
   onRestart,
@@ -24,12 +31,37 @@ export function QuickActions({
 }: QuickActionsProps) {
   const t = useTranslations('bots.detail.dashboard');
 
+  // 检查配置是否完成
+  const isConfigComplete = hasProvider && hasChannel;
+  const isConfigChecking = configLoading;
+
+  // 包装操作函数，在配置未完成时显示提示
+  const wrapActionWithConfigCheck = (
+    action: () => void,
+    requiresConfig: boolean,
+  ) => {
+    return () => {
+      if (requiresConfig && !isConfigChecking && !isConfigComplete) {
+        const missingItems: string[] = [];
+        if (!hasProvider) missingItems.push(t('configRequired.provider'));
+        if (!hasChannel) missingItems.push(t('configRequired.channel'));
+        toast.warning(t('configRequired.title'), {
+          description: t('configRequired.description', {
+            items: missingItems.join('、'),
+          }),
+        });
+        return;
+      }
+      action();
+    };
+  };
+
   const actions = [
     {
       id: 'start',
       label: t('start'),
       icon: Play,
-      onClick: onStart,
+      onClick: wrapActionWithConfigCheck(onStart, true),
       disabled: loading || isRunning,
       color: 'green',
       hoverBg: 'hover:bg-green-500/20 hover:border-green-500/50',
@@ -51,7 +83,7 @@ export function QuickActions({
       id: 'restart',
       label: t('restart'),
       icon: RotateCcw,
-      onClick: onRestart,
+      onClick: wrapActionWithConfigCheck(onRestart, true),
       disabled: loading,
       color: 'amber',
       hoverBg: 'hover:bg-amber-500/20 hover:border-amber-500/50',
@@ -62,7 +94,7 @@ export function QuickActions({
       id: 'diagnose',
       label: t('diagnose'),
       icon: Stethoscope,
-      onClick: onDiagnose,
+      onClick: wrapActionWithConfigCheck(onDiagnose, true),
       disabled: loading,
       color: 'purple',
       hoverBg: 'hover:bg-purple-500/20 hover:border-purple-500/50',

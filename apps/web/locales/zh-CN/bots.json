@@ -397,7 +397,13 @@
       "diagnose": "诊断",
       "noLogs": "暂无日志，请先启动服务",
       "autoRefresh": "自动刷新",
-      "lines": "行"
+      "lines": "行",
+      "configRequired": {
+        "title": "配置未完成",
+        "description": "请先完成以下配置：{items}",
+        "provider": "AI Provider",
+        "channel": "消息渠道"
+      }
     },
     "draftGuide": {
       "title": "完成配置",

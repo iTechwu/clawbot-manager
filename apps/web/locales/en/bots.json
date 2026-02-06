@@ -359,5 +359,115 @@
       "noOrphanedResources": "No orphaned resources",
       "cleanedUp": "Cleaned up {count} orphaned resources"
     }
+  },
+  "detail": {
+    "backToBots": "Back to Bots",
+    "nav": {
+      "overview": "Overview",
+      "ai": "AI Config",
+      "channels": "Channels",
+      "diagnostics": "Diagnostics",
+      "logs": "Logs",
+      "settings": "Settings",
+      "plugins": "Plugins",
+      "skills": "Skills",
+      "usage": "Usage",
+      "more": "More"
+    },
+    "status": {
+      "serviceRunning": "Service Running",
+      "serviceStopped": "Service Stopped"
+    },
+    "dashboard": {
+      "title": "Overview",
+      "description": "Service status, logs and quick actions",
+      "serviceStatus": "Service Status",
+      "quickActions": "Quick Actions",
+      "realtimeLogs": "Realtime Logs",
+      "port": "Port",
+      "processId": "Process ID",
+      "memory": "Memory",
+      "uptime": "Uptime",
+      "start": "Start",
+      "stop": "Stop",
+      "restart": "Restart",
+      "diagnose": "Diagnose",
+      "noLogs": "No logs available. Start the service first.",
+      "autoRefresh": "Auto Refresh",
+      "lines": "lines",
+      "configRequired": {
+        "title": "Configuration Incomplete",
+        "description": "Please complete the following configuration first: {items}",
+        "provider": "AI Provider",
+        "channel": "Message Channel"
+      }
+    },
+    "draftGuide": {
+      "title": "Complete Configuration",
+      "description": "Please complete the following configuration before starting the Bot:",
+      "configureProvider": "Configure AI Provider",
+      "configureProviderDesc": "Add API Key to enable AI features",
+      "configureChannel": "Configure Message Channel",
+      "configureChannelDesc": "Add Telegram, Discord, etc.",
+      "configure": "Configure",
+      "readyToStart": "Configuration complete! You can now start the Bot."
+    },
+    "ai": {
+      "title": "AI Model Configuration",
+      "description": "Configure AI providers and models",
+      "addProvider": "Add Provider",
+      "deleteProvider": "Delete Provider",
+      "setPrimary": "Set as Primary",
+      "models": "Models",
+      "configured": "Configured",
+      "notConfigured": "Not Configured",
+      "noProviders": "No AI Providers configured yet",
+      "addFirst": "Add First Provider"
+    },
+    "channels": {
+      "title": "Message Channels",
+      "description": "Configure Telegram, Discord, Feishu, etc.",
+      "saveConfig": "Save Config",
+      "quickTest": "Quick Test",
+      "configured": "Configured",
+      "notConfigured": "Not Configured",
+      "selectChannel": "Select a channel to configure"
+    },
+    "diagnostics": {
+      "title": "Diagnostics",
+      "description": "Check Bot configuration and connection status",
+      "runDiagnostics": "Run Diagnostics",
+      "providerKey": "Provider Key Validation",
+      "modelAccess": "Model Availability",
+      "channelTokens": "Channel Token Validation",
+      "container": "Container Health",
+      "network": "Network Connectivity",
+      "pass": "Pass",
+      "warning": "Warning",
+      "fail": "Fail",
+      "recommendations": "Recommendations"
+    },
+    "logs": {
+      "title": "Application Logs",
+      "description": "View Bot runtime logs",
+      "filter": "Filter",
+      "search": "Search logs...",
+      "export": "Export",
+      "clear": "Clear",
+      "all": "All",
+      "info": "Info",
+      "warn": "Warning",
+      "error": "Error"
+    },
+    "settings": {
+      "title": "Bot Settings",
+      "description": "Configure Bot basic info and runtime parameters",
+      "basicInfo": "Basic Info",
+      "runtime": "Runtime Config",
+      "security": "Security Settings",
+      "danger": "Danger Zone",
+      "deleteBot": "Delete Bot",
+      "deleteConfirm": "Are you sure you want to delete this Bot? This action cannot be undone."
+    }
   }
 }
