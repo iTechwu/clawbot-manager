@@ -18,6 +18,7 @@ import {
 } from '@app/db';
 import { CryptModule } from '@app/clients/internal/crypt';
 import { FeishuClientModule } from '@app/clients/internal/feishu';
+import { OpenClawModule } from '@app/clients/internal/openclaw';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { FeishuClientModule } from '@app/clients/internal/feishu';
     RedisModule,
     CryptModule,
     FeishuClientModule,
+    OpenClawModule,
   ],
   controllers: [BotChannelApiController],
   providers: [BotChannelApiService, BotChannelStartupService],

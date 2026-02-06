@@ -513,6 +513,31 @@ export class BotApiService {
       this.logger.warn(`Failed to delete workspace for ${hostname}:`, error);
     }
 
+    // Soft delete associated BotChannels
+    try {
+      const { list: channels } = await this.botChannelService.list({
+        botId: bot.id,
+      });
+      for (const channel of channels) {
+        await this.botChannelService.update(
+          { id: channel.id },
+          {
+            isDeleted: true,
+            deletedAt: new Date(),
+            isEnabled: false,
+            connectionStatus: 'DISCONNECTED',
+            lastError: 'Bot 已删除',
+          },
+        );
+        this.logger.log(`BotChannel soft deleted: ${channel.id}`);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Failed to soft delete BotChannels for ${hostname}:`,
+        error,
+      );
+    }
+
     // Soft delete in database
     await this.botService.update(
       { id: bot.id },
@@ -542,6 +567,20 @@ export class BotApiService {
     await this.botService.update({ id: bot.id }, { status: 'starting' });
 
     try {
+      // Allocate port if not set (for bots created via createBotSimple)
+      let botPort = bot.port;
+      if (!botPort) {
+        const { list: existingBots } = await this.botService.list({
+          createdById: userId,
+        });
+        const usedPorts = existingBots
+          .map((b) => b.port)
+          .filter((p): p is number => p !== null);
+        botPort = await this.dockerService.allocatePort(usedPorts);
+        await this.botService.update({ id: bot.id }, { port: botPort });
+        this.logger.log(`Allocated port ${botPort} for bot ${hostname}`);
+      }
+
       // Check if container exists and is in a healthy state
       let needsRecreate = false;
       if (bot.containerId) {
@@ -675,7 +714,7 @@ export class BotApiService {
           hostname: bot.hostname,
           isolationKey,
           name: bot.name,
-          port: bot.port || 9200,
+          port: botPort,
           gatewayToken: bot.gatewayToken || '',
           aiProvider: bot.aiProvider,
           model: bot.model,
@@ -1075,6 +1114,20 @@ export class BotApiService {
       primaryModel: bpk.primaryModel,
       createdAt: bpk.createdAt,
     };
+
+    // 如果是主要 Provider，更新 Bot 的 aiProvider 和 model 字段
+    if (input.isPrimary) {
+      await this.botService.update(
+        { id: bot.id },
+        {
+          aiProvider: providerKey.vendor,
+          model: input.primaryModel || input.models[0] || '',
+        },
+      );
+      this.logger.log(
+        `Updated bot ${bot.hostname} with primary provider: ${providerKey.vendor}, model: ${input.primaryModel || input.models[0]}`,
+      );
+    }
 
     // 检查并更新 Bot 状态（从 draft 到 created）
     await this.checkAndUpdateBotStatus(bot.id);

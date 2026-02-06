@@ -386,8 +386,8 @@ export class DockerService implements OnModuleInit {
           echo "$API_KEY" | node /app/openclaw.mjs models auth paste-token --provider "$AUTH_PROVIDER" 2>/dev/null || true
         fi
 
-        # Start the gateway
-        exec node /app/openclaw.mjs gateway --port ${options.port} --allow-unconfigured
+        # Start the gateway (bind to lan to accept external connections)
+        exec node /app/openclaw.mjs gateway --port ${options.port} --bind lan --allow-unconfigured
         `,
       ],
       Env: envVars,
