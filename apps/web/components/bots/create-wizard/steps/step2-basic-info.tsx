@@ -50,12 +50,14 @@ export function Step2BasicInfo() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Header */}
-      <div className="mb-8 shrink-0 text-center">
-        <div className="bg-primary/10 mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl">
-          <Bot className="text-primary size-7" />
+      <div className="mb-4 shrink-0 text-center">
+        <div className="bg-primary/10 mx-auto mb-2 flex size-10 items-center justify-center rounded-xl">
+          <Bot className="text-primary size-5" />
         </div>
-        <h2 className="text-xl font-semibold">{t('title')}</h2>
-        <p className="text-muted-foreground mt-1 text-sm">{t('description')}</p>
+        <h2 className="text-base font-semibold">{t('title')}</h2>
+        <p className="text-muted-foreground mt-0.5 text-xs">
+          {t('description')}
+        </p>
       </div>
 
       {/* Form Content */}

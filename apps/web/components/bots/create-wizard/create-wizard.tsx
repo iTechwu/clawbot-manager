@@ -113,7 +113,7 @@ function WizardContent({ onClose }: { onClose: () => void }) {
   return (
     <>
       {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b px-6 py-4">
+      <div className="relative flex shrink-0 items-center justify-center border-b px-6 py-4">
         <div className="flex items-center gap-6">
           {steps.map((s, idx) => (
             <div key={s.step} className="flex items-center">
@@ -133,7 +133,7 @@ function WizardContent({ onClose }: { onClose: () => void }) {
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="size-8 rounded-full"
+          className="absolute right-4 size-8 rounded-full"
         >
           <X className="size-4" />
         </Button>

@@ -114,8 +114,11 @@
       "systemPromptHint": "使用 Markdown 定义 Bot 的个性、行为和边界"
     },
     "step3": {
-      "title": "功能",
-      "description": "选择 API 密钥、渠道和 Bot 功能",
+      "title": "预览",
+      "description": "查看并自定义 Bot 的人设",
+      "systemPrompt": "系统提示词 (SOUL.md)",
+      "systemPromptPlaceholder": "# Soul\n\n## 核心身份\n你是一个有帮助的助手...\n\n## 个性\n- 友好且平易近人\n- 耐心且善解人意\n\n## 边界\n- 诚实面对局限性",
+      "systemPromptHint": "使用 Markdown 定义 Bot 的个性、行为和边界",
       "apiKeys": "API 密钥 *",
       "addApiKey": "添加密钥",
       "loadingKeys": "加载密钥中...",

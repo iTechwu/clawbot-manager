@@ -110,8 +110,11 @@
       "systemPromptHint": "Define your bot's personality, behavior, and boundaries using Markdown"
     },
     "step3": {
-      "title": "Features",
-      "description": "Select API keys, channels, and bot features",
+      "title": "Preview",
+      "description": "Review and customize your bot's personality",
+      "systemPrompt": "System Prompt (SOUL.md)",
+      "systemPromptPlaceholder": "# Soul\n\n## Core Identity\nYou are a helpful assistant...\n\n## Personality\n- Friendly and approachable\n- Patient and understanding\n\n## Boundaries\n- Be honest about limitations",
+      "systemPromptHint": "Define your bot's personality, behavior, and boundaries using Markdown",
       "apiKeys": "API Keys *",
       "addApiKey": "Add Key",
       "loadingKeys": "Loading keys...",
