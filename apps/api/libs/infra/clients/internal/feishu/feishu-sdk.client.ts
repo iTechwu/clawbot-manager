@@ -119,6 +119,9 @@ export class FeishuSdkClient {
   /**
    * 启动长连接
    * 使用官方 SDK 的 WSClient 建立连接
+   *
+   * 注意：需要先在飞书开发者后台配置事件订阅为"长连接"模式
+   * 否则会报错"应用未建立长连接"
    */
   async start(): Promise<void> {
     if (this.isStarted) {
@@ -130,27 +133,14 @@ export class FeishuSdkClient {
     const domain =
       this.config.domain === 'lark' ? lark.Domain.Lark : lark.Domain.Feishu;
 
-    // 创建事件分发器
-    this.eventDispatcher = new lark.EventDispatcher({
-      // 长连接模式不需要 verificationToken 和 encryptKey
-      logger: {
-        error: (...msg: unknown[]) => {
-          this.logger.error('Feishu SDK', { msg });
-        },
-        warn: (...msg: unknown[]) => {
-          this.logger.warn('Feishu SDK', { msg });
-        },
-        info: (...msg: unknown[]) => {
-          this.logger.info('Feishu SDK', { msg });
-        },
-        debug: (...msg: unknown[]) => {
-          this.logger.debug('Feishu SDK', { msg });
-        },
-        trace: (...msg: unknown[]) => {
-          this.logger.debug('Feishu SDK trace', { msg });
-        },
-      },
+    this.logger.info('Initializing Feishu SDK WebSocket connection', {
+      appId: this.credentials.appId,
+      domain: this.config.domain,
+      autoReconnect: this.options.autoReconnect,
     });
+
+    // 创建事件分发器（长连接模式不需要 verificationToken 和 encryptKey）
+    this.eventDispatcher = new lark.EventDispatcher({});
 
     // 注册消息接收事件处理器
     this.eventDispatcher.register({
@@ -237,40 +227,38 @@ export class FeishuSdkClient {
       appSecret: this.credentials.appSecret,
       domain,
       autoReconnect: this.options.autoReconnect,
-      logger: {
-        error: (...msg: unknown[]) => {
-          this.logger.error('Feishu WS', { msg });
-        },
-        warn: (...msg: unknown[]) => {
-          this.logger.warn('Feishu WS', { msg });
-        },
-        info: (...msg: unknown[]) => {
-          this.logger.info('Feishu WS', { msg });
-        },
-        debug: (...msg: unknown[]) => {
-          this.logger.debug('Feishu WS', { msg });
-        },
-        trace: (...msg: unknown[]) => {
-          this.logger.debug('Feishu WS trace', { msg });
-        },
-      },
+      loggerLevel: lark.LoggerLevel.info,
     });
 
     // 启动长连接
-    this.logger.info('Starting Feishu SDK WebSocket connection', {
+    this.logger.info('Starting Feishu SDK WebSocket connection...', {
       appId: this.credentials.appId,
       domain: this.config.domain,
     });
 
-    await this.wsClient.start({
-      eventDispatcher: this.eventDispatcher,
-    });
+    try {
+      await this.wsClient.start({
+        eventDispatcher: this.eventDispatcher,
+      });
 
-    this.isStarted = true;
-    this.logger.info('Feishu SDK WebSocket connection started successfully');
+      this.isStarted = true;
+      this.logger.info('Feishu SDK WebSocket connection started successfully');
 
-    // 调用连接成功回调
-    this.options.connectionCallbacks.onConnect?.();
+      // 调用连接成功回调
+      this.options.connectionCallbacks.onConnect?.();
+    } catch (error) {
+      this.logger.error('Failed to start Feishu SDK WebSocket connection', {
+        error,
+        hint: '请确保已在飞书开发者后台配置事件订阅为"长连接"模式',
+      });
+
+      // 调用错误回调
+      this.options.connectionCallbacks.onError?.(
+        error instanceof Error ? error : new Error(String(error)),
+      );
+
+      throw error;
+    }
   }
 
   /**
