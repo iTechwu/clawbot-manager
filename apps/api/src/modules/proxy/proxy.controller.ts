@@ -26,6 +26,9 @@ export class ProxyController {
   ): Promise<void> {
     // 提取 Authorization header
     const auth = req.headers.authorization;
+    console.log('techwu auth', auth);
+    console.log('techwu vendor', vendor);
+    console.log('techwu path', path);
     if (!auth || !auth.startsWith('Bearer ')) {
       reply.status(401).send({ error: 'Missing authorization' });
       return;

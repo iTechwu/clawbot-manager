@@ -9,6 +9,7 @@ import type {
   CleanupReport,
   ProviderVendor,
 } from '@repo/contracts';
+import { normalizeModelName } from '@/utils/model-normalizer';
 
 export interface ContainerInfo {
   id: string;
@@ -179,13 +180,24 @@ export class DockerService implements OnModuleInit {
     }
 
     // Build environment variables
+    // Normalize model name to handle aliases like chatgpt-4o-latest -> gpt-4o
+    const normalizedModel = normalizeModelName(
+      options.model,
+      options.aiProvider,
+    );
+    if (normalizedModel !== options.model) {
+      this.logger.log(
+        `Normalized model name: ${options.model} -> ${normalizedModel}`,
+      );
+    }
+
     const envVars = [
       `BOT_HOSTNAME=${options.hostname}`,
       `BOT_NAME=${options.name}`,
       `BOT_PORT=${options.port}`,
       `OPENCLAW_GATEWAY_TOKEN=${options.gatewayToken}`,
       `AI_PROVIDER=${options.aiProvider}`,
-      `AI_MODEL=${options.model}`,
+      `AI_MODEL=${normalizedModel}`,
       `CHANNEL_TYPE=${options.channelType}`,
     ];
 
@@ -206,6 +218,15 @@ export class DockerService implements OnModuleInit {
     // Get provider config for environment variable naming
     const providerConfig =
       PROVIDER_CONFIGS[options.aiProvider as ProviderVendor];
+
+    // Helper function to convert localhost URLs to host.docker.internal for container access
+    // This is needed because 127.0.0.1/localhost inside a container refers to the container itself,
+    // not the host machine. host.docker.internal is a special DNS name that resolves to the host.
+    const convertToDockerHost = (url: string): string => {
+      return url
+        .replace(/127\.0\.0\.1/g, 'host.docker.internal')
+        .replace(/localhost/g, 'host.docker.internal');
+    };
 
     // Helper function to get environment variable name for API key
     const getApiKeyEnvName = (provider: string): string => {
@@ -280,20 +301,32 @@ export class DockerService implements OnModuleInit {
 
     // Zero-trust mode: Use proxy URL and token instead of direct API key
     if (options.proxyUrl && options.proxyToken) {
-      // Pass proxy configuration to container
-      envVars.push(`PROXY_URL=${options.proxyUrl}`);
+      // Pass proxy configuration to container (convert localhost to host.docker.internal)
+      const dockerProxyUrl = convertToDockerHost(options.proxyUrl);
+      envVars.push(`PROXY_URL=${dockerProxyUrl}`);
       envVars.push(`PROXY_TOKEN=${options.proxyToken}`);
 
-      // Build proxy endpoint based on vendor (the proxy routes by vendor name)
-      // The proxy endpoint format is: {proxyUrl}/v1/{vendor}/*
-      const proxyEndpoint = `${options.proxyUrl}/v1/${options.aiProvider}`;
+      // Determine the actual vendor for proxy routing
+      // For custom provider, use the API type (e.g., openai, anthropic) as the vendor
+      // The proxy routes requests based on vendor name: {proxyUrl}/v1/{vendor}/*
+      const proxyVendor =
+        options.aiProvider === 'custom' && options.apiType
+          ? options.apiType
+          : options.aiProvider;
+
+      // Build proxy endpoint based on vendor
+      const proxyEndpoint = `${dockerProxyUrl}/v1/${proxyVendor}`;
 
       // Set the base URL to point to the proxy
-      const baseUrlEnvName = getBaseUrlEnvName(options.aiProvider);
+      // For custom provider with openai API type, use OPENAI_BASE_URL so OpenClaw can find it
+      const baseUrlEnvName =
+        options.aiProvider === 'custom' && options.apiType
+          ? getBaseUrlEnvName(options.apiType)
+          : getBaseUrlEnvName(options.aiProvider);
       envVars.push(`${baseUrlEnvName}=${proxyEndpoint}`);
 
       this.logger.log(
-        `Container ${options.hostname} configured in zero-trust mode with proxy: ${proxyEndpoint}`,
+        `Container ${options.hostname} configured in zero-trust mode with proxy: ${proxyEndpoint} (vendor: ${proxyVendor})`,
       );
     } else {
       // Direct mode: Pass API key and base URL directly
@@ -302,10 +335,11 @@ export class DockerService implements OnModuleInit {
         envVars.push(`${envKeyName}=${options.apiKey}`);
       }
 
-      // Add custom base URL if provided
+      // Add custom base URL if provided (convert localhost to host.docker.internal)
       if (options.apiBaseUrl) {
         const baseUrlEnvName = getBaseUrlEnvName(options.aiProvider);
-        envVars.push(`${baseUrlEnvName}=${options.apiBaseUrl}`);
+        const dockerBaseUrl = convertToDockerHost(options.apiBaseUrl);
+        envVars.push(`${baseUrlEnvName}=${dockerBaseUrl}`);
       } else if (providerConfig?.apiHost) {
         // Use default API host from provider config if no custom URL
         const baseUrlEnvName = getBaseUrlEnvName(options.aiProvider);
@@ -344,13 +378,11 @@ export class DockerService implements OnModuleInit {
         # Determine the provider for auth configuration and model prefix
         PROVIDER="${options.aiProvider}"
         if [ "$PROVIDER" = "custom" ] && [ -n "$AI_API_TYPE" ]; then
-          # For custom provider, use the API type as the auth provider and model provider
-          # OpenClaw uses standard provider names (openai, anthropic, etc.) for model prefixes
-          case "$AI_API_TYPE" in
-            openai) AUTH_PROVIDER="openai"; MODEL_PROVIDER="openai" ;;
-            anthropic) AUTH_PROVIDER="anthropic"; MODEL_PROVIDER="anthropic" ;;
-            *) AUTH_PROVIDER="$AI_API_TYPE"; MODEL_PROVIDER="$AI_API_TYPE" ;;
-          esac
+          # For custom provider, use {AI_API_TYPE}-compatible as the model provider
+          # This allows OpenClaw to accept any model name without validation
+          # AUTH_PROVIDER is used for API key environment variable naming
+          AUTH_PROVIDER="$AI_API_TYPE"
+          MODEL_PROVIDER="\${AI_API_TYPE}-compatible"
         else
           AUTH_PROVIDER="$PROVIDER"
           MODEL_PROVIDER="$PROVIDER"
@@ -358,6 +390,7 @@ export class DockerService implements OnModuleInit {
 
         # Set the model if AI_MODEL is provided
         # OpenClaw expects model format: provider/model-name
+        # For custom endpoints, use openai-compatible to bypass model validation
         if [ -n "$AI_MODEL" ]; then
           # Check if model already has a provider prefix (contains /)
           if echo "$AI_MODEL" | grep -q "/"; then
@@ -410,6 +443,18 @@ export class DockerService implements OnModuleInit {
             *) export OPENAI_API_KEY="$API_KEY" ;;
           esac
           echo "Configured API key for provider: $AUTH_PROVIDER"
+        fi
+
+        # Export base URL for OpenClaw when using custom provider
+        # OpenClaw expects provider-specific base URL env vars (e.g., OPENAI_BASE_URL)
+        # Map CUSTOM_BASE_URL to the appropriate provider-specific env var
+        if [ "$PROVIDER" = "custom" ] && [ -n "$CUSTOM_BASE_URL" ]; then
+          case "$AUTH_PROVIDER" in
+            openai) export OPENAI_BASE_URL="$CUSTOM_BASE_URL" ;;
+            anthropic) export ANTHROPIC_BASE_URL="$CUSTOM_BASE_URL" ;;
+            *) export OPENAI_BASE_URL="$CUSTOM_BASE_URL" ;;
+          esac
+          echo "Mapped CUSTOM_BASE_URL to provider base URL: $CUSTOM_BASE_URL"
         fi
 
         # Start the gateway (bind to lan to accept external connections)
