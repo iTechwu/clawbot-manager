@@ -58,6 +58,7 @@ export class BotApiService {
   ) {
     // Get internal API URL for bot containers to reach the proxy
     this.proxyUrl = enviromentUtil.generateEnvironmentUrls().internalApi;
+    this.logger.log(`BotApiService initialized with proxyUrl: ${this.proxyUrl}`);
     // this.configService.get<string>(
     //   'INTERNAL_API_BASE_URL',
     //   'http://clawbot-api:3200',
