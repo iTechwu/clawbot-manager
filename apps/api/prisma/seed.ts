@@ -425,9 +425,9 @@ async function seedFallbackChains() {
     const data = {
       name: chainData.name,
       description: chainData.description,
-      models: chainData.models as Prisma.InputJsonValue,
-      triggerStatusCodes: chainData.triggerStatusCodes as Prisma.InputJsonValue,
-      triggerErrorTypes: chainData.triggerErrorTypes as Prisma.InputJsonValue,
+      models: chainData.models as unknown as Prisma.InputJsonValue,
+      triggerStatusCodes: chainData.triggerStatusCodes as unknown as Prisma.InputJsonValue,
+      triggerErrorTypes: chainData.triggerErrorTypes as unknown as Prisma.InputJsonValue,
       triggerTimeoutMs: chainData.triggerTimeoutMs,
       maxRetries: chainData.maxRetries,
       retryDelayMs: chainData.retryDelayMs,

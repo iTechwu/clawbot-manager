@@ -38,6 +38,7 @@
     "templates": "Templates",
     "secrets": "API Keys",
     "diagnostics": "Diagnostics",
+    "routing": "Routing",
     "settings": "Settings"
   },
   "actions": {

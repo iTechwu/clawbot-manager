@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Bot, Activity, Sparkles, Puzzle, Wrench } from 'lucide-react';
+import { Bot, Activity, Sparkles, Puzzle, Wrench, Route } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -49,6 +49,11 @@ const navItems = [
     titleKey: 'diagnostics',
     href: '/diagnostics',
     icon: Activity,
+  },
+  {
+    titleKey: 'routing',
+    href: '/routing',
+    icon: Route,
   },
 ];
 

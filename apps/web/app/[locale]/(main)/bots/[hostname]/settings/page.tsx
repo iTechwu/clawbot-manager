@@ -53,10 +53,11 @@ export default function BotSettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // TODO: 实现保存 API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success('设置已保存');
-    } catch (error) {
+      // 注意：Bot 更新 API 尚未实现，当前仅模拟保存操作
+      // 后续需要在 botContract 中添加 update 端点并实现后端逻辑
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      toast.info('设置功能开发中，敬请期待');
+    } catch {
       toast.error('保存失败');
     } finally {
       setSaving(false);

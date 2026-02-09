@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useBot, useBots } from '@/hooks/useBots';
+import { useBot, useBots, useContainerStats } from '@/hooks/useBots';
 import { StatusCard } from './components/status-card';
 import { QuickActions } from './components/quick-actions';
 import { RealtimeLogs } from './components/realtime-logs';
@@ -21,6 +21,7 @@ export default function BotDashboardPage() {
 
   const { bot, loading: botLoading, refresh: refreshBot } = useBot(hostname);
   const { handleStart, handleStop, startLoading, stopLoading } = useBots();
+  const { stats: containerStats } = useContainerStats();
 
   const [logs, setLogs] = useState<string[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
@@ -142,14 +143,22 @@ export default function BotDashboardPage() {
   const isDraft = bot?.status === 'draft';
   const loading = actionLoading || startLoading || stopLoading;
 
+  // 从容器统计中获取当前 Bot 的统计信息
+  const currentBotStats = containerStats.find(
+    (s: { hostname: string }) => s.hostname === hostname,
+  ) as { memoryUsage?: number; cpuPercent?: number } | undefined;
+
   // 构建服务状态对象
   const serviceStatus = bot
     ? {
         running: isRunning,
         port: bot.port ?? undefined,
-        pid: null, // TODO: 从容器统计获取
-        memoryMb: null, // TODO: 从容器统计获取
-        uptimeSeconds: null, // TODO: 从容器统计获取
+        // 从容器统计获取内存使用量（转换为 MB）
+        memoryMb: currentBotStats?.memoryUsage
+          ? Math.round(currentBotStats.memoryUsage / 1024 / 1024)
+          : null,
+        // CPU 使用率
+        cpuPercent: currentBotStats?.cpuPercent ?? null,
       }
     : null;
 

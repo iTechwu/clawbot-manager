@@ -8,6 +8,11 @@ import {
   ProxyTokenModule,
   BotProviderKeyModule,
   BotModelRoutingModule,
+  // Routing configuration DB modules
+  ModelPricingModule,
+  CapabilityTagModule,
+  FallbackChainModule,
+  CostStrategyModule,
 } from '@app/db';
 import { ProxyController } from './proxy.controller';
 import { ProxyAdminController } from './proxy-admin.controller';
@@ -50,6 +55,11 @@ import { ConfigurationService } from './services/configuration.service';
     ProxyTokenModule,
     BotProviderKeyModule,
     BotModelRoutingModule,
+    // Routing configuration DB modules
+    ModelPricingModule,
+    CapabilityTagModule,
+    FallbackChainModule,
+    CostStrategyModule,
   ],
   controllers: [ProxyController, ProxyAdminController, RoutingAdminController],
   providers: [

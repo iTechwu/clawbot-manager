@@ -558,6 +558,13 @@ export class CostTrackerService {
   }
 
   /**
+   * 获取所有模型定价
+   */
+  getAllModelPricing(): ModelPricing[] {
+    return Array.from(this.modelPricing.values());
+  }
+
+  /**
    * 获取 Bot 使用量
    */
   getBotUsage(botId: string): {

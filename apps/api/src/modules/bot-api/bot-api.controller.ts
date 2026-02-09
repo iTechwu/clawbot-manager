@@ -114,7 +114,7 @@ export class BotApiController {
   }
 
   // ============================================================================
-  // Diagnostics (TODO: Implement)
+  // Container Diagnostics
   // ============================================================================
 
   @TsRestHandler(bc.getStats)

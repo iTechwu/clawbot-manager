@@ -5,6 +5,7 @@
 
 export * from './error-handler';
 export * from './streaming-asr-errors';
+export * from './error-tracking';
 
 // Re-export error codes from contracts for convenience
 export {

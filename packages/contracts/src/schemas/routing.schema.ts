@@ -36,7 +36,7 @@ export const ModelPricingSchema = z.object({
   deprecationDate: z.string().nullable().optional(),
   priceUpdatedAt: z.string(),
   notes: z.string().nullable().optional(),
-  metadata: z.record(z.unknown()).nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

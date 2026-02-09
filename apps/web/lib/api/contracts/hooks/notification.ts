@@ -1,12 +1,16 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
+import { notificationApi, notificationClient } from '../client';
+import type {
+  NotificationListQuery,
+  NotificationItem,
+  NotificationListResponse,
+} from '@repo/contracts';
+
 /**
  * Notification API Hooks
  * 基于 ts-rest 契约的通知 API Hooks
- *
- * 注意：此文件是脚手架占位符。
- * 实际项目中需要在 @repo/contracts 中定义 notificationContract，
- * 并在 client.ts 中导出 notificationApi 和 notificationClient。
  */
 
 // ============================================================================
@@ -15,9 +19,10 @@
 
 export const notificationKeys = {
   all: ['notifications'] as const,
-  list: (params?: Record<string, unknown>) =>
+  list: (params?: Partial<NotificationListQuery>) =>
     [...notificationKeys.all, 'list', params] as const,
   unreadCount: () => [...notificationKeys.all, 'unreadCount'] as const,
+  detail: (id: string) => [...notificationKeys.all, 'detail', id] as const,
 };
 
 // ============================================================================
@@ -37,62 +42,158 @@ export interface NotificationsOptions {
 }
 
 // ============================================================================
-// Placeholder Hooks
-// 这些 hooks 是占位符，需要在实际项目中实现
+// Hooks
 // ============================================================================
 
 /**
- * 获取通知列表 (占位符)
- * TODO: 实现 notificationContract 后启用
+ * 获取通知列表
  */
 export function useNotifications(
-  _params?: NotificationsParams,
-  _options?: NotificationsOptions,
+  params?: NotificationsParams,
+  options?: NotificationsOptions,
 ) {
-  // 占位符实现
+  const query = notificationApi.list.useQuery(
+    notificationKeys.list(params),
+    {
+      query: {
+        type: params?.type as NotificationListQuery['type'],
+        isRead: params?.isRead,
+        limit: params?.limit,
+        page: params?.page,
+      },
+    },
+    {
+      enabled: options?.enabled !== false,
+      staleTime: 30000,
+    },
+  );
+
+  const responseBody = query.data?.body;
+  const data: NotificationListResponse | undefined =
+    responseBody && 'data' in responseBody
+      ? (responseBody.data as NotificationListResponse)
+      : undefined;
+
   return {
-    data: undefined,
-    isLoading: false,
-    error: null,
-    refetch: () => Promise.resolve(),
+    data,
+    notifications: data?.list || [],
+    unreadCount: data?.unreadCount || 0,
+    total: data?.total || 0,
+    isLoading: query.isLoading,
+    error: query.error instanceof Error ? query.error.message : null,
+    refetch: () => query.refetch(),
   };
 }
 
 /**
- * 标记通知已读 (占位符)
- * TODO: 实现 notificationContract 后启用
+ * 获取未读通知数量
+ */
+export function useUnreadNotificationCount() {
+  const query = notificationApi.getUnreadCount.useQuery(
+    notificationKeys.unreadCount(),
+    {},
+    {
+      staleTime: 30000,
+      refetchInterval: 60000, // 每分钟刷新一次
+    },
+  );
+
+  const responseBody = query.data?.body;
+  const count =
+    responseBody && 'data' in responseBody
+      ? (responseBody.data as { count: number }).count
+      : 0;
+
+  return {
+    count,
+    isLoading: query.isLoading,
+    error: query.error instanceof Error ? query.error.message : null,
+    refetch: () => query.refetch(),
+  };
+}
+
+/**
+ * 标记通知已读
  */
 export function useMarkNotificationRead() {
+  const queryClient = useQueryClient();
+
+  const mutation = notificationApi.markRead.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+    },
+  });
+
   return {
-    mutate: (_params: { notificationIds: string[] }) => {},
-    mutateAsync: (_params: { notificationIds: string[] }) => Promise.resolve(),
-    isLoading: false,
-    isPending: false,
+    mutate: (params: { notificationIds: string[] }) =>
+      mutation.mutate({ body: params }),
+    mutateAsync: async (params: { notificationIds: string[] }) => {
+      const result = await mutation.mutateAsync({ body: params });
+      if (result.body && 'data' in result.body) {
+        return result.body.data;
+      }
+      return undefined;
+    },
+    isLoading: mutation.isPending,
+    isPending: mutation.isPending,
   };
 }
 
 /**
- * 标记全部通知已读 (占位符)
- * TODO: 实现 notificationContract 后启用
+ * 标记全部通知已读
  */
 export function useMarkAllNotificationsRead() {
+  const queryClient = useQueryClient();
+
+  const mutation = notificationApi.markAllRead.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+    },
+  });
+
   return {
-    mutate: () => {},
-    mutateAsync: () => Promise.resolve(),
-    isLoading: false,
-    isPending: false,
+    mutate: () => mutation.mutate({ body: {} }),
+    mutateAsync: async () => {
+      const result = await mutation.mutateAsync({ body: {} });
+      if (result.body && 'data' in result.body) {
+        return result.body.data;
+      }
+      return undefined;
+    },
+    isLoading: mutation.isPending,
+    isPending: mutation.isPending,
   };
 }
 
 /**
- * 删除通知 (占位符)
- * TODO: 实现 notificationContract 后启用
+ * 删除通知
  */
 export function useDeleteNotification() {
+  const queryClient = useQueryClient();
+
+  const mutation = notificationApi.delete.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+    },
+  });
+
   return {
-    mutate: (_params: { notificationId: string }) => {},
-    mutateAsync: (_params: { notificationId: string }) => Promise.resolve(),
-    isLoading: false,
-    isPending: false,
+    mutate: (params: { notificationId: string }) =>
+      mutation.mutate({
+        params: { notificationId: params.notificationId },
+        body: {},
+      }),
+    mutateAsync: async (params: { notificationId: string }) => {
+      const result = await mutation.mutateAsync({
+        params: { notificationId: params.notificationId },
+        body: {},
+      });
+      if (result.body && 'data' in result.body) {
+        return result.body.data;
+      }
+      return undefined;
+    },
+    isLoading: mutation.isPending,
+    isPending: mutation.isPending,
   };
 }

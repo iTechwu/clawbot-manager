@@ -6,6 +6,7 @@ import {
   BotModelRoutingService as BotModelRoutingDbService,
   ProviderKeyService,
   BotProviderKeyService,
+  BotUsageLogService,
 } from '@app/db';
 import { ModelRouterService } from './services/model-router.service';
 import { RoutingSuggestionService } from './services/routing-suggestion.service';
@@ -53,6 +54,7 @@ export class ModelRoutingService {
     private readonly botModelRoutingDbService: BotModelRoutingDbService,
     private readonly providerKeyService: ProviderKeyService,
     private readonly botProviderKeyService: BotProviderKeyService,
+    private readonly botUsageLogService: BotUsageLogService,
     private readonly modelRouterService: ModelRouterService,
     private readonly routingSuggestionService: RoutingSuggestionService,
   ) {}
@@ -237,15 +239,25 @@ export class ModelRoutingService {
       throw new NotFoundException(`Routing config not found: ${routingId}`);
     }
 
-    // TODO: 实现统计信息收集
-    // 目前返回空统计
+    // 从路由配置中提取模型列表用于统计查询
+    const models = this.extractModelsFromConfig(routing.config as unknown as RoutingConfig);
+
+    // 从 BotUsageLog 获取统计信息
+    const stats = await this.botUsageLogService.getRoutingStats(bot.id, { models });
+
     return {
       routingId,
-      totalRequests: 0,
-      successCount: 0,
-      failureCount: 0,
-      avgLatencyMs: 0,
-      targetStats: [],
+      totalRequests: stats.totalRequests,
+      successCount: stats.successCount,
+      failureCount: stats.failureCount,
+      avgLatencyMs: stats.avgLatencyMs,
+      targetStats: stats.targetStats.map((s) => ({
+        model: s.model,
+        vendor: s.vendor,
+        requestCount: s.requestCount,
+        successRate: s.successRate,
+        avgLatencyMs: s.avgLatencyMs,
+      })),
     };
   }
 
@@ -381,5 +393,36 @@ export class ModelRoutingService {
         throw new NotFoundException(`Provider key not found: ${keyId}`);
       }
     }
+  }
+
+  /**
+   * 从路由配置中提取模型列表
+   */
+  private extractModelsFromConfig(config: RoutingConfig): string[] {
+    const models = new Set<string>();
+
+    switch (config.type) {
+      case 'FUNCTION_ROUTE':
+        for (const rule of config.rules) {
+          models.add(rule.target.model);
+        }
+        models.add(config.defaultTarget.model);
+        break;
+
+      case 'LOAD_BALANCE':
+        for (const target of config.targets) {
+          models.add(target.model);
+        }
+        break;
+
+      case 'FAILOVER':
+        models.add(config.primary.model);
+        for (const target of config.fallbackChain) {
+          models.add(target.model);
+        }
+        break;
+    }
+
+    return Array.from(models);
   }
 }

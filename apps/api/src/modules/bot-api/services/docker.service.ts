@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Docker from 'dockerode';
 import { isAbsolute, join } from 'node:path';
+import { readdir, rm, stat } from 'node:fs/promises';
 import { PROVIDER_CONFIGS } from '@repo/contracts';
 import type {
   ContainerStats,
@@ -901,6 +902,50 @@ AUTH_EOF
   }
 
   /**
+   * Find orphaned workspaces (workspace directories without corresponding database entries)
+   * @param knownIsolationKeys - isolation keys of known bots
+   */
+  async findOrphanedWorkspaces(knownIsolationKeys: string[]): Promise<string[]> {
+    try {
+      const entries = await readdir(this.dataDir, { withFileTypes: true });
+      const orphaned: string[] = [];
+
+      for (const entry of entries) {
+        if (entry.isDirectory() && !knownIsolationKeys.includes(entry.name)) {
+          orphaned.push(entry.name);
+        }
+      }
+
+      return orphaned;
+    } catch (error) {
+      this.logger.warn(`Failed to scan workspace directory: ${error}`);
+      return [];
+    }
+  }
+
+  /**
+   * Find orphaned secrets (secrets directories without corresponding database entries)
+   * @param knownIsolationKeys - isolation keys of known bots
+   */
+  async findOrphanedSecrets(knownIsolationKeys: string[]): Promise<string[]> {
+    try {
+      const entries = await readdir(this.secretsDir, { withFileTypes: true });
+      const orphaned: string[] = [];
+
+      for (const entry of entries) {
+        if (entry.isDirectory() && !knownIsolationKeys.includes(entry.name)) {
+          orphaned.push(entry.name);
+        }
+      }
+
+      return orphaned;
+    } catch (error) {
+      this.logger.warn(`Failed to scan secrets directory: ${error}`);
+      return [];
+    }
+  }
+
+  /**
    * Get orphan report
    * @param knownIsolationKeys - isolation keys of known bots
    */
@@ -908,9 +953,10 @@ AUTH_EOF
     const orphanedContainers =
       await this.findOrphanedContainers(knownIsolationKeys);
 
-    // TODO: Implement workspace and secrets orphan detection
-    const orphanedWorkspaces: string[] = [];
-    const orphanedSecrets: string[] = [];
+    const orphanedWorkspaces =
+      await this.findOrphanedWorkspaces(knownIsolationKeys);
+    const orphanedSecrets =
+      await this.findOrphanedSecrets(knownIsolationKeys);
 
     return {
       orphanedContainers,
@@ -947,9 +993,41 @@ AUTH_EOF
       }
     }
 
-    // TODO: Implement workspace and secrets cleanup
-    const workspacesRemoved = 0;
-    const secretsRemoved = 0;
+    // Cleanup orphaned workspaces
+    const orphanedWorkspaces =
+      await this.findOrphanedWorkspaces(knownIsolationKeys);
+    let workspacesRemoved = 0;
+    for (const isolationKey of orphanedWorkspaces) {
+      try {
+        const workspacePath = join(this.dataDir, isolationKey);
+        await rm(workspacePath, { recursive: true, force: true });
+        workspacesRemoved++;
+        this.logger.log(`Removed orphaned workspace: ${workspacePath}`);
+      } catch (error) {
+        this.logger.warn(
+          `Failed to remove orphaned workspace for ${isolationKey}:`,
+          error,
+        );
+      }
+    }
+
+    // Cleanup orphaned secrets
+    const orphanedSecrets =
+      await this.findOrphanedSecrets(knownIsolationKeys);
+    let secretsRemoved = 0;
+    for (const isolationKey of orphanedSecrets) {
+      try {
+        const secretsPath = join(this.secretsDir, isolationKey);
+        await rm(secretsPath, { recursive: true, force: true });
+        secretsRemoved++;
+        this.logger.log(`Removed orphaned secrets: ${secretsPath}`);
+      } catch (error) {
+        this.logger.warn(
+          `Failed to remove orphaned secrets for ${isolationKey}:`,
+          error,
+        );
+      }
+    }
 
     return {
       success: true,

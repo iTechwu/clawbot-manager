@@ -9,6 +9,7 @@ export * from './channel.schema';
 export * from './download.schema';
 export * from './message.schema';
 export * from './model-routing.schema';
+export * from './notification.schema';
 export * from './operate-log.schema';
 export * from './persona-template.schema';
 export * from './plugin.schema';

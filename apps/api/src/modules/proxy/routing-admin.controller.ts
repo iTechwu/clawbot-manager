@@ -13,6 +13,18 @@ import { RoutingEngineService } from './services/routing-engine.service';
 import { FallbackEngineService } from './services/fallback-engine.service';
 import { CostTrackerService } from './services/cost-tracker.service';
 import { ConfigurationService } from './services/configuration.service';
+import { randomUUID } from 'crypto';
+
+// Helper to generate consistent UUIDs from string IDs
+const generateUUID = (id: string): string => {
+  // Use a simple hash-based approach for consistent UUIDs
+  const hash = id.split('').reduce((acc, char) => {
+    return ((acc << 5) - acc + char.charCodeAt(0)) | 0;
+  }, 0);
+  return `00000000-0000-4000-8000-${Math.abs(hash).toString(16).padStart(12, '0')}`;
+};
+
+const now = new Date().toISOString();
 
 /**
  * RoutingAdminController - 混合架构路由配置管理 API
@@ -73,9 +85,20 @@ export class RoutingAdminController {
    */
   @Get('capability-tags')
   async getCapabilityTags() {
+    const tags = this.routingEngine.getAllCapabilityTags();
     return {
       success: true,
-      data: this.routingEngine.getAllCapabilityTags(),
+      data: {
+        list: tags.map((tag) => ({
+          id: generateUUID(tag.tagId),
+          ...tag,
+          description: null,
+          isActive: true,
+          isBuiltin: true,
+          createdAt: now,
+          updatedAt: now,
+        })),
+      },
     };
   }
 
@@ -106,9 +129,20 @@ export class RoutingAdminController {
    */
   @Get('fallback-chains')
   async getFallbackChains() {
+    const chains = this.fallbackEngine.getAllFallbackChains();
     return {
       success: true,
-      data: this.fallbackEngine.getAllFallbackChains(),
+      data: {
+        list: chains.map((chain) => ({
+          id: generateUUID(chain.chainId),
+          ...chain,
+          description: null,
+          isActive: true,
+          isBuiltin: true,
+          createdAt: now,
+          updatedAt: now,
+        })),
+      },
     };
   }
 
@@ -139,9 +173,20 @@ export class RoutingAdminController {
    */
   @Get('cost-strategies')
   async getCostStrategies() {
+    const strategies = this.costTracker.getAllCostStrategies();
     return {
       success: true,
-      data: this.costTracker.getAllCostStrategies(),
+      data: {
+        list: strategies.map((strategy) => ({
+          id: generateUUID(strategy.strategyId),
+          ...strategy,
+          description: null,
+          isActive: true,
+          isBuiltin: true,
+          createdAt: now,
+          updatedAt: now,
+        })),
+      },
     };
   }
 
@@ -166,6 +211,40 @@ export class RoutingAdminController {
   // ============================================================================
   // 模型定价管理
   // ============================================================================
+
+  /**
+   * 获取所有模型定价
+   */
+  @Get('model-pricing')
+  async getModelPricingList() {
+    const pricingList = this.costTracker.getAllModelPricing();
+    return {
+      success: true,
+      data: {
+        list: pricingList.map((pricing) => ({
+          id: generateUUID(pricing.model),
+          ...pricing,
+          displayName: null,
+          description: null,
+          contextLength: 128,
+          supportsExtendedThinking: pricing.thinkingPrice !== undefined,
+          supportsCacheControl: pricing.cacheReadPrice !== undefined,
+          supportsVision: false,
+          supportsFunctionCalling: true,
+          supportsStreaming: true,
+          recommendedScenarios: null,
+          isEnabled: true,
+          isDeprecated: false,
+          deprecationDate: null,
+          priceUpdatedAt: now,
+          notes: null,
+          metadata: null,
+          createdAt: now,
+          updatedAt: now,
+        })),
+      },
+    };
+  }
 
   /**
    * 获取模型定价

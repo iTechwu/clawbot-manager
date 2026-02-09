@@ -38,6 +38,7 @@
     "templates": "人设模板",
     "secrets": "API密钥",
     "diagnostics": "诊断",
+    "routing": "路由配置",
     "settings": "设置"
   },
   "actions": {
