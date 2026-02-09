@@ -1,5 +1,5 @@
 /**
- * AI 模型定价数据
+ * AI 模型定价与能力数据
  * 价格单位：美元/百万 tokens
  * 数据来源：各 AI 服务商官方定价页面
  * 最后更新：2026-02-09
@@ -11,7 +11,30 @@ export interface ModelPricingData {
   inputPrice: number;
   outputPrice: number;
   displayName?: string;
+  description?: string;
   notes?: string;
+
+  // 扩展定价（Anthropic 特有）
+  cacheReadPrice?: number;
+  cacheWritePrice?: number;
+  thinkingPrice?: number;
+
+  // 能力评分（0-100）
+  reasoningScore?: number;
+  codingScore?: number;
+  creativityScore?: number;
+  speedScore?: number;
+  contextLength?: number; // K tokens
+
+  // 特性支持
+  supportsExtendedThinking?: boolean;
+  supportsCacheControl?: boolean;
+  supportsVision?: boolean;
+  supportsFunctionCalling?: boolean;
+  supportsStreaming?: boolean;
+
+  // 推荐场景
+  recommendedScenarios?: string[];
 }
 
 export const MODEL_PRICING_DATA: ModelPricingData[] = [
@@ -26,6 +49,15 @@ export const MODEL_PRICING_DATA: ModelPricingData[] = [
     outputPrice: 10,
     displayName: 'GPT-4o',
     notes: 'OpenAI flagship model',
+    reasoningScore: 90,
+    codingScore: 92,
+    creativityScore: 88,
+    speedScore: 85,
+    contextLength: 128,
+    supportsVision: true,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    recommendedScenarios: ['general-purpose', 'multimodal', 'coding'],
   },
   {
     model: 'gpt-4o-2024-11-20',
@@ -55,6 +87,15 @@ export const MODEL_PRICING_DATA: ModelPricingData[] = [
     outputPrice: 0.6,
     displayName: 'GPT-4o Mini',
     notes: 'Cost-effective small model',
+    reasoningScore: 75,
+    codingScore: 78,
+    creativityScore: 72,
+    speedScore: 95,
+    contextLength: 128,
+    supportsVision: true,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    recommendedScenarios: ['fast-response', 'cost-optimized', 'simple-tasks'],
   },
   {
     model: 'gpt-4o-mini-2024-07-18',
@@ -112,6 +153,14 @@ export const MODEL_PRICING_DATA: ModelPricingData[] = [
     outputPrice: 60,
     displayName: 'o1',
     notes: 'OpenAI reasoning model',
+    reasoningScore: 98,
+    codingScore: 95,
+    creativityScore: 85,
+    speedScore: 50,
+    contextLength: 200,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    recommendedScenarios: ['deep-reasoning', 'math', 'science'],
   },
   {
     model: 'o1-2024-12-17',
@@ -148,6 +197,14 @@ export const MODEL_PRICING_DATA: ModelPricingData[] = [
     outputPrice: 4.4,
     displayName: 'o3 Mini',
     notes: 'OpenAI latest reasoning model',
+    reasoningScore: 88,
+    codingScore: 90,
+    creativityScore: 75,
+    speedScore: 80,
+    contextLength: 200,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    recommendedScenarios: ['reasoning', 'coding', 'cost-optimized'],
   },
 
   // ============================================================================
@@ -155,12 +212,68 @@ export const MODEL_PRICING_DATA: ModelPricingData[] = [
   // https://www.anthropic.com/pricing
   // ============================================================================
   {
+    model: 'claude-opus-4-20250514',
+    vendor: 'anthropic',
+    inputPrice: 15,
+    outputPrice: 75,
+    cacheReadPrice: 1.5,
+    cacheWritePrice: 18.75,
+    thinkingPrice: 15,
+    displayName: 'Claude Opus 4',
+    notes: 'Anthropic flagship model with Extended Thinking',
+    reasoningScore: 100,
+    codingScore: 98,
+    creativityScore: 95,
+    speedScore: 60,
+    contextLength: 200,
+    supportsExtendedThinking: true,
+    supportsCacheControl: true,
+    supportsVision: true,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    recommendedScenarios: ['deep-reasoning', 'complex-analysis', 'research'],
+  },
+  {
+    model: 'claude-sonnet-4-20250514',
+    vendor: 'anthropic',
+    inputPrice: 3,
+    outputPrice: 15,
+    cacheReadPrice: 0.3,
+    cacheWritePrice: 3.75,
+    thinkingPrice: 3,
+    displayName: 'Claude Sonnet 4',
+    notes: 'Best balance of performance and cost with Extended Thinking',
+    reasoningScore: 92,
+    codingScore: 95,
+    creativityScore: 90,
+    speedScore: 80,
+    contextLength: 200,
+    supportsExtendedThinking: true,
+    supportsCacheControl: true,
+    supportsVision: true,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    recommendedScenarios: ['coding', 'general-purpose', 'cost-optimized'],
+  },
+  {
     model: 'claude-3-5-sonnet-20241022',
     vendor: 'anthropic',
     inputPrice: 3,
     outputPrice: 15,
+    cacheReadPrice: 0.3,
+    cacheWritePrice: 3.75,
     displayName: 'Claude 3.5 Sonnet (2024-10-22)',
     notes: 'Latest Claude 3.5 Sonnet',
+    reasoningScore: 90,
+    codingScore: 93,
+    creativityScore: 88,
+    speedScore: 82,
+    contextLength: 200,
+    supportsCacheControl: true,
+    supportsVision: true,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    recommendedScenarios: ['coding', 'general-purpose'],
   },
   {
     model: 'claude-3-5-sonnet-20240620',
@@ -181,7 +294,19 @@ export const MODEL_PRICING_DATA: ModelPricingData[] = [
     vendor: 'anthropic',
     inputPrice: 0.8,
     outputPrice: 4,
+    cacheReadPrice: 0.08,
+    cacheWritePrice: 1.0,
     displayName: 'Claude 3.5 Haiku (2024-10-22)',
+    reasoningScore: 75,
+    codingScore: 80,
+    creativityScore: 70,
+    speedScore: 95,
+    contextLength: 200,
+    supportsCacheControl: true,
+    supportsVision: true,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    recommendedScenarios: ['fast-response', 'simple-tasks', 'high-volume'],
   },
   {
     model: 'claude-3-5-haiku',
@@ -244,6 +369,14 @@ export const MODEL_PRICING_DATA: ModelPricingData[] = [
     outputPrice: 0.28,
     displayName: 'DeepSeek Chat',
     notes: 'DeepSeek V3',
+    reasoningScore: 85,
+    codingScore: 92,
+    creativityScore: 80,
+    speedScore: 90,
+    contextLength: 64,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    recommendedScenarios: ['cost-optimized', 'coding', 'general-purpose'],
   },
   {
     model: 'deepseek-coder',
@@ -251,6 +384,14 @@ export const MODEL_PRICING_DATA: ModelPricingData[] = [
     inputPrice: 0.14,
     outputPrice: 0.28,
     displayName: 'DeepSeek Coder',
+    reasoningScore: 80,
+    codingScore: 95,
+    creativityScore: 70,
+    speedScore: 90,
+    contextLength: 64,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    recommendedScenarios: ['coding', 'cost-optimized'],
   },
   {
     model: 'deepseek-reasoner',
@@ -259,6 +400,14 @@ export const MODEL_PRICING_DATA: ModelPricingData[] = [
     outputPrice: 2.19,
     displayName: 'DeepSeek Reasoner',
     notes: 'DeepSeek R1',
+    reasoningScore: 95,
+    codingScore: 93,
+    creativityScore: 78,
+    speedScore: 70,
+    contextLength: 64,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    recommendedScenarios: ['deep-reasoning', 'math', 'coding'],
   },
 
   // ============================================================================

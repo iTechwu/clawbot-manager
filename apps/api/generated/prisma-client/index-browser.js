@@ -346,7 +346,19 @@ exports.Prisma.BotUsageLogScalarFieldEnum = {
   model: 'model',
   endpoint: 'endpoint',
   durationMs: 'durationMs',
-  errorMessage: 'errorMessage'
+  errorMessage: 'errorMessage',
+  thinkingTokens: 'thinkingTokens',
+  cacheReadTokens: 'cacheReadTokens',
+  cacheWriteTokens: 'cacheWriteTokens',
+  protocolType: 'protocolType',
+  inputCost: 'inputCost',
+  outputCost: 'outputCost',
+  thinkingCost: 'thinkingCost',
+  cacheCost: 'cacheCost',
+  totalCost: 'totalCost',
+  fallbackUsed: 'fallbackUsed',
+  fallbackLevel: 'fallbackLevel',
+  originalModel: 'originalModel'
 };
 
 exports.Prisma.ProxyTokenScalarFieldEnum = {
@@ -499,12 +511,30 @@ exports.Prisma.ModelPricingScalarFieldEnum = {
   id: 'id',
   model: 'model',
   vendor: 'vendor',
+  displayName: 'displayName',
+  description: 'description',
   inputPrice: 'inputPrice',
   outputPrice: 'outputPrice',
-  displayName: 'displayName',
+  cacheReadPrice: 'cacheReadPrice',
+  cacheWritePrice: 'cacheWritePrice',
+  thinkingPrice: 'thinkingPrice',
+  reasoningScore: 'reasoningScore',
+  codingScore: 'codingScore',
+  creativityScore: 'creativityScore',
+  speedScore: 'speedScore',
+  contextLength: 'contextLength',
+  supportsExtendedThinking: 'supportsExtendedThinking',
+  supportsCacheControl: 'supportsCacheControl',
+  supportsVision: 'supportsVision',
+  supportsFunctionCalling: 'supportsFunctionCalling',
+  supportsStreaming: 'supportsStreaming',
+  recommendedScenarios: 'recommendedScenarios',
   isEnabled: 'isEnabled',
+  isDeprecated: 'isDeprecated',
+  deprecationDate: 'deprecationDate',
   priceUpdatedAt: 'priceUpdatedAt',
   notes: 'notes',
+  metadata: 'metadata',
   isDeleted: 'isDeleted',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -540,6 +570,86 @@ exports.Prisma.BotChannelScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   deletedAt: 'deletedAt'
+};
+
+exports.Prisma.CapabilityTagScalarFieldEnum = {
+  id: 'id',
+  tagId: 'tagId',
+  name: 'name',
+  description: 'description',
+  category: 'category',
+  priority: 'priority',
+  requiredProtocol: 'requiredProtocol',
+  requiredSkills: 'requiredSkills',
+  requiredModels: 'requiredModels',
+  requiresExtendedThinking: 'requiresExtendedThinking',
+  requiresCacheControl: 'requiresCacheControl',
+  requiresVision: 'requiresVision',
+  maxCostPerMToken: 'maxCostPerMToken',
+  isActive: 'isActive',
+  isBuiltin: 'isBuiltin',
+  isDeleted: 'isDeleted',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.FallbackChainScalarFieldEnum = {
+  id: 'id',
+  chainId: 'chainId',
+  name: 'name',
+  description: 'description',
+  models: 'models',
+  triggerStatusCodes: 'triggerStatusCodes',
+  triggerErrorTypes: 'triggerErrorTypes',
+  triggerTimeoutMs: 'triggerTimeoutMs',
+  maxRetries: 'maxRetries',
+  retryDelayMs: 'retryDelayMs',
+  preserveProtocol: 'preserveProtocol',
+  isActive: 'isActive',
+  isBuiltin: 'isBuiltin',
+  isDeleted: 'isDeleted',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.CostStrategyScalarFieldEnum = {
+  id: 'id',
+  strategyId: 'strategyId',
+  name: 'name',
+  description: 'description',
+  costWeight: 'costWeight',
+  performanceWeight: 'performanceWeight',
+  capabilityWeight: 'capabilityWeight',
+  maxCostPerRequest: 'maxCostPerRequest',
+  maxLatencyMs: 'maxLatencyMs',
+  minCapabilityScore: 'minCapabilityScore',
+  scenarioWeights: 'scenarioWeights',
+  isActive: 'isActive',
+  isBuiltin: 'isBuiltin',
+  isDeleted: 'isDeleted',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
+exports.Prisma.BotRoutingConfigScalarFieldEnum = {
+  id: 'id',
+  botId: 'botId',
+  routingEnabled: 'routingEnabled',
+  routingMode: 'routingMode',
+  fallbackEnabled: 'fallbackEnabled',
+  fallbackChainId: 'fallbackChainId',
+  costControlEnabled: 'costControlEnabled',
+  costStrategyId: 'costStrategyId',
+  dailyBudget: 'dailyBudget',
+  monthlyBudget: 'monthlyBudget',
+  alertThreshold: 'alertThreshold',
+  autoDowngrade: 'autoDowngrade',
+  downgradeModel: 'downgradeModel',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -693,7 +803,11 @@ exports.Prisma.ModelName = {
   BotSkill: 'BotSkill',
   ModelPricing: 'ModelPricing',
   BotModelRouting: 'BotModelRouting',
-  BotChannel: 'BotChannel'
+  BotChannel: 'BotChannel',
+  CapabilityTag: 'CapabilityTag',
+  FallbackChain: 'FallbackChain',
+  CostStrategy: 'CostStrategy',
+  BotRoutingConfig: 'BotRoutingConfig'
 };
 
 /**

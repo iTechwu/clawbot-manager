@@ -30,3 +30,7 @@ export * from './modules/bot-skill';
 export * from './modules/bot-channel';
 export * from './modules/model-pricing';
 export * from './modules/bot-model-routing';
+export * from './modules/capability-tag';
+export * from './modules/fallback-chain';
+export * from './modules/cost-strategy';
+export * from './modules/bot-routing-config';

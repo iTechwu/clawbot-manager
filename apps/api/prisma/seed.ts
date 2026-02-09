@@ -28,6 +28,15 @@ import { SYSTEM_TEMPLATES } from '../scripts/persona-templates.data';
 // Model pricing data
 import { MODEL_PRICING_DATA } from '../scripts/model-pricing.data';
 
+// Capability tags data
+import { CAPABILITY_TAGS_DATA } from '../scripts/capability-tags.data';
+
+// Fallback chains data
+import { FALLBACK_CHAINS_DATA } from '../scripts/fallback-chains.data';
+
+// Cost strategies data
+import { COST_STRATEGIES_DATA } from '../scripts/cost-strategies.data';
+
 // ============================================================================
 // Seed Functions
 // ============================================================================
@@ -293,19 +302,40 @@ async function seedModelPricing() {
       where: { model: pricingData.model },
     });
 
+    const data = {
+      vendor: pricingData.vendor,
+      inputPrice: pricingData.inputPrice,
+      outputPrice: pricingData.outputPrice,
+      displayName: pricingData.displayName,
+      description: pricingData.description,
+      notes: pricingData.notes,
+      // Extended pricing
+      cacheReadPrice: pricingData.cacheReadPrice,
+      cacheWritePrice: pricingData.cacheWritePrice,
+      thinkingPrice: pricingData.thinkingPrice,
+      // Capability scores
+      reasoningScore: pricingData.reasoningScore ?? 50,
+      codingScore: pricingData.codingScore ?? 50,
+      creativityScore: pricingData.creativityScore ?? 50,
+      speedScore: pricingData.speedScore ?? 50,
+      contextLength: pricingData.contextLength ?? 128,
+      // Feature support
+      supportsExtendedThinking: pricingData.supportsExtendedThinking ?? false,
+      supportsCacheControl: pricingData.supportsCacheControl ?? false,
+      supportsVision: pricingData.supportsVision ?? false,
+      supportsFunctionCalling: pricingData.supportsFunctionCalling ?? true,
+      supportsStreaming: pricingData.supportsStreaming ?? true,
+      // Recommended scenarios
+      recommendedScenarios: pricingData.recommendedScenarios as Prisma.InputJsonValue,
+      priceUpdatedAt: new Date(),
+      isDeleted: false,
+    };
+
     if (existing) {
       // Update existing pricing
       await prisma.modelPricing.update({
         where: { model: pricingData.model },
-        data: {
-          vendor: pricingData.vendor,
-          inputPrice: pricingData.inputPrice,
-          outputPrice: pricingData.outputPrice,
-          displayName: pricingData.displayName,
-          notes: pricingData.notes,
-          priceUpdatedAt: new Date(),
-          isDeleted: false,
-        },
+        data,
       });
       console.log(`  ⏭️  Updated: ${pricingData.model}`);
     } else {
@@ -313,11 +343,7 @@ async function seedModelPricing() {
       await prisma.modelPricing.create({
         data: {
           model: pricingData.model,
-          vendor: pricingData.vendor,
-          inputPrice: pricingData.inputPrice,
-          outputPrice: pricingData.outputPrice,
-          displayName: pricingData.displayName,
-          notes: pricingData.notes,
+          ...data,
         },
       });
       console.log(`  ✅ Created: ${pricingData.model}`);
@@ -340,6 +366,146 @@ async function seedModelPricing() {
   );
 }
 
+async function seedCapabilityTags() {
+  console.log('\n🏷️  Seeding capability tags...');
+
+  for (const tagData of CAPABILITY_TAGS_DATA) {
+    const existing = await prisma.capabilityTag.findUnique({
+      where: { tagId: tagData.tagId },
+    });
+
+    const data = {
+      name: tagData.name,
+      description: tagData.description,
+      category: tagData.category,
+      priority: tagData.priority,
+      requiredProtocol: tagData.requiredProtocol,
+      requiredSkills: tagData.requiredSkills as Prisma.InputJsonValue,
+      requiredModels: tagData.requiredModels as Prisma.InputJsonValue,
+      requiresExtendedThinking: tagData.requiresExtendedThinking ?? false,
+      requiresCacheControl: tagData.requiresCacheControl ?? false,
+      requiresVision: tagData.requiresVision ?? false,
+      maxCostPerMToken: tagData.maxCostPerMToken,
+      isBuiltin: tagData.isBuiltin,
+      isActive: true,
+      isDeleted: false,
+    };
+
+    if (existing) {
+      await prisma.capabilityTag.update({
+        where: { tagId: tagData.tagId },
+        data,
+      });
+      console.log(`  ⏭️  Updated: ${tagData.tagId}`);
+    } else {
+      await prisma.capabilityTag.create({
+        data: {
+          tagId: tagData.tagId,
+          ...data,
+        },
+      });
+      console.log(`  ✅ Created: ${tagData.tagId}`);
+    }
+  }
+
+  const count = await prisma.capabilityTag.count({
+    where: { isDeleted: false },
+  });
+  console.log(`🏷️  Capability tags seeding completed! (${count} tags)`);
+}
+
+async function seedFallbackChains() {
+  console.log('\n🔗 Seeding fallback chains...');
+
+  for (const chainData of FALLBACK_CHAINS_DATA) {
+    const existing = await prisma.fallbackChain.findUnique({
+      where: { chainId: chainData.chainId },
+    });
+
+    const data = {
+      name: chainData.name,
+      description: chainData.description,
+      models: chainData.models as Prisma.InputJsonValue,
+      triggerStatusCodes: chainData.triggerStatusCodes as Prisma.InputJsonValue,
+      triggerErrorTypes: chainData.triggerErrorTypes as Prisma.InputJsonValue,
+      triggerTimeoutMs: chainData.triggerTimeoutMs,
+      maxRetries: chainData.maxRetries,
+      retryDelayMs: chainData.retryDelayMs,
+      preserveProtocol: chainData.preserveProtocol,
+      isBuiltin: chainData.isBuiltin,
+      isActive: true,
+      isDeleted: false,
+    };
+
+    if (existing) {
+      await prisma.fallbackChain.update({
+        where: { chainId: chainData.chainId },
+        data,
+      });
+      console.log(`  ⏭️  Updated: ${chainData.chainId}`);
+    } else {
+      await prisma.fallbackChain.create({
+        data: {
+          chainId: chainData.chainId,
+          ...data,
+        },
+      });
+      console.log(`  ✅ Created: ${chainData.chainId}`);
+    }
+  }
+
+  const count = await prisma.fallbackChain.count({
+    where: { isDeleted: false },
+  });
+  console.log(`🔗 Fallback chains seeding completed! (${count} chains)`);
+}
+
+async function seedCostStrategies() {
+  console.log('\n💵 Seeding cost strategies...');
+
+  for (const strategyData of COST_STRATEGIES_DATA) {
+    const existing = await prisma.costStrategy.findUnique({
+      where: { strategyId: strategyData.strategyId },
+    });
+
+    const data = {
+      name: strategyData.name,
+      description: strategyData.description,
+      costWeight: strategyData.costWeight,
+      performanceWeight: strategyData.performanceWeight,
+      capabilityWeight: strategyData.capabilityWeight,
+      maxCostPerRequest: strategyData.maxCostPerRequest,
+      maxLatencyMs: strategyData.maxLatencyMs,
+      minCapabilityScore: strategyData.minCapabilityScore,
+      scenarioWeights: strategyData.scenarioWeights as Prisma.InputJsonValue,
+      isBuiltin: strategyData.isBuiltin,
+      isActive: true,
+      isDeleted: false,
+    };
+
+    if (existing) {
+      await prisma.costStrategy.update({
+        where: { strategyId: strategyData.strategyId },
+        data,
+      });
+      console.log(`  ⏭️  Updated: ${strategyData.strategyId}`);
+    } else {
+      await prisma.costStrategy.create({
+        data: {
+          strategyId: strategyData.strategyId,
+          ...data,
+        },
+      });
+      console.log(`  ✅ Created: ${strategyData.strategyId}`);
+    }
+  }
+
+  const count = await prisma.costStrategy.count({
+    where: { isDeleted: false },
+  });
+  console.log(`💵 Cost strategies seeding completed! (${count} strategies)`);
+}
+
 async function main() {
   console.log('🌱 Starting database seeding...\n');
 
@@ -348,6 +514,10 @@ async function main() {
   await seedChannelDefinitions();
   await seedPlugins();
   await seedModelPricing();
+  // Hybrid architecture routing configuration
+  await seedCapabilityTags();
+  await seedFallbackChains();
+  await seedCostStrategies();
 
   console.log('\n✅ Database seeding completed successfully!');
 }

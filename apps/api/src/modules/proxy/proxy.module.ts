@@ -11,6 +11,7 @@ import {
 } from '@app/db';
 import { ProxyController } from './proxy.controller';
 import { ProxyAdminController } from './proxy-admin.controller';
+import { RoutingAdminController } from './routing-admin.controller';
 import { ProxyService } from './services/proxy.service';
 import { KeyringService } from './services/keyring.service';
 import { KeyringProxyService } from './services/keyring-proxy.service';
@@ -19,6 +20,11 @@ import { QuotaService } from './services/quota.service';
 import { TokenExtractorService } from './services/token-extractor.service';
 import { EncryptionService } from '../bot-api/services/encryption.service';
 import { ModelRouterService } from '../bot-api/services/model-router.service';
+// Hybrid architecture services
+import { RoutingEngineService } from './services/routing-engine.service';
+import { FallbackEngineService } from './services/fallback-engine.service';
+import { CostTrackerService } from './services/cost-tracker.service';
+import { ConfigurationService } from './services/configuration.service';
 
 /**
  * ProxyModule - API 代理模块
@@ -32,6 +38,7 @@ import { ModelRouterService } from '../bot-api/services/model-router.service';
  * - Token 配额检查和通知
  * - Zero-Trust Mode 支持
  * - 模型路由支持（功能路由、负载均衡、故障转移）
+ * - 混合架构支持（能力标签路由、多模型 Fallback、成本控制）
  */
 @Module({
   imports: [
@@ -44,7 +51,7 @@ import { ModelRouterService } from '../bot-api/services/model-router.service';
     BotProviderKeyModule,
     BotModelRoutingModule,
   ],
-  controllers: [ProxyController, ProxyAdminController],
+  controllers: [ProxyController, ProxyAdminController, RoutingAdminController],
   providers: [
     ProxyService,
     KeyringService,
@@ -54,6 +61,11 @@ import { ModelRouterService } from '../bot-api/services/model-router.service';
     TokenExtractorService,
     EncryptionService,
     ModelRouterService,
+    // Hybrid architecture services
+    RoutingEngineService,
+    FallbackEngineService,
+    CostTrackerService,
+    ConfigurationService,
   ],
   exports: [
     ProxyService,
@@ -61,6 +73,11 @@ import { ModelRouterService } from '../bot-api/services/model-router.service';
     QuotaService,
     TokenExtractorService,
     ModelRouterService,
+    // Hybrid architecture services
+    RoutingEngineService,
+    FallbackEngineService,
+    CostTrackerService,
+    ConfigurationService,
   ],
 })
 export class ProxyModule {}

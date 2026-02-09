@@ -14,6 +14,7 @@ export * from './persona-template.schema';
 export * from './plugin.schema';
 export * from './provider.schema';
 export * from './risk-words.schema';
+export * from './routing.schema';
 export * from './setting.schema';
 export * from './sign.schema';
 export * from './skill.schema';

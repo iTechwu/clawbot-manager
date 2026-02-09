@@ -1,0 +1,250 @@
+import { z } from 'zod';
+
+// ============================================================================
+// Model Pricing Schema - 模型定价
+// ============================================================================
+
+export const ModelPricingSchema = z.object({
+  id: z.string().uuid(),
+  model: z.string(),
+  vendor: z.string(),
+  displayName: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  // 定价信息（美元/百万 tokens）
+  inputPrice: z.number(),
+  outputPrice: z.number(),
+  cacheReadPrice: z.number().nullable().optional(),
+  cacheWritePrice: z.number().nullable().optional(),
+  thinkingPrice: z.number().nullable().optional(),
+  // 能力评分（0-100）
+  reasoningScore: z.number().default(50),
+  codingScore: z.number().default(50),
+  creativityScore: z.number().default(50),
+  speedScore: z.number().default(50),
+  contextLength: z.number().default(128),
+  // 特性支持
+  supportsExtendedThinking: z.boolean().default(false),
+  supportsCacheControl: z.boolean().default(false),
+  supportsVision: z.boolean().default(false),
+  supportsFunctionCalling: z.boolean().default(true),
+  supportsStreaming: z.boolean().default(true),
+  // 推荐场景
+  recommendedScenarios: z.array(z.string()).nullable().optional(),
+  // 状态
+  isEnabled: z.boolean().default(true),
+  isDeprecated: z.boolean().default(false),
+  deprecationDate: z.string().nullable().optional(),
+  priceUpdatedAt: z.string(),
+  notes: z.string().nullable().optional(),
+  metadata: z.record(z.unknown()).nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type ModelPricing = z.infer<typeof ModelPricingSchema>;
+
+// ============================================================================
+// Capability Tag Schema - 能力标签
+// ============================================================================
+
+export const CapabilityTagCategorySchema = z.enum([
+  'reasoning',
+  'search',
+  'code',
+  'vision',
+  'audio',
+  'cost',
+  'context',
+]);
+
+export type CapabilityTagCategory = z.infer<typeof CapabilityTagCategorySchema>;
+
+export const CapabilityTagSchema = z.object({
+  id: z.string().uuid(),
+  tagId: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  category: z.string(),
+  priority: z.number().default(50),
+  // 路由要求
+  requiredProtocol: z.string().nullable().optional(),
+  requiredSkills: z.array(z.string()).nullable().optional(),
+  requiredModels: z.array(z.string()).nullable().optional(),
+  // 特性要求
+  requiresExtendedThinking: z.boolean().default(false),
+  requiresCacheControl: z.boolean().default(false),
+  requiresVision: z.boolean().default(false),
+  maxCostPerMToken: z.number().nullable().optional(),
+  // 状态
+  isActive: z.boolean().default(true),
+  isBuiltin: z.boolean().default(false),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type CapabilityTag = z.infer<typeof CapabilityTagSchema>;
+
+// ============================================================================
+// Fallback Chain Schema - Fallback 链
+// ============================================================================
+
+export const FallbackModelSchema = z.object({
+  vendor: z.string(),
+  model: z.string(),
+  protocol: z.enum(['openai-compatible', 'anthropic-native']),
+  features: z
+    .object({
+      extendedThinking: z.boolean().optional(),
+      cacheControl: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+export type FallbackModel = z.infer<typeof FallbackModelSchema>;
+
+export const FallbackChainSchema = z.object({
+  id: z.string().uuid(),
+  chainId: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  models: z.array(FallbackModelSchema),
+  // 触发条件
+  triggerStatusCodes: z.array(z.number()),
+  triggerErrorTypes: z.array(z.string()),
+  triggerTimeoutMs: z.number().default(60000),
+  // 行为配置
+  maxRetries: z.number().default(3),
+  retryDelayMs: z.number().default(2000),
+  preserveProtocol: z.boolean().default(false),
+  // 状态
+  isActive: z.boolean().default(true),
+  isBuiltin: z.boolean().default(false),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type FallbackChain = z.infer<typeof FallbackChainSchema>;
+
+// ============================================================================
+// Cost Strategy Schema - 成本策略
+// ============================================================================
+
+export const CostStrategySchema = z.object({
+  id: z.string().uuid(),
+  strategyId: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  // 优化权重（0-1）
+  costWeight: z.number().default(0.5),
+  performanceWeight: z.number().default(0.3),
+  capabilityWeight: z.number().default(0.2),
+  // 约束条件
+  maxCostPerRequest: z.number().nullable().optional(),
+  maxLatencyMs: z.number().nullable().optional(),
+  minCapabilityScore: z.number().nullable().optional(),
+  // 场景权重
+  scenarioWeights: z
+    .object({
+      reasoning: z.number().optional(),
+      coding: z.number().optional(),
+      creativity: z.number().optional(),
+      speed: z.number().optional(),
+    })
+    .nullable()
+    .optional(),
+  // 状态
+  isActive: z.boolean().default(true),
+  isBuiltin: z.boolean().default(false),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type CostStrategy = z.infer<typeof CostStrategySchema>;
+
+// ============================================================================
+// Bot Routing Config Schema - Bot 路由配置
+// ============================================================================
+
+export const BotRoutingConfigSchema = z.object({
+  id: z.string().uuid(),
+  botId: z.string().uuid(),
+  // 路由配置
+  routingEnabled: z.boolean().default(true),
+  routingMode: z.enum(['auto', 'manual', 'cost-optimized']).default('auto'),
+  // Fallback 配置
+  fallbackEnabled: z.boolean().default(true),
+  fallbackChainId: z.string().nullable().optional(),
+  // 成本控制配置
+  costControlEnabled: z.boolean().default(false),
+  costStrategyId: z.string().nullable().optional(),
+  dailyBudget: z.number().nullable().optional(),
+  monthlyBudget: z.number().nullable().optional(),
+  alertThreshold: z.number().default(0.8),
+  autoDowngrade: z.boolean().default(false),
+  downgradeModel: z.string().nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type BotRoutingConfig = z.infer<typeof BotRoutingConfigSchema>;
+
+// ============================================================================
+// Config Load Status Schema - 配置加载状态
+// ============================================================================
+
+export const ConfigLoadStatusSchema = z.object({
+  modelPricing: z.object({
+    loaded: z.boolean(),
+    count: z.number(),
+    lastUpdate: z.string().optional(),
+  }),
+  capabilityTags: z.object({
+    loaded: z.boolean(),
+    count: z.number(),
+    lastUpdate: z.string().optional(),
+  }),
+  fallbackChains: z.object({
+    loaded: z.boolean(),
+    count: z.number(),
+    lastUpdate: z.string().optional(),
+  }),
+  costStrategies: z.object({
+    loaded: z.boolean(),
+    count: z.number(),
+    lastUpdate: z.string().optional(),
+  }),
+});
+
+export type ConfigLoadStatus = z.infer<typeof ConfigLoadStatusSchema>;
+
+// ============================================================================
+// Cost Calculation Schema - 成本计算
+// ============================================================================
+
+export const CostCalculationSchema = z.object({
+  inputCost: z.number(),
+  outputCost: z.number(),
+  thinkingCost: z.number(),
+  cacheCost: z.number(),
+  totalCost: z.number(),
+  currency: z.literal('USD'),
+});
+
+export type CostCalculation = z.infer<typeof CostCalculationSchema>;
+
+// ============================================================================
+// Budget Status Schema - 预算状态
+// ============================================================================
+
+export const BudgetStatusSchema = z.object({
+  dailyUsed: z.number(),
+  dailyLimit: z.number().optional(),
+  dailyRemaining: z.number().optional(),
+  monthlyUsed: z.number(),
+  monthlyLimit: z.number().optional(),
+  monthlyRemaining: z.number().optional(),
+  alertTriggered: z.boolean(),
+  shouldDowngrade: z.boolean(),
+});
+
+export type BudgetStatus = z.infer<typeof BudgetStatusSchema>;
