@@ -249,43 +249,17 @@ export class BotApiService {
 
     // Note: Bot registration with proxy will happen after bot is created in database
     // This is because we need the bot ID for the ProxyToken model
+    // Container creation is deferred until after proxy registration
 
-    // Create container
-    let containerId: string | null = null;
-    try {
-      containerId = await this.dockerService.createContainer({
-        hostname: input.hostname,
-        isolationKey,
-        name: input.name,
-        port,
-        gatewayToken,
-        aiProvider: primaryProvider.providerId,
-        model: primaryProvider.primaryModel || primaryProvider.models[0],
-        channelType: input.channels[0].channelType,
-        workspacePath,
-        apiKey,
-        apiBaseUrl,
-        proxyUrl: proxyToken ? this.proxyUrl : undefined,
-        proxyToken,
-        apiType,
-      });
-    } catch (error) {
-      this.logger.warn(
-        `Failed to create container for ${input.hostname}:`,
-        error,
-      );
-      // Continue without container - can be created later
-    }
-
-    // Create bot in database（port 必须为 number，Prisma Int 不接受 string）
+    // Create bot in database FIRST (without container)
     // 注意：aiProvider、model、channelType 字段已从数据库移除，实际值从 BotProviderKey 和 BotChannel 派生
     const bot = await this.botService.create({
       name: input.name,
       hostname: input.hostname,
-      containerId,
+      containerId: null, // Will be updated after container creation
       port: typeof port === 'number' ? port : Number(port),
       gatewayToken,
-      proxyTokenHash: proxyTokenHash || null,
+      proxyTokenHash: null, // Will be updated after proxy registration
       tags: input.tags || [],
       status: 'created',
       emoji: input.persona.emoji || null,
@@ -297,7 +271,7 @@ export class BotApiService {
       createdBy: { connect: { id: userId } },
     });
 
-    this.logger.log(`Bot created: ${input.hostname}`);
+    this.logger.log(`Bot created in database: ${input.hostname} (id: ${bot.id})`);
 
     // Create BotProviderKey relationships for all providers
     for (const provider of input.providers) {
@@ -340,16 +314,7 @@ export class BotApiService {
         // Update bot with proxyTokenHash
         await this.botService.update({ id: bot.id }, { proxyTokenHash });
 
-        // Update container environment with proxy token if container exists
-        if (containerId) {
-          // Note: Container needs to be recreated with proxy token
-          // For now, we'll need to restart the bot to apply the proxy token
-          this.logger.log(
-            `Bot ${input.hostname} registered with proxy. Restart required to apply proxy token.`,
-          );
-        }
-
-        this.logger.log(`Bot ${input.hostname} registered with proxy`);
+        this.logger.log(`Bot ${input.hostname} registered with proxy (token obtained)`);
       } catch (error) {
         this.logger.warn(
           `Failed to register bot with proxy, falling back to direct mode:`,
@@ -380,6 +345,37 @@ export class BotApiService {
           }
         }
       }
+    }
+
+    // Create container AFTER proxy registration (so it has the proxy token)
+    let containerId: string | null = null;
+    try {
+      containerId = await this.dockerService.createContainer({
+        hostname: input.hostname,
+        isolationKey,
+        name: input.name,
+        port,
+        gatewayToken,
+        aiProvider: primaryProvider.providerId,
+        model: primaryProvider.primaryModel || primaryProvider.models[0],
+        channelType: input.channels[0].channelType,
+        workspacePath,
+        apiKey,
+        apiBaseUrl,
+        proxyUrl: proxyToken ? this.proxyUrl : undefined,
+        proxyToken,
+        apiType,
+      });
+
+      // Update bot with container ID
+      await this.botService.update({ id: bot.id }, { containerId });
+      this.logger.log(`Container created for bot ${input.hostname}: ${containerId}`);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to create container for ${input.hostname}:`,
+        error,
+      );
+      // Continue without container - can be created later
     }
 
     // Log operation
