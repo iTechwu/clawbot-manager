@@ -246,26 +246,44 @@ export class OpenClawClient {
 
           // 处理事件帧（聊天响应）
           if (frame.type === 'event') {
-            const { event, payload } = frame;
+            const { event } = frame;
+            // payload 可能是 JSON 字符串，需要解析
+            let payload: Record<string, unknown> | undefined;
+            try {
+              payload = typeof frame.payload === 'string'
+                ? JSON.parse(frame.payload)
+                : frame.payload;
+            } catch {
+              this.logger.warn('OpenClawClient: 解析 payload 失败', {
+                payload: String(frame.payload).slice(0, 200),
+              });
+              payload = undefined;
+            }
 
             // 处理 agent 事件（流式文本）
             // 格式: { stream: 'assistant', data: { text: '...' } }
-            if (event === 'agent' && payload?.stream === 'assistant' && payload?.data?.text) {
-              // 流式文本累积 - 但 agent 事件发送的是累积文本，不是增量
-              // 所以我们只保存最新的完整文本
-              responseText = payload.data.text;
-              this.logger.debug('OpenClawClient: 收到 agent 流式文本', {
-                textLength: responseText.length,
-              });
+            if (event === 'agent' && payload?.stream === 'assistant') {
+              const data = payload.data as { text?: string } | undefined;
+              if (data?.text) {
+                // 流式文本累积 - 但 agent 事件发送的是累积文本，不是增量
+                // 所以我们只保存最新的完整文本
+                responseText = data.text;
+                this.logger.debug('OpenClawClient: 收到 agent 流式文本', {
+                  textLength: responseText.length,
+                });
+              }
               return;
             }
 
             // 处理 agent lifecycle 事件（结束信号）
             // 格式: { stream: 'lifecycle', data: { phase: 'end' } }
-            if (event === 'agent' && payload?.stream === 'lifecycle' && payload?.data?.phase === 'end') {
-              this.logger.info('OpenClawClient: agent 生命周期结束', {
-                responseLength: responseText.length,
-              });
+            if (event === 'agent' && payload?.stream === 'lifecycle') {
+              const data = payload.data as { phase?: string } | undefined;
+              if (data?.phase === 'end') {
+                this.logger.info('OpenClawClient: agent 生命周期结束', {
+                  responseLength: responseText.length,
+                });
+              }
               // 不在这里 resolve，等待 chat 事件的 final 状态
               return;
             }
@@ -273,29 +291,35 @@ export class OpenClawClient {
             // 处理 chat 事件（最终结果）
             // 格式: { state: 'final', message: { role: 'assistant', content: [{ type: 'text', text: '...' }] } }
             if (event === 'chat') {
-              const chatEvent = payload;
+              const chatEvent = payload as Record<string, unknown> | undefined;
               this.logger.info('OpenClawClient: 处理 chat 事件', {
                 state: chatEvent?.state,
                 hasMessage: !!chatEvent?.message,
                 currentResponseLength: responseText.length,
               });
 
-              // 处理 final 状态 - 提取最终文本
-              if (chatEvent?.state === 'final' && chatEvent?.message?.content) {
-                const content = chatEvent.message.content;
-                let finalText = '';
-                for (const item of content) {
-                  if (item.type === 'text' && item.text) {
-                    finalText += item.text;
+              // 处理 final 状态
+              if (chatEvent?.state === 'final') {
+                // 尝试从 message.content 提取最终文本
+                const message = chatEvent?.message as { content?: Array<{ type: string; text?: string }> } | undefined;
+                if (message?.content && Array.isArray(message.content)) {
+                  let finalText = '';
+                  for (const item of message.content) {
+                    if (item.type === 'text' && item.text) {
+                      finalText += item.text;
+                    }
+                  }
+                  if (finalText) {
+                    responseText = finalText;
                   }
                 }
-                if (finalText) {
-                  responseText = finalText;
-                }
+
                 this.logger.info('OpenClawClient: 聊天完成 (final)', {
                   finalResponseLength: responseText.length,
                   responsePreview: responseText.substring(0, 200),
                 });
+
+                // 无论是否有 message，final 状态都应该 resolve
                 if (!isResolved) {
                   isResolved = true;
                   clearTimeout(timeoutId);
@@ -307,9 +331,10 @@ export class OpenClawClient {
 
               // 兼容旧格式: payload.type === 'text' / 'result' / 'error'
               if (chatEvent?.type === 'text' && chatEvent?.text) {
-                responseText += chatEvent.text;
+                const text = String(chatEvent.text);
+                responseText += text;
                 this.logger.debug('OpenClawClient: 累积响应文本 (旧格式)', {
-                  addedLength: chatEvent.text.length,
+                  addedLength: text.length,
                   totalLength: responseText.length,
                 });
               } else if (chatEvent?.type === 'result') {
@@ -324,14 +349,15 @@ export class OpenClawClient {
                   resolve(responseText);
                 }
               } else if (chatEvent?.type === 'error') {
+                const errorMessage = String(chatEvent.message || 'Chat error');
                 this.logger.error('OpenClawClient: 聊天错误', {
-                  errorMessage: chatEvent.message,
+                  errorMessage,
                 });
                 if (!isResolved) {
                   isResolved = true;
                   clearTimeout(timeoutId);
                   ws.close();
-                  reject(new Error(chatEvent.message || 'Chat error'));
+                  reject(new Error(errorMessage));
                 }
               }
             }

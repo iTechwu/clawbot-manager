@@ -223,180 +223,183 @@ function ChannelConfigForm({
   };
 
   return (
-    <div className="space-y-6">
-      {/* 标题 */}
-      <div className="flex items-center gap-3">
-        <div
-          className="size-12 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: `${accentColor}20` }}
-        >
-          <ChannelIcon channelId={definition.id} size={28} />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold">配置 {definition.label}</h3>
-          {definition.tokenHint && (
-            <p className="text-sm text-muted-foreground">
-              {definition.tokenHint}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* 飞书/Lark 域名选择 */}
-      {isFeishuChannel && (
-        <div className="space-y-2">
-          <Label className="flex items-center gap-1">
-            服务区域
-            <span className="text-destructive">*</span>
-            {channel?.config && (
-              <Check className="size-3 text-green-500 ml-1" />
-            )}
-          </Label>
-          <Select
-            value={feishuConfig.domain}
-            onValueChange={(value: 'feishu' | 'lark') =>
-              setFeishuConfig((prev) => ({ ...prev, domain: value }))
-            }
+    <div className="h-full flex flex-col min-h-0">
+      {/* 可滚动的内容区域 */}
+      <div className="flex-1 overflow-y-auto space-y-6 pb-4 min-h-0">
+        {/* 标题 */}
+        <div className="flex items-center gap-3">
+          <div
+            className="size-12 rounded-lg flex items-center justify-center"
+            style={{ backgroundColor: `${accentColor}20` }}
           >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="选择服务区域" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="feishu">
-                <div className="flex flex-col items-start">
-                  <span>飞书 (中国大陆)</span>
-                  <span className="text-xs text-muted-foreground">
-                    open.feishu.cn
-                  </span>
-                </div>
-              </SelectItem>
-              <SelectItem value="lark">
-                <div className="flex flex-col items-start">
-                  <span>Lark (海外)</span>
-                  <span className="text-xs text-muted-foreground">
-                    open.larksuite.com
-                  </span>
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            请根据您的飞书应用所在区域选择对应的服务
-          </p>
+            <ChannelIcon channelId={definition.id} size={28} />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">配置 {definition.label}</h3>
+            {definition.tokenHint && (
+              <p className="text-sm text-muted-foreground">
+                {definition.tokenHint}
+              </p>
+            )}
+          </div>
         </div>
-      )}
 
-      {/* 凭证字段 */}
-      <div className="space-y-4">
-        {definition.credentialFields?.map((field) => {
-          // 获取已保存的掩码值
-          const maskedValue = channel?.credentialsMasked?.[field.key];
-          // 判断是否已配置（有掩码值）
-          const isConfigured = !!maskedValue;
-          // 判断用户是否输入了新值
-          const hasNewValue = !!credentials[field.key];
+        {/* 飞书/Lark 域名选择 */}
+        {isFeishuChannel && (
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1">
+              服务区域
+              <span className="text-destructive">*</span>
+              {channel?.config && (
+                <Check className="size-3 text-green-500 ml-1" />
+              )}
+            </Label>
+            <Select
+              value={feishuConfig.domain}
+              onValueChange={(value: 'feishu' | 'lark') =>
+                setFeishuConfig((prev) => ({ ...prev, domain: value }))
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="选择服务区域" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="feishu">
+                  <div className="flex flex-col items-start">
+                    <span>飞书 (中国大陆)</span>
+                    <span className="text-xs text-muted-foreground">
+                      open.feishu.cn
+                    </span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="lark">
+                  <div className="flex flex-col items-start">
+                    <span>Lark (海外)</span>
+                    <span className="text-xs text-muted-foreground">
+                      open.larksuite.com
+                    </span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              请根据您的飞书应用所在区域选择对应的服务
+            </p>
+          </div>
+        )}
 
-          return (
-            <div key={field.key} className="space-y-2">
-              <Label htmlFor={field.key} className="flex items-center gap-1">
-                {field.label}
-                {field.required && !isConfigured && (
-                  <span className="text-destructive">*</span>
-                )}
-                {(hasNewValue || isConfigured) && (
-                  <Check className="size-3 text-green-500 ml-1" />
-                )}
-              </Label>
+        {/* 凭证字段 */}
+        <div className="space-y-4">
+          {definition.credentialFields?.map((field) => {
+            // 获取已保存的掩码值
+            const maskedValue = channel?.credentialsMasked?.[field.key];
+            // 判断是否已配置（有掩码值）
+            const isConfigured = !!maskedValue;
+            // 判断用户是否输入了新值
+            const hasNewValue = !!credentials[field.key];
 
-              <div className="relative">
-                <Input
-                  id={field.key}
-                  type={
-                    field.fieldType === 'password' && !showPasswords[field.key]
-                      ? 'password'
-                      : 'text'
-                  }
-                  placeholder={isConfigured ? `已配置: ${maskedValue}` : field.placeholder}
-                  value={credentials[field.key] || ''}
-                  onChange={(e) =>
-                    handleCredentialChange(field.key, e.target.value)
-                  }
-                />
-                {field.fieldType === 'password' && (
-                  <button
-                    type="button"
-                    onClick={() => togglePasswordVisibility(field.key)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPasswords[field.key] ? (
-                      <EyeOff className="size-4" />
-                    ) : (
-                      <Eye className="size-4" />
-                    )}
-                  </button>
+            return (
+              <div key={field.key} className="space-y-2">
+                <Label htmlFor={field.key} className="flex items-center gap-1">
+                  {field.label}
+                  {field.required && !isConfigured && (
+                    <span className="text-destructive">*</span>
+                  )}
+                  {(hasNewValue || isConfigured) && (
+                    <Check className="size-3 text-green-500 ml-1" />
+                  )}
+                </Label>
+
+                <div className="relative">
+                  <Input
+                    id={field.key}
+                    type={
+                      field.fieldType === 'password' && !showPasswords[field.key]
+                        ? 'password'
+                        : 'text'
+                    }
+                    placeholder={isConfigured ? `已配置: ${maskedValue}` : field.placeholder}
+                    value={credentials[field.key] || ''}
+                    onChange={(e) =>
+                      handleCredentialChange(field.key, e.target.value)
+                    }
+                  />
+                  {field.fieldType === 'password' && (
+                    <button
+                      type="button"
+                      onClick={() => togglePasswordVisibility(field.key)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPasswords[field.key] ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {isConfigured && !hasNewValue && (
+                  <p className="text-xs text-muted-foreground">
+                    留空则保持原有配置不变
+                  </p>
                 )}
               </div>
+            );
+          })}
+        </div>
 
-              {isConfigured && !hasNewValue && (
-                <p className="text-xs text-muted-foreground">
-                  留空则保持原有配置不变
-                </p>
+        {/* 安全提示 */}
+        <div className="rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-3 text-sm">
+          <div className="flex items-start gap-2">
+            <ShieldCheck className="size-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+            <p className="text-green-700 dark:text-green-300">
+              为保障您的隐私安全，所有敏感凭证数据均采用 AES-256 加密存储，且不会在页面上明文显示。
+            </p>
+          </div>
+        </div>
+
+        {/* 已保存配置提示 */}
+        {channel && (
+          <div className="rounded-lg bg-muted/50 p-3 text-sm">
+            <p className="text-muted-foreground">
+              ✓ 此渠道已配置。如需更新凭证，请重新填写上方字段。
+              {isFeishuChannel && channel.config && (
+                <span className="block mt-1">
+                  当前服务区域：
+                  <strong>
+                    {(channel.config as Record<string, unknown>).domain === 'lark'
+                      ? 'Lark (海外)'
+                      : '飞书 (中国大陆)'}
+                  </strong>
+                </span>
               )}
-            </div>
-          );
-        })}
+            </p>
+          </div>
+        )}
+
+        {/* 帮助链接 */}
+        {definition.helpUrl && (
+          <p className="text-xs text-muted-foreground">
+            💡 {definition.helpText || '查看帮助文档'}:{' '}
+            <a
+              href={definition.helpUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              {definition.helpUrl}
+            </a>
+          </p>
+        )}
       </div>
 
-      {/* 安全提示 */}
-      <div className="rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-3 text-sm">
-        <div className="flex items-start gap-2">
-          <ShieldCheck className="size-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-          <p className="text-green-700 dark:text-green-300">
-            为保障您的隐私安全，所有敏感凭证数据均采用 AES-256 加密存储，且不会在页面上明文显示。
-          </p>
-        </div>
-      </div>
-
-      {/* 已保存配置提示 */}
-      {channel && (
-        <div className="rounded-lg bg-muted/50 p-3 text-sm">
-          <p className="text-muted-foreground">
-            ✓ 此渠道已配置。如需更新凭证，请重新填写上方字段。
-            {isFeishuChannel && channel.config && (
-              <span className="block mt-1">
-                当前服务区域：
-                <strong>
-                  {(channel.config as Record<string, unknown>).domain === 'lark'
-                    ? 'Lark (海外)'
-                    : '飞书 (中国大陆)'}
-                </strong>
-              </span>
-            )}
-          </p>
-        </div>
-      )}
-
-      {/* 帮助链接 */}
-      {definition.helpUrl && (
-        <p className="text-xs text-muted-foreground">
-          💡 {definition.helpText || '查看帮助文档'}:{' '}
-          <a
-            href={definition.helpUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            {definition.helpUrl}
-          </a>
-        </p>
-      )}
-
-      {/* 操作按钮 */}
-      <div className="flex gap-3">
+      {/* 固定在底部的操作按钮 */}
+      <div className="flex-shrink-0 pt-4 border-t bg-background">
         <Button
           onClick={handleSubmit}
           disabled={saving}
-          className="flex-1"
+          className="w-full"
           style={{ backgroundColor: accentColor }}
         >
           {saving ? (
@@ -595,11 +598,11 @@ export default function BotChannelsPage() {
       {/* 主内容区 - 左右分栏，使用 calc 确保不超出屏幕 */}
       <div className="flex gap-6 h-[calc(100vh-220px)] min-h-[400px]">
         {/* 左侧：渠道列表 */}
-        <Card className="w-64 flex-shrink-0 flex flex-col">
+        <Card className="w-64 flex-shrink-0 flex flex-col overflow-hidden">
           <CardHeader className="pb-3 flex-shrink-0">
             <CardTitle className="text-sm font-medium">消息渠道</CardTitle>
           </CardHeader>
-          <CardContent className="p-2 flex-1 overflow-hidden">
+          <CardContent className="p-2 flex-1 overflow-hidden min-h-0">
             <ScrollArea className="h-full">
               <div className="space-y-1 pr-2">
                 {channelDefinitions.map((definition) => {
@@ -622,8 +625,8 @@ export default function BotChannelsPage() {
         </Card>
 
         {/* 右侧：配置表单 */}
-        <Card className="flex-1 flex flex-col overflow-hidden">
-          <CardContent className="p-6 flex-1 overflow-y-auto">
+        <Card className="flex-1 flex flex-col overflow-hidden min-w-0">
+          <CardContent className="p-6 flex-1 flex flex-col overflow-hidden min-h-0">
             {selectedDefinition ? (
               <ChannelConfigForm
                 definition={selectedDefinition}

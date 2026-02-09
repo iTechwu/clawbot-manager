@@ -457,7 +457,8 @@
       "all": "All",
       "info": "Info",
       "warn": "Warning",
-      "error": "Error"
+      "error": "Error",
+      "debug": "Debug"
     },
     "settings": {
       "title": "Bot Settings",

@@ -1,10 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  UnauthorizedException,
-  NotFoundException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ProxyTokenService, ProviderKeyService, BotService } from '@app/db';
 import { EncryptionService } from '../../bot-api/services/encryption.service';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
@@ -38,7 +32,6 @@ export interface TokenValidation {
 export class KeyringProxyService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly configService: ConfigService,
     private readonly proxyTokenService: ProxyTokenService,
     private readonly providerKeyService: ProviderKeyService,
     private readonly botService: BotService,
@@ -70,11 +63,12 @@ export class KeyringProxyService {
       throw new NotFoundException(`ProviderKey with id "${keyId}" not found`);
     }
 
-    // Check if bot already has a token
+    // Check if bot already has a token - delete it since botId is unique
     const existing = await this.proxyTokenService.getByBotId(botId);
-    if (existing && !existing.revokedAt) {
-      // Revoke existing token
-      await this.revokeBot(botId);
+    if (existing) {
+      // Delete existing token (botId has @unique constraint, can't have multiple)
+      await this.proxyTokenService.delete({ id: existing.id });
+      this.logger.info(`Deleted existing proxy token for bot: ${botId}`);
     }
 
     // Calculate expiration (default: 24 hours)
@@ -210,9 +204,20 @@ export class KeyringProxyService {
 
   /**
    * 检查 Zero-Trust 模式是否启用
+   * 注意：ZERO_TRUST_MODE 是从 .env 环境变量读取，不是从 config.yaml 读取
    */
   isZeroTrustEnabled(): boolean {
-    return this.configService.get<boolean>('ZERO_TRUST_MODE', false);
+    // 直接从 process.env 读取，因为 ConfigModule 只加载了 YAML 配置
+    const value = process.env.ZERO_TRUST_MODE;
+    const enabled = value === 'true' || value === '1';
+    this.logger.info('Zero-Trust mode check', {
+      ZERO_TRUST_MODE: value,
+      enabled,
+      allEnvKeys: Object.keys(process.env).filter((k) =>
+        k.includes('ZERO') || k.includes('TRUST') || k.includes('PROXY'),
+      ),
+    });
+    return enabled;
   }
 
   /**

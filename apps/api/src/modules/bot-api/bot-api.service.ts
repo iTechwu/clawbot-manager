@@ -39,7 +39,6 @@ import enviromentUtil from 'libs/infra/utils/enviroment.util';
 @Injectable()
 export class BotApiService {
   private readonly logger = new Logger(BotApiService.name);
-  private readonly proxyUrl: string | undefined;
 
   constructor(
     private readonly configService: ConfigService,
@@ -56,13 +55,17 @@ export class BotApiService {
     private readonly keyringProxyService: KeyringProxyService,
     private readonly botConfigResolver: BotConfigResolverService,
   ) {
-    // Get internal API URL for bot containers to reach the proxy
-    this.proxyUrl = enviromentUtil.generateEnvironmentUrls().internalApi;
-    this.logger.log(`BotApiService initialized with proxyUrl: ${this.proxyUrl}`);
-    // this.configService.get<string>(
-    //   'INTERNAL_API_BASE_URL',
-    //   'http://clawbot-api:3200',
-    // );
+    this.logger.log(`BotApiService initialized`);
+  }
+
+  /**
+   * 获取当前的 Proxy URL
+   * 每次调用时从环境变量读取，确保使用最新配置
+   */
+  private getProxyUrl(): string | undefined {
+    const proxyUrl = enviromentUtil.generateEnvironmentUrls().internalApi;
+    this.logger.debug(`Current proxyUrl: ${proxyUrl}`);
+    return proxyUrl;
   }
 
   // ============================================================================
@@ -401,7 +404,7 @@ export class BotApiService {
         workspacePath,
         apiKey,
         apiBaseUrl,
-        proxyUrl: proxyToken ? this.proxyUrl : undefined,
+        proxyUrl: proxyToken ? this.getProxyUrl() : undefined,
         proxyToken,
         apiType,
       });
@@ -660,6 +663,7 @@ export class BotApiService {
 
         // Check if zero-trust mode is enabled
         const useZeroTrust = this.keyringProxyService.isZeroTrustEnabled();
+        this.logger.log(`Starting bot ${hostname} with zero-trust mode: ${useZeroTrust}`);
 
         if (botProviderKey) {
           try {
@@ -756,6 +760,17 @@ export class BotApiService {
           bot.id,
         );
 
+        // 详细日志：检查 zero-trust 模式参数
+        const currentProxyUrl = this.getProxyUrl();
+        this.logger.log(`Creating container for bot ${hostname}`, {
+          hasProxyToken: !!proxyToken,
+          hasProxyUrl: !!currentProxyUrl,
+          proxyUrl: currentProxyUrl,
+          hasApiKey: !!apiKey,
+          apiKeyLength: apiKey?.length,
+          useZeroTrust,
+        });
+
         const containerId = await this.dockerService.createContainer({
           hostname: bot.hostname,
           isolationKey,
@@ -768,7 +783,7 @@ export class BotApiService {
           workspacePath,
           apiKey,
           apiBaseUrl,
-          proxyUrl: proxyToken ? this.proxyUrl : undefined,
+          proxyUrl: proxyToken ? currentProxyUrl : undefined,
           proxyToken,
           apiType,
         });
