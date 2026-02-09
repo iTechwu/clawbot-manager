@@ -155,3 +155,58 @@ export function getModelDisplayInfo(
     isAlias: model !== normalized,
   };
 }
+
+/**
+ * Strip provider prefix from model name
+ *
+ * OpenClaw and other clients may send model names with provider prefixes like:
+ * - openai-compatible/gpt-4o -> gpt-4o
+ * - openai/gpt-4o -> gpt-4o
+ * - anthropic/claude-3-5-sonnet -> claude-3-5-sonnet
+ *
+ * This function strips the provider prefix to get the raw model name
+ * that can be sent to the upstream AI provider.
+ *
+ * @param model - The model name (may include provider prefix)
+ * @returns The model name without provider prefix
+ */
+export function stripProviderPrefix(model: string): string {
+  if (!model) return model;
+
+  // Check if model contains a provider prefix (format: provider/model-name)
+  const slashIndex = model.indexOf('/');
+  if (slashIndex > 0 && slashIndex < model.length - 1) {
+    // Return the part after the slash
+    return model.substring(slashIndex + 1);
+  }
+
+  return model;
+}
+
+/**
+ * Normalize model name for proxy forwarding
+ *
+ * This function:
+ * 1. Strips provider prefix (e.g., openai-compatible/gpt-4o -> gpt-4o)
+ * 2. Optionally applies alias normalization
+ *
+ * @param model - The model name from the request
+ * @param targetVendor - The target vendor for alias normalization (optional)
+ * @returns The normalized model name ready for upstream
+ */
+export function normalizeModelForProxy(
+  model: string,
+  targetVendor?: string,
+): string {
+  if (!model) return model;
+
+  // First strip provider prefix
+  let normalized = stripProviderPrefix(model);
+
+  // Then apply alias normalization if target vendor is specified
+  if (targetVendor) {
+    normalized = normalizeModelName(normalized, targetVendor);
+  }
+
+  return normalized;
+}

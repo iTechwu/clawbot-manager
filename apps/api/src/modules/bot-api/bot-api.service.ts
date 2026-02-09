@@ -333,9 +333,17 @@ export class BotApiService {
     // Register bot with proxy if in zero-trust mode
     if (useZeroTrust && primaryProvider.keyId) {
       try {
+        // Determine the vendor for proxy registration
+        // For custom providers, use apiType (e.g., "openai") to match the proxy URL
+        // This ensures the vendor in ProxyToken matches the vendor in the proxy URL
+        const proxyVendor =
+          primaryProvider.providerId === 'custom' && apiType
+            ? apiType
+            : primaryProvider.providerId;
+
         const registration = await this.keyringProxyService.registerBot(
           bot.id,
-          primaryProvider.providerId,
+          proxyVendor,
           primaryProvider.keyId,
           input.tags,
         );
@@ -670,10 +678,17 @@ export class BotApiService {
               if (useZeroTrust) {
                 // Zero-trust mode: Register bot with proxy
                 try {
+                  // Determine the vendor for proxy registration
+                  // For custom providers, use apiType (e.g., "openai") to match the proxy URL
+                  const proxyVendor =
+                    providerKey.vendor === 'custom' && apiType
+                      ? apiType
+                      : providerKey.vendor;
+
                   const registration =
                     await this.keyringProxyService.registerBot(
                       bot.id,
-                      providerKey.vendor,
+                      proxyVendor,
                       botProviderKey.providerKeyId,
                       bot.tags,
                     );

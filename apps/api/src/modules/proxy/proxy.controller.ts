@@ -1,13 +1,14 @@
 import { Controller, All, Req, Res, Param } from '@nestjs/common';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { ProxyService } from './services/proxy.service';
+import { TsRestController } from '@/decorators/ts-rest-controller.decorator';
 
 /**
  * ProxyController - API 代理控制器
  *
  * 处理 /v1/:vendor/* 路由，将请求转发到对应的 AI 提供商
  */
-@Controller('v1')
+@TsRestController({ path: 'v1' })
 export class ProxyController {
   constructor(private readonly proxyService: ProxyService) {}
 
@@ -27,8 +28,6 @@ export class ProxyController {
     // 提取 Authorization header
     const auth = req.headers.authorization;
     console.log('techwu auth', auth);
-    console.log('techwu vendor', vendor);
-    console.log('techwu path', path);
     if (!auth || !auth.startsWith('Bearer ')) {
       reply.status(401).send({ error: 'Missing authorization' });
       return;

@@ -16,6 +16,7 @@ import { PROVIDER_CONFIGS } from '@repo/contracts';
  */
 export interface TokenValidation {
   valid: boolean;
+  apiType?: string;
   botId?: string;
   vendor?: string;
   keyId?: string;
@@ -152,6 +153,7 @@ export class KeyringProxyService {
 
     return {
       valid: true,
+      apiType: providerKey.apiType || 'openai',
       botId: proxyToken.botId,
       vendor: proxyToken.vendor,
       keyId: proxyToken.keyId,
