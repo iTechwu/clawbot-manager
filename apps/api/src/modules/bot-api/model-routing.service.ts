@@ -1,0 +1,330 @@
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
+import {
+  BotService,
+  BotModelRoutingService as BotModelRoutingDbService,
+  ProviderKeyService,
+} from '@app/db';
+import { ModelRouterService } from './services/model-router.service';
+import type { BotModelRouting as PrismaBotModelRouting, ModelRoutingType, Prisma } from '@prisma/client';
+import type {
+  BotModelRouting,
+  CreateRoutingConfigInput,
+  UpdateRoutingConfigInput,
+  RoutingTestInput,
+  RoutingTestResult,
+  RoutingStatistics,
+  RoutingConfig,
+} from '@repo/contracts';
+
+/**
+ * Transform Prisma BotModelRouting to contract BotModelRouting
+ * Excludes internal fields (isDeleted, deletedAt) that shouldn't be exposed in API
+ */
+function toContractRouting(prismaRouting: PrismaBotModelRouting): BotModelRouting {
+  return {
+    id: prismaRouting.id,
+    botId: prismaRouting.botId,
+    routingType: prismaRouting.routingType,
+    name: prismaRouting.name,
+    config: prismaRouting.config as unknown as RoutingConfig,
+    priority: prismaRouting.priority,
+    isEnabled: prismaRouting.isEnabled,
+    createdAt: prismaRouting.createdAt,
+    updatedAt: prismaRouting.updatedAt,
+  };
+}
+
+/**
+ * ModelRoutingService
+ * 模型路由配置业务服务
+ */
+@Injectable()
+export class ModelRoutingService {
+  constructor(
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly botService: BotService,
+    private readonly botModelRoutingDbService: BotModelRoutingDbService,
+    private readonly providerKeyService: ProviderKeyService,
+    private readonly modelRouterService: ModelRouterService,
+  ) {}
+
+  /**
+   * 获取 Bot 的所有路由配置
+   */
+  async listRoutings(
+    hostname: string,
+    userId: string,
+  ): Promise<BotModelRouting[]> {
+    const bot = await this.getBotByHostname(hostname, userId);
+    const { list } = await this.botModelRoutingDbService.list(
+      { botId: bot.id },
+      { orderBy: { priority: 'asc' } },
+    );
+    return list.map(toContractRouting);
+  }
+
+  /**
+   * 获取单个路由配置
+   */
+  async getRouting(
+    hostname: string,
+    routingId: string,
+    userId: string,
+  ): Promise<BotModelRouting> {
+    const bot = await this.getBotByHostname(hostname, userId);
+    const routing = await this.botModelRoutingDbService.getById(routingId);
+
+    if (!routing || routing.botId !== bot.id) {
+      throw new NotFoundException(`Routing config not found: ${routingId}`);
+    }
+
+    return toContractRouting(routing);
+  }
+
+  /**
+   * 创建路由配置
+   */
+  async createRouting(
+    hostname: string,
+    input: CreateRoutingConfigInput,
+    userId: string,
+  ): Promise<BotModelRouting> {
+    const bot = await this.getBotByHostname(hostname, userId);
+
+    // 验证配置中的 Provider Key
+    await this.validateRoutingConfig(input.config, userId);
+
+    // 从配置中提取路由类型
+    const routingType = input.config.type as ModelRoutingType;
+
+    const routing = await this.botModelRoutingDbService.create({
+      bot: { connect: { id: bot.id } },
+      routingType,
+      name: input.name,
+      config: input.config as Prisma.InputJsonValue,
+      priority: input.priority ?? 100,
+      isEnabled: true,
+    });
+
+    this.logger.info('Created model routing config', {
+      botId: bot.id,
+      routingId: routing.id,
+      routingType,
+      name: input.name,
+    });
+
+    return toContractRouting(routing);
+  }
+
+  /**
+   * 更新路由配置
+   */
+  async updateRouting(
+    hostname: string,
+    routingId: string,
+    input: UpdateRoutingConfigInput,
+    userId: string,
+  ): Promise<BotModelRouting> {
+    const bot = await this.getBotByHostname(hostname, userId);
+    const existing = await this.botModelRoutingDbService.getById(routingId);
+
+    if (!existing || existing.botId !== bot.id) {
+      throw new NotFoundException(`Routing config not found: ${routingId}`);
+    }
+
+    // 如果更新了配置，验证 Provider Key
+    if (input.config) {
+      await this.validateRoutingConfig(input.config, userId);
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (input.name !== undefined) updateData.name = input.name;
+    if (input.config !== undefined) {
+      updateData.config = input.config as unknown as Record<string, unknown>;
+      updateData.routingType = input.config.type;
+    }
+    if (input.priority !== undefined) updateData.priority = input.priority;
+    if (input.isEnabled !== undefined) updateData.isEnabled = input.isEnabled;
+
+    const routing = await this.botModelRoutingDbService.update(
+      { id: routingId },
+      updateData,
+    );
+
+    this.logger.info('Updated model routing config', {
+      botId: bot.id,
+      routingId,
+    });
+
+    // 清除负载均衡状态缓存
+    this.modelRouterService.clearLoadBalanceState(routingId);
+
+    return toContractRouting(routing);
+  }
+
+  /**
+   * 删除路由配置
+   */
+  async deleteRouting(
+    hostname: string,
+    routingId: string,
+    userId: string,
+  ): Promise<void> {
+    const bot = await this.getBotByHostname(hostname, userId);
+    const existing = await this.botModelRoutingDbService.getById(routingId);
+
+    if (!existing || existing.botId !== bot.id) {
+      throw new NotFoundException(`Routing config not found: ${routingId}`);
+    }
+
+    await this.botModelRoutingDbService.delete({ id: routingId });
+
+    this.logger.info('Deleted model routing config', {
+      botId: bot.id,
+      routingId,
+    });
+
+    // 清除负载均衡状态缓存
+    this.modelRouterService.clearLoadBalanceState(routingId);
+  }
+
+  /**
+   * 测试路由配置
+   */
+  async testRouting(
+    hostname: string,
+    input: RoutingTestInput,
+    userId: string,
+  ): Promise<RoutingTestResult> {
+    const bot = await this.getBotByHostname(hostname, userId);
+
+    const result = await this.modelRouterService.testRoute({
+      botId: bot.id,
+      message: input.message,
+      routingHint: input.routingHint,
+    });
+
+    return {
+      selectedModel: result.model,
+      selectedProvider: result.vendor,
+      providerKeyId: result.providerKeyId,
+      reason: result.reason,
+      matchedRule: result.matchedRule,
+    };
+  }
+
+  /**
+   * 获取路由统计信息
+   */
+  async getRoutingStats(
+    hostname: string,
+    routingId: string,
+    userId: string,
+  ): Promise<RoutingStatistics> {
+    const bot = await this.getBotByHostname(hostname, userId);
+    const routing = await this.botModelRoutingDbService.getById(routingId);
+
+    if (!routing || routing.botId !== bot.id) {
+      throw new NotFoundException(`Routing config not found: ${routingId}`);
+    }
+
+    // TODO: 实现统计信息收集
+    // 目前返回空统计
+    return {
+      routingId,
+      totalRequests: 0,
+      successCount: 0,
+      failureCount: 0,
+      avgLatencyMs: 0,
+      targetStats: [],
+    };
+  }
+
+  /**
+   * 启用路由配置
+   */
+  async enableRouting(
+    hostname: string,
+    routingId: string,
+    userId: string,
+  ): Promise<BotModelRouting> {
+    return this.updateRouting(hostname, routingId, { isEnabled: true }, userId);
+  }
+
+  /**
+   * 禁用路由配置
+   */
+  async disableRouting(
+    hostname: string,
+    routingId: string,
+    userId: string,
+  ): Promise<BotModelRouting> {
+    return this.updateRouting(hostname, routingId, { isEnabled: false }, userId);
+  }
+
+  /**
+   * 根据 hostname 获取 Bot
+   */
+  private async getBotByHostname(
+    hostname: string,
+    userId: string,
+  ): Promise<{ id: string }> {
+    const bot = await this.botService.get({
+      hostname,
+      createdById: userId,
+    });
+
+    if (!bot) {
+      throw new NotFoundException(`Bot not found: ${hostname}`);
+    }
+
+    return bot;
+  }
+
+  /**
+   * 验证路由配置中的 Provider Key
+   */
+  private async validateRoutingConfig(
+    config: RoutingConfig,
+    userId: string,
+  ): Promise<void> {
+    const providerKeyIds = new Set<string>();
+
+    // 收集所有 Provider Key ID
+    switch (config.type) {
+      case 'FUNCTION_ROUTE':
+        for (const rule of config.rules) {
+          providerKeyIds.add(rule.target.providerKeyId);
+        }
+        providerKeyIds.add(config.defaultTarget.providerKeyId);
+        break;
+
+      case 'LOAD_BALANCE':
+        for (const target of config.targets) {
+          providerKeyIds.add(target.providerKeyId);
+        }
+        break;
+
+      case 'FAILOVER':
+        providerKeyIds.add(config.primary.providerKeyId);
+        for (const target of config.fallbackChain) {
+          providerKeyIds.add(target.providerKeyId);
+        }
+        break;
+    }
+
+    // 验证所有 Provider Key 存在且属于当前用户
+    for (const keyId of providerKeyIds) {
+      const providerKey = await this.providerKeyService.get({
+        id: keyId,
+        createdById: userId,
+      });
+
+      if (!providerKey) {
+        throw new NotFoundException(`Provider key not found: ${keyId}`);
+      }
+    }
+  }
+}

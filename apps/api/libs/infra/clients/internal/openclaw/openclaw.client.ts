@@ -45,6 +45,20 @@ export interface OpenClawChatResponse {
   };
 }
 
+/**
+ * OpenClaw 聊天选项
+ */
+export interface OpenClawChatOptions {
+  /** 上下文消息 */
+  context?: OpenClawMessage[];
+  /** 指定模型（用于路由后的模型切换） */
+  model?: string;
+  /** 路由提示（用于功能路由匹配） */
+  routingHint?: string;
+  /** 容器 ID（用于模型切换时执行 Docker exec） */
+  containerId?: string;
+}
+
 @Injectable()
 export class OpenClawClient {
   private readonly requestTimeout = 120000; // 2 分钟超时
@@ -61,26 +75,33 @@ export class OpenClawClient {
    * @param port OpenClaw Gateway 端口
    * @param token Gateway 认证 token
    * @param message 用户消息
-   * @param context 可选的上下文消息
+   * @param options 可选的聊天选项（上下文、模型、路由提示等）
    */
   async chat(
     port: number,
     token: string,
     message: string,
-    context?: OpenClawMessage[],
+    options?: OpenClawChatOptions,
   ): Promise<string> {
     this.logger.info('OpenClawClient: 发送消息到 OpenClaw', {
       port,
       messageLength: message.length,
-      contextLength: context?.length || 0,
+      contextLength: options?.context?.length || 0,
+      model: options?.model,
+      routingHint: options?.routingHint,
     });
 
     try {
+      // 如果指定了模型且提供了容器 ID，先切换模型
+      if (options?.model && options?.containerId) {
+        await this.switchModel(options.containerId, options.model);
+      }
+
       const response = await this.sendMessageViaWebSocket(
         port,
         token,
         message,
-        context,
+        options?.context,
       );
 
       this.logger.info('OpenClawClient: 收到 AI 响应', {
@@ -95,6 +116,95 @@ export class OpenClawClient {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
       throw error;
+    }
+  }
+
+  /**
+   * 发送消息到 OpenClaw Gateway（兼容旧接口）
+   * @deprecated 使用带 options 参数的 chat 方法
+   */
+  async chatLegacy(
+    port: number,
+    token: string,
+    message: string,
+    context?: OpenClawMessage[],
+  ): Promise<string> {
+    return this.chat(port, token, message, { context });
+  }
+
+  /**
+   * 通过 Docker exec 切换 OpenClaw 容器的模型
+   * @param containerId Docker 容器 ID
+   * @param model 目标模型名称
+   */
+  async switchModel(containerId: string, model: string): Promise<void> {
+    this.logger.info('OpenClawClient: 切换模型', { containerId, model });
+
+    try {
+      // 使用 HTTP 调用 Docker API 执行命令
+      // 注意：这需要 Docker socket 访问权限
+      const execCreateUrl = `http://localhost/containers/${containerId}/exec`;
+      const execCreateResponse = await firstValueFrom(
+        this.httpService
+          .post(
+            execCreateUrl,
+            {
+              AttachStdout: true,
+              AttachStderr: true,
+              Cmd: ['node', '/app/openclaw.mjs', 'models', 'set', model],
+            },
+            {
+              socketPath: '/var/run/docker.sock',
+              timeout: 10000,
+            },
+          )
+          .pipe(
+            timeout(10000),
+            catchError((error) => {
+              this.logger.error('OpenClawClient: 创建 exec 失败', {
+                error: error instanceof Error ? error.message : 'Unknown error',
+              });
+              throw error;
+            }),
+          ),
+      );
+
+      const execId = execCreateResponse.data?.Id;
+      if (!execId) {
+        throw new Error('Failed to create exec instance');
+      }
+
+      // 启动 exec
+      const execStartUrl = `http://localhost/exec/${execId}/start`;
+      await firstValueFrom(
+        this.httpService
+          .post(
+            execStartUrl,
+            { Detach: false, Tty: false },
+            {
+              socketPath: '/var/run/docker.sock',
+              timeout: 10000,
+            },
+          )
+          .pipe(
+            timeout(10000),
+            catchError((error) => {
+              this.logger.error('OpenClawClient: 启动 exec 失败', {
+                error: error instanceof Error ? error.message : 'Unknown error',
+              });
+              throw error;
+            }),
+          ),
+      );
+
+      this.logger.info('OpenClawClient: 模型切换成功', { containerId, model });
+    } catch (error) {
+      this.logger.error('OpenClawClient: 模型切换失败', {
+        containerId,
+        model,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      // 不抛出错误，允许继续使用当前模型
     }
   }
 
@@ -236,9 +346,7 @@ export class OpenClawClient {
                 isResolved = true;
                 clearTimeout(timeoutId);
                 ws.close();
-                reject(
-                  new Error(frame.error.message || 'Request failed'),
-                );
+                reject(new Error(frame.error.message || 'Request failed'));
               }
             }
             return;
@@ -250,9 +358,10 @@ export class OpenClawClient {
             // payload 可能是 JSON 字符串，需要解析
             let payload: Record<string, unknown> | undefined;
             try {
-              payload = typeof frame.payload === 'string'
-                ? JSON.parse(frame.payload)
-                : frame.payload;
+              payload =
+                typeof frame.payload === 'string'
+                  ? JSON.parse(frame.payload)
+                  : frame.payload;
             } catch {
               this.logger.warn('OpenClawClient: 解析 payload 失败', {
                 payload: String(frame.payload).slice(0, 200),
@@ -301,7 +410,9 @@ export class OpenClawClient {
               // 处理 final 状态
               if (chatEvent?.state === 'final') {
                 // 尝试从 message.content 提取最终文本
-                const message = chatEvent?.message as { content?: Array<{ type: string; text?: string }> } | undefined;
+                const message = chatEvent?.message as
+                  | { content?: Array<{ type: string; text?: string }> }
+                  | undefined;
                 if (message?.content && Array.isArray(message.content)) {
                   let finalText = '';
                   for (const item of message.content) {

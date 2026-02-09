@@ -23,6 +23,9 @@ import {
   TabsList,
   TabsTrigger,
   Skeleton,
+  Alert,
+  AlertDescription,
+  AlertTitle,
 } from '@repo/ui';
 import {
   Activity,
@@ -32,6 +35,8 @@ import {
   Clock,
   TrendingUp,
   ArrowLeft,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 
@@ -257,14 +262,23 @@ export default function BotUsagePage() {
   }, [period]);
 
   // 获取统计数据
-  const { data: statsResponse, isLoading: statsLoading } = useBotUsageStats({
+  const {
+    data: statsResponse,
+    isLoading: statsLoading,
+    error: statsError,
+    refetch: refetchStats,
+  } = useBotUsageStats({
     hostname,
     period,
   });
   const stats = statsResponse?.body?.data;
 
   // 获取趋势数据
-  const { data: trendResponse, isLoading: trendLoading } = useBotUsageTrend({
+  const {
+    data: trendResponse,
+    isLoading: trendLoading,
+    error: trendError,
+  } = useBotUsageTrend({
     hostname,
     granularity: period === 'day' ? 'hour' : 'day',
     startDate: dateRange.startDate.toISOString(),
@@ -273,11 +287,14 @@ export default function BotUsagePage() {
   const trend = trendResponse?.body?.data;
 
   // 获取分组数据
-  const { data: breakdownResponse, isLoading: breakdownLoading } =
-    useBotUsageBreakdown({
-      hostname,
-      groupBy,
-    });
+  const {
+    data: breakdownResponse,
+    isLoading: breakdownLoading,
+    error: breakdownError,
+  } = useBotUsageBreakdown({
+    hostname,
+    groupBy,
+  });
   const breakdown = breakdownResponse?.body?.data;
 
   // 格式化数字
@@ -286,6 +303,14 @@ export default function BotUsagePage() {
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
     return num.toLocaleString();
   };
+
+  // 检查是否有错误
+  const hasError = !!statsError || !!trendError || !!breakdownError;
+  const errorMessage = hasError ? '无法加载用量数据，请稍后重试' : undefined;
+
+  // 检查是否有数据
+  const hasNoData =
+    !statsLoading && !stats?.requestCount && !stats?.totalTokens;
 
   return (
     <div className="space-y-6">
@@ -303,20 +328,52 @@ export default function BotUsagePage() {
             <p className="text-muted-foreground text-sm">{hostname}</p>
           </div>
         </div>
-        <Select
-          value={period}
-          onValueChange={(v) => setPeriod(v as 'day' | 'week' | 'month')}
-        >
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="day">今天</SelectItem>
-            <SelectItem value="week">近 7 天</SelectItem>
-            <SelectItem value="month">近 30 天</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => refetchStats()}
+            className="text-muted-foreground hover:text-foreground p-2 rounded-md hover:bg-muted"
+            title="刷新数据"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
+          <Select
+            value={period}
+            onValueChange={(v) => setPeriod(v as 'day' | 'week' | 'month')}
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="day">今天</SelectItem>
+              <SelectItem value="week">近 7 天</SelectItem>
+              <SelectItem value="month">近 30 天</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
+      {/* 错误提示 */}
+      {hasError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>加载失败</AlertTitle>
+          <AlertDescription>
+            {errorMessage || '无法加载用量数据，请稍后重试'}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* 无数据提示 */}
+      {hasNoData && !hasError && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>暂无数据</AlertTitle>
+          <AlertDescription>
+            该 Bot 在选定时间段内没有使用记录。当 Bot 开始处理 API
+            请求后，用量数据将自动显示在这里。
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* 统计卡片 */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

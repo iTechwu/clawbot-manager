@@ -207,6 +207,9 @@ export class ProxyService {
     // We need to strip the prefix before forwarding to the upstream
     const normalizedBody = this.normalizeRequestBody(body, effectiveApiType);
 
+    // 记录请求开始时间
+    const startTime = Date.now();
+
     // 转发请求到上游
     try {
       const { statusCode, tokenUsage } =
@@ -224,7 +227,10 @@ export class ProxyService {
           effectiveApiType,
         );
 
-      // 记录使用日志（包含 token 使用量）
+      // 计算请求耗时
+      const durationMs = Date.now() - startTime;
+
+      // 记录使用日志（包含 token 使用量和耗时）
       await this.logUsage(
         botId,
         effectiveApiType,
@@ -232,6 +238,8 @@ export class ProxyService {
         statusCode,
         path,
         tokenUsage,
+        undefined,
+        durationMs,
       );
 
       // 检查配额并发送通知（异步，不阻塞响应）
@@ -245,6 +253,9 @@ export class ProxyService {
         error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Upstream error for bot ${botId}:`, error);
 
+      // 计算请求耗时（即使失败也记录）
+      const durationMs = Date.now() - startTime;
+
       // 记录失败日志
       await this.logUsage(
         botId,
@@ -254,6 +265,7 @@ export class ProxyService {
         path,
         null,
         errorMessage,
+        durationMs,
       );
 
       return { success: false, error: `Upstream error: ${errorMessage}` };
@@ -271,6 +283,7 @@ export class ProxyService {
     endpoint?: string,
     tokenUsage?: TokenUsage | null,
     errorMessage?: string,
+    durationMs?: number,
   ): Promise<void> {
     try {
       await this.botUsageLogService.create({
@@ -283,6 +296,7 @@ export class ProxyService {
         requestTokens: tokenUsage?.requestTokens ?? null,
         responseTokens: tokenUsage?.responseTokens ?? null,
         errorMessage: errorMessage || null,
+        durationMs: durationMs ?? null,
       });
     } catch (error) {
       this.logger.error('Failed to log usage:', error);
@@ -309,14 +323,16 @@ export class ProxyService {
   }
 
   /**
-   * Normalize model name in request body
+   * Normalize model name in request body and inject stream_options for usage tracking
    *
    * OpenClaw and other clients may send model names with provider prefixes like:
    * - openai-compatible/gpt-4o
    * - openai/gpt-4o
    *
-   * This method strips the provider prefix to get the raw model name
-   * that can be sent to the upstream AI provider.
+   * This method:
+   * 1. Strips the provider prefix to get the raw model name
+   * 2. Injects stream_options: { include_usage: true } for streaming requests
+   *    to ensure token usage data is returned in the response
    *
    * @param body - The request body buffer
    * @param vendor - The target vendor for alias normalization
@@ -333,8 +349,9 @@ export class ProxyService {
     try {
       const bodyStr = body.toString('utf-8');
       const bodyJson = JSON.parse(bodyStr);
+      let modified = false;
 
-      // Check if there's a model field
+      // Check if there's a model field and normalize it
       if (bodyJson.model && typeof bodyJson.model === 'string') {
         const originalModel = bodyJson.model;
         const normalizedModel = normalizeModelForProxy(originalModel, vendor);
@@ -344,8 +361,27 @@ export class ProxyService {
             `Normalized model name: ${originalModel} -> ${normalizedModel}`,
           );
           bodyJson.model = normalizedModel;
-          return Buffer.from(JSON.stringify(bodyJson), 'utf-8');
+          modified = true;
         }
+      }
+
+      // Inject stream_options for streaming requests to get usage data
+      // This is required for OpenAI-compatible APIs to return token usage in streaming responses
+      if (bodyJson.stream === true) {
+        // Only inject if not already present
+        if (!bodyJson.stream_options) {
+          bodyJson.stream_options = { include_usage: true };
+          modified = true;
+          this.logger.debug('Injected stream_options for usage tracking');
+        } else if (!bodyJson.stream_options.include_usage) {
+          bodyJson.stream_options.include_usage = true;
+          modified = true;
+          this.logger.debug('Enabled include_usage in stream_options');
+        }
+      }
+
+      if (modified) {
+        return Buffer.from(JSON.stringify(bodyJson), 'utf-8');
       }
 
       return body;

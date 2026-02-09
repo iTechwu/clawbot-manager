@@ -6,6 +6,8 @@ import {
   BotUsageLogModule,
   MessageDbModule,
   ProxyTokenModule,
+  BotProviderKeyModule,
+  BotModelRoutingModule,
 } from '@app/db';
 import { ProxyController } from './proxy.controller';
 import { ProxyAdminController } from './proxy-admin.controller';
@@ -16,6 +18,7 @@ import { UpstreamService } from './services/upstream.service';
 import { QuotaService } from './services/quota.service';
 import { TokenExtractorService } from './services/token-extractor.service';
 import { EncryptionService } from '../bot-api/services/encryption.service';
+import { ModelRouterService } from '../bot-api/services/model-router.service';
 
 /**
  * ProxyModule - API 代理模块
@@ -28,6 +31,7 @@ import { EncryptionService } from '../bot-api/services/encryption.service';
  * - 使用日志记录
  * - Token 配额检查和通知
  * - Zero-Trust Mode 支持
+ * - 模型路由支持（功能路由、负载均衡、故障转移）
  */
 @Module({
   imports: [
@@ -37,6 +41,8 @@ import { EncryptionService } from '../bot-api/services/encryption.service';
     BotUsageLogModule,
     MessageDbModule,
     ProxyTokenModule,
+    BotProviderKeyModule,
+    BotModelRoutingModule,
   ],
   controllers: [ProxyController, ProxyAdminController],
   providers: [
@@ -47,12 +53,14 @@ import { EncryptionService } from '../bot-api/services/encryption.service';
     QuotaService,
     TokenExtractorService,
     EncryptionService,
+    ModelRouterService,
   ],
   exports: [
     ProxyService,
     KeyringProxyService,
     QuotaService,
     TokenExtractorService,
+    ModelRouterService,
   ],
 })
 export class ProxyModule {}

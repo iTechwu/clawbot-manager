@@ -401,15 +401,16 @@ model Bot {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   // Relations
-  createdBy       UserInfo         @relation(fields: [createdById], references: [id])
-  personaTemplate PersonaTemplate? @relation(fields: [personaTemplateId], references: [id], onDelete: SetNull)
-  avatarFile      FileSource?      @relation(fields: [avatarFileId], references: [id], onDelete: SetNull)
+  createdBy       UserInfo          @relation(fields: [createdById], references: [id])
+  personaTemplate PersonaTemplate?  @relation(fields: [personaTemplateId], references: [id], onDelete: SetNull)
+  avatarFile      FileSource?       @relation(fields: [avatarFileId], references: [id], onDelete: SetNull)
   providerKeys    BotProviderKey[]
   usageLogs       BotUsageLog[]
   proxyToken      ProxyToken?
   plugins         BotPlugin[]
   skills          BotSkill[]
   channels        BotChannel[]
+  modelRoutings   BotModelRouting[]
 
   @@index([status])
   @@index([hostname])
@@ -904,6 +905,53 @@ model ModelPricing {
   @@index([isEnabled])
   @@index([isDeleted])
   @@map("b_model_pricing")
+}
+
+// ============================================================================
+// Model Routing System - 模型路由系统
+// ============================================================================
+
+/// 路由类型枚举
+enum ModelRoutingType {
+  FUNCTION_ROUTE // 功能路由：根据消息内容选择模型
+  LOAD_BALANCE // 负载均衡：多模型分流
+  FAILOVER // 故障转移：主备切换
+
+  @@map("model_routing_type")
+}
+
+/// BotModelRouting - Bot 模型路由配置
+/// 存储 Bot 的模型路由规则，支持功能路由、负载均衡、故障转移
+model BotModelRouting {
+  id          String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  botId       String           @map("bot_id") @db.Uuid
+  /// 路由类型
+  routingType ModelRoutingType @map("routing_type")
+  /// 路由名称（用于标识）
+  name        String           @db.VarChar(100)
+  /// 路由配置 (JSON)
+  /// 功能路由: { rules: [...], defaultTarget: {...} }
+  /// 负载均衡: { strategy: "round_robin"|"weighted"|"least_latency", targets: [...] }
+  /// 故障转移: { primary: {...}, fallbackChain: [...], retry: {...} }
+  config      Json             @db.JsonB
+  /// 优先级（数字越小优先级越高）
+  priority    Int              @default(100)
+  /// 是否启用
+  isEnabled   Boolean          @default(true) @map("is_enabled")
+
+  isDeleted Boolean   @default(false) @map("is_deleted")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  bot Bot @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@index([botId])
+  @@index([routingType])
+  @@index([priority])
+  @@index([isEnabled])
+  @@index([isDeleted])
+  @@map("b_bot_model_routing")
 }
 
 /// BotChannel - Bot 渠道配置

@@ -12,6 +12,7 @@ import {
   BotUsageLogModule,
   BotChannelModule,
   ModelPricingModule,
+  BotModelRoutingModule,
 } from '@app/db';
 import { PrismaModule } from '@app/prisma';
 import { AuthModule } from '@app/auth';
@@ -30,6 +31,9 @@ import { BotSseService } from './services/bot-sse.service';
 import { BotUsageAnalyticsService } from './services/bot-usage-analytics.service';
 import { HealthCheckService } from './services/health-check.service';
 import { BotConfigResolverService } from './services/bot-config-resolver.service';
+import { ModelRouterService } from './services/model-router.service';
+import { ModelRoutingController } from './model-routing.controller';
+import { ModelRoutingService } from './model-routing.service';
 
 @Module({
   imports: [
@@ -50,9 +54,10 @@ import { BotConfigResolverService } from './services/bot-config-resolver.service
     ProxyModule,
     BotUsageLogModule,
     ModelPricingModule,
+    BotModelRoutingModule,
     PrismaModule,
   ],
-  controllers: [BotApiController],
+  controllers: [BotApiController, ModelRoutingController],
   providers: [
     BotApiService,
     EncryptionService,
@@ -64,6 +69,8 @@ import { BotConfigResolverService } from './services/bot-config-resolver.service
     BotUsageAnalyticsService,
     HealthCheckService,
     BotConfigResolverService,
+    ModelRouterService,
+    ModelRoutingService,
   ],
   exports: [
     BotApiService,
@@ -75,6 +82,8 @@ import { BotConfigResolverService } from './services/bot-config-resolver.service
     BotUsageAnalyticsService,
     HealthCheckService,
     BotConfigResolverService,
+    ModelRouterService,
+    ModelRoutingService,
   ],
 })
 export class BotApiModule {}

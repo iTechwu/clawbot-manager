@@ -511,6 +511,20 @@ exports.Prisma.ModelPricingScalarFieldEnum = {
   deletedAt: 'deletedAt'
 };
 
+exports.Prisma.BotModelRoutingScalarFieldEnum = {
+  id: 'id',
+  botId: 'botId',
+  routingType: 'routingType',
+  name: 'name',
+  config: 'config',
+  priority: 'priority',
+  isEnabled: 'isEnabled',
+  isDeleted: 'isDeleted',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
 exports.Prisma.BotChannelScalarFieldEnum = {
   id: 'id',
   botId: 'botId',
@@ -638,6 +652,12 @@ exports.PluginCategory = exports.$Enums.PluginCategory = {
   CUSTOM: 'CUSTOM'
 };
 
+exports.ModelRoutingType = exports.$Enums.ModelRoutingType = {
+  FUNCTION_ROUTE: 'FUNCTION_ROUTE',
+  LOAD_BALANCE: 'LOAD_BALANCE',
+  FAILOVER: 'FAILOVER'
+};
+
 exports.ChannelConnectionStatus = exports.$Enums.ChannelConnectionStatus = {
   DISCONNECTED: 'DISCONNECTED',
   CONNECTING: 'CONNECTING',
@@ -672,6 +692,7 @@ exports.Prisma.ModelName = {
   Skill: 'Skill',
   BotSkill: 'BotSkill',
   ModelPricing: 'ModelPricing',
+  BotModelRouting: 'BotModelRouting',
   BotChannel: 'BotChannel'
 };
 

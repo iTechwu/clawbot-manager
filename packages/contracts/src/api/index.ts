@@ -4,6 +4,7 @@ export * from './bot-usage.contract';
 export * from './channel.contract';
 export * from './download.contract';
 export * from './message.contract';
+export * from './model-routing.contract';
 export * from './operate-log.contract';
 export * from './persona-template.contract';
 export * from './plugin.contract';

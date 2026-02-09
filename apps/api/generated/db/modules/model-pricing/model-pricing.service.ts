@@ -41,7 +41,10 @@ export class ModelPricingService extends TransactionalServiceBase {
   }
 
   @HandlePrismaError(DbOperationType.QUERY)
-  async getByModel(value: string, additional?: { select?: Prisma.ModelPricingSelect }): Promise<ModelPricing | null> {
+  async getByModel(
+    value: string,
+    additional?: { select?: Prisma.ModelPricingSelect },
+  ): Promise<ModelPricing | null> {
     return this.getReadClient().modelPricing.findUnique({
       where: { model: value, isDeleted: false },
       ...additional,
@@ -57,7 +60,12 @@ export class ModelPricingService extends TransactionalServiceBase {
       page?: number;
     },
     additional?: { select?: Prisma.ModelPricingSelect },
-  ): Promise<{ list: ModelPricing[]; total: number; page: number; limit: number }> {
+  ): Promise<{
+    list: ModelPricing[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const {
       orderBy = { createdAt: 'desc' },
       limit = this.appConfig.MaxPageSize,
@@ -103,10 +111,15 @@ export class ModelPricingService extends TransactionalServiceBase {
   }
 
   @HandlePrismaError(DbOperationType.DELETE)
-  async delete(where: Prisma.ModelPricingWhereUniqueInput): Promise<ModelPricing> {
+  async delete(
+    where: Prisma.ModelPricingWhereUniqueInput,
+  ): Promise<ModelPricing> {
     return this.getWriteClient().modelPricing.delete({ where });
   }
 
+  /**
+   * 获取所有启用的模型定价
+   */
   @HandlePrismaError(DbOperationType.QUERY)
   async listAll(): Promise<ModelPricing[]> {
     return this.getReadClient().modelPricing.findMany({
@@ -115,6 +128,9 @@ export class ModelPricingService extends TransactionalServiceBase {
     });
   }
 
+  /**
+   * 按供应商获取模型定价
+   */
   @HandlePrismaError(DbOperationType.QUERY)
   async listByVendor(vendor: string): Promise<ModelPricing[]> {
     return this.getReadClient().modelPricing.findMany({
@@ -123,6 +139,9 @@ export class ModelPricingService extends TransactionalServiceBase {
     });
   }
 
+  /**
+   * 创建或更新模型定价
+   */
   @HandlePrismaError(DbOperationType.UPDATE)
   async upsert(
     model: string,
@@ -135,6 +154,9 @@ export class ModelPricingService extends TransactionalServiceBase {
     });
   }
 
+  /**
+   * 批量创建或更新模型定价
+   */
   @HandlePrismaError(DbOperationType.UPDATE)
   async batchUpsert(
     pricings: Array<{

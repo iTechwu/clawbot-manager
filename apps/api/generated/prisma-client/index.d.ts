@@ -169,6 +169,12 @@ export type BotSkill = $Result.DefaultSelection<Prisma.$BotSkillPayload>
  */
 export type ModelPricing = $Result.DefaultSelection<Prisma.$ModelPricingPayload>
 /**
+ * Model BotModelRouting
+ * BotModelRouting - Bot 模型路由配置
+ * 存储 Bot 的模型路由规则，支持功能路由、负载均衡、故障转移
+ */
+export type BotModelRouting = $Result.DefaultSelection<Prisma.$BotModelRoutingPayload>
+/**
  * Model BotChannel
  * BotChannel - Bot 渠道配置
  * 存储 Bot 的渠道连接配置，包括加密的凭证
@@ -300,6 +306,15 @@ export const ChannelConnectionStatus: {
 
 export type ChannelConnectionStatus = (typeof ChannelConnectionStatus)[keyof typeof ChannelConnectionStatus]
 
+
+export const ModelRoutingType: {
+  FUNCTION_ROUTE: 'FUNCTION_ROUTE',
+  LOAD_BALANCE: 'LOAD_BALANCE',
+  FAILOVER: 'FAILOVER'
+};
+
+export type ModelRoutingType = (typeof ModelRoutingType)[keyof typeof ModelRoutingType]
+
 }
 
 export type SexType = $Enums.SexType
@@ -345,6 +360,10 @@ export const PluginCategory: typeof $Enums.PluginCategory
 export type ChannelConnectionStatus = $Enums.ChannelConnectionStatus
 
 export const ChannelConnectionStatus: typeof $Enums.ChannelConnectionStatus
+
+export type ModelRoutingType = $Enums.ModelRoutingType
+
+export const ModelRoutingType: typeof $Enums.ModelRoutingType
 
 /**
  * ##  Prisma Client ʲˢ
@@ -722,6 +741,16 @@ export class PrismaClient<
     * ```
     */
   get modelPricing(): Prisma.ModelPricingDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.botModelRouting`: Exposes CRUD operations for the **BotModelRouting** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BotModelRoutings
+    * const botModelRoutings = await prisma.botModelRouting.findMany()
+    * ```
+    */
+  get botModelRouting(): Prisma.BotModelRoutingDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.botChannel`: Exposes CRUD operations for the **BotChannel** model.
@@ -1192,6 +1221,7 @@ export namespace Prisma {
     Skill: 'Skill',
     BotSkill: 'BotSkill',
     ModelPricing: 'ModelPricing',
+    BotModelRouting: 'BotModelRouting',
     BotChannel: 'BotChannel'
   };
 
@@ -1208,7 +1238,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "userInfo" | "personaTemplate" | "wechatAuth" | "googleAuth" | "discordAuth" | "mobileAuth" | "emailAuth" | "riskDetectionRecord" | "systemTaskQueue" | "fileSource" | "countryCode" | "bot" | "providerKey" | "botProviderKey" | "botUsageLog" | "proxyToken" | "message" | "messageRecipient" | "operateLog" | "channelDefinition" | "channelCredentialField" | "plugin" | "botPlugin" | "skill" | "botSkill" | "modelPricing" | "botChannel"
+      modelProps: "userInfo" | "personaTemplate" | "wechatAuth" | "googleAuth" | "discordAuth" | "mobileAuth" | "emailAuth" | "riskDetectionRecord" | "systemTaskQueue" | "fileSource" | "countryCode" | "bot" | "providerKey" | "botProviderKey" | "botUsageLog" | "proxyToken" | "message" | "messageRecipient" | "operateLog" | "channelDefinition" | "channelCredentialField" | "plugin" | "botPlugin" | "skill" | "botSkill" | "modelPricing" | "botModelRouting" | "botChannel"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3136,6 +3166,80 @@ export namespace Prisma {
           }
         }
       }
+      BotModelRouting: {
+        payload: Prisma.$BotModelRoutingPayload<ExtArgs>
+        fields: Prisma.BotModelRoutingFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BotModelRoutingFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BotModelRoutingFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>
+          }
+          findFirst: {
+            args: Prisma.BotModelRoutingFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BotModelRoutingFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>
+          }
+          findMany: {
+            args: Prisma.BotModelRoutingFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>[]
+          }
+          create: {
+            args: Prisma.BotModelRoutingCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>
+          }
+          createMany: {
+            args: Prisma.BotModelRoutingCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BotModelRoutingCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>[]
+          }
+          delete: {
+            args: Prisma.BotModelRoutingDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>
+          }
+          update: {
+            args: Prisma.BotModelRoutingUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>
+          }
+          deleteMany: {
+            args: Prisma.BotModelRoutingDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BotModelRoutingUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BotModelRoutingUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>[]
+          }
+          upsert: {
+            args: Prisma.BotModelRoutingUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>
+          }
+          aggregate: {
+            args: Prisma.BotModelRoutingAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBotModelRouting>
+          }
+          groupBy: {
+            args: Prisma.BotModelRoutingGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BotModelRoutingGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BotModelRoutingCountArgs<ExtArgs>
+            result: $Utils.Optional<BotModelRoutingCountAggregateOutputType> | number
+          }
+        }
+      }
       BotChannel: {
         payload: Prisma.$BotChannelPayload<ExtArgs>
         fields: Prisma.BotChannelFieldRefs
@@ -3344,6 +3448,7 @@ export namespace Prisma {
     skill?: SkillOmit
     botSkill?: BotSkillOmit
     modelPricing?: ModelPricingOmit
+    botModelRouting?: BotModelRoutingOmit
     botChannel?: BotChannelOmit
   }
 
@@ -3586,6 +3691,7 @@ export namespace Prisma {
     plugins: number
     skills: number
     channels: number
+    modelRoutings: number
   }
 
   export type BotCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3594,6 +3700,7 @@ export namespace Prisma {
     plugins?: boolean | BotCountOutputTypeCountPluginsArgs
     skills?: boolean | BotCountOutputTypeCountSkillsArgs
     channels?: boolean | BotCountOutputTypeCountChannelsArgs
+    modelRoutings?: boolean | BotCountOutputTypeCountModelRoutingsArgs
   }
 
   // Custom InputTypes
@@ -3640,6 +3747,13 @@ export namespace Prisma {
    */
   export type BotCountOutputTypeCountChannelsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: BotChannelWhereInput
+  }
+
+  /**
+   * BotCountOutputType without action
+   */
+  export type BotCountOutputTypeCountModelRoutingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BotModelRoutingWhereInput
   }
 
 
@@ -17190,6 +17304,7 @@ export namespace Prisma {
     plugins?: boolean | Bot$pluginsArgs<ExtArgs>
     skills?: boolean | Bot$skillsArgs<ExtArgs>
     channels?: boolean | Bot$channelsArgs<ExtArgs>
+    modelRoutings?: boolean | Bot$modelRoutingsArgs<ExtArgs>
     _count?: boolean | BotCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["bot"]>
 
@@ -17279,6 +17394,7 @@ export namespace Prisma {
     plugins?: boolean | Bot$pluginsArgs<ExtArgs>
     skills?: boolean | Bot$skillsArgs<ExtArgs>
     channels?: boolean | Bot$channelsArgs<ExtArgs>
+    modelRoutings?: boolean | Bot$modelRoutingsArgs<ExtArgs>
     _count?: boolean | BotCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type BotIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -17304,6 +17420,7 @@ export namespace Prisma {
       plugins: Prisma.$BotPluginPayload<ExtArgs>[]
       skills: Prisma.$BotSkillPayload<ExtArgs>[]
       channels: Prisma.$BotChannelPayload<ExtArgs>[]
+      modelRoutings: Prisma.$BotModelRoutingPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -17729,6 +17846,7 @@ export namespace Prisma {
     plugins<T extends Bot$pluginsArgs<ExtArgs> = {}>(args?: Subset<T, Bot$pluginsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotPluginPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     skills<T extends Bot$skillsArgs<ExtArgs> = {}>(args?: Subset<T, Bot$skillsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     channels<T extends Bot$channelsArgs<ExtArgs> = {}>(args?: Subset<T, Bot$channelsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotChannelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    modelRoutings<T extends Bot$modelRoutingsArgs<ExtArgs> = {}>(args?: Subset<T, Bot$modelRoutingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -18348,6 +18466,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: BotChannelScalarFieldEnum | BotChannelScalarFieldEnum[]
+  }
+
+  /**
+   * Bot.modelRoutings
+   */
+  export type Bot$modelRoutingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    where?: BotModelRoutingWhereInput
+    orderBy?: BotModelRoutingOrderByWithRelationInput | BotModelRoutingOrderByWithRelationInput[]
+    cursor?: BotModelRoutingWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BotModelRoutingScalarFieldEnum | BotModelRoutingScalarFieldEnum[]
   }
 
   /**
@@ -34743,6 +34885,1190 @@ export namespace Prisma {
 
 
   /**
+   * Model BotModelRouting
+   */
+
+  export type AggregateBotModelRouting = {
+    _count: BotModelRoutingCountAggregateOutputType | null
+    _avg: BotModelRoutingAvgAggregateOutputType | null
+    _sum: BotModelRoutingSumAggregateOutputType | null
+    _min: BotModelRoutingMinAggregateOutputType | null
+    _max: BotModelRoutingMaxAggregateOutputType | null
+  }
+
+  export type BotModelRoutingAvgAggregateOutputType = {
+    priority: number | null
+  }
+
+  export type BotModelRoutingSumAggregateOutputType = {
+    priority: number | null
+  }
+
+  export type BotModelRoutingMinAggregateOutputType = {
+    id: string | null
+    botId: string | null
+    routingType: $Enums.ModelRoutingType | null
+    name: string | null
+    priority: number | null
+    isEnabled: boolean | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type BotModelRoutingMaxAggregateOutputType = {
+    id: string | null
+    botId: string | null
+    routingType: $Enums.ModelRoutingType | null
+    name: string | null
+    priority: number | null
+    isEnabled: boolean | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type BotModelRoutingCountAggregateOutputType = {
+    id: number
+    botId: number
+    routingType: number
+    name: number
+    config: number
+    priority: number
+    isEnabled: number
+    isDeleted: number
+    createdAt: number
+    updatedAt: number
+    deletedAt: number
+    _all: number
+  }
+
+
+  export type BotModelRoutingAvgAggregateInputType = {
+    priority?: true
+  }
+
+  export type BotModelRoutingSumAggregateInputType = {
+    priority?: true
+  }
+
+  export type BotModelRoutingMinAggregateInputType = {
+    id?: true
+    botId?: true
+    routingType?: true
+    name?: true
+    priority?: true
+    isEnabled?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type BotModelRoutingMaxAggregateInputType = {
+    id?: true
+    botId?: true
+    routingType?: true
+    name?: true
+    priority?: true
+    isEnabled?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type BotModelRoutingCountAggregateInputType = {
+    id?: true
+    botId?: true
+    routingType?: true
+    name?: true
+    config?: true
+    priority?: true
+    isEnabled?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+    _all?: true
+  }
+
+  export type BotModelRoutingAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BotModelRouting to aggregate.
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotModelRoutings to fetch.
+     */
+    orderBy?: BotModelRoutingOrderByWithRelationInput | BotModelRoutingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BotModelRoutingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotModelRoutings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotModelRoutings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BotModelRoutings
+    **/
+    _count?: true | BotModelRoutingCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BotModelRoutingAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BotModelRoutingSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BotModelRoutingMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BotModelRoutingMaxAggregateInputType
+  }
+
+  export type GetBotModelRoutingAggregateType<T extends BotModelRoutingAggregateArgs> = {
+        [P in keyof T & keyof AggregateBotModelRouting]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBotModelRouting[P]>
+      : GetScalarType<T[P], AggregateBotModelRouting[P]>
+  }
+
+
+
+
+  export type BotModelRoutingGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BotModelRoutingWhereInput
+    orderBy?: BotModelRoutingOrderByWithAggregationInput | BotModelRoutingOrderByWithAggregationInput[]
+    by: BotModelRoutingScalarFieldEnum[] | BotModelRoutingScalarFieldEnum
+    having?: BotModelRoutingScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BotModelRoutingCountAggregateInputType | true
+    _avg?: BotModelRoutingAvgAggregateInputType
+    _sum?: BotModelRoutingSumAggregateInputType
+    _min?: BotModelRoutingMinAggregateInputType
+    _max?: BotModelRoutingMaxAggregateInputType
+  }
+
+  export type BotModelRoutingGroupByOutputType = {
+    id: string
+    botId: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonValue
+    priority: number
+    isEnabled: boolean
+    isDeleted: boolean
+    createdAt: Date
+    updatedAt: Date
+    deletedAt: Date | null
+    _count: BotModelRoutingCountAggregateOutputType | null
+    _avg: BotModelRoutingAvgAggregateOutputType | null
+    _sum: BotModelRoutingSumAggregateOutputType | null
+    _min: BotModelRoutingMinAggregateOutputType | null
+    _max: BotModelRoutingMaxAggregateOutputType | null
+  }
+
+  type GetBotModelRoutingGroupByPayload<T extends BotModelRoutingGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BotModelRoutingGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BotModelRoutingGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BotModelRoutingGroupByOutputType[P]>
+            : GetScalarType<T[P], BotModelRoutingGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BotModelRoutingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    botId?: boolean
+    routingType?: boolean
+    name?: boolean
+    config?: boolean
+    priority?: boolean
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["botModelRouting"]>
+
+  export type BotModelRoutingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    botId?: boolean
+    routingType?: boolean
+    name?: boolean
+    config?: boolean
+    priority?: boolean
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["botModelRouting"]>
+
+  export type BotModelRoutingSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    botId?: boolean
+    routingType?: boolean
+    name?: boolean
+    config?: boolean
+    priority?: boolean
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["botModelRouting"]>
+
+  export type BotModelRoutingSelectScalar = {
+    id?: boolean
+    botId?: boolean
+    routingType?: boolean
+    name?: boolean
+    config?: boolean
+    priority?: boolean
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }
+
+  export type BotModelRoutingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "botId" | "routingType" | "name" | "config" | "priority" | "isEnabled" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["botModelRouting"]>
+  export type BotModelRoutingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }
+  export type BotModelRoutingIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }
+  export type BotModelRoutingIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }
+
+  export type $BotModelRoutingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BotModelRouting"
+    objects: {
+      bot: Prisma.$BotPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      botId: string
+      /**
+       * 路由类型
+       */
+      routingType: $Enums.ModelRoutingType
+      /**
+       * 路由名称（用于标识）
+       */
+      name: string
+      /**
+       * 路由配置 (JSON)
+       * 功能路由: { rules: [...], defaultTarget: {...} }
+       * 负载均衡: { strategy: "round_robin"|"weighted"|"least_latency", targets: [...] }
+       * 故障转移: { primary: {...}, fallbackChain: [...], retry: {...} }
+       */
+      config: Prisma.JsonValue
+      /**
+       * 优先级（数字越小优先级越高）
+       */
+      priority: number
+      /**
+       * 是否启用
+       */
+      isEnabled: boolean
+      isDeleted: boolean
+      createdAt: Date
+      updatedAt: Date
+      deletedAt: Date | null
+    }, ExtArgs["result"]["botModelRouting"]>
+    composites: {}
+  }
+
+  type BotModelRoutingGetPayload<S extends boolean | null | undefined | BotModelRoutingDefaultArgs> = $Result.GetResult<Prisma.$BotModelRoutingPayload, S>
+
+  type BotModelRoutingCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BotModelRoutingFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BotModelRoutingCountAggregateInputType | true
+    }
+
+  export interface BotModelRoutingDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BotModelRouting'], meta: { name: 'BotModelRouting' } }
+    /**
+     * Find zero or one BotModelRouting that matches the filter.
+     * @param {BotModelRoutingFindUniqueArgs} args - Arguments to find a BotModelRouting
+     * @example
+     * // Get one BotModelRouting
+     * const botModelRouting = await prisma.botModelRouting.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BotModelRoutingFindUniqueArgs>(args: SelectSubset<T, BotModelRoutingFindUniqueArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BotModelRouting that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BotModelRoutingFindUniqueOrThrowArgs} args - Arguments to find a BotModelRouting
+     * @example
+     * // Get one BotModelRouting
+     * const botModelRouting = await prisma.botModelRouting.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BotModelRoutingFindUniqueOrThrowArgs>(args: SelectSubset<T, BotModelRoutingFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BotModelRouting that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingFindFirstArgs} args - Arguments to find a BotModelRouting
+     * @example
+     * // Get one BotModelRouting
+     * const botModelRouting = await prisma.botModelRouting.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BotModelRoutingFindFirstArgs>(args?: SelectSubset<T, BotModelRoutingFindFirstArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BotModelRouting that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingFindFirstOrThrowArgs} args - Arguments to find a BotModelRouting
+     * @example
+     * // Get one BotModelRouting
+     * const botModelRouting = await prisma.botModelRouting.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BotModelRoutingFindFirstOrThrowArgs>(args?: SelectSubset<T, BotModelRoutingFindFirstOrThrowArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BotModelRoutings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BotModelRoutings
+     * const botModelRoutings = await prisma.botModelRouting.findMany()
+     * 
+     * // Get first 10 BotModelRoutings
+     * const botModelRoutings = await prisma.botModelRouting.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const botModelRoutingWithIdOnly = await prisma.botModelRouting.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BotModelRoutingFindManyArgs>(args?: SelectSubset<T, BotModelRoutingFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BotModelRouting.
+     * @param {BotModelRoutingCreateArgs} args - Arguments to create a BotModelRouting.
+     * @example
+     * // Create one BotModelRouting
+     * const BotModelRouting = await prisma.botModelRouting.create({
+     *   data: {
+     *     // ... data to create a BotModelRouting
+     *   }
+     * })
+     * 
+     */
+    create<T extends BotModelRoutingCreateArgs>(args: SelectSubset<T, BotModelRoutingCreateArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BotModelRoutings.
+     * @param {BotModelRoutingCreateManyArgs} args - Arguments to create many BotModelRoutings.
+     * @example
+     * // Create many BotModelRoutings
+     * const botModelRouting = await prisma.botModelRouting.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BotModelRoutingCreateManyArgs>(args?: SelectSubset<T, BotModelRoutingCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BotModelRoutings and returns the data saved in the database.
+     * @param {BotModelRoutingCreateManyAndReturnArgs} args - Arguments to create many BotModelRoutings.
+     * @example
+     * // Create many BotModelRoutings
+     * const botModelRouting = await prisma.botModelRouting.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BotModelRoutings and only return the `id`
+     * const botModelRoutingWithIdOnly = await prisma.botModelRouting.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BotModelRoutingCreateManyAndReturnArgs>(args?: SelectSubset<T, BotModelRoutingCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BotModelRouting.
+     * @param {BotModelRoutingDeleteArgs} args - Arguments to delete one BotModelRouting.
+     * @example
+     * // Delete one BotModelRouting
+     * const BotModelRouting = await prisma.botModelRouting.delete({
+     *   where: {
+     *     // ... filter to delete one BotModelRouting
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BotModelRoutingDeleteArgs>(args: SelectSubset<T, BotModelRoutingDeleteArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BotModelRouting.
+     * @param {BotModelRoutingUpdateArgs} args - Arguments to update one BotModelRouting.
+     * @example
+     * // Update one BotModelRouting
+     * const botModelRouting = await prisma.botModelRouting.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BotModelRoutingUpdateArgs>(args: SelectSubset<T, BotModelRoutingUpdateArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BotModelRoutings.
+     * @param {BotModelRoutingDeleteManyArgs} args - Arguments to filter BotModelRoutings to delete.
+     * @example
+     * // Delete a few BotModelRoutings
+     * const { count } = await prisma.botModelRouting.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BotModelRoutingDeleteManyArgs>(args?: SelectSubset<T, BotModelRoutingDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BotModelRoutings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BotModelRoutings
+     * const botModelRouting = await prisma.botModelRouting.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BotModelRoutingUpdateManyArgs>(args: SelectSubset<T, BotModelRoutingUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BotModelRoutings and returns the data updated in the database.
+     * @param {BotModelRoutingUpdateManyAndReturnArgs} args - Arguments to update many BotModelRoutings.
+     * @example
+     * // Update many BotModelRoutings
+     * const botModelRouting = await prisma.botModelRouting.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BotModelRoutings and only return the `id`
+     * const botModelRoutingWithIdOnly = await prisma.botModelRouting.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BotModelRoutingUpdateManyAndReturnArgs>(args: SelectSubset<T, BotModelRoutingUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BotModelRouting.
+     * @param {BotModelRoutingUpsertArgs} args - Arguments to update or create a BotModelRouting.
+     * @example
+     * // Update or create a BotModelRouting
+     * const botModelRouting = await prisma.botModelRouting.upsert({
+     *   create: {
+     *     // ... data to create a BotModelRouting
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BotModelRouting we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BotModelRoutingUpsertArgs>(args: SelectSubset<T, BotModelRoutingUpsertArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BotModelRoutings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingCountArgs} args - Arguments to filter BotModelRoutings to count.
+     * @example
+     * // Count the number of BotModelRoutings
+     * const count = await prisma.botModelRouting.count({
+     *   where: {
+     *     // ... the filter for the BotModelRoutings we want to count
+     *   }
+     * })
+    **/
+    count<T extends BotModelRoutingCountArgs>(
+      args?: Subset<T, BotModelRoutingCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BotModelRoutingCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BotModelRouting.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BotModelRoutingAggregateArgs>(args: Subset<T, BotModelRoutingAggregateArgs>): Prisma.PrismaPromise<GetBotModelRoutingAggregateType<T>>
+
+    /**
+     * Group by BotModelRouting.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BotModelRoutingGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BotModelRoutingGroupByArgs['orderBy'] }
+        : { orderBy?: BotModelRoutingGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BotModelRoutingGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBotModelRoutingGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BotModelRouting model
+   */
+  readonly fields: BotModelRoutingFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BotModelRouting.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BotModelRoutingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    bot<T extends BotDefaultArgs<ExtArgs> = {}>(args?: Subset<T, BotDefaultArgs<ExtArgs>>): Prisma__BotClient<$Result.GetResult<Prisma.$BotPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BotModelRouting model
+   */
+  interface BotModelRoutingFieldRefs {
+    readonly id: FieldRef<"BotModelRouting", 'String'>
+    readonly botId: FieldRef<"BotModelRouting", 'String'>
+    readonly routingType: FieldRef<"BotModelRouting", 'ModelRoutingType'>
+    readonly name: FieldRef<"BotModelRouting", 'String'>
+    readonly config: FieldRef<"BotModelRouting", 'Json'>
+    readonly priority: FieldRef<"BotModelRouting", 'Int'>
+    readonly isEnabled: FieldRef<"BotModelRouting", 'Boolean'>
+    readonly isDeleted: FieldRef<"BotModelRouting", 'Boolean'>
+    readonly createdAt: FieldRef<"BotModelRouting", 'DateTime'>
+    readonly updatedAt: FieldRef<"BotModelRouting", 'DateTime'>
+    readonly deletedAt: FieldRef<"BotModelRouting", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BotModelRouting findUnique
+   */
+  export type BotModelRoutingFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * Filter, which BotModelRouting to fetch.
+     */
+    where: BotModelRoutingWhereUniqueInput
+  }
+
+  /**
+   * BotModelRouting findUniqueOrThrow
+   */
+  export type BotModelRoutingFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * Filter, which BotModelRouting to fetch.
+     */
+    where: BotModelRoutingWhereUniqueInput
+  }
+
+  /**
+   * BotModelRouting findFirst
+   */
+  export type BotModelRoutingFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * Filter, which BotModelRouting to fetch.
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotModelRoutings to fetch.
+     */
+    orderBy?: BotModelRoutingOrderByWithRelationInput | BotModelRoutingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BotModelRoutings.
+     */
+    cursor?: BotModelRoutingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotModelRoutings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotModelRoutings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BotModelRoutings.
+     */
+    distinct?: BotModelRoutingScalarFieldEnum | BotModelRoutingScalarFieldEnum[]
+  }
+
+  /**
+   * BotModelRouting findFirstOrThrow
+   */
+  export type BotModelRoutingFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * Filter, which BotModelRouting to fetch.
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotModelRoutings to fetch.
+     */
+    orderBy?: BotModelRoutingOrderByWithRelationInput | BotModelRoutingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BotModelRoutings.
+     */
+    cursor?: BotModelRoutingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotModelRoutings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotModelRoutings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BotModelRoutings.
+     */
+    distinct?: BotModelRoutingScalarFieldEnum | BotModelRoutingScalarFieldEnum[]
+  }
+
+  /**
+   * BotModelRouting findMany
+   */
+  export type BotModelRoutingFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * Filter, which BotModelRoutings to fetch.
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotModelRoutings to fetch.
+     */
+    orderBy?: BotModelRoutingOrderByWithRelationInput | BotModelRoutingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BotModelRoutings.
+     */
+    cursor?: BotModelRoutingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotModelRoutings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotModelRoutings.
+     */
+    skip?: number
+    distinct?: BotModelRoutingScalarFieldEnum | BotModelRoutingScalarFieldEnum[]
+  }
+
+  /**
+   * BotModelRouting create
+   */
+  export type BotModelRoutingCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BotModelRouting.
+     */
+    data: XOR<BotModelRoutingCreateInput, BotModelRoutingUncheckedCreateInput>
+  }
+
+  /**
+   * BotModelRouting createMany
+   */
+  export type BotModelRoutingCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BotModelRoutings.
+     */
+    data: BotModelRoutingCreateManyInput | BotModelRoutingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BotModelRouting createManyAndReturn
+   */
+  export type BotModelRoutingCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * The data used to create many BotModelRoutings.
+     */
+    data: BotModelRoutingCreateManyInput | BotModelRoutingCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BotModelRouting update
+   */
+  export type BotModelRoutingUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BotModelRouting.
+     */
+    data: XOR<BotModelRoutingUpdateInput, BotModelRoutingUncheckedUpdateInput>
+    /**
+     * Choose, which BotModelRouting to update.
+     */
+    where: BotModelRoutingWhereUniqueInput
+  }
+
+  /**
+   * BotModelRouting updateMany
+   */
+  export type BotModelRoutingUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BotModelRoutings.
+     */
+    data: XOR<BotModelRoutingUpdateManyMutationInput, BotModelRoutingUncheckedUpdateManyInput>
+    /**
+     * Filter which BotModelRoutings to update
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * Limit how many BotModelRoutings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BotModelRouting updateManyAndReturn
+   */
+  export type BotModelRoutingUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * The data used to update BotModelRoutings.
+     */
+    data: XOR<BotModelRoutingUpdateManyMutationInput, BotModelRoutingUncheckedUpdateManyInput>
+    /**
+     * Filter which BotModelRoutings to update
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * Limit how many BotModelRoutings to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BotModelRouting upsert
+   */
+  export type BotModelRoutingUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BotModelRouting to update in case it exists.
+     */
+    where: BotModelRoutingWhereUniqueInput
+    /**
+     * In case the BotModelRouting found by the `where` argument doesn't exist, create a new BotModelRouting with this data.
+     */
+    create: XOR<BotModelRoutingCreateInput, BotModelRoutingUncheckedCreateInput>
+    /**
+     * In case the BotModelRouting was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BotModelRoutingUpdateInput, BotModelRoutingUncheckedUpdateInput>
+  }
+
+  /**
+   * BotModelRouting delete
+   */
+  export type BotModelRoutingDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * Filter which BotModelRouting to delete.
+     */
+    where: BotModelRoutingWhereUniqueInput
+  }
+
+  /**
+   * BotModelRouting deleteMany
+   */
+  export type BotModelRoutingDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BotModelRoutings to delete
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * Limit how many BotModelRoutings to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BotModelRouting without action
+   */
+  export type BotModelRoutingDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model BotChannel
    */
 
@@ -36396,6 +37722,23 @@ export namespace Prisma {
   export type ModelPricingScalarFieldEnum = (typeof ModelPricingScalarFieldEnum)[keyof typeof ModelPricingScalarFieldEnum]
 
 
+  export const BotModelRoutingScalarFieldEnum: {
+    id: 'id',
+    botId: 'botId',
+    routingType: 'routingType',
+    name: 'name',
+    config: 'config',
+    priority: 'priority',
+    isEnabled: 'isEnabled',
+    isDeleted: 'isDeleted',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    deletedAt: 'deletedAt'
+  };
+
+  export type BotModelRoutingScalarFieldEnum = (typeof BotModelRoutingScalarFieldEnum)[keyof typeof BotModelRoutingScalarFieldEnum]
+
+
   export const BotChannelScalarFieldEnum: {
     id: 'id',
     botId: 'botId',
@@ -36711,6 +38054,20 @@ export namespace Prisma {
    * Reference to a field of type 'Decimal[]'
    */
   export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ModelRoutingType'
+   */
+  export type EnumModelRoutingTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ModelRoutingType'>
+    
+
+
+  /**
+   * Reference to a field of type 'ModelRoutingType[]'
+   */
+  export type ListEnumModelRoutingTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ModelRoutingType[]'>
     
 
 
@@ -37804,6 +39161,7 @@ export namespace Prisma {
     plugins?: BotPluginListRelationFilter
     skills?: BotSkillListRelationFilter
     channels?: BotChannelListRelationFilter
+    modelRoutings?: BotModelRoutingListRelationFilter
   }
 
   export type BotOrderByWithRelationInput = {
@@ -37836,6 +39194,7 @@ export namespace Prisma {
     plugins?: BotPluginOrderByRelationAggregateInput
     skills?: BotSkillOrderByRelationAggregateInput
     channels?: BotChannelOrderByRelationAggregateInput
+    modelRoutings?: BotModelRoutingOrderByRelationAggregateInput
   }
 
   export type BotWhereUniqueInput = Prisma.AtLeast<{
@@ -37871,6 +39230,7 @@ export namespace Prisma {
     plugins?: BotPluginListRelationFilter
     skills?: BotSkillListRelationFilter
     channels?: BotChannelListRelationFilter
+    modelRoutings?: BotModelRoutingListRelationFilter
   }, "id">
 
   export type BotOrderByWithAggregationInput = {
@@ -39189,6 +40549,93 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"ModelPricing"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"ModelPricing"> | Date | string
     deletedAt?: DateTimeNullableWithAggregatesFilter<"ModelPricing"> | Date | string | null
+  }
+
+  export type BotModelRoutingWhereInput = {
+    AND?: BotModelRoutingWhereInput | BotModelRoutingWhereInput[]
+    OR?: BotModelRoutingWhereInput[]
+    NOT?: BotModelRoutingWhereInput | BotModelRoutingWhereInput[]
+    id?: UuidFilter<"BotModelRouting"> | string
+    botId?: UuidFilter<"BotModelRouting"> | string
+    routingType?: EnumModelRoutingTypeFilter<"BotModelRouting"> | $Enums.ModelRoutingType
+    name?: StringFilter<"BotModelRouting"> | string
+    config?: JsonFilter<"BotModelRouting">
+    priority?: IntFilter<"BotModelRouting"> | number
+    isEnabled?: BoolFilter<"BotModelRouting"> | boolean
+    isDeleted?: BoolFilter<"BotModelRouting"> | boolean
+    createdAt?: DateTimeFilter<"BotModelRouting"> | Date | string
+    updatedAt?: DateTimeFilter<"BotModelRouting"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"BotModelRouting"> | Date | string | null
+    bot?: XOR<BotScalarRelationFilter, BotWhereInput>
+  }
+
+  export type BotModelRoutingOrderByWithRelationInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingType?: SortOrder
+    name?: SortOrder
+    config?: SortOrder
+    priority?: SortOrder
+    isEnabled?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    bot?: BotOrderByWithRelationInput
+  }
+
+  export type BotModelRoutingWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: BotModelRoutingWhereInput | BotModelRoutingWhereInput[]
+    OR?: BotModelRoutingWhereInput[]
+    NOT?: BotModelRoutingWhereInput | BotModelRoutingWhereInput[]
+    botId?: UuidFilter<"BotModelRouting"> | string
+    routingType?: EnumModelRoutingTypeFilter<"BotModelRouting"> | $Enums.ModelRoutingType
+    name?: StringFilter<"BotModelRouting"> | string
+    config?: JsonFilter<"BotModelRouting">
+    priority?: IntFilter<"BotModelRouting"> | number
+    isEnabled?: BoolFilter<"BotModelRouting"> | boolean
+    isDeleted?: BoolFilter<"BotModelRouting"> | boolean
+    createdAt?: DateTimeFilter<"BotModelRouting"> | Date | string
+    updatedAt?: DateTimeFilter<"BotModelRouting"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"BotModelRouting"> | Date | string | null
+    bot?: XOR<BotScalarRelationFilter, BotWhereInput>
+  }, "id">
+
+  export type BotModelRoutingOrderByWithAggregationInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingType?: SortOrder
+    name?: SortOrder
+    config?: SortOrder
+    priority?: SortOrder
+    isEnabled?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    _count?: BotModelRoutingCountOrderByAggregateInput
+    _avg?: BotModelRoutingAvgOrderByAggregateInput
+    _max?: BotModelRoutingMaxOrderByAggregateInput
+    _min?: BotModelRoutingMinOrderByAggregateInput
+    _sum?: BotModelRoutingSumOrderByAggregateInput
+  }
+
+  export type BotModelRoutingScalarWhereWithAggregatesInput = {
+    AND?: BotModelRoutingScalarWhereWithAggregatesInput | BotModelRoutingScalarWhereWithAggregatesInput[]
+    OR?: BotModelRoutingScalarWhereWithAggregatesInput[]
+    NOT?: BotModelRoutingScalarWhereWithAggregatesInput | BotModelRoutingScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"BotModelRouting"> | string
+    botId?: UuidWithAggregatesFilter<"BotModelRouting"> | string
+    routingType?: EnumModelRoutingTypeWithAggregatesFilter<"BotModelRouting"> | $Enums.ModelRoutingType
+    name?: StringWithAggregatesFilter<"BotModelRouting"> | string
+    config?: JsonWithAggregatesFilter<"BotModelRouting">
+    priority?: IntWithAggregatesFilter<"BotModelRouting"> | number
+    isEnabled?: BoolWithAggregatesFilter<"BotModelRouting"> | boolean
+    isDeleted?: BoolWithAggregatesFilter<"BotModelRouting"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"BotModelRouting"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"BotModelRouting"> | Date | string
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"BotModelRouting"> | Date | string | null
   }
 
   export type BotChannelWhereInput = {
@@ -40533,6 +41980,7 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateInput = {
@@ -40562,6 +42010,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotUpdateInput = {
@@ -40591,6 +42040,7 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateInput = {
@@ -40620,6 +42070,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type BotCreateManyInput = {
@@ -42114,6 +43565,103 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
+  export type BotModelRoutingCreateInput = {
+    id?: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonNullValueInput | InputJsonValue
+    priority?: number
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    bot: BotCreateNestedOneWithoutModelRoutingsInput
+  }
+
+  export type BotModelRoutingUncheckedCreateInput = {
+    id?: string
+    botId: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonNullValueInput | InputJsonValue
+    priority?: number
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type BotModelRoutingUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    bot?: BotUpdateOneRequiredWithoutModelRoutingsNestedInput
+  }
+
+  export type BotModelRoutingUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    botId?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BotModelRoutingCreateManyInput = {
+    id?: string
+    botId: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonNullValueInput | InputJsonValue
+    priority?: number
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type BotModelRoutingUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BotModelRoutingUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    botId?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type BotChannelCreateInput = {
     id?: string
     channelType: string
@@ -43334,6 +44882,12 @@ export namespace Prisma {
     none?: BotChannelWhereInput
   }
 
+  export type BotModelRoutingListRelationFilter = {
+    every?: BotModelRoutingWhereInput
+    some?: BotModelRoutingWhereInput
+    none?: BotModelRoutingWhereInput
+  }
+
   export type BotProviderKeyOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -43351,6 +44905,10 @@ export namespace Prisma {
   }
 
   export type BotChannelOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type BotModelRoutingOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -44327,6 +45885,71 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
+  export type EnumModelRoutingTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModelRoutingType | EnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumModelRoutingTypeFilter<$PrismaModel> | $Enums.ModelRoutingType
+  }
+
+  export type BotModelRoutingCountOrderByAggregateInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingType?: SortOrder
+    name?: SortOrder
+    config?: SortOrder
+    priority?: SortOrder
+    isEnabled?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type BotModelRoutingAvgOrderByAggregateInput = {
+    priority?: SortOrder
+  }
+
+  export type BotModelRoutingMaxOrderByAggregateInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingType?: SortOrder
+    name?: SortOrder
+    priority?: SortOrder
+    isEnabled?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type BotModelRoutingMinOrderByAggregateInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingType?: SortOrder
+    name?: SortOrder
+    priority?: SortOrder
+    isEnabled?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type BotModelRoutingSumOrderByAggregateInput = {
+    priority?: SortOrder
+  }
+
+  export type EnumModelRoutingTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModelRoutingType | EnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumModelRoutingTypeWithAggregatesFilter<$PrismaModel> | $Enums.ModelRoutingType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumModelRoutingTypeFilter<$PrismaModel>
+    _max?: NestedEnumModelRoutingTypeFilter<$PrismaModel>
+  }
+
   export type EnumChannelConnectionStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.ChannelConnectionStatus | EnumChannelConnectionStatusFieldRefInput<$PrismaModel>
     in?: $Enums.ChannelConnectionStatus[] | ListEnumChannelConnectionStatusFieldRefInput<$PrismaModel>
@@ -45225,6 +46848,13 @@ export namespace Prisma {
     connect?: BotChannelWhereUniqueInput | BotChannelWhereUniqueInput[]
   }
 
+  export type BotModelRoutingCreateNestedManyWithoutBotInput = {
+    create?: XOR<BotModelRoutingCreateWithoutBotInput, BotModelRoutingUncheckedCreateWithoutBotInput> | BotModelRoutingCreateWithoutBotInput[] | BotModelRoutingUncheckedCreateWithoutBotInput[]
+    connectOrCreate?: BotModelRoutingCreateOrConnectWithoutBotInput | BotModelRoutingCreateOrConnectWithoutBotInput[]
+    createMany?: BotModelRoutingCreateManyBotInputEnvelope
+    connect?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+  }
+
   export type BotProviderKeyUncheckedCreateNestedManyWithoutBotInput = {
     create?: XOR<BotProviderKeyCreateWithoutBotInput, BotProviderKeyUncheckedCreateWithoutBotInput> | BotProviderKeyCreateWithoutBotInput[] | BotProviderKeyUncheckedCreateWithoutBotInput[]
     connectOrCreate?: BotProviderKeyCreateOrConnectWithoutBotInput | BotProviderKeyCreateOrConnectWithoutBotInput[]
@@ -45264,6 +46894,13 @@ export namespace Prisma {
     connectOrCreate?: BotChannelCreateOrConnectWithoutBotInput | BotChannelCreateOrConnectWithoutBotInput[]
     createMany?: BotChannelCreateManyBotInputEnvelope
     connect?: BotChannelWhereUniqueInput | BotChannelWhereUniqueInput[]
+  }
+
+  export type BotModelRoutingUncheckedCreateNestedManyWithoutBotInput = {
+    create?: XOR<BotModelRoutingCreateWithoutBotInput, BotModelRoutingUncheckedCreateWithoutBotInput> | BotModelRoutingCreateWithoutBotInput[] | BotModelRoutingUncheckedCreateWithoutBotInput[]
+    connectOrCreate?: BotModelRoutingCreateOrConnectWithoutBotInput | BotModelRoutingCreateOrConnectWithoutBotInput[]
+    createMany?: BotModelRoutingCreateManyBotInputEnvelope
+    connect?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
   }
 
   export type NullableIntFieldUpdateOperationsInput = {
@@ -45395,6 +47032,20 @@ export namespace Prisma {
     deleteMany?: BotChannelScalarWhereInput | BotChannelScalarWhereInput[]
   }
 
+  export type BotModelRoutingUpdateManyWithoutBotNestedInput = {
+    create?: XOR<BotModelRoutingCreateWithoutBotInput, BotModelRoutingUncheckedCreateWithoutBotInput> | BotModelRoutingCreateWithoutBotInput[] | BotModelRoutingUncheckedCreateWithoutBotInput[]
+    connectOrCreate?: BotModelRoutingCreateOrConnectWithoutBotInput | BotModelRoutingCreateOrConnectWithoutBotInput[]
+    upsert?: BotModelRoutingUpsertWithWhereUniqueWithoutBotInput | BotModelRoutingUpsertWithWhereUniqueWithoutBotInput[]
+    createMany?: BotModelRoutingCreateManyBotInputEnvelope
+    set?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    disconnect?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    delete?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    connect?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    update?: BotModelRoutingUpdateWithWhereUniqueWithoutBotInput | BotModelRoutingUpdateWithWhereUniqueWithoutBotInput[]
+    updateMany?: BotModelRoutingUpdateManyWithWhereWithoutBotInput | BotModelRoutingUpdateManyWithWhereWithoutBotInput[]
+    deleteMany?: BotModelRoutingScalarWhereInput | BotModelRoutingScalarWhereInput[]
+  }
+
   export type BotProviderKeyUncheckedUpdateManyWithoutBotNestedInput = {
     create?: XOR<BotProviderKeyCreateWithoutBotInput, BotProviderKeyUncheckedCreateWithoutBotInput> | BotProviderKeyCreateWithoutBotInput[] | BotProviderKeyUncheckedCreateWithoutBotInput[]
     connectOrCreate?: BotProviderKeyCreateOrConnectWithoutBotInput | BotProviderKeyCreateOrConnectWithoutBotInput[]
@@ -45473,6 +47124,20 @@ export namespace Prisma {
     update?: BotChannelUpdateWithWhereUniqueWithoutBotInput | BotChannelUpdateWithWhereUniqueWithoutBotInput[]
     updateMany?: BotChannelUpdateManyWithWhereWithoutBotInput | BotChannelUpdateManyWithWhereWithoutBotInput[]
     deleteMany?: BotChannelScalarWhereInput | BotChannelScalarWhereInput[]
+  }
+
+  export type BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput = {
+    create?: XOR<BotModelRoutingCreateWithoutBotInput, BotModelRoutingUncheckedCreateWithoutBotInput> | BotModelRoutingCreateWithoutBotInput[] | BotModelRoutingUncheckedCreateWithoutBotInput[]
+    connectOrCreate?: BotModelRoutingCreateOrConnectWithoutBotInput | BotModelRoutingCreateOrConnectWithoutBotInput[]
+    upsert?: BotModelRoutingUpsertWithWhereUniqueWithoutBotInput | BotModelRoutingUpsertWithWhereUniqueWithoutBotInput[]
+    createMany?: BotModelRoutingCreateManyBotInputEnvelope
+    set?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    disconnect?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    delete?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    connect?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    update?: BotModelRoutingUpdateWithWhereUniqueWithoutBotInput | BotModelRoutingUpdateWithWhereUniqueWithoutBotInput[]
+    updateMany?: BotModelRoutingUpdateManyWithWhereWithoutBotInput | BotModelRoutingUpdateManyWithWhereWithoutBotInput[]
+    deleteMany?: BotModelRoutingScalarWhereInput | BotModelRoutingScalarWhereInput[]
   }
 
   export type UserInfoCreateNestedOneWithoutProviderKeysInput = {
@@ -46048,6 +47713,24 @@ export namespace Prisma {
     divide?: Decimal | DecimalJsLike | number | string
   }
 
+  export type BotCreateNestedOneWithoutModelRoutingsInput = {
+    create?: XOR<BotCreateWithoutModelRoutingsInput, BotUncheckedCreateWithoutModelRoutingsInput>
+    connectOrCreate?: BotCreateOrConnectWithoutModelRoutingsInput
+    connect?: BotWhereUniqueInput
+  }
+
+  export type EnumModelRoutingTypeFieldUpdateOperationsInput = {
+    set?: $Enums.ModelRoutingType
+  }
+
+  export type BotUpdateOneRequiredWithoutModelRoutingsNestedInput = {
+    create?: XOR<BotCreateWithoutModelRoutingsInput, BotUncheckedCreateWithoutModelRoutingsInput>
+    connectOrCreate?: BotCreateOrConnectWithoutModelRoutingsInput
+    upsert?: BotUpsertWithoutModelRoutingsInput
+    connect?: BotWhereUniqueInput
+    update?: XOR<XOR<BotUpdateToOneWithWhereWithoutModelRoutingsInput, BotUpdateWithoutModelRoutingsInput>, BotUncheckedUpdateWithoutModelRoutingsInput>
+  }
+
   export type BotCreateNestedOneWithoutChannelsInput = {
     create?: XOR<BotCreateWithoutChannelsInput, BotUncheckedCreateWithoutChannelsInput>
     connectOrCreate?: BotCreateOrConnectWithoutChannelsInput
@@ -46593,6 +48276,23 @@ export namespace Prisma {
     _max?: NestedDecimalFilter<$PrismaModel>
   }
 
+  export type NestedEnumModelRoutingTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModelRoutingType | EnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumModelRoutingTypeFilter<$PrismaModel> | $Enums.ModelRoutingType
+  }
+
+  export type NestedEnumModelRoutingTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModelRoutingType | EnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumModelRoutingTypeWithAggregatesFilter<$PrismaModel> | $Enums.ModelRoutingType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumModelRoutingTypeFilter<$PrismaModel>
+    _max?: NestedEnumModelRoutingTypeFilter<$PrismaModel>
+  }
+
   export type NestedEnumChannelConnectionStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.ChannelConnectionStatus | EnumChannelConnectionStatusFieldRefInput<$PrismaModel>
     in?: $Enums.ChannelConnectionStatus[] | ListEnumChannelConnectionStatusFieldRefInput<$PrismaModel>
@@ -46906,6 +48606,7 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutCreatedByInput = {
@@ -46934,6 +48635,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutCreatedByInput = {
@@ -47675,6 +49377,7 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutPersonaTemplateInput = {
@@ -47703,6 +49406,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutPersonaTemplateInput = {
@@ -48743,6 +50447,7 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutAvatarFileInput = {
@@ -48771,6 +50476,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutAvatarFileInput = {
@@ -49228,6 +50934,42 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type BotModelRoutingCreateWithoutBotInput = {
+    id?: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonNullValueInput | InputJsonValue
+    priority?: number
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type BotModelRoutingUncheckedCreateWithoutBotInput = {
+    id?: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonNullValueInput | InputJsonValue
+    priority?: number
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type BotModelRoutingCreateOrConnectWithoutBotInput = {
+    where: BotModelRoutingWhereUniqueInput
+    create: XOR<BotModelRoutingCreateWithoutBotInput, BotModelRoutingUncheckedCreateWithoutBotInput>
+  }
+
+  export type BotModelRoutingCreateManyBotInputEnvelope = {
+    data: BotModelRoutingCreateManyBotInput | BotModelRoutingCreateManyBotInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserInfoUpsertWithoutBotsInput = {
     update: XOR<UserInfoUpdateWithoutBotsInput, UserInfoUncheckedUpdateWithoutBotsInput>
     create: XOR<UserInfoCreateWithoutBotsInput, UserInfoUncheckedCreateWithoutBotsInput>
@@ -49617,6 +51359,39 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"BotChannel"> | Date | string | null
   }
 
+  export type BotModelRoutingUpsertWithWhereUniqueWithoutBotInput = {
+    where: BotModelRoutingWhereUniqueInput
+    update: XOR<BotModelRoutingUpdateWithoutBotInput, BotModelRoutingUncheckedUpdateWithoutBotInput>
+    create: XOR<BotModelRoutingCreateWithoutBotInput, BotModelRoutingUncheckedCreateWithoutBotInput>
+  }
+
+  export type BotModelRoutingUpdateWithWhereUniqueWithoutBotInput = {
+    where: BotModelRoutingWhereUniqueInput
+    data: XOR<BotModelRoutingUpdateWithoutBotInput, BotModelRoutingUncheckedUpdateWithoutBotInput>
+  }
+
+  export type BotModelRoutingUpdateManyWithWhereWithoutBotInput = {
+    where: BotModelRoutingScalarWhereInput
+    data: XOR<BotModelRoutingUpdateManyMutationInput, BotModelRoutingUncheckedUpdateManyWithoutBotInput>
+  }
+
+  export type BotModelRoutingScalarWhereInput = {
+    AND?: BotModelRoutingScalarWhereInput | BotModelRoutingScalarWhereInput[]
+    OR?: BotModelRoutingScalarWhereInput[]
+    NOT?: BotModelRoutingScalarWhereInput | BotModelRoutingScalarWhereInput[]
+    id?: UuidFilter<"BotModelRouting"> | string
+    botId?: UuidFilter<"BotModelRouting"> | string
+    routingType?: EnumModelRoutingTypeFilter<"BotModelRouting"> | $Enums.ModelRoutingType
+    name?: StringFilter<"BotModelRouting"> | string
+    config?: JsonFilter<"BotModelRouting">
+    priority?: IntFilter<"BotModelRouting"> | number
+    isEnabled?: BoolFilter<"BotModelRouting"> | boolean
+    isDeleted?: BoolFilter<"BotModelRouting"> | boolean
+    createdAt?: DateTimeFilter<"BotModelRouting"> | Date | string
+    updatedAt?: DateTimeFilter<"BotModelRouting"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"BotModelRouting"> | Date | string | null
+  }
+
   export type UserInfoCreateWithoutProviderKeysInput = {
     id?: string
     nickname?: string
@@ -49957,6 +51732,7 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutProviderKeysInput = {
@@ -49985,6 +51761,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutProviderKeysInput = {
@@ -50068,6 +51845,7 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutProviderKeysInput = {
@@ -50096,6 +51874,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type ProviderKeyUpsertWithoutBotProviderKeysInput = {
@@ -50169,6 +51948,7 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutUsageLogsInput = {
@@ -50197,6 +51977,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutUsageLogsInput = {
@@ -50280,6 +52061,7 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutUsageLogsInput = {
@@ -50308,6 +52090,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type ProviderKeyUpsertWithoutUsageLogsInput = {
@@ -50381,6 +52164,7 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutProxyTokenInput = {
@@ -50409,6 +52193,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutProxyTokenInput = {
@@ -50492,6 +52277,7 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutProxyTokenInput = {
@@ -50520,6 +52306,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type ProviderKeyUpsertWithoutProxyTokensInput = {
@@ -51341,6 +53128,7 @@ export namespace Prisma {
     proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutPluginsInput = {
@@ -51369,6 +53157,7 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutPluginsInput = {
@@ -51464,6 +53253,7 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutPluginsInput = {
@@ -51492,6 +53282,7 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type PluginUpsertWithoutInstallationsInput = {
@@ -51621,6 +53412,7 @@ export namespace Prisma {
     proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutSkillsInput = {
@@ -51649,6 +53441,7 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutSkillsInput = {
@@ -51734,6 +53527,7 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutSkillsInput = {
@@ -51762,6 +53556,7 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type SkillUpsertWithoutInstallationsInput = {
@@ -51811,6 +53606,138 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
+  export type BotCreateWithoutModelRoutingsInput = {
+    id?: string
+    name: string
+    hostname: string
+    containerId?: string | null
+    port?: number | null
+    gatewayToken?: string | null
+    proxyTokenHash?: string | null
+    tags?: BotCreatetagsInput | string[]
+    status?: $Enums.BotStatus
+    emoji?: string | null
+    soulMarkdown?: string | null
+    healthStatus?: $Enums.HealthStatus
+    lastHealthCheck?: Date | string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    createdBy: UserInfoCreateNestedOneWithoutBotsInput
+    personaTemplate?: PersonaTemplateCreateNestedOneWithoutBotsInput
+    avatarFile?: FileSourceCreateNestedOneWithoutBotAvatarsInput
+    providerKeys?: BotProviderKeyCreateNestedManyWithoutBotInput
+    usageLogs?: BotUsageLogCreateNestedManyWithoutBotInput
+    proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
+    plugins?: BotPluginCreateNestedManyWithoutBotInput
+    skills?: BotSkillCreateNestedManyWithoutBotInput
+    channels?: BotChannelCreateNestedManyWithoutBotInput
+  }
+
+  export type BotUncheckedCreateWithoutModelRoutingsInput = {
+    id?: string
+    name: string
+    hostname: string
+    containerId?: string | null
+    port?: number | null
+    gatewayToken?: string | null
+    proxyTokenHash?: string | null
+    tags?: BotCreatetagsInput | string[]
+    status?: $Enums.BotStatus
+    createdById: string
+    personaTemplateId?: string | null
+    emoji?: string | null
+    avatarFileId?: string | null
+    soulMarkdown?: string | null
+    healthStatus?: $Enums.HealthStatus
+    lastHealthCheck?: Date | string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    providerKeys?: BotProviderKeyUncheckedCreateNestedManyWithoutBotInput
+    usageLogs?: BotUsageLogUncheckedCreateNestedManyWithoutBotInput
+    proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
+    plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
+    skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
+    channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+  }
+
+  export type BotCreateOrConnectWithoutModelRoutingsInput = {
+    where: BotWhereUniqueInput
+    create: XOR<BotCreateWithoutModelRoutingsInput, BotUncheckedCreateWithoutModelRoutingsInput>
+  }
+
+  export type BotUpsertWithoutModelRoutingsInput = {
+    update: XOR<BotUpdateWithoutModelRoutingsInput, BotUncheckedUpdateWithoutModelRoutingsInput>
+    create: XOR<BotCreateWithoutModelRoutingsInput, BotUncheckedCreateWithoutModelRoutingsInput>
+    where?: BotWhereInput
+  }
+
+  export type BotUpdateToOneWithWhereWithoutModelRoutingsInput = {
+    where?: BotWhereInput
+    data: XOR<BotUpdateWithoutModelRoutingsInput, BotUncheckedUpdateWithoutModelRoutingsInput>
+  }
+
+  export type BotUpdateWithoutModelRoutingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    containerId?: NullableStringFieldUpdateOperationsInput | string | null
+    port?: NullableIntFieldUpdateOperationsInput | number | null
+    gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
+    proxyTokenHash?: NullableStringFieldUpdateOperationsInput | string | null
+    tags?: BotUpdatetagsInput | string[]
+    status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
+    emoji?: NullableStringFieldUpdateOperationsInput | string | null
+    soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
+    lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: UserInfoUpdateOneRequiredWithoutBotsNestedInput
+    personaTemplate?: PersonaTemplateUpdateOneWithoutBotsNestedInput
+    avatarFile?: FileSourceUpdateOneWithoutBotAvatarsNestedInput
+    providerKeys?: BotProviderKeyUpdateManyWithoutBotNestedInput
+    usageLogs?: BotUsageLogUpdateManyWithoutBotNestedInput
+    proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
+    plugins?: BotPluginUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUpdateManyWithoutBotNestedInput
+    channels?: BotChannelUpdateManyWithoutBotNestedInput
+  }
+
+  export type BotUncheckedUpdateWithoutModelRoutingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    containerId?: NullableStringFieldUpdateOperationsInput | string | null
+    port?: NullableIntFieldUpdateOperationsInput | number | null
+    gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
+    proxyTokenHash?: NullableStringFieldUpdateOperationsInput | string | null
+    tags?: BotUpdatetagsInput | string[]
+    status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
+    createdById?: StringFieldUpdateOperationsInput | string
+    personaTemplateId?: NullableStringFieldUpdateOperationsInput | string | null
+    emoji?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
+    soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
+    lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    providerKeys?: BotProviderKeyUncheckedUpdateManyWithoutBotNestedInput
+    usageLogs?: BotUsageLogUncheckedUpdateManyWithoutBotNestedInput
+    proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
+    plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
+    channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+  }
+
   export type BotCreateWithoutChannelsInput = {
     id?: string
     name: string
@@ -51837,6 +53764,7 @@ export namespace Prisma {
     proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutChannelsInput = {
@@ -51865,6 +53793,7 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutChannelsInput = {
@@ -51909,6 +53838,7 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutChannelsInput = {
@@ -51937,6 +53867,7 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type MessageCreateManySenderInput = {
@@ -52123,6 +54054,7 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutCreatedByInput = {
@@ -52151,6 +54083,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateManyWithoutCreatedByInput = {
@@ -52357,6 +54290,7 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutPersonaTemplateInput = {
@@ -52385,6 +54319,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateManyWithoutPersonaTemplateInput = {
@@ -52629,6 +54564,7 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutAvatarFileInput = {
@@ -52657,6 +54593,7 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateManyWithoutAvatarFileInput = {
@@ -52732,6 +54669,19 @@ export namespace Prisma {
     connectionStatus?: $Enums.ChannelConnectionStatus
     lastConnectedAt?: Date | string | null
     lastError?: string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type BotModelRoutingCreateManyBotInput = {
+    id?: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonNullValueInput | InputJsonValue
+    priority?: number
+    isEnabled?: boolean
     isDeleted?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -52903,6 +54853,45 @@ export namespace Prisma {
     connectionStatus?: EnumChannelConnectionStatusFieldUpdateOperationsInput | $Enums.ChannelConnectionStatus
     lastConnectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BotModelRoutingUpdateWithoutBotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BotModelRoutingUncheckedUpdateWithoutBotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BotModelRoutingUncheckedUpdateManyWithoutBotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
