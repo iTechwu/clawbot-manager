@@ -769,25 +769,22 @@ export class BotApiService {
       }
 
       // Check if container exists and is in a healthy state
-      let needsRecreate = false;
+      // IMPORTANT: We always recreate the container to ensure new configurations take effect
+      // The OpenClaw data (memory, sessions) is persisted in a separate volume and won't be lost
+      let needsRecreate = true; // Always recreate to apply new config
       if (bot.containerId) {
         const containerStatus = await this.dockerService.getContainerStatus(
           bot.containerId,
         );
-        if (!containerStatus) {
-          // Container doesn't exist anymore
+        if (containerStatus) {
+          // Container exists, remove it to recreate with new config
           this.logger.log(
-            `Container ${bot.containerId} not found, will recreate`,
+            `Container ${bot.containerId} exists, will recreate to apply latest config`,
           );
-          needsRecreate = true;
-        } else if (containerStatus.exitCode !== 0 && !containerStatus.running) {
-          // Container exited with error, needs to be recreated
-          this.logger.log(
-            `Container ${bot.containerId} exited with code ${containerStatus.exitCode}, will recreate`,
-          );
-          needsRecreate = true;
-          // Remove the failed container
           try {
+            if (containerStatus.running) {
+              await this.dockerService.stopContainer(bot.containerId);
+            }
             await this.dockerService.removeContainer(bot.containerId);
           } catch (removeError) {
             this.logger.warn(
@@ -795,10 +792,20 @@ export class BotApiService {
               removeError,
             );
           }
+        } else {
+          // Container doesn't exist anymore
+          this.logger.log(
+            `Container ${bot.containerId} not found, will create new one`,
+          );
         }
       }
 
-      if (bot.containerId && !needsRecreate) {
+      // Ensure OpenClaw data directory exists before creating container
+      await this.workspaceService.ensureOpenclawDir(userId, hostname);
+
+      if (!needsRecreate && bot.containerId) {
+        // This branch is currently unreachable since needsRecreate is always true
+        // Kept for potential future optimization where we might skip recreation
         await this.dockerService.startContainer(bot.containerId);
       } else {
         // Get provider key for this bot

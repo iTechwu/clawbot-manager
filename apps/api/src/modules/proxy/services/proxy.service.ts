@@ -207,6 +207,20 @@ export class ProxyService {
     // We need to strip the prefix before forwarding to the upstream
     const normalizedBody = this.normalizeRequestBody(body, effectiveApiType);
 
+    // Log the actual model being used after normalization
+    if (normalizedBody && normalizedBody.length > 0) {
+      try {
+        const normalizedJson = JSON.parse(normalizedBody.toString('utf-8'));
+        if (normalizedJson.model) {
+          this.logger.info(
+            `[Proxy] Actual model used: ${normalizedJson.model} (vendor: ${effectiveApiType}, baseUrl: ${baseUrl || 'default'})`,
+          );
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    }
+
     // 记录请求开始时间
     const startTime = Date.now();
 

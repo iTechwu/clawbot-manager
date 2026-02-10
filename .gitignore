@@ -83,6 +83,9 @@ uploads/
 **/uploads/
 undefined/
 secrets/
+data/bots/
+data/secrets/
+data/openclaw/
 
 # Keys and secrets
 keys/

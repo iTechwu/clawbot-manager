@@ -20,15 +20,16 @@ import type { UserInfo } from '@repo/contracts';
  * 监听 userInfoUpdated 事件以响应用户信息变化
  */
 function useUserInfo(): UserInfo | null {
-  const [user, setUser] = useState<UserInfo | null>(() => {
-    if (typeof window === 'undefined') return null;
-    return getUser();
-  });
+  // Always initialize with null to avoid hydration mismatch
+  // User data will be populated in useEffect after hydration
+  const [user, setUser] = useState<UserInfo | null>(null);
 
   useEffect(() => {
-    // 初始化时获取用户信息
+    // Initialize user info after hydration to avoid SSR mismatch
     const storedUser = getUser();
-    setUser(storedUser);
+    if (storedUser) {
+      setUser(storedUser);
+    }
 
     // 监听用户信息更新事件
     const handleUserUpdate = () => {
