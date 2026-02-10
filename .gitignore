@@ -87,6 +87,7 @@ secrets/
 # Keys and secrets
 keys/
 **/keys/config.json
+openclaw-skills/
 *.pem
 *.key
 *.crt

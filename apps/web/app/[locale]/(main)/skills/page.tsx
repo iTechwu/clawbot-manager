@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { skillApi } from '@/lib/api/contracts/client';
+import { skillApi, skillSyncApi } from '@/lib/api/contracts/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useLocalizedFields } from '@/hooks/useLocalizedFields';
 import {
   Card,
   CardContent,
@@ -32,32 +33,18 @@ import {
   DialogFooter,
   Label,
   Textarea,
+  ScrollArea,
 } from '@repo/ui';
 import {
   Search,
   Wrench,
-  MessageSquare,
-  GitBranch,
   Plus,
   Sparkles,
   User,
   Loader2,
+  ChevronRight,
 } from 'lucide-react';
-import type { SkillType, CreateSkillRequest } from '@repo/contracts';
-
-/**
- * 技能类型图标映射
- */
-const skillTypeIcons: Record<SkillType, React.ElementType> = {
-  tool: Wrench,
-  prompt: MessageSquare,
-  workflow: GitBranch,
-};
-
-/**
- * 技能类型键列表
- */
-const skillTypeKeys: SkillType[] = ['tool', 'prompt', 'workflow'];
+import type { CreateSkillRequest, SkillTypeWithCount } from '@repo/contracts';
 
 /**
  * 技能卡片组件
@@ -69,27 +56,37 @@ function SkillCard({
   skill: {
     id: string;
     name: string;
+    nameZh?: string | null;
     slug: string;
     description: string | null;
+    descriptionZh?: string | null;
     version: string;
-    skillType: SkillType;
     isSystem: boolean;
     isEnabled: boolean;
+    skillType?: {
+      name: string;
+      nameZh?: string | null;
+      icon?: string | null;
+    } | null;
   };
   t: (key: string) => string;
 }) {
-  const TypeIcon = skillTypeIcons[skill.skillType];
+  const { getName, getDescription } = useLocalizedFields();
+
+  const displayName = getName(skill);
+  const displayDescription = getDescription(skill);
+  const typeIcon = skill.skillType?.icon || '📦';
 
   return (
     <Card className="hover:border-primary/50 transition-colors">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-muted flex h-8 w-8 items-center justify-center rounded">
-              <TypeIcon className="h-4 w-4" />
+            <div className="bg-muted flex h-8 w-8 items-center justify-center rounded text-lg">
+              {typeIcon}
             </div>
             <div>
-              <CardTitle className="text-base">{skill.name}</CardTitle>
+              <CardTitle className="text-base">{displayName}</CardTitle>
               <CardDescription className="text-xs">
                 v{skill.version}
               </CardDescription>
@@ -107,15 +104,12 @@ function SkillCard({
                 {t('custom')}
               </Badge>
             )}
-            <Badge variant="outline" className="text-xs">
-              {t(`types.${skill.skillType}`)}
-            </Badge>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground line-clamp-2 text-sm">
-          {skill.description || t('noDescription')}
+          {displayDescription || t('noDescription')}
         </p>
       </CardContent>
     </Card>
@@ -148,24 +142,66 @@ function SkillCardSkeleton() {
 }
 
 /**
+ * 技能类型侧边栏项
+ */
+function SkillTypeSidebarItem({
+  skillType,
+  isSelected,
+  onClick,
+}: {
+  skillType: SkillTypeWithCount;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  const { getName } = useLocalizedFields();
+  const displayName = getName(skillType);
+
+  return (
+    <button
+      onClick={onClick}
+      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+        isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-base">{skillType.icon || '📦'}</span>
+        <span className="truncate">{displayName}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <Badge
+          variant={isSelected ? 'secondary' : 'outline'}
+          className="text-xs"
+        >
+          {skillType._count.skills}
+        </Badge>
+        <ChevronRight className="h-4 w-4 opacity-50" />
+      </div>
+    </button>
+  );
+}
+
+/**
  * 创建技能表单组件
  */
 function CreateSkillForm({
+  skillTypes,
   onSuccess,
   onCancel,
   t,
 }: {
+  skillTypes: SkillTypeWithCount[];
   onSuccess: () => void;
   onCancel: () => void;
   t: (key: string) => string;
 }) {
+  const { getName } = useLocalizedFields();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<Partial<CreateSkillRequest>>({
     name: '',
     slug: '',
     description: '',
     version: '1.0.0',
-    skillType: 'tool',
+    skillTypeId: undefined,
     definition: {},
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -173,7 +209,7 @@ function CreateSkillForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.slug || !formData.skillType) {
+    if (!formData.name || !formData.slug) {
       toast.error(t('fillRequiredFields'));
       return;
     }
@@ -186,7 +222,7 @@ function CreateSkillForm({
           slug: formData.slug,
           description: formData.description || undefined,
           version: formData.version || '1.0.0',
-          skillType: formData.skillType,
+          skillTypeId: formData.skillTypeId,
           definition: formData.definition || {},
         },
       });
@@ -209,7 +245,12 @@ function CreateSkillForm({
     setFormData((prev) => ({
       ...prev,
       name,
-      slug: prev.slug || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      slug:
+        prev.slug ||
+        name
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, ''),
     }));
   };
 
@@ -231,25 +272,30 @@ function CreateSkillForm({
         <Input
           id="slug"
           value={formData.slug}
-          onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, slug: e.target.value }))
+          }
           placeholder={t('form.slugPlaceholder')}
           required
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="skillType">{t('form.type')} *</Label>
+        <Label htmlFor="skillType">{t('form.type')}</Label>
         <Select
-          value={formData.skillType}
-          onValueChange={(v) => setFormData((prev) => ({ ...prev, skillType: v as SkillType }))}
+          value={formData.skillTypeId || ''}
+          onValueChange={(v) =>
+            setFormData((prev) => ({ ...prev, skillTypeId: v || undefined }))
+          }
         >
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder={t('form.selectType')} />
           </SelectTrigger>
           <SelectContent>
-            {skillTypeKeys.map((key) => (
-              <SelectItem key={key} value={key}>
-                {t(`types.${key}`)}
+            {skillTypes.map((type) => (
+              <SelectItem key={type.id} value={type.id}>
+                <span className="mr-2">{type.icon || '📦'}</span>
+                {getName(type)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -261,7 +307,9 @@ function CreateSkillForm({
         <Textarea
           id="description"
           value={formData.description}
-          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, description: e.target.value }))
+          }
           placeholder={t('form.descriptionPlaceholder')}
           rows={3}
         />
@@ -272,7 +320,9 @@ function CreateSkillForm({
         <Input
           id="version"
           value={formData.version}
-          onChange={(e) => setFormData((prev) => ({ ...prev, version: e.target.value }))}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, version: e.target.value }))
+          }
           placeholder="1.0.0"
         />
       </div>
@@ -295,19 +345,34 @@ function CreateSkillForm({
  */
 export default function SkillsPage() {
   const t = useTranslations('skills');
+  const { getName } = useLocalizedFields();
   const [search, setSearch] = useState('');
-  const [skillType, setSkillType] = useState<SkillType | 'all'>('all');
+  const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
   const [sourceFilter, setSourceFilter] = useState<'all' | 'system' | 'custom'>(
     'all',
   );
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
+  // 获取技能类型列表
+  const { data: skillTypesResponse, isLoading: isLoadingTypes } =
+    skillSyncApi.skillTypes.useQuery(
+      ['skill-types'],
+      {},
+      {
+        staleTime: 300000,
+        queryKey: ['skill-types'],
+      },
+    );
+
+  const skillTypes = skillTypesResponse?.body?.data?.skillTypes || [];
+
+  // 获取技能列表
   const { data: response, isLoading } = skillApi.list.useQuery(
-    ['skills', { search, skillType, sourceFilter }],
+    ['skills', { search, selectedTypeId, sourceFilter }],
     {
       query: {
         search: search || undefined,
-        skillType: skillType === 'all' ? undefined : skillType,
+        skillTypeId: selectedTypeId || undefined,
         isSystem:
           sourceFilter === 'all'
             ? undefined
@@ -319,60 +384,116 @@ export default function SkillsPage() {
     },
     {
       staleTime: 60000,
-      queryKey: ['skills', { search, skillType, sourceFilter }],
+      queryKey: ['skills', { search, selectedTypeId, sourceFilter }],
     },
   );
 
   const skills = response?.body?.data?.list || [];
 
+  // 获取当前选中的类型名称
+  const selectedType = skillTypes.find((t) => t.id === selectedTypeId);
+  const selectedTypeName = selectedType ? getName(selectedType) : t('allTypes');
+
   return (
-    <div className="space-y-6">
-      {/* 页面标题 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{t('title')}</h1>
-          <p className="text-muted-foreground text-sm">{t('description')}</p>
+    <div className="flex h-full gap-6">
+      {/* 左侧技能类型列表 */}
+      <div className="w-64 shrink-0">
+        <div className="sticky top-0">
+          <h2 className="mb-4 text-lg font-semibold">{t('skillTypes')}</h2>
+          <ScrollArea className="h-[calc(100vh-200px)]">
+            <div className="space-y-1 pr-4">
+              {/* 全部类型 */}
+              <button
+                onClick={() => setSelectedTypeId(null)}
+                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                  selectedTypeId === null
+                    ? 'bg-primary text-primary-foreground'
+                    : 'hover:bg-muted'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-base">📋</span>
+                  <span>{t('allTypes')}</span>
+                </div>
+                <Badge
+                  variant={selectedTypeId === null ? 'secondary' : 'outline'}
+                  className="text-xs"
+                >
+                  {skillTypes.reduce((sum, t) => sum + t._count.skills, 0)}
+                </Badge>
+              </button>
+
+              {/* 技能类型列表 */}
+              {isLoadingTypes
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-10 w-full" />
+                  ))
+                : skillTypes.map((type) => (
+                    <SkillTypeSidebarItem
+                      key={type.id}
+                      skillType={type}
+                      isSelected={selectedTypeId === type.id}
+                      onClick={() => setSelectedTypeId(type.id)}
+                    />
+                  ))}
+            </div>
+          </ScrollArea>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              {t('createSkill')}
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('createSkill')}</DialogTitle>
-              <DialogDescription>
-                {t('createSkillDescription')}
-              </DialogDescription>
-            </DialogHeader>
-            <CreateSkillForm
-              t={t}
-              onSuccess={() => setIsCreateDialogOpen(false)}
-              onCancel={() => setIsCreateDialogOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
       </div>
 
-      {/* 来源切换 */}
-      <Tabs
-        value={sourceFilter}
-        onValueChange={(v) =>
-          setSourceFilter(v as 'all' | 'system' | 'custom')
-        }
-      >
-        <TabsList>
-          <TabsTrigger value="all">{t('allSkills')}</TabsTrigger>
-          <TabsTrigger value="system">{t('systemSkills')}</TabsTrigger>
-          <TabsTrigger value="custom">{t('customSkills')}</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* 右侧内容区 */}
+      <div className="flex-1 space-y-6">
+        {/* 页面标题 */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">
+              {selectedTypeId ? selectedTypeName : t('title')}
+            </h1>
+            <p className="text-muted-foreground text-sm">{t('description')}</p>
+          </div>
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                {t('createSkill')}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t('createSkill')}</DialogTitle>
+                <DialogDescription>
+                  {t('createSkillDescription')}
+                </DialogDescription>
+              </DialogHeader>
+              <CreateSkillForm
+                skillTypes={skillTypes}
+                t={t}
+                onSuccess={() => setIsCreateDialogOpen(false)}
+                onCancel={() => setIsCreateDialogOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
 
-      {/* 搜索和筛选 */}
-      <div className="flex gap-4">
-        <div className="relative flex-1">
+        {/* 来源切换 */}
+        <Tabs
+          value={sourceFilter}
+          onValueChange={(v) =>
+            setSourceFilter(v as 'all' | 'system' | 'custom')
+          }
+        >
+          <TabsList>
+            <TabsTrigger value="all">{t('allSkills')}</TabsTrigger>
+            <TabsTrigger value="system">{t('systemSkills')}</TabsTrigger>
+            <TabsTrigger value="custom">{t('customSkills')}</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {/* 搜索 */}
+        <div className="relative">
           <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder={t('searchPlaceholder')}
@@ -381,44 +502,28 @@ export default function SkillsPage() {
             className="pl-9"
           />
         </div>
-        <Select
-          value={skillType}
-          onValueChange={(v) => setSkillType(v as SkillType | 'all')}
-        >
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder={t('allTypes')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('allTypes')}</SelectItem>
-            {skillTypeKeys.map((key) => (
-              <SelectItem key={key} value={key}>
-                {t(`types.${key}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
 
-      {/* 技能列表 */}
-      {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <SkillCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : skills.length === 0 ? (
-        <div className="text-muted-foreground py-12 text-center">
-          <Wrench className="mx-auto mb-4 h-12 w-12 opacity-50" />
-          <p>{t('noSkills')}</p>
-          {search && <p className="mt-1 text-sm">{t('tryOtherKeywords')}</p>}
-        </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {skills.map((skill) => (
-            <SkillCard key={skill.id} skill={skill} t={t} />
-          ))}
-        </div>
-      )}
+        {/* 技能列表 */}
+        {isLoading ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <SkillCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : skills.length === 0 ? (
+          <div className="text-muted-foreground py-12 text-center">
+            <Wrench className="mx-auto mb-4 h-12 w-12 opacity-50" />
+            <p>{t('noSkills')}</p>
+            {search && <p className="mt-1 text-sm">{t('tryOtherKeywords')}</p>}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {skills.map((skill) => (
+              <SkillCard key={skill.id} skill={skill} t={t} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -98,4 +98,49 @@ export class SkillService extends TransactionalServiceBase {
   async delete(where: Prisma.SkillWhereUniqueInput): Promise<Skill> {
     return this.getWriteClient().skill.delete({ where });
   }
+
+  /**
+   * Upsert skill by source and slug (for external sync)
+   */
+  @HandlePrismaError(DbOperationType.UPDATE)
+  async upsertBySourceSlug(
+    source: string,
+    slug: string,
+    data: Omit<Prisma.SkillCreateInput, 'slug'>,
+    additional?: { select?: Prisma.SkillSelect },
+  ): Promise<Skill> {
+    return this.getWriteClient().skill.upsert({
+      where: {
+        b_skill_source_slug_key: { source, slug },
+      },
+      create: { ...data, slug },
+      update: data,
+      ...additional,
+    });
+  }
+
+  /**
+   * Get skills by source
+   */
+  @HandlePrismaError(DbOperationType.QUERY)
+  async getBySource(
+    source: string,
+    pagination?: {
+      orderBy?: Prisma.SkillOrderByWithRelationInput;
+      limit?: number;
+      page?: number;
+    },
+  ): Promise<{ list: Skill[]; total: number; page: number; limit: number }> {
+    return this.list({ source }, pagination);
+  }
+
+  /**
+   * Count skills by source
+   */
+  @HandlePrismaError(DbOperationType.QUERY)
+  async countBySource(source: string): Promise<number> {
+    return this.getReadClient().skill.count({
+      where: { source, isDeleted: false },
+    });
+  }
 }

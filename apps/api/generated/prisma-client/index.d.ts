@@ -150,9 +150,16 @@ export type Plugin = $Result.DefaultSelection<Prisma.$PluginPayload>
  */
 export type BotPlugin = $Result.DefaultSelection<Prisma.$BotPluginPayload>
 /**
+ * Model SkillType
+ * SkillType - 技能类型/分类
+ * 用于对技能进行分类管理，支持中英文名称
+ */
+export type SkillType = $Result.DefaultSelection<Prisma.$SkillTypePayload>
+/**
  * Model Skill
  * Skill - 自定义技能定义
  * 用户可以创建自定义技能供 Bot 使用
+ * 支持系统预设、用户自定义和外部同步（如 OpenClaw）
  */
 export type Skill = $Result.DefaultSelection<Prisma.$SkillPayload>
 /**
@@ -737,6 +744,16 @@ export class PrismaClient<
   get botPlugin(): Prisma.BotPluginDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.skillType`: Exposes CRUD operations for the **SkillType** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SkillTypes
+    * const skillTypes = await prisma.skillType.findMany()
+    * ```
+    */
+  get skillType(): Prisma.SkillTypeDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.skill`: Exposes CRUD operations for the **Skill** model.
     * Example usage:
     * ```ts
@@ -1282,6 +1299,7 @@ export namespace Prisma {
     ChannelCredentialField: 'ChannelCredentialField',
     Plugin: 'Plugin',
     BotPlugin: 'BotPlugin',
+    SkillType: 'SkillType',
     Skill: 'Skill',
     BotSkill: 'BotSkill',
     ModelPricing: 'ModelPricing',
@@ -1306,7 +1324,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "userInfo" | "personaTemplate" | "wechatAuth" | "googleAuth" | "discordAuth" | "mobileAuth" | "emailAuth" | "riskDetectionRecord" | "systemTaskQueue" | "fileSource" | "countryCode" | "bot" | "providerKey" | "botProviderKey" | "botUsageLog" | "proxyToken" | "message" | "messageRecipient" | "operateLog" | "channelDefinition" | "channelCredentialField" | "plugin" | "botPlugin" | "skill" | "botSkill" | "modelPricing" | "botModelRouting" | "botChannel" | "capabilityTag" | "fallbackChain" | "costStrategy" | "botRoutingConfig"
+      modelProps: "userInfo" | "personaTemplate" | "wechatAuth" | "googleAuth" | "discordAuth" | "mobileAuth" | "emailAuth" | "riskDetectionRecord" | "systemTaskQueue" | "fileSource" | "countryCode" | "bot" | "providerKey" | "botProviderKey" | "botUsageLog" | "proxyToken" | "message" | "messageRecipient" | "operateLog" | "channelDefinition" | "channelCredentialField" | "plugin" | "botPlugin" | "skillType" | "skill" | "botSkill" | "modelPricing" | "botModelRouting" | "botChannel" | "capabilityTag" | "fallbackChain" | "costStrategy" | "botRoutingConfig"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3012,6 +3030,80 @@ export namespace Prisma {
           }
         }
       }
+      SkillType: {
+        payload: Prisma.$SkillTypePayload<ExtArgs>
+        fields: Prisma.SkillTypeFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SkillTypeFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillTypePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SkillTypeFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillTypePayload>
+          }
+          findFirst: {
+            args: Prisma.SkillTypeFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillTypePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SkillTypeFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillTypePayload>
+          }
+          findMany: {
+            args: Prisma.SkillTypeFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillTypePayload>[]
+          }
+          create: {
+            args: Prisma.SkillTypeCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillTypePayload>
+          }
+          createMany: {
+            args: Prisma.SkillTypeCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SkillTypeCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillTypePayload>[]
+          }
+          delete: {
+            args: Prisma.SkillTypeDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillTypePayload>
+          }
+          update: {
+            args: Prisma.SkillTypeUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillTypePayload>
+          }
+          deleteMany: {
+            args: Prisma.SkillTypeDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SkillTypeUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SkillTypeUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillTypePayload>[]
+          }
+          upsert: {
+            args: Prisma.SkillTypeUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SkillTypePayload>
+          }
+          aggregate: {
+            args: Prisma.SkillTypeAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSkillType>
+          }
+          groupBy: {
+            args: Prisma.SkillTypeGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SkillTypeGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SkillTypeCountArgs<ExtArgs>
+            result: $Utils.Optional<SkillTypeCountAggregateOutputType> | number
+          }
+        }
+      }
       Skill: {
         payload: Prisma.$SkillPayload<ExtArgs>
         fields: Prisma.SkillFieldRefs
@@ -3809,6 +3901,7 @@ export namespace Prisma {
     channelCredentialField?: ChannelCredentialFieldOmit
     plugin?: PluginOmit
     botPlugin?: BotPluginOmit
+    skillType?: SkillTypeOmit
     skill?: SkillOmit
     botSkill?: BotSkillOmit
     modelPricing?: ModelPricingOmit
@@ -4264,6 +4357,37 @@ export namespace Prisma {
    */
   export type PluginCountOutputTypeCountInstallationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: BotPluginWhereInput
+  }
+
+
+  /**
+   * Count Type SkillTypeCountOutputType
+   */
+
+  export type SkillTypeCountOutputType = {
+    skills: number
+  }
+
+  export type SkillTypeCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    skills?: boolean | SkillTypeCountOutputTypeCountSkillsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * SkillTypeCountOutputType without action
+   */
+  export type SkillTypeCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillTypeCountOutputType
+     */
+    select?: SkillTypeCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * SkillTypeCountOutputType without action
+   */
+  export type SkillTypeCountOutputTypeCountSkillsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SkillWhereInput
   }
 
 
@@ -32072,6 +32196,1222 @@ export namespace Prisma {
 
 
   /**
+   * Model SkillType
+   */
+
+  export type AggregateSkillType = {
+    _count: SkillTypeCountAggregateOutputType | null
+    _avg: SkillTypeAvgAggregateOutputType | null
+    _sum: SkillTypeSumAggregateOutputType | null
+    _min: SkillTypeMinAggregateOutputType | null
+    _max: SkillTypeMaxAggregateOutputType | null
+  }
+
+  export type SkillTypeAvgAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type SkillTypeSumAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type SkillTypeMinAggregateOutputType = {
+    id: string | null
+    slug: string | null
+    name: string | null
+    nameZh: string | null
+    description: string | null
+    descriptionZh: string | null
+    icon: string | null
+    sortOrder: number | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type SkillTypeMaxAggregateOutputType = {
+    id: string | null
+    slug: string | null
+    name: string | null
+    nameZh: string | null
+    description: string | null
+    descriptionZh: string | null
+    icon: string | null
+    sortOrder: number | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type SkillTypeCountAggregateOutputType = {
+    id: number
+    slug: number
+    name: number
+    nameZh: number
+    description: number
+    descriptionZh: number
+    icon: number
+    sortOrder: number
+    isDeleted: number
+    createdAt: number
+    updatedAt: number
+    deletedAt: number
+    _all: number
+  }
+
+
+  export type SkillTypeAvgAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type SkillTypeSumAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type SkillTypeMinAggregateInputType = {
+    id?: true
+    slug?: true
+    name?: true
+    nameZh?: true
+    description?: true
+    descriptionZh?: true
+    icon?: true
+    sortOrder?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type SkillTypeMaxAggregateInputType = {
+    id?: true
+    slug?: true
+    name?: true
+    nameZh?: true
+    description?: true
+    descriptionZh?: true
+    icon?: true
+    sortOrder?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type SkillTypeCountAggregateInputType = {
+    id?: true
+    slug?: true
+    name?: true
+    nameZh?: true
+    description?: true
+    descriptionZh?: true
+    icon?: true
+    sortOrder?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+    _all?: true
+  }
+
+  export type SkillTypeAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SkillType to aggregate.
+     */
+    where?: SkillTypeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SkillTypes to fetch.
+     */
+    orderBy?: SkillTypeOrderByWithRelationInput | SkillTypeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SkillTypeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SkillTypes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SkillTypes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SkillTypes
+    **/
+    _count?: true | SkillTypeCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SkillTypeAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SkillTypeSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SkillTypeMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SkillTypeMaxAggregateInputType
+  }
+
+  export type GetSkillTypeAggregateType<T extends SkillTypeAggregateArgs> = {
+        [P in keyof T & keyof AggregateSkillType]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSkillType[P]>
+      : GetScalarType<T[P], AggregateSkillType[P]>
+  }
+
+
+
+
+  export type SkillTypeGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SkillTypeWhereInput
+    orderBy?: SkillTypeOrderByWithAggregationInput | SkillTypeOrderByWithAggregationInput[]
+    by: SkillTypeScalarFieldEnum[] | SkillTypeScalarFieldEnum
+    having?: SkillTypeScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SkillTypeCountAggregateInputType | true
+    _avg?: SkillTypeAvgAggregateInputType
+    _sum?: SkillTypeSumAggregateInputType
+    _min?: SkillTypeMinAggregateInputType
+    _max?: SkillTypeMaxAggregateInputType
+  }
+
+  export type SkillTypeGroupByOutputType = {
+    id: string
+    slug: string
+    name: string
+    nameZh: string | null
+    description: string | null
+    descriptionZh: string | null
+    icon: string | null
+    sortOrder: number
+    isDeleted: boolean
+    createdAt: Date
+    updatedAt: Date
+    deletedAt: Date | null
+    _count: SkillTypeCountAggregateOutputType | null
+    _avg: SkillTypeAvgAggregateOutputType | null
+    _sum: SkillTypeSumAggregateOutputType | null
+    _min: SkillTypeMinAggregateOutputType | null
+    _max: SkillTypeMaxAggregateOutputType | null
+  }
+
+  type GetSkillTypeGroupByPayload<T extends SkillTypeGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SkillTypeGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SkillTypeGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SkillTypeGroupByOutputType[P]>
+            : GetScalarType<T[P], SkillTypeGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SkillTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    slug?: boolean
+    name?: boolean
+    nameZh?: boolean
+    description?: boolean
+    descriptionZh?: boolean
+    icon?: boolean
+    sortOrder?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+    skills?: boolean | SkillType$skillsArgs<ExtArgs>
+    _count?: boolean | SkillTypeCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["skillType"]>
+
+  export type SkillTypeSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    slug?: boolean
+    name?: boolean
+    nameZh?: boolean
+    description?: boolean
+    descriptionZh?: boolean
+    icon?: boolean
+    sortOrder?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["skillType"]>
+
+  export type SkillTypeSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    slug?: boolean
+    name?: boolean
+    nameZh?: boolean
+    description?: boolean
+    descriptionZh?: boolean
+    icon?: boolean
+    sortOrder?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["skillType"]>
+
+  export type SkillTypeSelectScalar = {
+    id?: boolean
+    slug?: boolean
+    name?: boolean
+    nameZh?: boolean
+    description?: boolean
+    descriptionZh?: boolean
+    icon?: boolean
+    sortOrder?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }
+
+  export type SkillTypeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "name" | "nameZh" | "description" | "descriptionZh" | "icon" | "sortOrder" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["skillType"]>
+  export type SkillTypeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    skills?: boolean | SkillType$skillsArgs<ExtArgs>
+    _count?: boolean | SkillTypeCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type SkillTypeIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type SkillTypeIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $SkillTypePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SkillType"
+    objects: {
+      skills: Prisma.$SkillPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      /**
+       * 类型标识（如 coding-agents, git-github）
+       */
+      slug: string
+      /**
+       * 英文名称（如 Coding Agents & IDEs）
+       */
+      name: string
+      /**
+       * 中文名称
+       */
+      nameZh: string | null
+      /**
+       * 英文描述
+       */
+      description: string | null
+      /**
+       * 中文描述
+       */
+      descriptionZh: string | null
+      /**
+       * 图标（emoji 或图标名称）
+       */
+      icon: string | null
+      /**
+       * 排序权重（越小越靠前）
+       */
+      sortOrder: number
+      isDeleted: boolean
+      createdAt: Date
+      updatedAt: Date
+      deletedAt: Date | null
+    }, ExtArgs["result"]["skillType"]>
+    composites: {}
+  }
+
+  type SkillTypeGetPayload<S extends boolean | null | undefined | SkillTypeDefaultArgs> = $Result.GetResult<Prisma.$SkillTypePayload, S>
+
+  type SkillTypeCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SkillTypeFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SkillTypeCountAggregateInputType | true
+    }
+
+  export interface SkillTypeDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SkillType'], meta: { name: 'SkillType' } }
+    /**
+     * Find zero or one SkillType that matches the filter.
+     * @param {SkillTypeFindUniqueArgs} args - Arguments to find a SkillType
+     * @example
+     * // Get one SkillType
+     * const skillType = await prisma.skillType.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SkillTypeFindUniqueArgs>(args: SelectSubset<T, SkillTypeFindUniqueArgs<ExtArgs>>): Prisma__SkillTypeClient<$Result.GetResult<Prisma.$SkillTypePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SkillType that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SkillTypeFindUniqueOrThrowArgs} args - Arguments to find a SkillType
+     * @example
+     * // Get one SkillType
+     * const skillType = await prisma.skillType.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SkillTypeFindUniqueOrThrowArgs>(args: SelectSubset<T, SkillTypeFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SkillTypeClient<$Result.GetResult<Prisma.$SkillTypePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SkillType that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillTypeFindFirstArgs} args - Arguments to find a SkillType
+     * @example
+     * // Get one SkillType
+     * const skillType = await prisma.skillType.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SkillTypeFindFirstArgs>(args?: SelectSubset<T, SkillTypeFindFirstArgs<ExtArgs>>): Prisma__SkillTypeClient<$Result.GetResult<Prisma.$SkillTypePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SkillType that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillTypeFindFirstOrThrowArgs} args - Arguments to find a SkillType
+     * @example
+     * // Get one SkillType
+     * const skillType = await prisma.skillType.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SkillTypeFindFirstOrThrowArgs>(args?: SelectSubset<T, SkillTypeFindFirstOrThrowArgs<ExtArgs>>): Prisma__SkillTypeClient<$Result.GetResult<Prisma.$SkillTypePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SkillTypes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillTypeFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SkillTypes
+     * const skillTypes = await prisma.skillType.findMany()
+     * 
+     * // Get first 10 SkillTypes
+     * const skillTypes = await prisma.skillType.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const skillTypeWithIdOnly = await prisma.skillType.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SkillTypeFindManyArgs>(args?: SelectSubset<T, SkillTypeFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SkillTypePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SkillType.
+     * @param {SkillTypeCreateArgs} args - Arguments to create a SkillType.
+     * @example
+     * // Create one SkillType
+     * const SkillType = await prisma.skillType.create({
+     *   data: {
+     *     // ... data to create a SkillType
+     *   }
+     * })
+     * 
+     */
+    create<T extends SkillTypeCreateArgs>(args: SelectSubset<T, SkillTypeCreateArgs<ExtArgs>>): Prisma__SkillTypeClient<$Result.GetResult<Prisma.$SkillTypePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SkillTypes.
+     * @param {SkillTypeCreateManyArgs} args - Arguments to create many SkillTypes.
+     * @example
+     * // Create many SkillTypes
+     * const skillType = await prisma.skillType.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SkillTypeCreateManyArgs>(args?: SelectSubset<T, SkillTypeCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SkillTypes and returns the data saved in the database.
+     * @param {SkillTypeCreateManyAndReturnArgs} args - Arguments to create many SkillTypes.
+     * @example
+     * // Create many SkillTypes
+     * const skillType = await prisma.skillType.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SkillTypes and only return the `id`
+     * const skillTypeWithIdOnly = await prisma.skillType.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SkillTypeCreateManyAndReturnArgs>(args?: SelectSubset<T, SkillTypeCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SkillTypePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SkillType.
+     * @param {SkillTypeDeleteArgs} args - Arguments to delete one SkillType.
+     * @example
+     * // Delete one SkillType
+     * const SkillType = await prisma.skillType.delete({
+     *   where: {
+     *     // ... filter to delete one SkillType
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SkillTypeDeleteArgs>(args: SelectSubset<T, SkillTypeDeleteArgs<ExtArgs>>): Prisma__SkillTypeClient<$Result.GetResult<Prisma.$SkillTypePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SkillType.
+     * @param {SkillTypeUpdateArgs} args - Arguments to update one SkillType.
+     * @example
+     * // Update one SkillType
+     * const skillType = await prisma.skillType.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SkillTypeUpdateArgs>(args: SelectSubset<T, SkillTypeUpdateArgs<ExtArgs>>): Prisma__SkillTypeClient<$Result.GetResult<Prisma.$SkillTypePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SkillTypes.
+     * @param {SkillTypeDeleteManyArgs} args - Arguments to filter SkillTypes to delete.
+     * @example
+     * // Delete a few SkillTypes
+     * const { count } = await prisma.skillType.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SkillTypeDeleteManyArgs>(args?: SelectSubset<T, SkillTypeDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SkillTypes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillTypeUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SkillTypes
+     * const skillType = await prisma.skillType.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SkillTypeUpdateManyArgs>(args: SelectSubset<T, SkillTypeUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SkillTypes and returns the data updated in the database.
+     * @param {SkillTypeUpdateManyAndReturnArgs} args - Arguments to update many SkillTypes.
+     * @example
+     * // Update many SkillTypes
+     * const skillType = await prisma.skillType.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SkillTypes and only return the `id`
+     * const skillTypeWithIdOnly = await prisma.skillType.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SkillTypeUpdateManyAndReturnArgs>(args: SelectSubset<T, SkillTypeUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SkillTypePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SkillType.
+     * @param {SkillTypeUpsertArgs} args - Arguments to update or create a SkillType.
+     * @example
+     * // Update or create a SkillType
+     * const skillType = await prisma.skillType.upsert({
+     *   create: {
+     *     // ... data to create a SkillType
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SkillType we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SkillTypeUpsertArgs>(args: SelectSubset<T, SkillTypeUpsertArgs<ExtArgs>>): Prisma__SkillTypeClient<$Result.GetResult<Prisma.$SkillTypePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SkillTypes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillTypeCountArgs} args - Arguments to filter SkillTypes to count.
+     * @example
+     * // Count the number of SkillTypes
+     * const count = await prisma.skillType.count({
+     *   where: {
+     *     // ... the filter for the SkillTypes we want to count
+     *   }
+     * })
+    **/
+    count<T extends SkillTypeCountArgs>(
+      args?: Subset<T, SkillTypeCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SkillTypeCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SkillType.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillTypeAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SkillTypeAggregateArgs>(args: Subset<T, SkillTypeAggregateArgs>): Prisma.PrismaPromise<GetSkillTypeAggregateType<T>>
+
+    /**
+     * Group by SkillType.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SkillTypeGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SkillTypeGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SkillTypeGroupByArgs['orderBy'] }
+        : { orderBy?: SkillTypeGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SkillTypeGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSkillTypeGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SkillType model
+   */
+  readonly fields: SkillTypeFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SkillType.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SkillTypeClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    skills<T extends SkillType$skillsArgs<ExtArgs> = {}>(args?: Subset<T, SkillType$skillsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SkillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SkillType model
+   */
+  interface SkillTypeFieldRefs {
+    readonly id: FieldRef<"SkillType", 'String'>
+    readonly slug: FieldRef<"SkillType", 'String'>
+    readonly name: FieldRef<"SkillType", 'String'>
+    readonly nameZh: FieldRef<"SkillType", 'String'>
+    readonly description: FieldRef<"SkillType", 'String'>
+    readonly descriptionZh: FieldRef<"SkillType", 'String'>
+    readonly icon: FieldRef<"SkillType", 'String'>
+    readonly sortOrder: FieldRef<"SkillType", 'Int'>
+    readonly isDeleted: FieldRef<"SkillType", 'Boolean'>
+    readonly createdAt: FieldRef<"SkillType", 'DateTime'>
+    readonly updatedAt: FieldRef<"SkillType", 'DateTime'>
+    readonly deletedAt: FieldRef<"SkillType", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SkillType findUnique
+   */
+  export type SkillTypeFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillType
+     */
+    select?: SkillTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SkillType
+     */
+    omit?: SkillTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which SkillType to fetch.
+     */
+    where: SkillTypeWhereUniqueInput
+  }
+
+  /**
+   * SkillType findUniqueOrThrow
+   */
+  export type SkillTypeFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillType
+     */
+    select?: SkillTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SkillType
+     */
+    omit?: SkillTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which SkillType to fetch.
+     */
+    where: SkillTypeWhereUniqueInput
+  }
+
+  /**
+   * SkillType findFirst
+   */
+  export type SkillTypeFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillType
+     */
+    select?: SkillTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SkillType
+     */
+    omit?: SkillTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which SkillType to fetch.
+     */
+    where?: SkillTypeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SkillTypes to fetch.
+     */
+    orderBy?: SkillTypeOrderByWithRelationInput | SkillTypeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SkillTypes.
+     */
+    cursor?: SkillTypeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SkillTypes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SkillTypes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SkillTypes.
+     */
+    distinct?: SkillTypeScalarFieldEnum | SkillTypeScalarFieldEnum[]
+  }
+
+  /**
+   * SkillType findFirstOrThrow
+   */
+  export type SkillTypeFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillType
+     */
+    select?: SkillTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SkillType
+     */
+    omit?: SkillTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which SkillType to fetch.
+     */
+    where?: SkillTypeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SkillTypes to fetch.
+     */
+    orderBy?: SkillTypeOrderByWithRelationInput | SkillTypeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SkillTypes.
+     */
+    cursor?: SkillTypeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SkillTypes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SkillTypes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SkillTypes.
+     */
+    distinct?: SkillTypeScalarFieldEnum | SkillTypeScalarFieldEnum[]
+  }
+
+  /**
+   * SkillType findMany
+   */
+  export type SkillTypeFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillType
+     */
+    select?: SkillTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SkillType
+     */
+    omit?: SkillTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillTypeInclude<ExtArgs> | null
+    /**
+     * Filter, which SkillTypes to fetch.
+     */
+    where?: SkillTypeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SkillTypes to fetch.
+     */
+    orderBy?: SkillTypeOrderByWithRelationInput | SkillTypeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SkillTypes.
+     */
+    cursor?: SkillTypeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SkillTypes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SkillTypes.
+     */
+    skip?: number
+    distinct?: SkillTypeScalarFieldEnum | SkillTypeScalarFieldEnum[]
+  }
+
+  /**
+   * SkillType create
+   */
+  export type SkillTypeCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillType
+     */
+    select?: SkillTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SkillType
+     */
+    omit?: SkillTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillTypeInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SkillType.
+     */
+    data: XOR<SkillTypeCreateInput, SkillTypeUncheckedCreateInput>
+  }
+
+  /**
+   * SkillType createMany
+   */
+  export type SkillTypeCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SkillTypes.
+     */
+    data: SkillTypeCreateManyInput | SkillTypeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SkillType createManyAndReturn
+   */
+  export type SkillTypeCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillType
+     */
+    select?: SkillTypeSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SkillType
+     */
+    omit?: SkillTypeOmit<ExtArgs> | null
+    /**
+     * The data used to create many SkillTypes.
+     */
+    data: SkillTypeCreateManyInput | SkillTypeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SkillType update
+   */
+  export type SkillTypeUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillType
+     */
+    select?: SkillTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SkillType
+     */
+    omit?: SkillTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillTypeInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SkillType.
+     */
+    data: XOR<SkillTypeUpdateInput, SkillTypeUncheckedUpdateInput>
+    /**
+     * Choose, which SkillType to update.
+     */
+    where: SkillTypeWhereUniqueInput
+  }
+
+  /**
+   * SkillType updateMany
+   */
+  export type SkillTypeUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SkillTypes.
+     */
+    data: XOR<SkillTypeUpdateManyMutationInput, SkillTypeUncheckedUpdateManyInput>
+    /**
+     * Filter which SkillTypes to update
+     */
+    where?: SkillTypeWhereInput
+    /**
+     * Limit how many SkillTypes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SkillType updateManyAndReturn
+   */
+  export type SkillTypeUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillType
+     */
+    select?: SkillTypeSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SkillType
+     */
+    omit?: SkillTypeOmit<ExtArgs> | null
+    /**
+     * The data used to update SkillTypes.
+     */
+    data: XOR<SkillTypeUpdateManyMutationInput, SkillTypeUncheckedUpdateManyInput>
+    /**
+     * Filter which SkillTypes to update
+     */
+    where?: SkillTypeWhereInput
+    /**
+     * Limit how many SkillTypes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SkillType upsert
+   */
+  export type SkillTypeUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillType
+     */
+    select?: SkillTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SkillType
+     */
+    omit?: SkillTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillTypeInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SkillType to update in case it exists.
+     */
+    where: SkillTypeWhereUniqueInput
+    /**
+     * In case the SkillType found by the `where` argument doesn't exist, create a new SkillType with this data.
+     */
+    create: XOR<SkillTypeCreateInput, SkillTypeUncheckedCreateInput>
+    /**
+     * In case the SkillType was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SkillTypeUpdateInput, SkillTypeUncheckedUpdateInput>
+  }
+
+  /**
+   * SkillType delete
+   */
+  export type SkillTypeDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillType
+     */
+    select?: SkillTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SkillType
+     */
+    omit?: SkillTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillTypeInclude<ExtArgs> | null
+    /**
+     * Filter which SkillType to delete.
+     */
+    where: SkillTypeWhereUniqueInput
+  }
+
+  /**
+   * SkillType deleteMany
+   */
+  export type SkillTypeDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SkillTypes to delete
+     */
+    where?: SkillTypeWhereInput
+    /**
+     * Limit how many SkillTypes to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SkillType.skills
+   */
+  export type SkillType$skillsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Skill
+     */
+    select?: SkillSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Skill
+     */
+    omit?: SkillOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillInclude<ExtArgs> | null
+    where?: SkillWhereInput
+    orderBy?: SkillOrderByWithRelationInput | SkillOrderByWithRelationInput[]
+    cursor?: SkillWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SkillScalarFieldEnum | SkillScalarFieldEnum[]
+  }
+
+  /**
+   * SkillType without action
+   */
+  export type SkillTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillType
+     */
+    select?: SkillTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SkillType
+     */
+    omit?: SkillTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillTypeInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model Skill
    */
 
@@ -32084,13 +33424,19 @@ export namespace Prisma {
   export type SkillMinAggregateOutputType = {
     id: string | null
     name: string | null
+    nameZh: string | null
     slug: string | null
     description: string | null
+    descriptionZh: string | null
     version: string | null
-    skillType: string | null
+    skillTypeId: string | null
     isSystem: boolean | null
     isEnabled: boolean | null
     createdById: string | null
+    source: string | null
+    sourceUrl: string | null
+    author: string | null
+    lastSyncedAt: Date | null
     isDeleted: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -32100,13 +33446,19 @@ export namespace Prisma {
   export type SkillMaxAggregateOutputType = {
     id: string | null
     name: string | null
+    nameZh: string | null
     slug: string | null
     description: string | null
+    descriptionZh: string | null
     version: string | null
-    skillType: string | null
+    skillTypeId: string | null
     isSystem: boolean | null
     isEnabled: boolean | null
     createdById: string | null
+    source: string | null
+    sourceUrl: string | null
+    author: string | null
+    lastSyncedAt: Date | null
     isDeleted: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -32116,15 +33468,21 @@ export namespace Prisma {
   export type SkillCountAggregateOutputType = {
     id: number
     name: number
+    nameZh: number
     slug: number
     description: number
+    descriptionZh: number
     version: number
-    skillType: number
+    skillTypeId: number
     definition: number
     examples: number
     isSystem: number
     isEnabled: number
     createdById: number
+    source: number
+    sourceUrl: number
+    author: number
+    lastSyncedAt: number
     isDeleted: number
     createdAt: number
     updatedAt: number
@@ -32136,13 +33494,19 @@ export namespace Prisma {
   export type SkillMinAggregateInputType = {
     id?: true
     name?: true
+    nameZh?: true
     slug?: true
     description?: true
+    descriptionZh?: true
     version?: true
-    skillType?: true
+    skillTypeId?: true
     isSystem?: true
     isEnabled?: true
     createdById?: true
+    source?: true
+    sourceUrl?: true
+    author?: true
+    lastSyncedAt?: true
     isDeleted?: true
     createdAt?: true
     updatedAt?: true
@@ -32152,13 +33516,19 @@ export namespace Prisma {
   export type SkillMaxAggregateInputType = {
     id?: true
     name?: true
+    nameZh?: true
     slug?: true
     description?: true
+    descriptionZh?: true
     version?: true
-    skillType?: true
+    skillTypeId?: true
     isSystem?: true
     isEnabled?: true
     createdById?: true
+    source?: true
+    sourceUrl?: true
+    author?: true
+    lastSyncedAt?: true
     isDeleted?: true
     createdAt?: true
     updatedAt?: true
@@ -32168,15 +33538,21 @@ export namespace Prisma {
   export type SkillCountAggregateInputType = {
     id?: true
     name?: true
+    nameZh?: true
     slug?: true
     description?: true
+    descriptionZh?: true
     version?: true
-    skillType?: true
+    skillTypeId?: true
     definition?: true
     examples?: true
     isSystem?: true
     isEnabled?: true
     createdById?: true
+    source?: true
+    sourceUrl?: true
+    author?: true
+    lastSyncedAt?: true
     isDeleted?: true
     createdAt?: true
     updatedAt?: true
@@ -32259,15 +33635,21 @@ export namespace Prisma {
   export type SkillGroupByOutputType = {
     id: string
     name: string
+    nameZh: string | null
     slug: string
     description: string | null
+    descriptionZh: string | null
     version: string
-    skillType: string
+    skillTypeId: string | null
     definition: JsonValue
     examples: JsonValue | null
     isSystem: boolean
     isEnabled: boolean
     createdById: string | null
+    source: string | null
+    sourceUrl: string | null
+    author: string | null
+    lastSyncedAt: Date | null
     isDeleted: boolean
     createdAt: Date
     updatedAt: Date
@@ -32294,19 +33676,26 @@ export namespace Prisma {
   export type SkillSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    nameZh?: boolean
     slug?: boolean
     description?: boolean
+    descriptionZh?: boolean
     version?: boolean
-    skillType?: boolean
+    skillTypeId?: boolean
     definition?: boolean
     examples?: boolean
     isSystem?: boolean
     isEnabled?: boolean
     createdById?: boolean
+    source?: boolean
+    sourceUrl?: boolean
+    author?: boolean
+    lastSyncedAt?: boolean
     isDeleted?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
+    skillType?: boolean | Skill$skillTypeArgs<ExtArgs>
     installations?: boolean | Skill$installationsArgs<ExtArgs>
     _count?: boolean | SkillCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["skill"]>
@@ -32314,82 +33703,135 @@ export namespace Prisma {
   export type SkillSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    nameZh?: boolean
     slug?: boolean
     description?: boolean
+    descriptionZh?: boolean
     version?: boolean
-    skillType?: boolean
+    skillTypeId?: boolean
     definition?: boolean
     examples?: boolean
     isSystem?: boolean
     isEnabled?: boolean
     createdById?: boolean
+    source?: boolean
+    sourceUrl?: boolean
+    author?: boolean
+    lastSyncedAt?: boolean
     isDeleted?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
+    skillType?: boolean | Skill$skillTypeArgs<ExtArgs>
   }, ExtArgs["result"]["skill"]>
 
   export type SkillSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    nameZh?: boolean
     slug?: boolean
     description?: boolean
+    descriptionZh?: boolean
     version?: boolean
-    skillType?: boolean
+    skillTypeId?: boolean
     definition?: boolean
     examples?: boolean
     isSystem?: boolean
     isEnabled?: boolean
     createdById?: boolean
+    source?: boolean
+    sourceUrl?: boolean
+    author?: boolean
+    lastSyncedAt?: boolean
     isDeleted?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
+    skillType?: boolean | Skill$skillTypeArgs<ExtArgs>
   }, ExtArgs["result"]["skill"]>
 
   export type SkillSelectScalar = {
     id?: boolean
     name?: boolean
+    nameZh?: boolean
     slug?: boolean
     description?: boolean
+    descriptionZh?: boolean
     version?: boolean
-    skillType?: boolean
+    skillTypeId?: boolean
     definition?: boolean
     examples?: boolean
     isSystem?: boolean
     isEnabled?: boolean
     createdById?: boolean
+    source?: boolean
+    sourceUrl?: boolean
+    author?: boolean
+    lastSyncedAt?: boolean
     isDeleted?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean
   }
 
-  export type SkillOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "slug" | "description" | "version" | "skillType" | "definition" | "examples" | "isSystem" | "isEnabled" | "createdById" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["skill"]>
+  export type SkillOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "nameZh" | "slug" | "description" | "descriptionZh" | "version" | "skillTypeId" | "definition" | "examples" | "isSystem" | "isEnabled" | "createdById" | "source" | "sourceUrl" | "author" | "lastSyncedAt" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["skill"]>
   export type SkillInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    skillType?: boolean | Skill$skillTypeArgs<ExtArgs>
     installations?: boolean | Skill$installationsArgs<ExtArgs>
     _count?: boolean | SkillCountOutputTypeDefaultArgs<ExtArgs>
   }
-  export type SkillIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
-  export type SkillIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type SkillIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    skillType?: boolean | Skill$skillTypeArgs<ExtArgs>
+  }
+  export type SkillIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    skillType?: boolean | Skill$skillTypeArgs<ExtArgs>
+  }
 
   export type $SkillPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Skill"
     objects: {
+      skillType: Prisma.$SkillTypePayload<ExtArgs> | null
       installations: Prisma.$BotSkillPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       name: string
+      /**
+       * 中文名称（翻译自 name）
+       */
+      nameZh: string | null
       slug: string
+      /**
+       * 英文描述（原始描述）
+       */
       description: string | null
+      /**
+       * 中文描述（翻译自 description）
+       */
+      descriptionZh: string | null
       version: string
-      skillType: string
+      skillTypeId: string | null
       definition: Prisma.JsonValue
       examples: Prisma.JsonValue | null
       isSystem: boolean
       isEnabled: boolean
       createdById: string | null
+      /**
+       * 外部来源标识（如 openclaw, clawhub）
+       */
+      source: string | null
+      /**
+       * 外部来源 URL（如 GitHub 仓库链接）
+       */
+      sourceUrl: string | null
+      /**
+       * 技能作者（外部来源的作者）
+       */
+      author: string | null
+      /**
+       * 最后同步时间
+       */
+      lastSyncedAt: Date | null
       isDeleted: boolean
       createdAt: Date
       updatedAt: Date
@@ -32788,6 +34230,7 @@ export namespace Prisma {
    */
   export interface Prisma__SkillClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    skillType<T extends Skill$skillTypeArgs<ExtArgs> = {}>(args?: Subset<T, Skill$skillTypeArgs<ExtArgs>>): Prisma__SkillTypeClient<$Result.GetResult<Prisma.$SkillTypePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     installations<T extends Skill$installationsArgs<ExtArgs> = {}>(args?: Subset<T, Skill$installationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -32820,15 +34263,21 @@ export namespace Prisma {
   interface SkillFieldRefs {
     readonly id: FieldRef<"Skill", 'String'>
     readonly name: FieldRef<"Skill", 'String'>
+    readonly nameZh: FieldRef<"Skill", 'String'>
     readonly slug: FieldRef<"Skill", 'String'>
     readonly description: FieldRef<"Skill", 'String'>
+    readonly descriptionZh: FieldRef<"Skill", 'String'>
     readonly version: FieldRef<"Skill", 'String'>
-    readonly skillType: FieldRef<"Skill", 'String'>
+    readonly skillTypeId: FieldRef<"Skill", 'String'>
     readonly definition: FieldRef<"Skill", 'Json'>
     readonly examples: FieldRef<"Skill", 'Json'>
     readonly isSystem: FieldRef<"Skill", 'Boolean'>
     readonly isEnabled: FieldRef<"Skill", 'Boolean'>
     readonly createdById: FieldRef<"Skill", 'String'>
+    readonly source: FieldRef<"Skill", 'String'>
+    readonly sourceUrl: FieldRef<"Skill", 'String'>
+    readonly author: FieldRef<"Skill", 'String'>
+    readonly lastSyncedAt: FieldRef<"Skill", 'DateTime'>
     readonly isDeleted: FieldRef<"Skill", 'Boolean'>
     readonly createdAt: FieldRef<"Skill", 'DateTime'>
     readonly updatedAt: FieldRef<"Skill", 'DateTime'>
@@ -33082,6 +34531,10 @@ export namespace Prisma {
      */
     data: SkillCreateManyInput | SkillCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -33152,6 +34605,10 @@ export namespace Prisma {
      * Limit how many Skills to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -33218,6 +34675,25 @@ export namespace Prisma {
      * Limit how many Skills to delete.
      */
     limit?: number
+  }
+
+  /**
+   * Skill.skillType
+   */
+  export type Skill$skillTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SkillType
+     */
+    select?: SkillTypeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SkillType
+     */
+    omit?: SkillTypeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SkillTypeInclude<ExtArgs> | null
+    where?: SkillTypeWhereInput
   }
 
   /**
@@ -43591,18 +45067,42 @@ export namespace Prisma {
   export type BotPluginScalarFieldEnum = (typeof BotPluginScalarFieldEnum)[keyof typeof BotPluginScalarFieldEnum]
 
 
+  export const SkillTypeScalarFieldEnum: {
+    id: 'id',
+    slug: 'slug',
+    name: 'name',
+    nameZh: 'nameZh',
+    description: 'description',
+    descriptionZh: 'descriptionZh',
+    icon: 'icon',
+    sortOrder: 'sortOrder',
+    isDeleted: 'isDeleted',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    deletedAt: 'deletedAt'
+  };
+
+  export type SkillTypeScalarFieldEnum = (typeof SkillTypeScalarFieldEnum)[keyof typeof SkillTypeScalarFieldEnum]
+
+
   export const SkillScalarFieldEnum: {
     id: 'id',
     name: 'name',
+    nameZh: 'nameZh',
     slug: 'slug',
     description: 'description',
+    descriptionZh: 'descriptionZh',
     version: 'version',
-    skillType: 'skillType',
+    skillTypeId: 'skillTypeId',
     definition: 'definition',
     examples: 'examples',
     isSystem: 'isSystem',
     isEnabled: 'isEnabled',
     createdById: 'createdById',
+    source: 'source',
+    sourceUrl: 'sourceUrl',
+    author: 'author',
+    lastSyncedAt: 'lastSyncedAt',
     isDeleted: 'isDeleted',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
@@ -46382,82 +47882,202 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"BotPlugin"> | Date | string
   }
 
+  export type SkillTypeWhereInput = {
+    AND?: SkillTypeWhereInput | SkillTypeWhereInput[]
+    OR?: SkillTypeWhereInput[]
+    NOT?: SkillTypeWhereInput | SkillTypeWhereInput[]
+    id?: UuidFilter<"SkillType"> | string
+    slug?: StringFilter<"SkillType"> | string
+    name?: StringFilter<"SkillType"> | string
+    nameZh?: StringNullableFilter<"SkillType"> | string | null
+    description?: StringNullableFilter<"SkillType"> | string | null
+    descriptionZh?: StringNullableFilter<"SkillType"> | string | null
+    icon?: StringNullableFilter<"SkillType"> | string | null
+    sortOrder?: IntFilter<"SkillType"> | number
+    isDeleted?: BoolFilter<"SkillType"> | boolean
+    createdAt?: DateTimeFilter<"SkillType"> | Date | string
+    updatedAt?: DateTimeFilter<"SkillType"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"SkillType"> | Date | string | null
+    skills?: SkillListRelationFilter
+  }
+
+  export type SkillTypeOrderByWithRelationInput = {
+    id?: SortOrder
+    slug?: SortOrder
+    name?: SortOrder
+    nameZh?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    descriptionZh?: SortOrderInput | SortOrder
+    icon?: SortOrderInput | SortOrder
+    sortOrder?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    skills?: SkillOrderByRelationAggregateInput
+  }
+
+  export type SkillTypeWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    slug?: string
+    AND?: SkillTypeWhereInput | SkillTypeWhereInput[]
+    OR?: SkillTypeWhereInput[]
+    NOT?: SkillTypeWhereInput | SkillTypeWhereInput[]
+    name?: StringFilter<"SkillType"> | string
+    nameZh?: StringNullableFilter<"SkillType"> | string | null
+    description?: StringNullableFilter<"SkillType"> | string | null
+    descriptionZh?: StringNullableFilter<"SkillType"> | string | null
+    icon?: StringNullableFilter<"SkillType"> | string | null
+    sortOrder?: IntFilter<"SkillType"> | number
+    isDeleted?: BoolFilter<"SkillType"> | boolean
+    createdAt?: DateTimeFilter<"SkillType"> | Date | string
+    updatedAt?: DateTimeFilter<"SkillType"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"SkillType"> | Date | string | null
+    skills?: SkillListRelationFilter
+  }, "id" | "slug">
+
+  export type SkillTypeOrderByWithAggregationInput = {
+    id?: SortOrder
+    slug?: SortOrder
+    name?: SortOrder
+    nameZh?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    descriptionZh?: SortOrderInput | SortOrder
+    icon?: SortOrderInput | SortOrder
+    sortOrder?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    _count?: SkillTypeCountOrderByAggregateInput
+    _avg?: SkillTypeAvgOrderByAggregateInput
+    _max?: SkillTypeMaxOrderByAggregateInput
+    _min?: SkillTypeMinOrderByAggregateInput
+    _sum?: SkillTypeSumOrderByAggregateInput
+  }
+
+  export type SkillTypeScalarWhereWithAggregatesInput = {
+    AND?: SkillTypeScalarWhereWithAggregatesInput | SkillTypeScalarWhereWithAggregatesInput[]
+    OR?: SkillTypeScalarWhereWithAggregatesInput[]
+    NOT?: SkillTypeScalarWhereWithAggregatesInput | SkillTypeScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"SkillType"> | string
+    slug?: StringWithAggregatesFilter<"SkillType"> | string
+    name?: StringWithAggregatesFilter<"SkillType"> | string
+    nameZh?: StringNullableWithAggregatesFilter<"SkillType"> | string | null
+    description?: StringNullableWithAggregatesFilter<"SkillType"> | string | null
+    descriptionZh?: StringNullableWithAggregatesFilter<"SkillType"> | string | null
+    icon?: StringNullableWithAggregatesFilter<"SkillType"> | string | null
+    sortOrder?: IntWithAggregatesFilter<"SkillType"> | number
+    isDeleted?: BoolWithAggregatesFilter<"SkillType"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"SkillType"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SkillType"> | Date | string
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"SkillType"> | Date | string | null
+  }
+
   export type SkillWhereInput = {
     AND?: SkillWhereInput | SkillWhereInput[]
     OR?: SkillWhereInput[]
     NOT?: SkillWhereInput | SkillWhereInput[]
     id?: UuidFilter<"Skill"> | string
     name?: StringFilter<"Skill"> | string
+    nameZh?: StringNullableFilter<"Skill"> | string | null
     slug?: StringFilter<"Skill"> | string
     description?: StringNullableFilter<"Skill"> | string | null
+    descriptionZh?: StringNullableFilter<"Skill"> | string | null
     version?: StringFilter<"Skill"> | string
-    skillType?: StringFilter<"Skill"> | string
+    skillTypeId?: UuidNullableFilter<"Skill"> | string | null
     definition?: JsonFilter<"Skill">
     examples?: JsonNullableFilter<"Skill">
     isSystem?: BoolFilter<"Skill"> | boolean
     isEnabled?: BoolFilter<"Skill"> | boolean
     createdById?: UuidNullableFilter<"Skill"> | string | null
+    source?: StringNullableFilter<"Skill"> | string | null
+    sourceUrl?: StringNullableFilter<"Skill"> | string | null
+    author?: StringNullableFilter<"Skill"> | string | null
+    lastSyncedAt?: DateTimeNullableFilter<"Skill"> | Date | string | null
     isDeleted?: BoolFilter<"Skill"> | boolean
     createdAt?: DateTimeFilter<"Skill"> | Date | string
     updatedAt?: DateTimeFilter<"Skill"> | Date | string
     deletedAt?: DateTimeNullableFilter<"Skill"> | Date | string | null
+    skillType?: XOR<SkillTypeNullableScalarRelationFilter, SkillTypeWhereInput> | null
     installations?: BotSkillListRelationFilter
   }
 
   export type SkillOrderByWithRelationInput = {
     id?: SortOrder
     name?: SortOrder
+    nameZh?: SortOrderInput | SortOrder
     slug?: SortOrder
     description?: SortOrderInput | SortOrder
+    descriptionZh?: SortOrderInput | SortOrder
     version?: SortOrder
-    skillType?: SortOrder
+    skillTypeId?: SortOrderInput | SortOrder
     definition?: SortOrder
     examples?: SortOrderInput | SortOrder
     isSystem?: SortOrder
     isEnabled?: SortOrder
     createdById?: SortOrderInput | SortOrder
+    source?: SortOrderInput | SortOrder
+    sourceUrl?: SortOrderInput | SortOrder
+    author?: SortOrderInput | SortOrder
+    lastSyncedAt?: SortOrderInput | SortOrder
     isDeleted?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     deletedAt?: SortOrderInput | SortOrder
+    skillType?: SkillTypeOrderByWithRelationInput
     installations?: BotSkillOrderByRelationAggregateInput
   }
 
   export type SkillWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     slug_createdById?: SkillSlugCreatedByIdCompoundUniqueInput
+    b_skill_source_slug_key?: SkillB_skill_source_slug_keyCompoundUniqueInput
     AND?: SkillWhereInput | SkillWhereInput[]
     OR?: SkillWhereInput[]
     NOT?: SkillWhereInput | SkillWhereInput[]
     name?: StringFilter<"Skill"> | string
+    nameZh?: StringNullableFilter<"Skill"> | string | null
     slug?: StringFilter<"Skill"> | string
     description?: StringNullableFilter<"Skill"> | string | null
+    descriptionZh?: StringNullableFilter<"Skill"> | string | null
     version?: StringFilter<"Skill"> | string
-    skillType?: StringFilter<"Skill"> | string
+    skillTypeId?: UuidNullableFilter<"Skill"> | string | null
     definition?: JsonFilter<"Skill">
     examples?: JsonNullableFilter<"Skill">
     isSystem?: BoolFilter<"Skill"> | boolean
     isEnabled?: BoolFilter<"Skill"> | boolean
     createdById?: UuidNullableFilter<"Skill"> | string | null
+    source?: StringNullableFilter<"Skill"> | string | null
+    sourceUrl?: StringNullableFilter<"Skill"> | string | null
+    author?: StringNullableFilter<"Skill"> | string | null
+    lastSyncedAt?: DateTimeNullableFilter<"Skill"> | Date | string | null
     isDeleted?: BoolFilter<"Skill"> | boolean
     createdAt?: DateTimeFilter<"Skill"> | Date | string
     updatedAt?: DateTimeFilter<"Skill"> | Date | string
     deletedAt?: DateTimeNullableFilter<"Skill"> | Date | string | null
+    skillType?: XOR<SkillTypeNullableScalarRelationFilter, SkillTypeWhereInput> | null
     installations?: BotSkillListRelationFilter
-  }, "id" | "slug_createdById">
+  }, "id" | "slug_createdById" | "b_skill_source_slug_key">
 
   export type SkillOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
+    nameZh?: SortOrderInput | SortOrder
     slug?: SortOrder
     description?: SortOrderInput | SortOrder
+    descriptionZh?: SortOrderInput | SortOrder
     version?: SortOrder
-    skillType?: SortOrder
+    skillTypeId?: SortOrderInput | SortOrder
     definition?: SortOrder
     examples?: SortOrderInput | SortOrder
     isSystem?: SortOrder
     isEnabled?: SortOrder
     createdById?: SortOrderInput | SortOrder
+    source?: SortOrderInput | SortOrder
+    sourceUrl?: SortOrderInput | SortOrder
+    author?: SortOrderInput | SortOrder
+    lastSyncedAt?: SortOrderInput | SortOrder
     isDeleted?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -46473,15 +48093,21 @@ export namespace Prisma {
     NOT?: SkillScalarWhereWithAggregatesInput | SkillScalarWhereWithAggregatesInput[]
     id?: UuidWithAggregatesFilter<"Skill"> | string
     name?: StringWithAggregatesFilter<"Skill"> | string
+    nameZh?: StringNullableWithAggregatesFilter<"Skill"> | string | null
     slug?: StringWithAggregatesFilter<"Skill"> | string
     description?: StringNullableWithAggregatesFilter<"Skill"> | string | null
+    descriptionZh?: StringNullableWithAggregatesFilter<"Skill"> | string | null
     version?: StringWithAggregatesFilter<"Skill"> | string
-    skillType?: StringWithAggregatesFilter<"Skill"> | string
+    skillTypeId?: UuidNullableWithAggregatesFilter<"Skill"> | string | null
     definition?: JsonWithAggregatesFilter<"Skill">
     examples?: JsonNullableWithAggregatesFilter<"Skill">
     isSystem?: BoolWithAggregatesFilter<"Skill"> | boolean
     isEnabled?: BoolWithAggregatesFilter<"Skill"> | boolean
     createdById?: UuidNullableWithAggregatesFilter<"Skill"> | string | null
+    source?: StringNullableWithAggregatesFilter<"Skill"> | string | null
+    sourceUrl?: StringNullableWithAggregatesFilter<"Skill"> | string | null
+    author?: StringNullableWithAggregatesFilter<"Skill"> | string | null
+    lastSyncedAt?: DateTimeNullableWithAggregatesFilter<"Skill"> | Date | string | null
     isDeleted?: BoolWithAggregatesFilter<"Skill"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"Skill"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Skill"> | Date | string
@@ -49999,37 +51625,158 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type SkillTypeCreateInput = {
+    id?: string
+    slug: string
+    name: string
+    nameZh?: string | null
+    description?: string | null
+    descriptionZh?: string | null
+    icon?: string | null
+    sortOrder?: number
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    skills?: SkillCreateNestedManyWithoutSkillTypeInput
+  }
+
+  export type SkillTypeUncheckedCreateInput = {
+    id?: string
+    slug: string
+    name: string
+    nameZh?: string | null
+    description?: string | null
+    descriptionZh?: string | null
+    icon?: string | null
+    sortOrder?: number
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    skills?: SkillUncheckedCreateNestedManyWithoutSkillTypeInput
+  }
+
+  export type SkillTypeUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
+    icon?: NullableStringFieldUpdateOperationsInput | string | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    skills?: SkillUpdateManyWithoutSkillTypeNestedInput
+  }
+
+  export type SkillTypeUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
+    icon?: NullableStringFieldUpdateOperationsInput | string | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    skills?: SkillUncheckedUpdateManyWithoutSkillTypeNestedInput
+  }
+
+  export type SkillTypeCreateManyInput = {
+    id?: string
+    slug: string
+    name: string
+    nameZh?: string | null
+    description?: string | null
+    descriptionZh?: string | null
+    icon?: string | null
+    sortOrder?: number
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type SkillTypeUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
+    icon?: NullableStringFieldUpdateOperationsInput | string | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type SkillTypeUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
+    icon?: NullableStringFieldUpdateOperationsInput | string | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type SkillCreateInput = {
     id?: string
     name: string
+    nameZh?: string | null
     slug: string
     description?: string | null
+    descriptionZh?: string | null
     version?: string
-    skillType?: string
     definition: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: boolean
     isEnabled?: boolean
     createdById?: string | null
+    source?: string | null
+    sourceUrl?: string | null
+    author?: string | null
+    lastSyncedAt?: Date | string | null
     isDeleted?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    skillType?: SkillTypeCreateNestedOneWithoutSkillsInput
     installations?: BotSkillCreateNestedManyWithoutSkillInput
   }
 
   export type SkillUncheckedCreateInput = {
     id?: string
     name: string
+    nameZh?: string | null
     slug: string
     description?: string | null
+    descriptionZh?: string | null
     version?: string
-    skillType?: string
+    skillTypeId?: string | null
     definition: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: boolean
     isEnabled?: boolean
     createdById?: string | null
+    source?: string | null
+    sourceUrl?: string | null
+    author?: string | null
+    lastSyncedAt?: Date | string | null
     isDeleted?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -50040,34 +51787,46 @@ export namespace Prisma {
   export type SkillUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
     slug?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
-    skillType?: StringFieldUpdateOperationsInput | string
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: BoolFieldUpdateOperationsInput | boolean
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    author?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    skillType?: SkillTypeUpdateOneWithoutSkillsNestedInput
     installations?: BotSkillUpdateManyWithoutSkillNestedInput
   }
 
   export type SkillUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
     slug?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
-    skillType?: StringFieldUpdateOperationsInput | string
+    skillTypeId?: NullableStringFieldUpdateOperationsInput | string | null
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: BoolFieldUpdateOperationsInput | boolean
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    author?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -50078,15 +51837,21 @@ export namespace Prisma {
   export type SkillCreateManyInput = {
     id?: string
     name: string
+    nameZh?: string | null
     slug: string
     description?: string | null
+    descriptionZh?: string | null
     version?: string
-    skillType?: string
+    skillTypeId?: string | null
     definition: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: boolean
     isEnabled?: boolean
     createdById?: string | null
+    source?: string | null
+    sourceUrl?: string | null
+    author?: string | null
+    lastSyncedAt?: Date | string | null
     isDeleted?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -50096,15 +51861,20 @@ export namespace Prisma {
   export type SkillUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
     slug?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
-    skillType?: StringFieldUpdateOperationsInput | string
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: BoolFieldUpdateOperationsInput | boolean
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    author?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -50114,15 +51884,21 @@ export namespace Prisma {
   export type SkillUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
     slug?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
-    skillType?: StringFieldUpdateOperationsInput | string
+    skillTypeId?: NullableStringFieldUpdateOperationsInput | string | null
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: BoolFieldUpdateOperationsInput | boolean
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    author?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -53236,23 +55012,102 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type SkillListRelationFilter = {
+    every?: SkillWhereInput
+    some?: SkillWhereInput
+    none?: SkillWhereInput
+  }
+
+  export type SkillOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type SkillTypeCountOrderByAggregateInput = {
+    id?: SortOrder
+    slug?: SortOrder
+    name?: SortOrder
+    nameZh?: SortOrder
+    description?: SortOrder
+    descriptionZh?: SortOrder
+    icon?: SortOrder
+    sortOrder?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type SkillTypeAvgOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type SkillTypeMaxOrderByAggregateInput = {
+    id?: SortOrder
+    slug?: SortOrder
+    name?: SortOrder
+    nameZh?: SortOrder
+    description?: SortOrder
+    descriptionZh?: SortOrder
+    icon?: SortOrder
+    sortOrder?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type SkillTypeMinOrderByAggregateInput = {
+    id?: SortOrder
+    slug?: SortOrder
+    name?: SortOrder
+    nameZh?: SortOrder
+    description?: SortOrder
+    descriptionZh?: SortOrder
+    icon?: SortOrder
+    sortOrder?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type SkillTypeSumOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type SkillTypeNullableScalarRelationFilter = {
+    is?: SkillTypeWhereInput | null
+    isNot?: SkillTypeWhereInput | null
+  }
+
   export type SkillSlugCreatedByIdCompoundUniqueInput = {
     slug: string
     createdById: string
   }
 
+  export type SkillB_skill_source_slug_keyCompoundUniqueInput = {
+    source: string
+    slug: string
+  }
+
   export type SkillCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    nameZh?: SortOrder
     slug?: SortOrder
     description?: SortOrder
+    descriptionZh?: SortOrder
     version?: SortOrder
-    skillType?: SortOrder
+    skillTypeId?: SortOrder
     definition?: SortOrder
     examples?: SortOrder
     isSystem?: SortOrder
     isEnabled?: SortOrder
     createdById?: SortOrder
+    source?: SortOrder
+    sourceUrl?: SortOrder
+    author?: SortOrder
+    lastSyncedAt?: SortOrder
     isDeleted?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -53262,13 +55117,19 @@ export namespace Prisma {
   export type SkillMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    nameZh?: SortOrder
     slug?: SortOrder
     description?: SortOrder
+    descriptionZh?: SortOrder
     version?: SortOrder
-    skillType?: SortOrder
+    skillTypeId?: SortOrder
     isSystem?: SortOrder
     isEnabled?: SortOrder
     createdById?: SortOrder
+    source?: SortOrder
+    sourceUrl?: SortOrder
+    author?: SortOrder
+    lastSyncedAt?: SortOrder
     isDeleted?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -53278,13 +55139,19 @@ export namespace Prisma {
   export type SkillMinOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    nameZh?: SortOrder
     slug?: SortOrder
     description?: SortOrder
+    descriptionZh?: SortOrder
     version?: SortOrder
-    skillType?: SortOrder
+    skillTypeId?: SortOrder
     isSystem?: SortOrder
     isEnabled?: SortOrder
     createdById?: SortOrder
+    source?: SortOrder
+    sourceUrl?: SortOrder
+    author?: SortOrder
+    lastSyncedAt?: SortOrder
     isDeleted?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -55554,6 +57421,54 @@ export namespace Prisma {
     update?: XOR<XOR<PluginUpdateToOneWithWhereWithoutInstallationsInput, PluginUpdateWithoutInstallationsInput>, PluginUncheckedUpdateWithoutInstallationsInput>
   }
 
+  export type SkillCreateNestedManyWithoutSkillTypeInput = {
+    create?: XOR<SkillCreateWithoutSkillTypeInput, SkillUncheckedCreateWithoutSkillTypeInput> | SkillCreateWithoutSkillTypeInput[] | SkillUncheckedCreateWithoutSkillTypeInput[]
+    connectOrCreate?: SkillCreateOrConnectWithoutSkillTypeInput | SkillCreateOrConnectWithoutSkillTypeInput[]
+    createMany?: SkillCreateManySkillTypeInputEnvelope
+    connect?: SkillWhereUniqueInput | SkillWhereUniqueInput[]
+  }
+
+  export type SkillUncheckedCreateNestedManyWithoutSkillTypeInput = {
+    create?: XOR<SkillCreateWithoutSkillTypeInput, SkillUncheckedCreateWithoutSkillTypeInput> | SkillCreateWithoutSkillTypeInput[] | SkillUncheckedCreateWithoutSkillTypeInput[]
+    connectOrCreate?: SkillCreateOrConnectWithoutSkillTypeInput | SkillCreateOrConnectWithoutSkillTypeInput[]
+    createMany?: SkillCreateManySkillTypeInputEnvelope
+    connect?: SkillWhereUniqueInput | SkillWhereUniqueInput[]
+  }
+
+  export type SkillUpdateManyWithoutSkillTypeNestedInput = {
+    create?: XOR<SkillCreateWithoutSkillTypeInput, SkillUncheckedCreateWithoutSkillTypeInput> | SkillCreateWithoutSkillTypeInput[] | SkillUncheckedCreateWithoutSkillTypeInput[]
+    connectOrCreate?: SkillCreateOrConnectWithoutSkillTypeInput | SkillCreateOrConnectWithoutSkillTypeInput[]
+    upsert?: SkillUpsertWithWhereUniqueWithoutSkillTypeInput | SkillUpsertWithWhereUniqueWithoutSkillTypeInput[]
+    createMany?: SkillCreateManySkillTypeInputEnvelope
+    set?: SkillWhereUniqueInput | SkillWhereUniqueInput[]
+    disconnect?: SkillWhereUniqueInput | SkillWhereUniqueInput[]
+    delete?: SkillWhereUniqueInput | SkillWhereUniqueInput[]
+    connect?: SkillWhereUniqueInput | SkillWhereUniqueInput[]
+    update?: SkillUpdateWithWhereUniqueWithoutSkillTypeInput | SkillUpdateWithWhereUniqueWithoutSkillTypeInput[]
+    updateMany?: SkillUpdateManyWithWhereWithoutSkillTypeInput | SkillUpdateManyWithWhereWithoutSkillTypeInput[]
+    deleteMany?: SkillScalarWhereInput | SkillScalarWhereInput[]
+  }
+
+  export type SkillUncheckedUpdateManyWithoutSkillTypeNestedInput = {
+    create?: XOR<SkillCreateWithoutSkillTypeInput, SkillUncheckedCreateWithoutSkillTypeInput> | SkillCreateWithoutSkillTypeInput[] | SkillUncheckedCreateWithoutSkillTypeInput[]
+    connectOrCreate?: SkillCreateOrConnectWithoutSkillTypeInput | SkillCreateOrConnectWithoutSkillTypeInput[]
+    upsert?: SkillUpsertWithWhereUniqueWithoutSkillTypeInput | SkillUpsertWithWhereUniqueWithoutSkillTypeInput[]
+    createMany?: SkillCreateManySkillTypeInputEnvelope
+    set?: SkillWhereUniqueInput | SkillWhereUniqueInput[]
+    disconnect?: SkillWhereUniqueInput | SkillWhereUniqueInput[]
+    delete?: SkillWhereUniqueInput | SkillWhereUniqueInput[]
+    connect?: SkillWhereUniqueInput | SkillWhereUniqueInput[]
+    update?: SkillUpdateWithWhereUniqueWithoutSkillTypeInput | SkillUpdateWithWhereUniqueWithoutSkillTypeInput[]
+    updateMany?: SkillUpdateManyWithWhereWithoutSkillTypeInput | SkillUpdateManyWithWhereWithoutSkillTypeInput[]
+    deleteMany?: SkillScalarWhereInput | SkillScalarWhereInput[]
+  }
+
+  export type SkillTypeCreateNestedOneWithoutSkillsInput = {
+    create?: XOR<SkillTypeCreateWithoutSkillsInput, SkillTypeUncheckedCreateWithoutSkillsInput>
+    connectOrCreate?: SkillTypeCreateOrConnectWithoutSkillsInput
+    connect?: SkillTypeWhereUniqueInput
+  }
+
   export type BotSkillCreateNestedManyWithoutSkillInput = {
     create?: XOR<BotSkillCreateWithoutSkillInput, BotSkillUncheckedCreateWithoutSkillInput> | BotSkillCreateWithoutSkillInput[] | BotSkillUncheckedCreateWithoutSkillInput[]
     connectOrCreate?: BotSkillCreateOrConnectWithoutSkillInput | BotSkillCreateOrConnectWithoutSkillInput[]
@@ -55566,6 +57481,16 @@ export namespace Prisma {
     connectOrCreate?: BotSkillCreateOrConnectWithoutSkillInput | BotSkillCreateOrConnectWithoutSkillInput[]
     createMany?: BotSkillCreateManySkillInputEnvelope
     connect?: BotSkillWhereUniqueInput | BotSkillWhereUniqueInput[]
+  }
+
+  export type SkillTypeUpdateOneWithoutSkillsNestedInput = {
+    create?: XOR<SkillTypeCreateWithoutSkillsInput, SkillTypeUncheckedCreateWithoutSkillsInput>
+    connectOrCreate?: SkillTypeCreateOrConnectWithoutSkillsInput
+    upsert?: SkillTypeUpsertWithoutSkillsInput
+    disconnect?: SkillTypeWhereInput | boolean
+    delete?: SkillTypeWhereInput | boolean
+    connect?: SkillTypeWhereUniqueInput
+    update?: XOR<XOR<SkillTypeUpdateToOneWithWhereWithoutSkillsInput, SkillTypeUpdateWithoutSkillsInput>, SkillTypeUncheckedUpdateWithoutSkillsInput>
   }
 
   export type BotSkillUpdateManyWithoutSkillNestedInput = {
@@ -61504,6 +63429,142 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
+  export type SkillCreateWithoutSkillTypeInput = {
+    id?: string
+    name: string
+    nameZh?: string | null
+    slug: string
+    description?: string | null
+    descriptionZh?: string | null
+    version?: string
+    definition: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: boolean
+    isEnabled?: boolean
+    createdById?: string | null
+    source?: string | null
+    sourceUrl?: string | null
+    author?: string | null
+    lastSyncedAt?: Date | string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    installations?: BotSkillCreateNestedManyWithoutSkillInput
+  }
+
+  export type SkillUncheckedCreateWithoutSkillTypeInput = {
+    id?: string
+    name: string
+    nameZh?: string | null
+    slug: string
+    description?: string | null
+    descriptionZh?: string | null
+    version?: string
+    definition: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: boolean
+    isEnabled?: boolean
+    createdById?: string | null
+    source?: string | null
+    sourceUrl?: string | null
+    author?: string | null
+    lastSyncedAt?: Date | string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    installations?: BotSkillUncheckedCreateNestedManyWithoutSkillInput
+  }
+
+  export type SkillCreateOrConnectWithoutSkillTypeInput = {
+    where: SkillWhereUniqueInput
+    create: XOR<SkillCreateWithoutSkillTypeInput, SkillUncheckedCreateWithoutSkillTypeInput>
+  }
+
+  export type SkillCreateManySkillTypeInputEnvelope = {
+    data: SkillCreateManySkillTypeInput | SkillCreateManySkillTypeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SkillUpsertWithWhereUniqueWithoutSkillTypeInput = {
+    where: SkillWhereUniqueInput
+    update: XOR<SkillUpdateWithoutSkillTypeInput, SkillUncheckedUpdateWithoutSkillTypeInput>
+    create: XOR<SkillCreateWithoutSkillTypeInput, SkillUncheckedCreateWithoutSkillTypeInput>
+  }
+
+  export type SkillUpdateWithWhereUniqueWithoutSkillTypeInput = {
+    where: SkillWhereUniqueInput
+    data: XOR<SkillUpdateWithoutSkillTypeInput, SkillUncheckedUpdateWithoutSkillTypeInput>
+  }
+
+  export type SkillUpdateManyWithWhereWithoutSkillTypeInput = {
+    where: SkillScalarWhereInput
+    data: XOR<SkillUpdateManyMutationInput, SkillUncheckedUpdateManyWithoutSkillTypeInput>
+  }
+
+  export type SkillScalarWhereInput = {
+    AND?: SkillScalarWhereInput | SkillScalarWhereInput[]
+    OR?: SkillScalarWhereInput[]
+    NOT?: SkillScalarWhereInput | SkillScalarWhereInput[]
+    id?: UuidFilter<"Skill"> | string
+    name?: StringFilter<"Skill"> | string
+    nameZh?: StringNullableFilter<"Skill"> | string | null
+    slug?: StringFilter<"Skill"> | string
+    description?: StringNullableFilter<"Skill"> | string | null
+    descriptionZh?: StringNullableFilter<"Skill"> | string | null
+    version?: StringFilter<"Skill"> | string
+    skillTypeId?: UuidNullableFilter<"Skill"> | string | null
+    definition?: JsonFilter<"Skill">
+    examples?: JsonNullableFilter<"Skill">
+    isSystem?: BoolFilter<"Skill"> | boolean
+    isEnabled?: BoolFilter<"Skill"> | boolean
+    createdById?: UuidNullableFilter<"Skill"> | string | null
+    source?: StringNullableFilter<"Skill"> | string | null
+    sourceUrl?: StringNullableFilter<"Skill"> | string | null
+    author?: StringNullableFilter<"Skill"> | string | null
+    lastSyncedAt?: DateTimeNullableFilter<"Skill"> | Date | string | null
+    isDeleted?: BoolFilter<"Skill"> | boolean
+    createdAt?: DateTimeFilter<"Skill"> | Date | string
+    updatedAt?: DateTimeFilter<"Skill"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"Skill"> | Date | string | null
+  }
+
+  export type SkillTypeCreateWithoutSkillsInput = {
+    id?: string
+    slug: string
+    name: string
+    nameZh?: string | null
+    description?: string | null
+    descriptionZh?: string | null
+    icon?: string | null
+    sortOrder?: number
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type SkillTypeUncheckedCreateWithoutSkillsInput = {
+    id?: string
+    slug: string
+    name: string
+    nameZh?: string | null
+    description?: string | null
+    descriptionZh?: string | null
+    icon?: string | null
+    sortOrder?: number
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type SkillTypeCreateOrConnectWithoutSkillsInput = {
+    where: SkillTypeWhereUniqueInput
+    create: XOR<SkillTypeCreateWithoutSkillsInput, SkillTypeUncheckedCreateWithoutSkillsInput>
+  }
+
   export type BotSkillCreateWithoutSkillInput = {
     id?: string
     config?: NullableJsonNullValueInput | InputJsonValue
@@ -61530,6 +63591,47 @@ export namespace Prisma {
   export type BotSkillCreateManySkillInputEnvelope = {
     data: BotSkillCreateManySkillInput | BotSkillCreateManySkillInput[]
     skipDuplicates?: boolean
+  }
+
+  export type SkillTypeUpsertWithoutSkillsInput = {
+    update: XOR<SkillTypeUpdateWithoutSkillsInput, SkillTypeUncheckedUpdateWithoutSkillsInput>
+    create: XOR<SkillTypeCreateWithoutSkillsInput, SkillTypeUncheckedCreateWithoutSkillsInput>
+    where?: SkillTypeWhereInput
+  }
+
+  export type SkillTypeUpdateToOneWithWhereWithoutSkillsInput = {
+    where?: SkillTypeWhereInput
+    data: XOR<SkillTypeUpdateWithoutSkillsInput, SkillTypeUncheckedUpdateWithoutSkillsInput>
+  }
+
+  export type SkillTypeUpdateWithoutSkillsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
+    icon?: NullableStringFieldUpdateOperationsInput | string | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type SkillTypeUncheckedUpdateWithoutSkillsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    slug?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
+    icon?: NullableStringFieldUpdateOperationsInput | string | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type BotSkillUpsertWithWhereUniqueWithoutSkillInput = {
@@ -61618,33 +63720,45 @@ export namespace Prisma {
   export type SkillCreateWithoutInstallationsInput = {
     id?: string
     name: string
+    nameZh?: string | null
     slug: string
     description?: string | null
+    descriptionZh?: string | null
     version?: string
-    skillType?: string
     definition: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: boolean
     isEnabled?: boolean
     createdById?: string | null
+    source?: string | null
+    sourceUrl?: string | null
+    author?: string | null
+    lastSyncedAt?: Date | string | null
     isDeleted?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    skillType?: SkillTypeCreateNestedOneWithoutSkillsInput
   }
 
   export type SkillUncheckedCreateWithoutInstallationsInput = {
     id?: string
     name: string
+    nameZh?: string | null
     slug: string
     description?: string | null
+    descriptionZh?: string | null
     version?: string
-    skillType?: string
+    skillTypeId?: string | null
     definition: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: boolean
     isEnabled?: boolean
     createdById?: string | null
+    source?: string | null
+    sourceUrl?: string | null
+    author?: string | null
+    lastSyncedAt?: Date | string | null
     isDeleted?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -61743,33 +63857,45 @@ export namespace Prisma {
   export type SkillUpdateWithoutInstallationsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
     slug?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
-    skillType?: StringFieldUpdateOperationsInput | string
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: BoolFieldUpdateOperationsInput | boolean
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    author?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    skillType?: SkillTypeUpdateOneWithoutSkillsNestedInput
   }
 
   export type SkillUncheckedUpdateWithoutInstallationsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
     slug?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
-    skillType?: StringFieldUpdateOperationsInput | string
+    skillTypeId?: NullableStringFieldUpdateOperationsInput | string | null
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: BoolFieldUpdateOperationsInput | boolean
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    author?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -63620,6 +65746,100 @@ export namespace Prisma {
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SkillCreateManySkillTypeInput = {
+    id?: string
+    name: string
+    nameZh?: string | null
+    slug: string
+    description?: string | null
+    descriptionZh?: string | null
+    version?: string
+    definition: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: boolean
+    isEnabled?: boolean
+    createdById?: string | null
+    source?: string | null
+    sourceUrl?: string | null
+    author?: string | null
+    lastSyncedAt?: Date | string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type SkillUpdateWithoutSkillTypeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
+    slug?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
+    version?: StringFieldUpdateOperationsInput | string
+    definition?: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: BoolFieldUpdateOperationsInput | boolean
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    author?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    installations?: BotSkillUpdateManyWithoutSkillNestedInput
+  }
+
+  export type SkillUncheckedUpdateWithoutSkillTypeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
+    slug?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
+    version?: StringFieldUpdateOperationsInput | string
+    definition?: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: BoolFieldUpdateOperationsInput | boolean
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    author?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    installations?: BotSkillUncheckedUpdateManyWithoutSkillNestedInput
+  }
+
+  export type SkillUncheckedUpdateManyWithoutSkillTypeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameZh?: NullableStringFieldUpdateOperationsInput | string | null
+    slug?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
+    version?: StringFieldUpdateOperationsInput | string
+    definition?: JsonNullValueInput | InputJsonValue
+    examples?: NullableJsonNullValueInput | InputJsonValue
+    isSystem?: BoolFieldUpdateOperationsInput | boolean
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    source?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    author?: NullableStringFieldUpdateOperationsInput | string | null
+    lastSyncedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type BotSkillCreateManySkillInput = {

@@ -480,18 +480,39 @@ exports.Prisma.BotPluginScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.SkillTypeScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  name: 'name',
+  nameZh: 'nameZh',
+  description: 'description',
+  descriptionZh: 'descriptionZh',
+  icon: 'icon',
+  sortOrder: 'sortOrder',
+  isDeleted: 'isDeleted',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+};
+
 exports.Prisma.SkillScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  nameZh: 'nameZh',
   slug: 'slug',
   description: 'description',
+  descriptionZh: 'descriptionZh',
   version: 'version',
-  skillType: 'skillType',
+  skillTypeId: 'skillTypeId',
   definition: 'definition',
   examples: 'examples',
   isSystem: 'isSystem',
   isEnabled: 'isEnabled',
   createdById: 'createdById',
+  source: 'source',
+  sourceUrl: 'sourceUrl',
+  author: 'author',
+  lastSyncedAt: 'lastSyncedAt',
   isDeleted: 'isDeleted',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -800,6 +821,7 @@ exports.Prisma.ModelName = {
   ChannelCredentialField: 'ChannelCredentialField',
   Plugin: 'Plugin',
   BotPlugin: 'BotPlugin',
+  SkillType: 'SkillType',
   Skill: 'Skill',
   BotSkill: 'BotSkill',
   ModelPricing: 'ModelPricing',
