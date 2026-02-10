@@ -39,8 +39,8 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
         model: 'claude-sonnet-4-5-20250929',
         protocol: 'openai-compatible',
       },
+      { vendor: 'openai', model: 'gpt-5.2', protocol: 'openai-compatible' },
       { vendor: 'openai', model: 'gpt-4o', protocol: 'openai-compatible' },
-      { vendor: 'openai', model: 'gpt-4.1', protocol: 'openai-compatible' },
       {
         vendor: 'deepseek',
         model: 'deepseek-v3',
@@ -67,7 +67,7 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
     models: [
       {
         vendor: 'anthropic',
-        model: 'claude-sonnet-4-5-20250929-thinking',
+        model: 'claude-opus-4-6',
         protocol: 'anthropic-native',
         features: { extendedThinking: true },
       },
@@ -78,10 +78,15 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
         features: { extendedThinking: true },
       },
       { vendor: 'openai', model: 'o3', protocol: 'openai-compatible' },
-      { vendor: 'openai', model: 'gpt-5-pro', protocol: 'openai-compatible' },
+      { vendor: 'openai', model: 'gpt-5.2-pro', protocol: 'openai-compatible' },
       {
         vendor: 'deepseek',
         model: 'deepseek-r1',
+        protocol: 'openai-compatible',
+      },
+      {
+        vendor: 'xai',
+        model: 'grok-3-reasoner-r',
         protocol: 'openai-compatible',
       },
       { vendor: 'xai', model: 'grok-4', protocol: 'openai-compatible' },
@@ -106,8 +111,8 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
       },
       { vendor: 'openai', model: 'gpt-4o-mini', protocol: 'openai-compatible' },
       {
-        vendor: 'openai',
-        model: 'gpt-4.1-mini',
+        vendor: 'google',
+        model: 'gemini-3-flash-preview',
         protocol: 'openai-compatible',
       },
       {
@@ -116,8 +121,8 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
         protocol: 'openai-compatible',
       },
       {
-        vendor: 'google',
-        model: 'gemini-3-flash-preview',
+        vendor: 'doubao',
+        model: 'doubao-seed-1-6-flash-250615',
         protocol: 'openai-compatible',
       },
       {
@@ -145,6 +150,11 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
     description: '优先使用响应速度快的模型',
     models: [
       {
+        vendor: 'google',
+        model: 'gemini-3-flash-preview',
+        protocol: 'openai-compatible',
+      },
+      {
         vendor: 'anthropic',
         model: 'claude-haiku-4-5-20251001',
         protocol: 'openai-compatible',
@@ -152,12 +162,12 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
       { vendor: 'openai', model: 'gpt-4o-mini', protocol: 'openai-compatible' },
       {
         vendor: 'openai',
-        model: 'gpt-4.1-nano',
+        model: 'gpt-5-nano',
         protocol: 'openai-compatible',
       },
       {
-        vendor: 'google',
-        model: 'gemini-3-flash-preview',
+        vendor: 'openai',
+        model: 'gpt-4.1-nano',
         protocol: 'openai-compatible',
       },
       { vendor: 'xai', model: 'grok-3-mini', protocol: 'openai-compatible' },
@@ -180,7 +190,16 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
         model: 'claude-sonnet-4-5-20250929',
         protocol: 'openai-compatible',
       },
-      { vendor: 'openai', model: 'gpt-5-codex', protocol: 'openai-compatible' },
+      {
+        vendor: 'openai',
+        model: 'gpt-5.2-codex',
+        protocol: 'openai-compatible',
+      },
+      {
+        vendor: 'openai',
+        model: 'gpt-5.1-codex',
+        protocol: 'openai-compatible',
+      },
       {
         vendor: 'deepseek',
         model: 'deepseek-v3',
@@ -206,10 +225,16 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
     name: '视觉理解 Fallback 链',
     description: '多模态视觉任务专用',
     models: [
+      { vendor: 'openai', model: 'gpt-5.2', protocol: 'openai-compatible' },
       { vendor: 'openai', model: 'gpt-4o', protocol: 'openai-compatible' },
       {
         vendor: 'anthropic',
         model: 'claude-sonnet-4-5-20250929',
+        protocol: 'openai-compatible',
+      },
+      {
+        vendor: 'google',
+        model: 'gemini-3-pro-preview',
         protocol: 'openai-compatible',
       },
       {
@@ -239,12 +264,17 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
     models: [
       {
         vendor: 'google',
-        model: 'gemini-2.5-pro',
+        model: 'gemini-3-pro-preview',
         protocol: 'openai-compatible',
       },
       {
         vendor: 'google',
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-2.5-pro',
+        protocol: 'openai-compatible',
+      },
+      {
+        vendor: 'anthropic',
+        model: 'claude-opus-4-6',
         protocol: 'openai-compatible',
       },
       {
@@ -280,6 +310,11 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
       },
       {
         vendor: 'openai',
+        model: 'gpt-image-1.5-plus',
+        protocol: 'openai-compatible',
+      },
+      {
+        vendor: 'openai',
         model: 'gpt-image-1.5',
         protocol: 'openai-compatible',
       },
@@ -288,6 +323,7 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
         model: 'flux-kontext-max',
         protocol: 'openai-compatible',
       },
+      { vendor: 'xai', model: 'grok-4-image', protocol: 'openai-compatible' },
       {
         vendor: 'ideogram',
         model: 'ideogram-generate-v3',
@@ -324,7 +360,13 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
         model: 'hailuo-2.3-pro',
         protocol: 'openai-compatible',
       },
+      {
+        vendor: 'doubao',
+        model: 'doubao-seedance-1-5-pro-251215',
+        protocol: 'openai-compatible',
+      },
       { vendor: 'vidu', model: 'viduq3-pro', protocol: 'openai-compatible' },
+      { vendor: 'alibaba', model: 'wan-2.6', protocol: 'openai-compatible' },
     ],
     triggerStatusCodes: [429, 500, 502, 503, 504],
     triggerErrorTypes: ['rate_limit', 'overloaded', 'timeout'],
@@ -359,6 +401,7 @@ export const FALLBACK_CHAINS_DATA: FallbackChainData[] = [
         model: 'claude-sonnet-4-5-20250929',
         protocol: 'openai-compatible',
       },
+      { vendor: 'openai', model: 'gpt-5.2', protocol: 'openai-compatible' },
       { vendor: 'openai', model: 'gpt-4o', protocol: 'openai-compatible' },
     ],
     triggerStatusCodes: [429, 500, 502, 503, 504],
