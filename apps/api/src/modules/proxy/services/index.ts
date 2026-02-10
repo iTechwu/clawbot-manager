@@ -3,3 +3,8 @@ export * from './keyring-proxy.service';
 export * from './upstream.service';
 export * from './proxy.service';
 export * from './quota.service';
+// Hybrid architecture services
+export * from './routing-engine.service';
+export * from './fallback-engine.service';
+export * from './cost-tracker.service';
+export * from './configuration.service';

@@ -76,6 +76,7 @@ export type CountryCode = $Result.DefaultSelection<Prisma.$CountryCodePayload>
  * Model Bot
  * Bot - 机器人实体
  * 管理 AI 机器人的生命周期和配置
+ * 注意：aiProvider、model、channelType 字段已移除，这些值从 BotProviderKey 和 BotChannel 动态派生
  */
 export type Bot = $Result.DefaultSelection<Prisma.$BotPayload>
 /**
@@ -161,12 +162,49 @@ export type Skill = $Result.DefaultSelection<Prisma.$SkillPayload>
  */
 export type BotSkill = $Result.DefaultSelection<Prisma.$BotSkillPayload>
 /**
+ * Model ModelPricing
+ * ModelPricing - AI 模型定价与能力目录
+ * 存储各 AI 模型的定价信息、能力评分和特性支持，用于成本估算和智能路由
+ * 价格单位：美元/百万 tokens
+ */
+export type ModelPricing = $Result.DefaultSelection<Prisma.$ModelPricingPayload>
+/**
+ * Model BotModelRouting
+ * BotModelRouting - Bot 模型路由配置
+ * 存储 Bot 的模型路由规则，支持功能路由、负载均衡、故障转移
+ */
+export type BotModelRouting = $Result.DefaultSelection<Prisma.$BotModelRoutingPayload>
+/**
  * Model BotChannel
  * BotChannel - Bot 渠道配置
  * 存储 Bot 的渠道连接配置，包括加密的凭证
  * 一个 Bot 可以连接多个渠道（如同时连接飞书和 Telegram）
  */
 export type BotChannel = $Result.DefaultSelection<Prisma.$BotChannelPayload>
+/**
+ * Model CapabilityTag
+ * CapabilityTag - 能力标签
+ * 定义路由能力标签及其要求，用于智能路由决策
+ */
+export type CapabilityTag = $Result.DefaultSelection<Prisma.$CapabilityTagPayload>
+/**
+ * Model FallbackChain
+ * FallbackChain - Fallback 链配置
+ * 定义模型降级策略，支持多模型故障转移
+ */
+export type FallbackChain = $Result.DefaultSelection<Prisma.$FallbackChainPayload>
+/**
+ * Model CostStrategy
+ * CostStrategy - 成本策略配置
+ * 定义成本优化策略，用于模型选择决策
+ */
+export type CostStrategy = $Result.DefaultSelection<Prisma.$CostStrategyPayload>
+/**
+ * Model BotRoutingConfig
+ * BotRoutingConfig - Bot 路由配置
+ * 存储 Bot 的智能路由、Fallback 和成本控制配置
+ */
+export type BotRoutingConfig = $Result.DefaultSelection<Prisma.$BotRoutingConfigPayload>
 
 /**
  * Enums
@@ -224,6 +262,7 @@ export type FileEnvType = (typeof FileEnvType)[keyof typeof FileEnvType]
 
 
 export const BotStatus: {
+  draft: 'draft',
   created: 'created',
   starting: 'starting',
   running: 'running',
@@ -291,6 +330,15 @@ export const ChannelConnectionStatus: {
 
 export type ChannelConnectionStatus = (typeof ChannelConnectionStatus)[keyof typeof ChannelConnectionStatus]
 
+
+export const ModelRoutingType: {
+  FUNCTION_ROUTE: 'FUNCTION_ROUTE',
+  LOAD_BALANCE: 'LOAD_BALANCE',
+  FAILOVER: 'FAILOVER'
+};
+
+export type ModelRoutingType = (typeof ModelRoutingType)[keyof typeof ModelRoutingType]
+
 }
 
 export type SexType = $Enums.SexType
@@ -336,6 +384,10 @@ export const PluginCategory: typeof $Enums.PluginCategory
 export type ChannelConnectionStatus = $Enums.ChannelConnectionStatus
 
 export const ChannelConnectionStatus: typeof $Enums.ChannelConnectionStatus
+
+export type ModelRoutingType = $Enums.ModelRoutingType
+
+export const ModelRoutingType: typeof $Enums.ModelRoutingType
 
 /**
  * ##  Prisma Client ʲˢ
@@ -705,6 +757,26 @@ export class PrismaClient<
   get botSkill(): Prisma.BotSkillDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.modelPricing`: Exposes CRUD operations for the **ModelPricing** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ModelPricings
+    * const modelPricings = await prisma.modelPricing.findMany()
+    * ```
+    */
+  get modelPricing(): Prisma.ModelPricingDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.botModelRouting`: Exposes CRUD operations for the **BotModelRouting** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BotModelRoutings
+    * const botModelRoutings = await prisma.botModelRouting.findMany()
+    * ```
+    */
+  get botModelRouting(): Prisma.BotModelRoutingDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.botChannel`: Exposes CRUD operations for the **BotChannel** model.
     * Example usage:
     * ```ts
@@ -713,6 +785,46 @@ export class PrismaClient<
     * ```
     */
   get botChannel(): Prisma.BotChannelDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.capabilityTag`: Exposes CRUD operations for the **CapabilityTag** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CapabilityTags
+    * const capabilityTags = await prisma.capabilityTag.findMany()
+    * ```
+    */
+  get capabilityTag(): Prisma.CapabilityTagDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.fallbackChain`: Exposes CRUD operations for the **FallbackChain** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more FallbackChains
+    * const fallbackChains = await prisma.fallbackChain.findMany()
+    * ```
+    */
+  get fallbackChain(): Prisma.FallbackChainDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.costStrategy`: Exposes CRUD operations for the **CostStrategy** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CostStrategies
+    * const costStrategies = await prisma.costStrategy.findMany()
+    * ```
+    */
+  get costStrategy(): Prisma.CostStrategyDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.botRoutingConfig`: Exposes CRUD operations for the **BotRoutingConfig** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BotRoutingConfigs
+    * const botRoutingConfigs = await prisma.botRoutingConfig.findMany()
+    * ```
+    */
+  get botRoutingConfig(): Prisma.BotRoutingConfigDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1172,7 +1284,13 @@ export namespace Prisma {
     BotPlugin: 'BotPlugin',
     Skill: 'Skill',
     BotSkill: 'BotSkill',
-    BotChannel: 'BotChannel'
+    ModelPricing: 'ModelPricing',
+    BotModelRouting: 'BotModelRouting',
+    BotChannel: 'BotChannel',
+    CapabilityTag: 'CapabilityTag',
+    FallbackChain: 'FallbackChain',
+    CostStrategy: 'CostStrategy',
+    BotRoutingConfig: 'BotRoutingConfig'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1188,7 +1306,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "userInfo" | "personaTemplate" | "wechatAuth" | "googleAuth" | "discordAuth" | "mobileAuth" | "emailAuth" | "riskDetectionRecord" | "systemTaskQueue" | "fileSource" | "countryCode" | "bot" | "providerKey" | "botProviderKey" | "botUsageLog" | "proxyToken" | "message" | "messageRecipient" | "operateLog" | "channelDefinition" | "channelCredentialField" | "plugin" | "botPlugin" | "skill" | "botSkill" | "botChannel"
+      modelProps: "userInfo" | "personaTemplate" | "wechatAuth" | "googleAuth" | "discordAuth" | "mobileAuth" | "emailAuth" | "riskDetectionRecord" | "systemTaskQueue" | "fileSource" | "countryCode" | "bot" | "providerKey" | "botProviderKey" | "botUsageLog" | "proxyToken" | "message" | "messageRecipient" | "operateLog" | "channelDefinition" | "channelCredentialField" | "plugin" | "botPlugin" | "skill" | "botSkill" | "modelPricing" | "botModelRouting" | "botChannel" | "capabilityTag" | "fallbackChain" | "costStrategy" | "botRoutingConfig"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3042,6 +3160,154 @@ export namespace Prisma {
           }
         }
       }
+      ModelPricing: {
+        payload: Prisma.$ModelPricingPayload<ExtArgs>
+        fields: Prisma.ModelPricingFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ModelPricingFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModelPricingPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ModelPricingFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModelPricingPayload>
+          }
+          findFirst: {
+            args: Prisma.ModelPricingFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModelPricingPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ModelPricingFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModelPricingPayload>
+          }
+          findMany: {
+            args: Prisma.ModelPricingFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModelPricingPayload>[]
+          }
+          create: {
+            args: Prisma.ModelPricingCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModelPricingPayload>
+          }
+          createMany: {
+            args: Prisma.ModelPricingCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ModelPricingCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModelPricingPayload>[]
+          }
+          delete: {
+            args: Prisma.ModelPricingDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModelPricingPayload>
+          }
+          update: {
+            args: Prisma.ModelPricingUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModelPricingPayload>
+          }
+          deleteMany: {
+            args: Prisma.ModelPricingDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ModelPricingUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ModelPricingUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModelPricingPayload>[]
+          }
+          upsert: {
+            args: Prisma.ModelPricingUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ModelPricingPayload>
+          }
+          aggregate: {
+            args: Prisma.ModelPricingAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateModelPricing>
+          }
+          groupBy: {
+            args: Prisma.ModelPricingGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ModelPricingGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ModelPricingCountArgs<ExtArgs>
+            result: $Utils.Optional<ModelPricingCountAggregateOutputType> | number
+          }
+        }
+      }
+      BotModelRouting: {
+        payload: Prisma.$BotModelRoutingPayload<ExtArgs>
+        fields: Prisma.BotModelRoutingFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BotModelRoutingFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BotModelRoutingFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>
+          }
+          findFirst: {
+            args: Prisma.BotModelRoutingFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BotModelRoutingFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>
+          }
+          findMany: {
+            args: Prisma.BotModelRoutingFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>[]
+          }
+          create: {
+            args: Prisma.BotModelRoutingCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>
+          }
+          createMany: {
+            args: Prisma.BotModelRoutingCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BotModelRoutingCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>[]
+          }
+          delete: {
+            args: Prisma.BotModelRoutingDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>
+          }
+          update: {
+            args: Prisma.BotModelRoutingUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>
+          }
+          deleteMany: {
+            args: Prisma.BotModelRoutingDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BotModelRoutingUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BotModelRoutingUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>[]
+          }
+          upsert: {
+            args: Prisma.BotModelRoutingUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotModelRoutingPayload>
+          }
+          aggregate: {
+            args: Prisma.BotModelRoutingAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBotModelRouting>
+          }
+          groupBy: {
+            args: Prisma.BotModelRoutingGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BotModelRoutingGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BotModelRoutingCountArgs<ExtArgs>
+            result: $Utils.Optional<BotModelRoutingCountAggregateOutputType> | number
+          }
+        }
+      }
       BotChannel: {
         payload: Prisma.$BotChannelPayload<ExtArgs>
         fields: Prisma.BotChannelFieldRefs
@@ -3113,6 +3379,302 @@ export namespace Prisma {
           count: {
             args: Prisma.BotChannelCountArgs<ExtArgs>
             result: $Utils.Optional<BotChannelCountAggregateOutputType> | number
+          }
+        }
+      }
+      CapabilityTag: {
+        payload: Prisma.$CapabilityTagPayload<ExtArgs>
+        fields: Prisma.CapabilityTagFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CapabilityTagFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapabilityTagPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CapabilityTagFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapabilityTagPayload>
+          }
+          findFirst: {
+            args: Prisma.CapabilityTagFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapabilityTagPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CapabilityTagFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapabilityTagPayload>
+          }
+          findMany: {
+            args: Prisma.CapabilityTagFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapabilityTagPayload>[]
+          }
+          create: {
+            args: Prisma.CapabilityTagCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapabilityTagPayload>
+          }
+          createMany: {
+            args: Prisma.CapabilityTagCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CapabilityTagCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapabilityTagPayload>[]
+          }
+          delete: {
+            args: Prisma.CapabilityTagDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapabilityTagPayload>
+          }
+          update: {
+            args: Prisma.CapabilityTagUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapabilityTagPayload>
+          }
+          deleteMany: {
+            args: Prisma.CapabilityTagDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CapabilityTagUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CapabilityTagUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapabilityTagPayload>[]
+          }
+          upsert: {
+            args: Prisma.CapabilityTagUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CapabilityTagPayload>
+          }
+          aggregate: {
+            args: Prisma.CapabilityTagAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCapabilityTag>
+          }
+          groupBy: {
+            args: Prisma.CapabilityTagGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CapabilityTagGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CapabilityTagCountArgs<ExtArgs>
+            result: $Utils.Optional<CapabilityTagCountAggregateOutputType> | number
+          }
+        }
+      }
+      FallbackChain: {
+        payload: Prisma.$FallbackChainPayload<ExtArgs>
+        fields: Prisma.FallbackChainFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.FallbackChainFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FallbackChainPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.FallbackChainFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FallbackChainPayload>
+          }
+          findFirst: {
+            args: Prisma.FallbackChainFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FallbackChainPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.FallbackChainFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FallbackChainPayload>
+          }
+          findMany: {
+            args: Prisma.FallbackChainFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FallbackChainPayload>[]
+          }
+          create: {
+            args: Prisma.FallbackChainCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FallbackChainPayload>
+          }
+          createMany: {
+            args: Prisma.FallbackChainCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.FallbackChainCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FallbackChainPayload>[]
+          }
+          delete: {
+            args: Prisma.FallbackChainDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FallbackChainPayload>
+          }
+          update: {
+            args: Prisma.FallbackChainUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FallbackChainPayload>
+          }
+          deleteMany: {
+            args: Prisma.FallbackChainDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.FallbackChainUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.FallbackChainUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FallbackChainPayload>[]
+          }
+          upsert: {
+            args: Prisma.FallbackChainUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FallbackChainPayload>
+          }
+          aggregate: {
+            args: Prisma.FallbackChainAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateFallbackChain>
+          }
+          groupBy: {
+            args: Prisma.FallbackChainGroupByArgs<ExtArgs>
+            result: $Utils.Optional<FallbackChainGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.FallbackChainCountArgs<ExtArgs>
+            result: $Utils.Optional<FallbackChainCountAggregateOutputType> | number
+          }
+        }
+      }
+      CostStrategy: {
+        payload: Prisma.$CostStrategyPayload<ExtArgs>
+        fields: Prisma.CostStrategyFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CostStrategyFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CostStrategyPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CostStrategyFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CostStrategyPayload>
+          }
+          findFirst: {
+            args: Prisma.CostStrategyFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CostStrategyPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CostStrategyFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CostStrategyPayload>
+          }
+          findMany: {
+            args: Prisma.CostStrategyFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CostStrategyPayload>[]
+          }
+          create: {
+            args: Prisma.CostStrategyCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CostStrategyPayload>
+          }
+          createMany: {
+            args: Prisma.CostStrategyCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CostStrategyCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CostStrategyPayload>[]
+          }
+          delete: {
+            args: Prisma.CostStrategyDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CostStrategyPayload>
+          }
+          update: {
+            args: Prisma.CostStrategyUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CostStrategyPayload>
+          }
+          deleteMany: {
+            args: Prisma.CostStrategyDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CostStrategyUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CostStrategyUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CostStrategyPayload>[]
+          }
+          upsert: {
+            args: Prisma.CostStrategyUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CostStrategyPayload>
+          }
+          aggregate: {
+            args: Prisma.CostStrategyAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCostStrategy>
+          }
+          groupBy: {
+            args: Prisma.CostStrategyGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CostStrategyGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CostStrategyCountArgs<ExtArgs>
+            result: $Utils.Optional<CostStrategyCountAggregateOutputType> | number
+          }
+        }
+      }
+      BotRoutingConfig: {
+        payload: Prisma.$BotRoutingConfigPayload<ExtArgs>
+        fields: Prisma.BotRoutingConfigFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BotRoutingConfigFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotRoutingConfigPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BotRoutingConfigFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotRoutingConfigPayload>
+          }
+          findFirst: {
+            args: Prisma.BotRoutingConfigFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotRoutingConfigPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BotRoutingConfigFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotRoutingConfigPayload>
+          }
+          findMany: {
+            args: Prisma.BotRoutingConfigFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotRoutingConfigPayload>[]
+          }
+          create: {
+            args: Prisma.BotRoutingConfigCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotRoutingConfigPayload>
+          }
+          createMany: {
+            args: Prisma.BotRoutingConfigCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BotRoutingConfigCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotRoutingConfigPayload>[]
+          }
+          delete: {
+            args: Prisma.BotRoutingConfigDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotRoutingConfigPayload>
+          }
+          update: {
+            args: Prisma.BotRoutingConfigUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotRoutingConfigPayload>
+          }
+          deleteMany: {
+            args: Prisma.BotRoutingConfigDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BotRoutingConfigUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BotRoutingConfigUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotRoutingConfigPayload>[]
+          }
+          upsert: {
+            args: Prisma.BotRoutingConfigUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BotRoutingConfigPayload>
+          }
+          aggregate: {
+            args: Prisma.BotRoutingConfigAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBotRoutingConfig>
+          }
+          groupBy: {
+            args: Prisma.BotRoutingConfigGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BotRoutingConfigGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BotRoutingConfigCountArgs<ExtArgs>
+            result: $Utils.Optional<BotRoutingConfigCountAggregateOutputType> | number
           }
         }
       }
@@ -3249,7 +3811,13 @@ export namespace Prisma {
     botPlugin?: BotPluginOmit
     skill?: SkillOmit
     botSkill?: BotSkillOmit
+    modelPricing?: ModelPricingOmit
+    botModelRouting?: BotModelRoutingOmit
     botChannel?: BotChannelOmit
+    capabilityTag?: CapabilityTagOmit
+    fallbackChain?: FallbackChainOmit
+    costStrategy?: CostStrategyOmit
+    botRoutingConfig?: BotRoutingConfigOmit
   }
 
   /* Types for Logging */
@@ -3491,6 +4059,7 @@ export namespace Prisma {
     plugins: number
     skills: number
     channels: number
+    modelRoutings: number
   }
 
   export type BotCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3499,6 +4068,7 @@ export namespace Prisma {
     plugins?: boolean | BotCountOutputTypeCountPluginsArgs
     skills?: boolean | BotCountOutputTypeCountSkillsArgs
     channels?: boolean | BotCountOutputTypeCountChannelsArgs
+    modelRoutings?: boolean | BotCountOutputTypeCountModelRoutingsArgs
   }
 
   // Custom InputTypes
@@ -3545,6 +4115,13 @@ export namespace Prisma {
    */
   export type BotCountOutputTypeCountChannelsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: BotChannelWhereInput
+  }
+
+  /**
+   * BotCountOutputType without action
+   */
+  export type BotCountOutputTypeCountModelRoutingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BotModelRoutingWhereInput
   }
 
 
@@ -5288,6 +5865,7 @@ export namespace Prisma {
     soulMarkdown: string | null
     soulPreview: string | null
     isSystem: boolean | null
+    locale: string | null
     createdById: string | null
     isDeleted: boolean | null
     createdAt: Date | null
@@ -5304,6 +5882,7 @@ export namespace Prisma {
     soulMarkdown: string | null
     soulPreview: string | null
     isSystem: boolean | null
+    locale: string | null
     createdById: string | null
     isDeleted: boolean | null
     createdAt: Date | null
@@ -5320,6 +5899,7 @@ export namespace Prisma {
     soulMarkdown: number
     soulPreview: number
     isSystem: number
+    locale: number
     createdById: number
     isDeleted: number
     createdAt: number
@@ -5338,6 +5918,7 @@ export namespace Prisma {
     soulMarkdown?: true
     soulPreview?: true
     isSystem?: true
+    locale?: true
     createdById?: true
     isDeleted?: true
     createdAt?: true
@@ -5354,6 +5935,7 @@ export namespace Prisma {
     soulMarkdown?: true
     soulPreview?: true
     isSystem?: true
+    locale?: true
     createdById?: true
     isDeleted?: true
     createdAt?: true
@@ -5370,6 +5952,7 @@ export namespace Prisma {
     soulMarkdown?: true
     soulPreview?: true
     isSystem?: true
+    locale?: true
     createdById?: true
     isDeleted?: true
     createdAt?: true
@@ -5459,6 +6042,7 @@ export namespace Prisma {
     soulMarkdown: string
     soulPreview: string | null
     isSystem: boolean
+    locale: string
     createdById: string | null
     isDeleted: boolean
     createdAt: Date
@@ -5492,6 +6076,7 @@ export namespace Prisma {
     soulMarkdown?: boolean
     soulPreview?: boolean
     isSystem?: boolean
+    locale?: boolean
     createdById?: boolean
     isDeleted?: boolean
     createdAt?: boolean
@@ -5512,6 +6097,7 @@ export namespace Prisma {
     soulMarkdown?: boolean
     soulPreview?: boolean
     isSystem?: boolean
+    locale?: boolean
     createdById?: boolean
     isDeleted?: boolean
     createdAt?: boolean
@@ -5530,6 +6116,7 @@ export namespace Prisma {
     soulMarkdown?: boolean
     soulPreview?: boolean
     isSystem?: boolean
+    locale?: boolean
     createdById?: boolean
     isDeleted?: boolean
     createdAt?: boolean
@@ -5548,6 +6135,7 @@ export namespace Prisma {
     soulMarkdown?: boolean
     soulPreview?: boolean
     isSystem?: boolean
+    locale?: boolean
     createdById?: boolean
     isDeleted?: boolean
     createdAt?: boolean
@@ -5555,7 +6143,7 @@ export namespace Prisma {
     deletedAt?: boolean
   }
 
-  export type PersonaTemplateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "emoji" | "avatarFileId" | "tagline" | "soulMarkdown" | "soulPreview" | "isSystem" | "createdById" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["personaTemplate"]>
+  export type PersonaTemplateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "emoji" | "avatarFileId" | "tagline" | "soulMarkdown" | "soulPreview" | "isSystem" | "locale" | "createdById" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["personaTemplate"]>
   export type PersonaTemplateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     createdBy?: boolean | PersonaTemplate$createdByArgs<ExtArgs>
     avatarFile?: boolean | PersonaTemplate$avatarFileArgs<ExtArgs>
@@ -5587,6 +6175,7 @@ export namespace Prisma {
       soulMarkdown: string
       soulPreview: string | null
       isSystem: boolean
+      locale: string
       createdById: string | null
       isDeleted: boolean
       createdAt: Date
@@ -6026,6 +6615,7 @@ export namespace Prisma {
     readonly soulMarkdown: FieldRef<"PersonaTemplate", 'String'>
     readonly soulPreview: FieldRef<"PersonaTemplate", 'String'>
     readonly isSystem: FieldRef<"PersonaTemplate", 'Boolean'>
+    readonly locale: FieldRef<"PersonaTemplate", 'String'>
     readonly createdById: FieldRef<"PersonaTemplate", 'String'>
     readonly isDeleted: FieldRef<"PersonaTemplate", 'Boolean'>
     readonly createdAt: FieldRef<"PersonaTemplate", 'DateTime'>
@@ -16783,9 +17373,6 @@ export namespace Prisma {
     id: string | null
     name: string | null
     hostname: string | null
-    aiProvider: string | null
-    model: string | null
-    channelType: string | null
     containerId: string | null
     port: number | null
     gatewayToken: string | null
@@ -16808,9 +17395,6 @@ export namespace Prisma {
     id: string | null
     name: string | null
     hostname: string | null
-    aiProvider: string | null
-    model: string | null
-    channelType: string | null
     containerId: string | null
     port: number | null
     gatewayToken: string | null
@@ -16833,9 +17417,6 @@ export namespace Prisma {
     id: number
     name: number
     hostname: number
-    aiProvider: number
-    model: number
-    channelType: number
     containerId: number
     port: number
     gatewayToken: number
@@ -16847,6 +17428,7 @@ export namespace Prisma {
     emoji: number
     avatarFileId: number
     soulMarkdown: number
+    pendingConfig: number
     healthStatus: number
     lastHealthCheck: number
     isDeleted: number
@@ -16869,9 +17451,6 @@ export namespace Prisma {
     id?: true
     name?: true
     hostname?: true
-    aiProvider?: true
-    model?: true
-    channelType?: true
     containerId?: true
     port?: true
     gatewayToken?: true
@@ -16894,9 +17473,6 @@ export namespace Prisma {
     id?: true
     name?: true
     hostname?: true
-    aiProvider?: true
-    model?: true
-    channelType?: true
     containerId?: true
     port?: true
     gatewayToken?: true
@@ -16919,9 +17495,6 @@ export namespace Prisma {
     id?: true
     name?: true
     hostname?: true
-    aiProvider?: true
-    model?: true
-    channelType?: true
     containerId?: true
     port?: true
     gatewayToken?: true
@@ -16933,6 +17506,7 @@ export namespace Prisma {
     emoji?: true
     avatarFileId?: true
     soulMarkdown?: true
+    pendingConfig?: true
     healthStatus?: true
     lastHealthCheck?: true
     isDeleted?: true
@@ -17032,9 +17606,6 @@ export namespace Prisma {
     id: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId: string | null
     port: number | null
     gatewayToken: string | null
@@ -17046,6 +17617,7 @@ export namespace Prisma {
     emoji: string | null
     avatarFileId: string | null
     soulMarkdown: string | null
+    pendingConfig: JsonValue | null
     healthStatus: $Enums.HealthStatus
     lastHealthCheck: Date | null
     isDeleted: boolean
@@ -17077,9 +17649,6 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     hostname?: boolean
-    aiProvider?: boolean
-    model?: boolean
-    channelType?: boolean
     containerId?: boolean
     port?: boolean
     gatewayToken?: boolean
@@ -17091,6 +17660,7 @@ export namespace Prisma {
     emoji?: boolean
     avatarFileId?: boolean
     soulMarkdown?: boolean
+    pendingConfig?: boolean
     healthStatus?: boolean
     lastHealthCheck?: boolean
     isDeleted?: boolean
@@ -17106,6 +17676,8 @@ export namespace Prisma {
     plugins?: boolean | Bot$pluginsArgs<ExtArgs>
     skills?: boolean | Bot$skillsArgs<ExtArgs>
     channels?: boolean | Bot$channelsArgs<ExtArgs>
+    modelRoutings?: boolean | Bot$modelRoutingsArgs<ExtArgs>
+    routingConfig?: boolean | Bot$routingConfigArgs<ExtArgs>
     _count?: boolean | BotCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["bot"]>
 
@@ -17113,9 +17685,6 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     hostname?: boolean
-    aiProvider?: boolean
-    model?: boolean
-    channelType?: boolean
     containerId?: boolean
     port?: boolean
     gatewayToken?: boolean
@@ -17127,6 +17696,7 @@ export namespace Prisma {
     emoji?: boolean
     avatarFileId?: boolean
     soulMarkdown?: boolean
+    pendingConfig?: boolean
     healthStatus?: boolean
     lastHealthCheck?: boolean
     isDeleted?: boolean
@@ -17142,9 +17712,6 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     hostname?: boolean
-    aiProvider?: boolean
-    model?: boolean
-    channelType?: boolean
     containerId?: boolean
     port?: boolean
     gatewayToken?: boolean
@@ -17156,6 +17723,7 @@ export namespace Prisma {
     emoji?: boolean
     avatarFileId?: boolean
     soulMarkdown?: boolean
+    pendingConfig?: boolean
     healthStatus?: boolean
     lastHealthCheck?: boolean
     isDeleted?: boolean
@@ -17171,9 +17739,6 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     hostname?: boolean
-    aiProvider?: boolean
-    model?: boolean
-    channelType?: boolean
     containerId?: boolean
     port?: boolean
     gatewayToken?: boolean
@@ -17185,6 +17750,7 @@ export namespace Prisma {
     emoji?: boolean
     avatarFileId?: boolean
     soulMarkdown?: boolean
+    pendingConfig?: boolean
     healthStatus?: boolean
     lastHealthCheck?: boolean
     isDeleted?: boolean
@@ -17193,7 +17759,7 @@ export namespace Prisma {
     deletedAt?: boolean
   }
 
-  export type BotOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "hostname" | "aiProvider" | "model" | "channelType" | "containerId" | "port" | "gatewayToken" | "proxyTokenHash" | "tags" | "status" | "createdById" | "personaTemplateId" | "emoji" | "avatarFileId" | "soulMarkdown" | "healthStatus" | "lastHealthCheck" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["bot"]>
+  export type BotOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "hostname" | "containerId" | "port" | "gatewayToken" | "proxyTokenHash" | "tags" | "status" | "createdById" | "personaTemplateId" | "emoji" | "avatarFileId" | "soulMarkdown" | "pendingConfig" | "healthStatus" | "lastHealthCheck" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["bot"]>
   export type BotInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     createdBy?: boolean | UserInfoDefaultArgs<ExtArgs>
     personaTemplate?: boolean | Bot$personaTemplateArgs<ExtArgs>
@@ -17204,6 +17770,8 @@ export namespace Prisma {
     plugins?: boolean | Bot$pluginsArgs<ExtArgs>
     skills?: boolean | Bot$skillsArgs<ExtArgs>
     channels?: boolean | Bot$channelsArgs<ExtArgs>
+    modelRoutings?: boolean | Bot$modelRoutingsArgs<ExtArgs>
+    routingConfig?: boolean | Bot$routingConfigArgs<ExtArgs>
     _count?: boolean | BotCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type BotIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -17229,14 +17797,13 @@ export namespace Prisma {
       plugins: Prisma.$BotPluginPayload<ExtArgs>[]
       skills: Prisma.$BotSkillPayload<ExtArgs>[]
       channels: Prisma.$BotChannelPayload<ExtArgs>[]
+      modelRoutings: Prisma.$BotModelRoutingPayload<ExtArgs>[]
+      routingConfig: Prisma.$BotRoutingConfigPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       name: string
       hostname: string
-      aiProvider: string
-      model: string
-      channelType: string
       containerId: string | null
       port: number | null
       gatewayToken: string | null
@@ -17248,6 +17815,7 @@ export namespace Prisma {
       emoji: string | null
       avatarFileId: string | null
       soulMarkdown: string | null
+      pendingConfig: Prisma.JsonValue | null
       healthStatus: $Enums.HealthStatus
       lastHealthCheck: Date | null
       isDeleted: boolean
@@ -17657,6 +18225,8 @@ export namespace Prisma {
     plugins<T extends Bot$pluginsArgs<ExtArgs> = {}>(args?: Subset<T, Bot$pluginsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotPluginPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     skills<T extends Bot$skillsArgs<ExtArgs> = {}>(args?: Subset<T, Bot$skillsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotSkillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     channels<T extends Bot$channelsArgs<ExtArgs> = {}>(args?: Subset<T, Bot$channelsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotChannelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    modelRoutings<T extends Bot$modelRoutingsArgs<ExtArgs> = {}>(args?: Subset<T, Bot$modelRoutingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    routingConfig<T extends Bot$routingConfigArgs<ExtArgs> = {}>(args?: Subset<T, Bot$routingConfigArgs<ExtArgs>>): Prisma__BotRoutingConfigClient<$Result.GetResult<Prisma.$BotRoutingConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -17689,9 +18259,6 @@ export namespace Prisma {
     readonly id: FieldRef<"Bot", 'String'>
     readonly name: FieldRef<"Bot", 'String'>
     readonly hostname: FieldRef<"Bot", 'String'>
-    readonly aiProvider: FieldRef<"Bot", 'String'>
-    readonly model: FieldRef<"Bot", 'String'>
-    readonly channelType: FieldRef<"Bot", 'String'>
     readonly containerId: FieldRef<"Bot", 'String'>
     readonly port: FieldRef<"Bot", 'Int'>
     readonly gatewayToken: FieldRef<"Bot", 'String'>
@@ -17703,6 +18270,7 @@ export namespace Prisma {
     readonly emoji: FieldRef<"Bot", 'String'>
     readonly avatarFileId: FieldRef<"Bot", 'String'>
     readonly soulMarkdown: FieldRef<"Bot", 'String'>
+    readonly pendingConfig: FieldRef<"Bot", 'Json'>
     readonly healthStatus: FieldRef<"Bot", 'HealthStatus'>
     readonly lastHealthCheck: FieldRef<"Bot", 'DateTime'>
     readonly isDeleted: FieldRef<"Bot", 'Boolean'>
@@ -18279,6 +18847,49 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: BotChannelScalarFieldEnum | BotChannelScalarFieldEnum[]
+  }
+
+  /**
+   * Bot.modelRoutings
+   */
+  export type Bot$modelRoutingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    where?: BotModelRoutingWhereInput
+    orderBy?: BotModelRoutingOrderByWithRelationInput | BotModelRoutingOrderByWithRelationInput[]
+    cursor?: BotModelRoutingWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BotModelRoutingScalarFieldEnum | BotModelRoutingScalarFieldEnum[]
+  }
+
+  /**
+   * Bot.routingConfig
+   */
+  export type Bot$routingConfigArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotRoutingConfig
+     */
+    select?: BotRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotRoutingConfig
+     */
+    omit?: BotRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotRoutingConfigInclude<ExtArgs> | null
+    where?: BotRoutingConfigWhereInput
   }
 
   /**
@@ -20671,6 +21282,15 @@ export namespace Prisma {
     requestTokens: number | null
     responseTokens: number | null
     durationMs: number | null
+    thinkingTokens: number | null
+    cacheReadTokens: number | null
+    cacheWriteTokens: number | null
+    inputCost: Decimal | null
+    outputCost: Decimal | null
+    thinkingCost: Decimal | null
+    cacheCost: Decimal | null
+    totalCost: Decimal | null
+    fallbackLevel: number | null
   }
 
   export type BotUsageLogSumAggregateOutputType = {
@@ -20678,6 +21298,15 @@ export namespace Prisma {
     requestTokens: number | null
     responseTokens: number | null
     durationMs: number | null
+    thinkingTokens: number | null
+    cacheReadTokens: number | null
+    cacheWriteTokens: number | null
+    inputCost: Decimal | null
+    outputCost: Decimal | null
+    thinkingCost: Decimal | null
+    cacheCost: Decimal | null
+    totalCost: Decimal | null
+    fallbackLevel: number | null
   }
 
   export type BotUsageLogMinAggregateOutputType = {
@@ -20693,6 +21322,18 @@ export namespace Prisma {
     endpoint: string | null
     durationMs: number | null
     errorMessage: string | null
+    thinkingTokens: number | null
+    cacheReadTokens: number | null
+    cacheWriteTokens: number | null
+    protocolType: string | null
+    inputCost: Decimal | null
+    outputCost: Decimal | null
+    thinkingCost: Decimal | null
+    cacheCost: Decimal | null
+    totalCost: Decimal | null
+    fallbackUsed: boolean | null
+    fallbackLevel: number | null
+    originalModel: string | null
   }
 
   export type BotUsageLogMaxAggregateOutputType = {
@@ -20708,6 +21349,18 @@ export namespace Prisma {
     endpoint: string | null
     durationMs: number | null
     errorMessage: string | null
+    thinkingTokens: number | null
+    cacheReadTokens: number | null
+    cacheWriteTokens: number | null
+    protocolType: string | null
+    inputCost: Decimal | null
+    outputCost: Decimal | null
+    thinkingCost: Decimal | null
+    cacheCost: Decimal | null
+    totalCost: Decimal | null
+    fallbackUsed: boolean | null
+    fallbackLevel: number | null
+    originalModel: string | null
   }
 
   export type BotUsageLogCountAggregateOutputType = {
@@ -20723,6 +21376,18 @@ export namespace Prisma {
     endpoint: number
     durationMs: number
     errorMessage: number
+    thinkingTokens: number
+    cacheReadTokens: number
+    cacheWriteTokens: number
+    protocolType: number
+    inputCost: number
+    outputCost: number
+    thinkingCost: number
+    cacheCost: number
+    totalCost: number
+    fallbackUsed: number
+    fallbackLevel: number
+    originalModel: number
     _all: number
   }
 
@@ -20732,6 +21397,15 @@ export namespace Prisma {
     requestTokens?: true
     responseTokens?: true
     durationMs?: true
+    thinkingTokens?: true
+    cacheReadTokens?: true
+    cacheWriteTokens?: true
+    inputCost?: true
+    outputCost?: true
+    thinkingCost?: true
+    cacheCost?: true
+    totalCost?: true
+    fallbackLevel?: true
   }
 
   export type BotUsageLogSumAggregateInputType = {
@@ -20739,6 +21413,15 @@ export namespace Prisma {
     requestTokens?: true
     responseTokens?: true
     durationMs?: true
+    thinkingTokens?: true
+    cacheReadTokens?: true
+    cacheWriteTokens?: true
+    inputCost?: true
+    outputCost?: true
+    thinkingCost?: true
+    cacheCost?: true
+    totalCost?: true
+    fallbackLevel?: true
   }
 
   export type BotUsageLogMinAggregateInputType = {
@@ -20754,6 +21437,18 @@ export namespace Prisma {
     endpoint?: true
     durationMs?: true
     errorMessage?: true
+    thinkingTokens?: true
+    cacheReadTokens?: true
+    cacheWriteTokens?: true
+    protocolType?: true
+    inputCost?: true
+    outputCost?: true
+    thinkingCost?: true
+    cacheCost?: true
+    totalCost?: true
+    fallbackUsed?: true
+    fallbackLevel?: true
+    originalModel?: true
   }
 
   export type BotUsageLogMaxAggregateInputType = {
@@ -20769,6 +21464,18 @@ export namespace Prisma {
     endpoint?: true
     durationMs?: true
     errorMessage?: true
+    thinkingTokens?: true
+    cacheReadTokens?: true
+    cacheWriteTokens?: true
+    protocolType?: true
+    inputCost?: true
+    outputCost?: true
+    thinkingCost?: true
+    cacheCost?: true
+    totalCost?: true
+    fallbackUsed?: true
+    fallbackLevel?: true
+    originalModel?: true
   }
 
   export type BotUsageLogCountAggregateInputType = {
@@ -20784,6 +21491,18 @@ export namespace Prisma {
     endpoint?: true
     durationMs?: true
     errorMessage?: true
+    thinkingTokens?: true
+    cacheReadTokens?: true
+    cacheWriteTokens?: true
+    protocolType?: true
+    inputCost?: true
+    outputCost?: true
+    thinkingCost?: true
+    cacheCost?: true
+    totalCost?: true
+    fallbackUsed?: true
+    fallbackLevel?: true
+    originalModel?: true
     _all?: true
   }
 
@@ -20886,6 +21605,18 @@ export namespace Prisma {
     endpoint: string | null
     durationMs: number | null
     errorMessage: string | null
+    thinkingTokens: number | null
+    cacheReadTokens: number | null
+    cacheWriteTokens: number | null
+    protocolType: string | null
+    inputCost: Decimal | null
+    outputCost: Decimal | null
+    thinkingCost: Decimal | null
+    cacheCost: Decimal | null
+    totalCost: Decimal | null
+    fallbackUsed: boolean | null
+    fallbackLevel: number | null
+    originalModel: string | null
     _count: BotUsageLogCountAggregateOutputType | null
     _avg: BotUsageLogAvgAggregateOutputType | null
     _sum: BotUsageLogSumAggregateOutputType | null
@@ -20920,6 +21651,18 @@ export namespace Prisma {
     endpoint?: boolean
     durationMs?: boolean
     errorMessage?: boolean
+    thinkingTokens?: boolean
+    cacheReadTokens?: boolean
+    cacheWriteTokens?: boolean
+    protocolType?: boolean
+    inputCost?: boolean
+    outputCost?: boolean
+    thinkingCost?: boolean
+    cacheCost?: boolean
+    totalCost?: boolean
+    fallbackUsed?: boolean
+    fallbackLevel?: boolean
+    originalModel?: boolean
     bot?: boolean | BotDefaultArgs<ExtArgs>
     providerKey?: boolean | BotUsageLog$providerKeyArgs<ExtArgs>
   }, ExtArgs["result"]["botUsageLog"]>
@@ -20937,6 +21680,18 @@ export namespace Prisma {
     endpoint?: boolean
     durationMs?: boolean
     errorMessage?: boolean
+    thinkingTokens?: boolean
+    cacheReadTokens?: boolean
+    cacheWriteTokens?: boolean
+    protocolType?: boolean
+    inputCost?: boolean
+    outputCost?: boolean
+    thinkingCost?: boolean
+    cacheCost?: boolean
+    totalCost?: boolean
+    fallbackUsed?: boolean
+    fallbackLevel?: boolean
+    originalModel?: boolean
     bot?: boolean | BotDefaultArgs<ExtArgs>
     providerKey?: boolean | BotUsageLog$providerKeyArgs<ExtArgs>
   }, ExtArgs["result"]["botUsageLog"]>
@@ -20954,6 +21709,18 @@ export namespace Prisma {
     endpoint?: boolean
     durationMs?: boolean
     errorMessage?: boolean
+    thinkingTokens?: boolean
+    cacheReadTokens?: boolean
+    cacheWriteTokens?: boolean
+    protocolType?: boolean
+    inputCost?: boolean
+    outputCost?: boolean
+    thinkingCost?: boolean
+    cacheCost?: boolean
+    totalCost?: boolean
+    fallbackUsed?: boolean
+    fallbackLevel?: boolean
+    originalModel?: boolean
     bot?: boolean | BotDefaultArgs<ExtArgs>
     providerKey?: boolean | BotUsageLog$providerKeyArgs<ExtArgs>
   }, ExtArgs["result"]["botUsageLog"]>
@@ -20971,9 +21738,21 @@ export namespace Prisma {
     endpoint?: boolean
     durationMs?: boolean
     errorMessage?: boolean
+    thinkingTokens?: boolean
+    cacheReadTokens?: boolean
+    cacheWriteTokens?: boolean
+    protocolType?: boolean
+    inputCost?: boolean
+    outputCost?: boolean
+    thinkingCost?: boolean
+    cacheCost?: boolean
+    totalCost?: boolean
+    fallbackUsed?: boolean
+    fallbackLevel?: boolean
+    originalModel?: boolean
   }
 
-  export type BotUsageLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "botId" | "vendor" | "providerKeyId" | "statusCode" | "requestTokens" | "responseTokens" | "createdAt" | "model" | "endpoint" | "durationMs" | "errorMessage", ExtArgs["result"]["botUsageLog"]>
+  export type BotUsageLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "botId" | "vendor" | "providerKeyId" | "statusCode" | "requestTokens" | "responseTokens" | "createdAt" | "model" | "endpoint" | "durationMs" | "errorMessage" | "thinkingTokens" | "cacheReadTokens" | "cacheWriteTokens" | "protocolType" | "inputCost" | "outputCost" | "thinkingCost" | "cacheCost" | "totalCost" | "fallbackUsed" | "fallbackLevel" | "originalModel", ExtArgs["result"]["botUsageLog"]>
   export type BotUsageLogInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     bot?: boolean | BotDefaultArgs<ExtArgs>
     providerKey?: boolean | BotUsageLog$providerKeyArgs<ExtArgs>
@@ -21006,6 +21785,54 @@ export namespace Prisma {
       endpoint: string | null
       durationMs: number | null
       errorMessage: string | null
+      /**
+       * Extended Thinking tokens
+       */
+      thinkingTokens: number | null
+      /**
+       * Cache Control 读取 tokens
+       */
+      cacheReadTokens: number | null
+      /**
+       * Cache Control 写入 tokens
+       */
+      cacheWriteTokens: number | null
+      /**
+       * 协议类型：openai-compatible | anthropic-native | gemini-native
+       */
+      protocolType: string | null
+      /**
+       * 输入成本
+       */
+      inputCost: Prisma.Decimal | null
+      /**
+       * 输出成本
+       */
+      outputCost: Prisma.Decimal | null
+      /**
+       * 思考成本
+       */
+      thinkingCost: Prisma.Decimal | null
+      /**
+       * 缓存成本
+       */
+      cacheCost: Prisma.Decimal | null
+      /**
+       * 总成本
+       */
+      totalCost: Prisma.Decimal | null
+      /**
+       * 是否使用了 Fallback
+       */
+      fallbackUsed: boolean | null
+      /**
+       * Fallback 级别（0=主模型，1=第一备用，以此类推）
+       */
+      fallbackLevel: number | null
+      /**
+       * 原始请求模型
+       */
+      originalModel: string | null
     }, ExtArgs["result"]["botUsageLog"]>
     composites: {}
   }
@@ -21443,6 +22270,18 @@ export namespace Prisma {
     readonly endpoint: FieldRef<"BotUsageLog", 'String'>
     readonly durationMs: FieldRef<"BotUsageLog", 'Int'>
     readonly errorMessage: FieldRef<"BotUsageLog", 'String'>
+    readonly thinkingTokens: FieldRef<"BotUsageLog", 'Int'>
+    readonly cacheReadTokens: FieldRef<"BotUsageLog", 'Int'>
+    readonly cacheWriteTokens: FieldRef<"BotUsageLog", 'Int'>
+    readonly protocolType: FieldRef<"BotUsageLog", 'String'>
+    readonly inputCost: FieldRef<"BotUsageLog", 'Decimal'>
+    readonly outputCost: FieldRef<"BotUsageLog", 'Decimal'>
+    readonly thinkingCost: FieldRef<"BotUsageLog", 'Decimal'>
+    readonly cacheCost: FieldRef<"BotUsageLog", 'Decimal'>
+    readonly totalCost: FieldRef<"BotUsageLog", 'Decimal'>
+    readonly fallbackUsed: FieldRef<"BotUsageLog", 'Boolean'>
+    readonly fallbackLevel: FieldRef<"BotUsageLog", 'Int'>
+    readonly originalModel: FieldRef<"BotUsageLog", 'String'>
   }
     
 
@@ -33513,6 +34352,2664 @@ export namespace Prisma {
 
 
   /**
+   * Model ModelPricing
+   */
+
+  export type AggregateModelPricing = {
+    _count: ModelPricingCountAggregateOutputType | null
+    _avg: ModelPricingAvgAggregateOutputType | null
+    _sum: ModelPricingSumAggregateOutputType | null
+    _min: ModelPricingMinAggregateOutputType | null
+    _max: ModelPricingMaxAggregateOutputType | null
+  }
+
+  export type ModelPricingAvgAggregateOutputType = {
+    inputPrice: Decimal | null
+    outputPrice: Decimal | null
+    cacheReadPrice: Decimal | null
+    cacheWritePrice: Decimal | null
+    thinkingPrice: Decimal | null
+    reasoningScore: number | null
+    codingScore: number | null
+    creativityScore: number | null
+    speedScore: number | null
+    contextLength: number | null
+  }
+
+  export type ModelPricingSumAggregateOutputType = {
+    inputPrice: Decimal | null
+    outputPrice: Decimal | null
+    cacheReadPrice: Decimal | null
+    cacheWritePrice: Decimal | null
+    thinkingPrice: Decimal | null
+    reasoningScore: number | null
+    codingScore: number | null
+    creativityScore: number | null
+    speedScore: number | null
+    contextLength: number | null
+  }
+
+  export type ModelPricingMinAggregateOutputType = {
+    id: string | null
+    model: string | null
+    vendor: string | null
+    displayName: string | null
+    description: string | null
+    inputPrice: Decimal | null
+    outputPrice: Decimal | null
+    cacheReadPrice: Decimal | null
+    cacheWritePrice: Decimal | null
+    thinkingPrice: Decimal | null
+    reasoningScore: number | null
+    codingScore: number | null
+    creativityScore: number | null
+    speedScore: number | null
+    contextLength: number | null
+    supportsExtendedThinking: boolean | null
+    supportsCacheControl: boolean | null
+    supportsVision: boolean | null
+    supportsFunctionCalling: boolean | null
+    supportsStreaming: boolean | null
+    isEnabled: boolean | null
+    isDeprecated: boolean | null
+    deprecationDate: Date | null
+    priceUpdatedAt: Date | null
+    notes: string | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type ModelPricingMaxAggregateOutputType = {
+    id: string | null
+    model: string | null
+    vendor: string | null
+    displayName: string | null
+    description: string | null
+    inputPrice: Decimal | null
+    outputPrice: Decimal | null
+    cacheReadPrice: Decimal | null
+    cacheWritePrice: Decimal | null
+    thinkingPrice: Decimal | null
+    reasoningScore: number | null
+    codingScore: number | null
+    creativityScore: number | null
+    speedScore: number | null
+    contextLength: number | null
+    supportsExtendedThinking: boolean | null
+    supportsCacheControl: boolean | null
+    supportsVision: boolean | null
+    supportsFunctionCalling: boolean | null
+    supportsStreaming: boolean | null
+    isEnabled: boolean | null
+    isDeprecated: boolean | null
+    deprecationDate: Date | null
+    priceUpdatedAt: Date | null
+    notes: string | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type ModelPricingCountAggregateOutputType = {
+    id: number
+    model: number
+    vendor: number
+    displayName: number
+    description: number
+    inputPrice: number
+    outputPrice: number
+    cacheReadPrice: number
+    cacheWritePrice: number
+    thinkingPrice: number
+    reasoningScore: number
+    codingScore: number
+    creativityScore: number
+    speedScore: number
+    contextLength: number
+    supportsExtendedThinking: number
+    supportsCacheControl: number
+    supportsVision: number
+    supportsFunctionCalling: number
+    supportsStreaming: number
+    recommendedScenarios: number
+    isEnabled: number
+    isDeprecated: number
+    deprecationDate: number
+    priceUpdatedAt: number
+    notes: number
+    metadata: number
+    isDeleted: number
+    createdAt: number
+    updatedAt: number
+    deletedAt: number
+    _all: number
+  }
+
+
+  export type ModelPricingAvgAggregateInputType = {
+    inputPrice?: true
+    outputPrice?: true
+    cacheReadPrice?: true
+    cacheWritePrice?: true
+    thinkingPrice?: true
+    reasoningScore?: true
+    codingScore?: true
+    creativityScore?: true
+    speedScore?: true
+    contextLength?: true
+  }
+
+  export type ModelPricingSumAggregateInputType = {
+    inputPrice?: true
+    outputPrice?: true
+    cacheReadPrice?: true
+    cacheWritePrice?: true
+    thinkingPrice?: true
+    reasoningScore?: true
+    codingScore?: true
+    creativityScore?: true
+    speedScore?: true
+    contextLength?: true
+  }
+
+  export type ModelPricingMinAggregateInputType = {
+    id?: true
+    model?: true
+    vendor?: true
+    displayName?: true
+    description?: true
+    inputPrice?: true
+    outputPrice?: true
+    cacheReadPrice?: true
+    cacheWritePrice?: true
+    thinkingPrice?: true
+    reasoningScore?: true
+    codingScore?: true
+    creativityScore?: true
+    speedScore?: true
+    contextLength?: true
+    supportsExtendedThinking?: true
+    supportsCacheControl?: true
+    supportsVision?: true
+    supportsFunctionCalling?: true
+    supportsStreaming?: true
+    isEnabled?: true
+    isDeprecated?: true
+    deprecationDate?: true
+    priceUpdatedAt?: true
+    notes?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type ModelPricingMaxAggregateInputType = {
+    id?: true
+    model?: true
+    vendor?: true
+    displayName?: true
+    description?: true
+    inputPrice?: true
+    outputPrice?: true
+    cacheReadPrice?: true
+    cacheWritePrice?: true
+    thinkingPrice?: true
+    reasoningScore?: true
+    codingScore?: true
+    creativityScore?: true
+    speedScore?: true
+    contextLength?: true
+    supportsExtendedThinking?: true
+    supportsCacheControl?: true
+    supportsVision?: true
+    supportsFunctionCalling?: true
+    supportsStreaming?: true
+    isEnabled?: true
+    isDeprecated?: true
+    deprecationDate?: true
+    priceUpdatedAt?: true
+    notes?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type ModelPricingCountAggregateInputType = {
+    id?: true
+    model?: true
+    vendor?: true
+    displayName?: true
+    description?: true
+    inputPrice?: true
+    outputPrice?: true
+    cacheReadPrice?: true
+    cacheWritePrice?: true
+    thinkingPrice?: true
+    reasoningScore?: true
+    codingScore?: true
+    creativityScore?: true
+    speedScore?: true
+    contextLength?: true
+    supportsExtendedThinking?: true
+    supportsCacheControl?: true
+    supportsVision?: true
+    supportsFunctionCalling?: true
+    supportsStreaming?: true
+    recommendedScenarios?: true
+    isEnabled?: true
+    isDeprecated?: true
+    deprecationDate?: true
+    priceUpdatedAt?: true
+    notes?: true
+    metadata?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+    _all?: true
+  }
+
+  export type ModelPricingAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ModelPricing to aggregate.
+     */
+    where?: ModelPricingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModelPricings to fetch.
+     */
+    orderBy?: ModelPricingOrderByWithRelationInput | ModelPricingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ModelPricingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModelPricings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModelPricings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ModelPricings
+    **/
+    _count?: true | ModelPricingCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ModelPricingAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ModelPricingSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ModelPricingMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ModelPricingMaxAggregateInputType
+  }
+
+  export type GetModelPricingAggregateType<T extends ModelPricingAggregateArgs> = {
+        [P in keyof T & keyof AggregateModelPricing]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateModelPricing[P]>
+      : GetScalarType<T[P], AggregateModelPricing[P]>
+  }
+
+
+
+
+  export type ModelPricingGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ModelPricingWhereInput
+    orderBy?: ModelPricingOrderByWithAggregationInput | ModelPricingOrderByWithAggregationInput[]
+    by: ModelPricingScalarFieldEnum[] | ModelPricingScalarFieldEnum
+    having?: ModelPricingScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ModelPricingCountAggregateInputType | true
+    _avg?: ModelPricingAvgAggregateInputType
+    _sum?: ModelPricingSumAggregateInputType
+    _min?: ModelPricingMinAggregateInputType
+    _max?: ModelPricingMaxAggregateInputType
+  }
+
+  export type ModelPricingGroupByOutputType = {
+    id: string
+    model: string
+    vendor: string
+    displayName: string | null
+    description: string | null
+    inputPrice: Decimal
+    outputPrice: Decimal
+    cacheReadPrice: Decimal | null
+    cacheWritePrice: Decimal | null
+    thinkingPrice: Decimal | null
+    reasoningScore: number
+    codingScore: number
+    creativityScore: number
+    speedScore: number
+    contextLength: number
+    supportsExtendedThinking: boolean
+    supportsCacheControl: boolean
+    supportsVision: boolean
+    supportsFunctionCalling: boolean
+    supportsStreaming: boolean
+    recommendedScenarios: JsonValue | null
+    isEnabled: boolean
+    isDeprecated: boolean
+    deprecationDate: Date | null
+    priceUpdatedAt: Date
+    notes: string | null
+    metadata: JsonValue | null
+    isDeleted: boolean
+    createdAt: Date
+    updatedAt: Date
+    deletedAt: Date | null
+    _count: ModelPricingCountAggregateOutputType | null
+    _avg: ModelPricingAvgAggregateOutputType | null
+    _sum: ModelPricingSumAggregateOutputType | null
+    _min: ModelPricingMinAggregateOutputType | null
+    _max: ModelPricingMaxAggregateOutputType | null
+  }
+
+  type GetModelPricingGroupByPayload<T extends ModelPricingGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ModelPricingGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ModelPricingGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ModelPricingGroupByOutputType[P]>
+            : GetScalarType<T[P], ModelPricingGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ModelPricingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    model?: boolean
+    vendor?: boolean
+    displayName?: boolean
+    description?: boolean
+    inputPrice?: boolean
+    outputPrice?: boolean
+    cacheReadPrice?: boolean
+    cacheWritePrice?: boolean
+    thinkingPrice?: boolean
+    reasoningScore?: boolean
+    codingScore?: boolean
+    creativityScore?: boolean
+    speedScore?: boolean
+    contextLength?: boolean
+    supportsExtendedThinking?: boolean
+    supportsCacheControl?: boolean
+    supportsVision?: boolean
+    supportsFunctionCalling?: boolean
+    supportsStreaming?: boolean
+    recommendedScenarios?: boolean
+    isEnabled?: boolean
+    isDeprecated?: boolean
+    deprecationDate?: boolean
+    priceUpdatedAt?: boolean
+    notes?: boolean
+    metadata?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["modelPricing"]>
+
+  export type ModelPricingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    model?: boolean
+    vendor?: boolean
+    displayName?: boolean
+    description?: boolean
+    inputPrice?: boolean
+    outputPrice?: boolean
+    cacheReadPrice?: boolean
+    cacheWritePrice?: boolean
+    thinkingPrice?: boolean
+    reasoningScore?: boolean
+    codingScore?: boolean
+    creativityScore?: boolean
+    speedScore?: boolean
+    contextLength?: boolean
+    supportsExtendedThinking?: boolean
+    supportsCacheControl?: boolean
+    supportsVision?: boolean
+    supportsFunctionCalling?: boolean
+    supportsStreaming?: boolean
+    recommendedScenarios?: boolean
+    isEnabled?: boolean
+    isDeprecated?: boolean
+    deprecationDate?: boolean
+    priceUpdatedAt?: boolean
+    notes?: boolean
+    metadata?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["modelPricing"]>
+
+  export type ModelPricingSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    model?: boolean
+    vendor?: boolean
+    displayName?: boolean
+    description?: boolean
+    inputPrice?: boolean
+    outputPrice?: boolean
+    cacheReadPrice?: boolean
+    cacheWritePrice?: boolean
+    thinkingPrice?: boolean
+    reasoningScore?: boolean
+    codingScore?: boolean
+    creativityScore?: boolean
+    speedScore?: boolean
+    contextLength?: boolean
+    supportsExtendedThinking?: boolean
+    supportsCacheControl?: boolean
+    supportsVision?: boolean
+    supportsFunctionCalling?: boolean
+    supportsStreaming?: boolean
+    recommendedScenarios?: boolean
+    isEnabled?: boolean
+    isDeprecated?: boolean
+    deprecationDate?: boolean
+    priceUpdatedAt?: boolean
+    notes?: boolean
+    metadata?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["modelPricing"]>
+
+  export type ModelPricingSelectScalar = {
+    id?: boolean
+    model?: boolean
+    vendor?: boolean
+    displayName?: boolean
+    description?: boolean
+    inputPrice?: boolean
+    outputPrice?: boolean
+    cacheReadPrice?: boolean
+    cacheWritePrice?: boolean
+    thinkingPrice?: boolean
+    reasoningScore?: boolean
+    codingScore?: boolean
+    creativityScore?: boolean
+    speedScore?: boolean
+    contextLength?: boolean
+    supportsExtendedThinking?: boolean
+    supportsCacheControl?: boolean
+    supportsVision?: boolean
+    supportsFunctionCalling?: boolean
+    supportsStreaming?: boolean
+    recommendedScenarios?: boolean
+    isEnabled?: boolean
+    isDeprecated?: boolean
+    deprecationDate?: boolean
+    priceUpdatedAt?: boolean
+    notes?: boolean
+    metadata?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }
+
+  export type ModelPricingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "model" | "vendor" | "displayName" | "description" | "inputPrice" | "outputPrice" | "cacheReadPrice" | "cacheWritePrice" | "thinkingPrice" | "reasoningScore" | "codingScore" | "creativityScore" | "speedScore" | "contextLength" | "supportsExtendedThinking" | "supportsCacheControl" | "supportsVision" | "supportsFunctionCalling" | "supportsStreaming" | "recommendedScenarios" | "isEnabled" | "isDeprecated" | "deprecationDate" | "priceUpdatedAt" | "notes" | "metadata" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["modelPricing"]>
+
+  export type $ModelPricingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ModelPricing"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      /**
+       * 模型名称（如 gpt-4o, claude-sonnet-4-20250514）
+       */
+      model: string
+      /**
+       * 服务商标识（openai, anthropic, google, deepseek 等）
+       */
+      vendor: string
+      /**
+       * 模型显示名称
+       */
+      displayName: string | null
+      /**
+       * 模型描述
+       */
+      description: string | null
+      /**
+       * 输入 token 价格
+       */
+      inputPrice: Prisma.Decimal
+      /**
+       * 输出 token 价格
+       */
+      outputPrice: Prisma.Decimal
+      /**
+       * 缓存读取价格（Anthropic Cache Control）
+       */
+      cacheReadPrice: Prisma.Decimal | null
+      /**
+       * 缓存写入价格（Anthropic Cache Control）
+       */
+      cacheWritePrice: Prisma.Decimal | null
+      /**
+       * 思考 token 价格（Anthropic Extended Thinking）
+       */
+      thinkingPrice: Prisma.Decimal | null
+      /**
+       * 推理能力评分
+       */
+      reasoningScore: number
+      /**
+       * 编码能力评分
+       */
+      codingScore: number
+      /**
+       * 创造力评分
+       */
+      creativityScore: number
+      /**
+       * 响应速度评分
+       */
+      speedScore: number
+      /**
+       * 上下文长度（K tokens）
+       */
+      contextLength: number
+      /**
+       * 是否支持 Extended Thinking（Anthropic）
+       */
+      supportsExtendedThinking: boolean
+      /**
+       * 是否支持 Cache Control（Anthropic）
+       */
+      supportsCacheControl: boolean
+      /**
+       * 是否支持视觉/多模态
+       */
+      supportsVision: boolean
+      /**
+       * 是否支持 Function Calling
+       */
+      supportsFunctionCalling: boolean
+      /**
+       * 是否支持流式响应
+       */
+      supportsStreaming: boolean
+      /**
+       * 推荐使用场景（JSON 数组）
+       * 如 ["deep-reasoning", "coding", "general-purpose"]
+       */
+      recommendedScenarios: Prisma.JsonValue | null
+      /**
+       * 是否启用
+       */
+      isEnabled: boolean
+      /**
+       * 是否已弃用
+       */
+      isDeprecated: boolean
+      /**
+       * 弃用日期
+       */
+      deprecationDate: Date | null
+      /**
+       * 价格更新时间
+       */
+      priceUpdatedAt: Date
+      /**
+       * 备注
+       */
+      notes: string | null
+      /**
+       * 其他扩展元数据
+       */
+      metadata: Prisma.JsonValue | null
+      isDeleted: boolean
+      createdAt: Date
+      updatedAt: Date
+      deletedAt: Date | null
+    }, ExtArgs["result"]["modelPricing"]>
+    composites: {}
+  }
+
+  type ModelPricingGetPayload<S extends boolean | null | undefined | ModelPricingDefaultArgs> = $Result.GetResult<Prisma.$ModelPricingPayload, S>
+
+  type ModelPricingCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ModelPricingFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ModelPricingCountAggregateInputType | true
+    }
+
+  export interface ModelPricingDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ModelPricing'], meta: { name: 'ModelPricing' } }
+    /**
+     * Find zero or one ModelPricing that matches the filter.
+     * @param {ModelPricingFindUniqueArgs} args - Arguments to find a ModelPricing
+     * @example
+     * // Get one ModelPricing
+     * const modelPricing = await prisma.modelPricing.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ModelPricingFindUniqueArgs>(args: SelectSubset<T, ModelPricingFindUniqueArgs<ExtArgs>>): Prisma__ModelPricingClient<$Result.GetResult<Prisma.$ModelPricingPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ModelPricing that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ModelPricingFindUniqueOrThrowArgs} args - Arguments to find a ModelPricing
+     * @example
+     * // Get one ModelPricing
+     * const modelPricing = await prisma.modelPricing.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ModelPricingFindUniqueOrThrowArgs>(args: SelectSubset<T, ModelPricingFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ModelPricingClient<$Result.GetResult<Prisma.$ModelPricingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ModelPricing that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModelPricingFindFirstArgs} args - Arguments to find a ModelPricing
+     * @example
+     * // Get one ModelPricing
+     * const modelPricing = await prisma.modelPricing.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ModelPricingFindFirstArgs>(args?: SelectSubset<T, ModelPricingFindFirstArgs<ExtArgs>>): Prisma__ModelPricingClient<$Result.GetResult<Prisma.$ModelPricingPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ModelPricing that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModelPricingFindFirstOrThrowArgs} args - Arguments to find a ModelPricing
+     * @example
+     * // Get one ModelPricing
+     * const modelPricing = await prisma.modelPricing.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ModelPricingFindFirstOrThrowArgs>(args?: SelectSubset<T, ModelPricingFindFirstOrThrowArgs<ExtArgs>>): Prisma__ModelPricingClient<$Result.GetResult<Prisma.$ModelPricingPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ModelPricings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModelPricingFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ModelPricings
+     * const modelPricings = await prisma.modelPricing.findMany()
+     * 
+     * // Get first 10 ModelPricings
+     * const modelPricings = await prisma.modelPricing.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const modelPricingWithIdOnly = await prisma.modelPricing.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ModelPricingFindManyArgs>(args?: SelectSubset<T, ModelPricingFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModelPricingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ModelPricing.
+     * @param {ModelPricingCreateArgs} args - Arguments to create a ModelPricing.
+     * @example
+     * // Create one ModelPricing
+     * const ModelPricing = await prisma.modelPricing.create({
+     *   data: {
+     *     // ... data to create a ModelPricing
+     *   }
+     * })
+     * 
+     */
+    create<T extends ModelPricingCreateArgs>(args: SelectSubset<T, ModelPricingCreateArgs<ExtArgs>>): Prisma__ModelPricingClient<$Result.GetResult<Prisma.$ModelPricingPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ModelPricings.
+     * @param {ModelPricingCreateManyArgs} args - Arguments to create many ModelPricings.
+     * @example
+     * // Create many ModelPricings
+     * const modelPricing = await prisma.modelPricing.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ModelPricingCreateManyArgs>(args?: SelectSubset<T, ModelPricingCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ModelPricings and returns the data saved in the database.
+     * @param {ModelPricingCreateManyAndReturnArgs} args - Arguments to create many ModelPricings.
+     * @example
+     * // Create many ModelPricings
+     * const modelPricing = await prisma.modelPricing.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ModelPricings and only return the `id`
+     * const modelPricingWithIdOnly = await prisma.modelPricing.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ModelPricingCreateManyAndReturnArgs>(args?: SelectSubset<T, ModelPricingCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModelPricingPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ModelPricing.
+     * @param {ModelPricingDeleteArgs} args - Arguments to delete one ModelPricing.
+     * @example
+     * // Delete one ModelPricing
+     * const ModelPricing = await prisma.modelPricing.delete({
+     *   where: {
+     *     // ... filter to delete one ModelPricing
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ModelPricingDeleteArgs>(args: SelectSubset<T, ModelPricingDeleteArgs<ExtArgs>>): Prisma__ModelPricingClient<$Result.GetResult<Prisma.$ModelPricingPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ModelPricing.
+     * @param {ModelPricingUpdateArgs} args - Arguments to update one ModelPricing.
+     * @example
+     * // Update one ModelPricing
+     * const modelPricing = await prisma.modelPricing.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ModelPricingUpdateArgs>(args: SelectSubset<T, ModelPricingUpdateArgs<ExtArgs>>): Prisma__ModelPricingClient<$Result.GetResult<Prisma.$ModelPricingPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ModelPricings.
+     * @param {ModelPricingDeleteManyArgs} args - Arguments to filter ModelPricings to delete.
+     * @example
+     * // Delete a few ModelPricings
+     * const { count } = await prisma.modelPricing.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ModelPricingDeleteManyArgs>(args?: SelectSubset<T, ModelPricingDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ModelPricings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModelPricingUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ModelPricings
+     * const modelPricing = await prisma.modelPricing.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ModelPricingUpdateManyArgs>(args: SelectSubset<T, ModelPricingUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ModelPricings and returns the data updated in the database.
+     * @param {ModelPricingUpdateManyAndReturnArgs} args - Arguments to update many ModelPricings.
+     * @example
+     * // Update many ModelPricings
+     * const modelPricing = await prisma.modelPricing.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ModelPricings and only return the `id`
+     * const modelPricingWithIdOnly = await prisma.modelPricing.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ModelPricingUpdateManyAndReturnArgs>(args: SelectSubset<T, ModelPricingUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModelPricingPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ModelPricing.
+     * @param {ModelPricingUpsertArgs} args - Arguments to update or create a ModelPricing.
+     * @example
+     * // Update or create a ModelPricing
+     * const modelPricing = await prisma.modelPricing.upsert({
+     *   create: {
+     *     // ... data to create a ModelPricing
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ModelPricing we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ModelPricingUpsertArgs>(args: SelectSubset<T, ModelPricingUpsertArgs<ExtArgs>>): Prisma__ModelPricingClient<$Result.GetResult<Prisma.$ModelPricingPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ModelPricings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModelPricingCountArgs} args - Arguments to filter ModelPricings to count.
+     * @example
+     * // Count the number of ModelPricings
+     * const count = await prisma.modelPricing.count({
+     *   where: {
+     *     // ... the filter for the ModelPricings we want to count
+     *   }
+     * })
+    **/
+    count<T extends ModelPricingCountArgs>(
+      args?: Subset<T, ModelPricingCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ModelPricingCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ModelPricing.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModelPricingAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ModelPricingAggregateArgs>(args: Subset<T, ModelPricingAggregateArgs>): Prisma.PrismaPromise<GetModelPricingAggregateType<T>>
+
+    /**
+     * Group by ModelPricing.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ModelPricingGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ModelPricingGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ModelPricingGroupByArgs['orderBy'] }
+        : { orderBy?: ModelPricingGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ModelPricingGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetModelPricingGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ModelPricing model
+   */
+  readonly fields: ModelPricingFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ModelPricing.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ModelPricingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ModelPricing model
+   */
+  interface ModelPricingFieldRefs {
+    readonly id: FieldRef<"ModelPricing", 'String'>
+    readonly model: FieldRef<"ModelPricing", 'String'>
+    readonly vendor: FieldRef<"ModelPricing", 'String'>
+    readonly displayName: FieldRef<"ModelPricing", 'String'>
+    readonly description: FieldRef<"ModelPricing", 'String'>
+    readonly inputPrice: FieldRef<"ModelPricing", 'Decimal'>
+    readonly outputPrice: FieldRef<"ModelPricing", 'Decimal'>
+    readonly cacheReadPrice: FieldRef<"ModelPricing", 'Decimal'>
+    readonly cacheWritePrice: FieldRef<"ModelPricing", 'Decimal'>
+    readonly thinkingPrice: FieldRef<"ModelPricing", 'Decimal'>
+    readonly reasoningScore: FieldRef<"ModelPricing", 'Int'>
+    readonly codingScore: FieldRef<"ModelPricing", 'Int'>
+    readonly creativityScore: FieldRef<"ModelPricing", 'Int'>
+    readonly speedScore: FieldRef<"ModelPricing", 'Int'>
+    readonly contextLength: FieldRef<"ModelPricing", 'Int'>
+    readonly supportsExtendedThinking: FieldRef<"ModelPricing", 'Boolean'>
+    readonly supportsCacheControl: FieldRef<"ModelPricing", 'Boolean'>
+    readonly supportsVision: FieldRef<"ModelPricing", 'Boolean'>
+    readonly supportsFunctionCalling: FieldRef<"ModelPricing", 'Boolean'>
+    readonly supportsStreaming: FieldRef<"ModelPricing", 'Boolean'>
+    readonly recommendedScenarios: FieldRef<"ModelPricing", 'Json'>
+    readonly isEnabled: FieldRef<"ModelPricing", 'Boolean'>
+    readonly isDeprecated: FieldRef<"ModelPricing", 'Boolean'>
+    readonly deprecationDate: FieldRef<"ModelPricing", 'DateTime'>
+    readonly priceUpdatedAt: FieldRef<"ModelPricing", 'DateTime'>
+    readonly notes: FieldRef<"ModelPricing", 'String'>
+    readonly metadata: FieldRef<"ModelPricing", 'Json'>
+    readonly isDeleted: FieldRef<"ModelPricing", 'Boolean'>
+    readonly createdAt: FieldRef<"ModelPricing", 'DateTime'>
+    readonly updatedAt: FieldRef<"ModelPricing", 'DateTime'>
+    readonly deletedAt: FieldRef<"ModelPricing", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ModelPricing findUnique
+   */
+  export type ModelPricingFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModelPricing
+     */
+    select?: ModelPricingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModelPricing
+     */
+    omit?: ModelPricingOmit<ExtArgs> | null
+    /**
+     * Filter, which ModelPricing to fetch.
+     */
+    where: ModelPricingWhereUniqueInput
+  }
+
+  /**
+   * ModelPricing findUniqueOrThrow
+   */
+  export type ModelPricingFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModelPricing
+     */
+    select?: ModelPricingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModelPricing
+     */
+    omit?: ModelPricingOmit<ExtArgs> | null
+    /**
+     * Filter, which ModelPricing to fetch.
+     */
+    where: ModelPricingWhereUniqueInput
+  }
+
+  /**
+   * ModelPricing findFirst
+   */
+  export type ModelPricingFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModelPricing
+     */
+    select?: ModelPricingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModelPricing
+     */
+    omit?: ModelPricingOmit<ExtArgs> | null
+    /**
+     * Filter, which ModelPricing to fetch.
+     */
+    where?: ModelPricingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModelPricings to fetch.
+     */
+    orderBy?: ModelPricingOrderByWithRelationInput | ModelPricingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ModelPricings.
+     */
+    cursor?: ModelPricingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModelPricings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModelPricings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ModelPricings.
+     */
+    distinct?: ModelPricingScalarFieldEnum | ModelPricingScalarFieldEnum[]
+  }
+
+  /**
+   * ModelPricing findFirstOrThrow
+   */
+  export type ModelPricingFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModelPricing
+     */
+    select?: ModelPricingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModelPricing
+     */
+    omit?: ModelPricingOmit<ExtArgs> | null
+    /**
+     * Filter, which ModelPricing to fetch.
+     */
+    where?: ModelPricingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModelPricings to fetch.
+     */
+    orderBy?: ModelPricingOrderByWithRelationInput | ModelPricingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ModelPricings.
+     */
+    cursor?: ModelPricingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModelPricings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModelPricings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ModelPricings.
+     */
+    distinct?: ModelPricingScalarFieldEnum | ModelPricingScalarFieldEnum[]
+  }
+
+  /**
+   * ModelPricing findMany
+   */
+  export type ModelPricingFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModelPricing
+     */
+    select?: ModelPricingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModelPricing
+     */
+    omit?: ModelPricingOmit<ExtArgs> | null
+    /**
+     * Filter, which ModelPricings to fetch.
+     */
+    where?: ModelPricingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ModelPricings to fetch.
+     */
+    orderBy?: ModelPricingOrderByWithRelationInput | ModelPricingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ModelPricings.
+     */
+    cursor?: ModelPricingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ModelPricings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ModelPricings.
+     */
+    skip?: number
+    distinct?: ModelPricingScalarFieldEnum | ModelPricingScalarFieldEnum[]
+  }
+
+  /**
+   * ModelPricing create
+   */
+  export type ModelPricingCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModelPricing
+     */
+    select?: ModelPricingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModelPricing
+     */
+    omit?: ModelPricingOmit<ExtArgs> | null
+    /**
+     * The data needed to create a ModelPricing.
+     */
+    data: XOR<ModelPricingCreateInput, ModelPricingUncheckedCreateInput>
+  }
+
+  /**
+   * ModelPricing createMany
+   */
+  export type ModelPricingCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ModelPricings.
+     */
+    data: ModelPricingCreateManyInput | ModelPricingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ModelPricing createManyAndReturn
+   */
+  export type ModelPricingCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModelPricing
+     */
+    select?: ModelPricingSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModelPricing
+     */
+    omit?: ModelPricingOmit<ExtArgs> | null
+    /**
+     * The data used to create many ModelPricings.
+     */
+    data: ModelPricingCreateManyInput | ModelPricingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ModelPricing update
+   */
+  export type ModelPricingUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModelPricing
+     */
+    select?: ModelPricingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModelPricing
+     */
+    omit?: ModelPricingOmit<ExtArgs> | null
+    /**
+     * The data needed to update a ModelPricing.
+     */
+    data: XOR<ModelPricingUpdateInput, ModelPricingUncheckedUpdateInput>
+    /**
+     * Choose, which ModelPricing to update.
+     */
+    where: ModelPricingWhereUniqueInput
+  }
+
+  /**
+   * ModelPricing updateMany
+   */
+  export type ModelPricingUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ModelPricings.
+     */
+    data: XOR<ModelPricingUpdateManyMutationInput, ModelPricingUncheckedUpdateManyInput>
+    /**
+     * Filter which ModelPricings to update
+     */
+    where?: ModelPricingWhereInput
+    /**
+     * Limit how many ModelPricings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModelPricing updateManyAndReturn
+   */
+  export type ModelPricingUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModelPricing
+     */
+    select?: ModelPricingSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModelPricing
+     */
+    omit?: ModelPricingOmit<ExtArgs> | null
+    /**
+     * The data used to update ModelPricings.
+     */
+    data: XOR<ModelPricingUpdateManyMutationInput, ModelPricingUncheckedUpdateManyInput>
+    /**
+     * Filter which ModelPricings to update
+     */
+    where?: ModelPricingWhereInput
+    /**
+     * Limit how many ModelPricings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModelPricing upsert
+   */
+  export type ModelPricingUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModelPricing
+     */
+    select?: ModelPricingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModelPricing
+     */
+    omit?: ModelPricingOmit<ExtArgs> | null
+    /**
+     * The filter to search for the ModelPricing to update in case it exists.
+     */
+    where: ModelPricingWhereUniqueInput
+    /**
+     * In case the ModelPricing found by the `where` argument doesn't exist, create a new ModelPricing with this data.
+     */
+    create: XOR<ModelPricingCreateInput, ModelPricingUncheckedCreateInput>
+    /**
+     * In case the ModelPricing was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ModelPricingUpdateInput, ModelPricingUncheckedUpdateInput>
+  }
+
+  /**
+   * ModelPricing delete
+   */
+  export type ModelPricingDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModelPricing
+     */
+    select?: ModelPricingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModelPricing
+     */
+    omit?: ModelPricingOmit<ExtArgs> | null
+    /**
+     * Filter which ModelPricing to delete.
+     */
+    where: ModelPricingWhereUniqueInput
+  }
+
+  /**
+   * ModelPricing deleteMany
+   */
+  export type ModelPricingDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ModelPricings to delete
+     */
+    where?: ModelPricingWhereInput
+    /**
+     * Limit how many ModelPricings to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ModelPricing without action
+   */
+  export type ModelPricingDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ModelPricing
+     */
+    select?: ModelPricingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ModelPricing
+     */
+    omit?: ModelPricingOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BotModelRouting
+   */
+
+  export type AggregateBotModelRouting = {
+    _count: BotModelRoutingCountAggregateOutputType | null
+    _avg: BotModelRoutingAvgAggregateOutputType | null
+    _sum: BotModelRoutingSumAggregateOutputType | null
+    _min: BotModelRoutingMinAggregateOutputType | null
+    _max: BotModelRoutingMaxAggregateOutputType | null
+  }
+
+  export type BotModelRoutingAvgAggregateOutputType = {
+    priority: number | null
+  }
+
+  export type BotModelRoutingSumAggregateOutputType = {
+    priority: number | null
+  }
+
+  export type BotModelRoutingMinAggregateOutputType = {
+    id: string | null
+    botId: string | null
+    routingType: $Enums.ModelRoutingType | null
+    name: string | null
+    priority: number | null
+    isEnabled: boolean | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type BotModelRoutingMaxAggregateOutputType = {
+    id: string | null
+    botId: string | null
+    routingType: $Enums.ModelRoutingType | null
+    name: string | null
+    priority: number | null
+    isEnabled: boolean | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type BotModelRoutingCountAggregateOutputType = {
+    id: number
+    botId: number
+    routingType: number
+    name: number
+    config: number
+    priority: number
+    isEnabled: number
+    isDeleted: number
+    createdAt: number
+    updatedAt: number
+    deletedAt: number
+    _all: number
+  }
+
+
+  export type BotModelRoutingAvgAggregateInputType = {
+    priority?: true
+  }
+
+  export type BotModelRoutingSumAggregateInputType = {
+    priority?: true
+  }
+
+  export type BotModelRoutingMinAggregateInputType = {
+    id?: true
+    botId?: true
+    routingType?: true
+    name?: true
+    priority?: true
+    isEnabled?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type BotModelRoutingMaxAggregateInputType = {
+    id?: true
+    botId?: true
+    routingType?: true
+    name?: true
+    priority?: true
+    isEnabled?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type BotModelRoutingCountAggregateInputType = {
+    id?: true
+    botId?: true
+    routingType?: true
+    name?: true
+    config?: true
+    priority?: true
+    isEnabled?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+    _all?: true
+  }
+
+  export type BotModelRoutingAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BotModelRouting to aggregate.
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotModelRoutings to fetch.
+     */
+    orderBy?: BotModelRoutingOrderByWithRelationInput | BotModelRoutingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BotModelRoutingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotModelRoutings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotModelRoutings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BotModelRoutings
+    **/
+    _count?: true | BotModelRoutingCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BotModelRoutingAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BotModelRoutingSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BotModelRoutingMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BotModelRoutingMaxAggregateInputType
+  }
+
+  export type GetBotModelRoutingAggregateType<T extends BotModelRoutingAggregateArgs> = {
+        [P in keyof T & keyof AggregateBotModelRouting]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBotModelRouting[P]>
+      : GetScalarType<T[P], AggregateBotModelRouting[P]>
+  }
+
+
+
+
+  export type BotModelRoutingGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BotModelRoutingWhereInput
+    orderBy?: BotModelRoutingOrderByWithAggregationInput | BotModelRoutingOrderByWithAggregationInput[]
+    by: BotModelRoutingScalarFieldEnum[] | BotModelRoutingScalarFieldEnum
+    having?: BotModelRoutingScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BotModelRoutingCountAggregateInputType | true
+    _avg?: BotModelRoutingAvgAggregateInputType
+    _sum?: BotModelRoutingSumAggregateInputType
+    _min?: BotModelRoutingMinAggregateInputType
+    _max?: BotModelRoutingMaxAggregateInputType
+  }
+
+  export type BotModelRoutingGroupByOutputType = {
+    id: string
+    botId: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonValue
+    priority: number
+    isEnabled: boolean
+    isDeleted: boolean
+    createdAt: Date
+    updatedAt: Date
+    deletedAt: Date | null
+    _count: BotModelRoutingCountAggregateOutputType | null
+    _avg: BotModelRoutingAvgAggregateOutputType | null
+    _sum: BotModelRoutingSumAggregateOutputType | null
+    _min: BotModelRoutingMinAggregateOutputType | null
+    _max: BotModelRoutingMaxAggregateOutputType | null
+  }
+
+  type GetBotModelRoutingGroupByPayload<T extends BotModelRoutingGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BotModelRoutingGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BotModelRoutingGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BotModelRoutingGroupByOutputType[P]>
+            : GetScalarType<T[P], BotModelRoutingGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BotModelRoutingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    botId?: boolean
+    routingType?: boolean
+    name?: boolean
+    config?: boolean
+    priority?: boolean
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["botModelRouting"]>
+
+  export type BotModelRoutingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    botId?: boolean
+    routingType?: boolean
+    name?: boolean
+    config?: boolean
+    priority?: boolean
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["botModelRouting"]>
+
+  export type BotModelRoutingSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    botId?: boolean
+    routingType?: boolean
+    name?: boolean
+    config?: boolean
+    priority?: boolean
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["botModelRouting"]>
+
+  export type BotModelRoutingSelectScalar = {
+    id?: boolean
+    botId?: boolean
+    routingType?: boolean
+    name?: boolean
+    config?: boolean
+    priority?: boolean
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }
+
+  export type BotModelRoutingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "botId" | "routingType" | "name" | "config" | "priority" | "isEnabled" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["botModelRouting"]>
+  export type BotModelRoutingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }
+  export type BotModelRoutingIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }
+  export type BotModelRoutingIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }
+
+  export type $BotModelRoutingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BotModelRouting"
+    objects: {
+      bot: Prisma.$BotPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      botId: string
+      /**
+       * 路由类型
+       */
+      routingType: $Enums.ModelRoutingType
+      /**
+       * 路由名称（用于标识）
+       */
+      name: string
+      /**
+       * 路由配置 (JSON)
+       * 功能路由: { rules: [...], defaultTarget: {...} }
+       * 负载均衡: { strategy: "round_robin"|"weighted"|"least_latency", targets: [...] }
+       * 故障转移: { primary: {...}, fallbackChain: [...], retry: {...} }
+       */
+      config: Prisma.JsonValue
+      /**
+       * 优先级（数字越小优先级越高）
+       */
+      priority: number
+      /**
+       * 是否启用
+       */
+      isEnabled: boolean
+      isDeleted: boolean
+      createdAt: Date
+      updatedAt: Date
+      deletedAt: Date | null
+    }, ExtArgs["result"]["botModelRouting"]>
+    composites: {}
+  }
+
+  type BotModelRoutingGetPayload<S extends boolean | null | undefined | BotModelRoutingDefaultArgs> = $Result.GetResult<Prisma.$BotModelRoutingPayload, S>
+
+  type BotModelRoutingCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BotModelRoutingFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BotModelRoutingCountAggregateInputType | true
+    }
+
+  export interface BotModelRoutingDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BotModelRouting'], meta: { name: 'BotModelRouting' } }
+    /**
+     * Find zero or one BotModelRouting that matches the filter.
+     * @param {BotModelRoutingFindUniqueArgs} args - Arguments to find a BotModelRouting
+     * @example
+     * // Get one BotModelRouting
+     * const botModelRouting = await prisma.botModelRouting.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BotModelRoutingFindUniqueArgs>(args: SelectSubset<T, BotModelRoutingFindUniqueArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BotModelRouting that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BotModelRoutingFindUniqueOrThrowArgs} args - Arguments to find a BotModelRouting
+     * @example
+     * // Get one BotModelRouting
+     * const botModelRouting = await prisma.botModelRouting.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BotModelRoutingFindUniqueOrThrowArgs>(args: SelectSubset<T, BotModelRoutingFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BotModelRouting that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingFindFirstArgs} args - Arguments to find a BotModelRouting
+     * @example
+     * // Get one BotModelRouting
+     * const botModelRouting = await prisma.botModelRouting.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BotModelRoutingFindFirstArgs>(args?: SelectSubset<T, BotModelRoutingFindFirstArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BotModelRouting that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingFindFirstOrThrowArgs} args - Arguments to find a BotModelRouting
+     * @example
+     * // Get one BotModelRouting
+     * const botModelRouting = await prisma.botModelRouting.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BotModelRoutingFindFirstOrThrowArgs>(args?: SelectSubset<T, BotModelRoutingFindFirstOrThrowArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BotModelRoutings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BotModelRoutings
+     * const botModelRoutings = await prisma.botModelRouting.findMany()
+     * 
+     * // Get first 10 BotModelRoutings
+     * const botModelRoutings = await prisma.botModelRouting.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const botModelRoutingWithIdOnly = await prisma.botModelRouting.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BotModelRoutingFindManyArgs>(args?: SelectSubset<T, BotModelRoutingFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BotModelRouting.
+     * @param {BotModelRoutingCreateArgs} args - Arguments to create a BotModelRouting.
+     * @example
+     * // Create one BotModelRouting
+     * const BotModelRouting = await prisma.botModelRouting.create({
+     *   data: {
+     *     // ... data to create a BotModelRouting
+     *   }
+     * })
+     * 
+     */
+    create<T extends BotModelRoutingCreateArgs>(args: SelectSubset<T, BotModelRoutingCreateArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BotModelRoutings.
+     * @param {BotModelRoutingCreateManyArgs} args - Arguments to create many BotModelRoutings.
+     * @example
+     * // Create many BotModelRoutings
+     * const botModelRouting = await prisma.botModelRouting.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BotModelRoutingCreateManyArgs>(args?: SelectSubset<T, BotModelRoutingCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BotModelRoutings and returns the data saved in the database.
+     * @param {BotModelRoutingCreateManyAndReturnArgs} args - Arguments to create many BotModelRoutings.
+     * @example
+     * // Create many BotModelRoutings
+     * const botModelRouting = await prisma.botModelRouting.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BotModelRoutings and only return the `id`
+     * const botModelRoutingWithIdOnly = await prisma.botModelRouting.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BotModelRoutingCreateManyAndReturnArgs>(args?: SelectSubset<T, BotModelRoutingCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BotModelRouting.
+     * @param {BotModelRoutingDeleteArgs} args - Arguments to delete one BotModelRouting.
+     * @example
+     * // Delete one BotModelRouting
+     * const BotModelRouting = await prisma.botModelRouting.delete({
+     *   where: {
+     *     // ... filter to delete one BotModelRouting
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BotModelRoutingDeleteArgs>(args: SelectSubset<T, BotModelRoutingDeleteArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BotModelRouting.
+     * @param {BotModelRoutingUpdateArgs} args - Arguments to update one BotModelRouting.
+     * @example
+     * // Update one BotModelRouting
+     * const botModelRouting = await prisma.botModelRouting.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BotModelRoutingUpdateArgs>(args: SelectSubset<T, BotModelRoutingUpdateArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BotModelRoutings.
+     * @param {BotModelRoutingDeleteManyArgs} args - Arguments to filter BotModelRoutings to delete.
+     * @example
+     * // Delete a few BotModelRoutings
+     * const { count } = await prisma.botModelRouting.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BotModelRoutingDeleteManyArgs>(args?: SelectSubset<T, BotModelRoutingDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BotModelRoutings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BotModelRoutings
+     * const botModelRouting = await prisma.botModelRouting.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BotModelRoutingUpdateManyArgs>(args: SelectSubset<T, BotModelRoutingUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BotModelRoutings and returns the data updated in the database.
+     * @param {BotModelRoutingUpdateManyAndReturnArgs} args - Arguments to update many BotModelRoutings.
+     * @example
+     * // Update many BotModelRoutings
+     * const botModelRouting = await prisma.botModelRouting.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BotModelRoutings and only return the `id`
+     * const botModelRoutingWithIdOnly = await prisma.botModelRouting.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BotModelRoutingUpdateManyAndReturnArgs>(args: SelectSubset<T, BotModelRoutingUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BotModelRouting.
+     * @param {BotModelRoutingUpsertArgs} args - Arguments to update or create a BotModelRouting.
+     * @example
+     * // Update or create a BotModelRouting
+     * const botModelRouting = await prisma.botModelRouting.upsert({
+     *   create: {
+     *     // ... data to create a BotModelRouting
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BotModelRouting we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BotModelRoutingUpsertArgs>(args: SelectSubset<T, BotModelRoutingUpsertArgs<ExtArgs>>): Prisma__BotModelRoutingClient<$Result.GetResult<Prisma.$BotModelRoutingPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BotModelRoutings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingCountArgs} args - Arguments to filter BotModelRoutings to count.
+     * @example
+     * // Count the number of BotModelRoutings
+     * const count = await prisma.botModelRouting.count({
+     *   where: {
+     *     // ... the filter for the BotModelRoutings we want to count
+     *   }
+     * })
+    **/
+    count<T extends BotModelRoutingCountArgs>(
+      args?: Subset<T, BotModelRoutingCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BotModelRoutingCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BotModelRouting.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BotModelRoutingAggregateArgs>(args: Subset<T, BotModelRoutingAggregateArgs>): Prisma.PrismaPromise<GetBotModelRoutingAggregateType<T>>
+
+    /**
+     * Group by BotModelRouting.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotModelRoutingGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BotModelRoutingGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BotModelRoutingGroupByArgs['orderBy'] }
+        : { orderBy?: BotModelRoutingGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BotModelRoutingGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBotModelRoutingGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BotModelRouting model
+   */
+  readonly fields: BotModelRoutingFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BotModelRouting.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BotModelRoutingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    bot<T extends BotDefaultArgs<ExtArgs> = {}>(args?: Subset<T, BotDefaultArgs<ExtArgs>>): Prisma__BotClient<$Result.GetResult<Prisma.$BotPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BotModelRouting model
+   */
+  interface BotModelRoutingFieldRefs {
+    readonly id: FieldRef<"BotModelRouting", 'String'>
+    readonly botId: FieldRef<"BotModelRouting", 'String'>
+    readonly routingType: FieldRef<"BotModelRouting", 'ModelRoutingType'>
+    readonly name: FieldRef<"BotModelRouting", 'String'>
+    readonly config: FieldRef<"BotModelRouting", 'Json'>
+    readonly priority: FieldRef<"BotModelRouting", 'Int'>
+    readonly isEnabled: FieldRef<"BotModelRouting", 'Boolean'>
+    readonly isDeleted: FieldRef<"BotModelRouting", 'Boolean'>
+    readonly createdAt: FieldRef<"BotModelRouting", 'DateTime'>
+    readonly updatedAt: FieldRef<"BotModelRouting", 'DateTime'>
+    readonly deletedAt: FieldRef<"BotModelRouting", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BotModelRouting findUnique
+   */
+  export type BotModelRoutingFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * Filter, which BotModelRouting to fetch.
+     */
+    where: BotModelRoutingWhereUniqueInput
+  }
+
+  /**
+   * BotModelRouting findUniqueOrThrow
+   */
+  export type BotModelRoutingFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * Filter, which BotModelRouting to fetch.
+     */
+    where: BotModelRoutingWhereUniqueInput
+  }
+
+  /**
+   * BotModelRouting findFirst
+   */
+  export type BotModelRoutingFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * Filter, which BotModelRouting to fetch.
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotModelRoutings to fetch.
+     */
+    orderBy?: BotModelRoutingOrderByWithRelationInput | BotModelRoutingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BotModelRoutings.
+     */
+    cursor?: BotModelRoutingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotModelRoutings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotModelRoutings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BotModelRoutings.
+     */
+    distinct?: BotModelRoutingScalarFieldEnum | BotModelRoutingScalarFieldEnum[]
+  }
+
+  /**
+   * BotModelRouting findFirstOrThrow
+   */
+  export type BotModelRoutingFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * Filter, which BotModelRouting to fetch.
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotModelRoutings to fetch.
+     */
+    orderBy?: BotModelRoutingOrderByWithRelationInput | BotModelRoutingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BotModelRoutings.
+     */
+    cursor?: BotModelRoutingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotModelRoutings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotModelRoutings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BotModelRoutings.
+     */
+    distinct?: BotModelRoutingScalarFieldEnum | BotModelRoutingScalarFieldEnum[]
+  }
+
+  /**
+   * BotModelRouting findMany
+   */
+  export type BotModelRoutingFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * Filter, which BotModelRoutings to fetch.
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotModelRoutings to fetch.
+     */
+    orderBy?: BotModelRoutingOrderByWithRelationInput | BotModelRoutingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BotModelRoutings.
+     */
+    cursor?: BotModelRoutingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotModelRoutings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotModelRoutings.
+     */
+    skip?: number
+    distinct?: BotModelRoutingScalarFieldEnum | BotModelRoutingScalarFieldEnum[]
+  }
+
+  /**
+   * BotModelRouting create
+   */
+  export type BotModelRoutingCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BotModelRouting.
+     */
+    data: XOR<BotModelRoutingCreateInput, BotModelRoutingUncheckedCreateInput>
+  }
+
+  /**
+   * BotModelRouting createMany
+   */
+  export type BotModelRoutingCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BotModelRoutings.
+     */
+    data: BotModelRoutingCreateManyInput | BotModelRoutingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BotModelRouting createManyAndReturn
+   */
+  export type BotModelRoutingCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * The data used to create many BotModelRoutings.
+     */
+    data: BotModelRoutingCreateManyInput | BotModelRoutingCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BotModelRouting update
+   */
+  export type BotModelRoutingUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BotModelRouting.
+     */
+    data: XOR<BotModelRoutingUpdateInput, BotModelRoutingUncheckedUpdateInput>
+    /**
+     * Choose, which BotModelRouting to update.
+     */
+    where: BotModelRoutingWhereUniqueInput
+  }
+
+  /**
+   * BotModelRouting updateMany
+   */
+  export type BotModelRoutingUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BotModelRoutings.
+     */
+    data: XOR<BotModelRoutingUpdateManyMutationInput, BotModelRoutingUncheckedUpdateManyInput>
+    /**
+     * Filter which BotModelRoutings to update
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * Limit how many BotModelRoutings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BotModelRouting updateManyAndReturn
+   */
+  export type BotModelRoutingUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * The data used to update BotModelRoutings.
+     */
+    data: XOR<BotModelRoutingUpdateManyMutationInput, BotModelRoutingUncheckedUpdateManyInput>
+    /**
+     * Filter which BotModelRoutings to update
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * Limit how many BotModelRoutings to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BotModelRouting upsert
+   */
+  export type BotModelRoutingUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BotModelRouting to update in case it exists.
+     */
+    where: BotModelRoutingWhereUniqueInput
+    /**
+     * In case the BotModelRouting found by the `where` argument doesn't exist, create a new BotModelRouting with this data.
+     */
+    create: XOR<BotModelRoutingCreateInput, BotModelRoutingUncheckedCreateInput>
+    /**
+     * In case the BotModelRouting was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BotModelRoutingUpdateInput, BotModelRoutingUncheckedUpdateInput>
+  }
+
+  /**
+   * BotModelRouting delete
+   */
+  export type BotModelRoutingDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+    /**
+     * Filter which BotModelRouting to delete.
+     */
+    where: BotModelRoutingWhereUniqueInput
+  }
+
+  /**
+   * BotModelRouting deleteMany
+   */
+  export type BotModelRoutingDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BotModelRoutings to delete
+     */
+    where?: BotModelRoutingWhereInput
+    /**
+     * Limit how many BotModelRoutings to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BotModelRouting without action
+   */
+  export type BotModelRoutingDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotModelRouting
+     */
+    select?: BotModelRoutingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotModelRouting
+     */
+    omit?: BotModelRoutingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotModelRoutingInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model BotChannel
    */
 
@@ -34684,6 +38181,4974 @@ export namespace Prisma {
 
 
   /**
+   * Model CapabilityTag
+   */
+
+  export type AggregateCapabilityTag = {
+    _count: CapabilityTagCountAggregateOutputType | null
+    _avg: CapabilityTagAvgAggregateOutputType | null
+    _sum: CapabilityTagSumAggregateOutputType | null
+    _min: CapabilityTagMinAggregateOutputType | null
+    _max: CapabilityTagMaxAggregateOutputType | null
+  }
+
+  export type CapabilityTagAvgAggregateOutputType = {
+    priority: number | null
+    maxCostPerMToken: Decimal | null
+  }
+
+  export type CapabilityTagSumAggregateOutputType = {
+    priority: number | null
+    maxCostPerMToken: Decimal | null
+  }
+
+  export type CapabilityTagMinAggregateOutputType = {
+    id: string | null
+    tagId: string | null
+    name: string | null
+    description: string | null
+    category: string | null
+    priority: number | null
+    requiredProtocol: string | null
+    requiresExtendedThinking: boolean | null
+    requiresCacheControl: boolean | null
+    requiresVision: boolean | null
+    maxCostPerMToken: Decimal | null
+    isActive: boolean | null
+    isBuiltin: boolean | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type CapabilityTagMaxAggregateOutputType = {
+    id: string | null
+    tagId: string | null
+    name: string | null
+    description: string | null
+    category: string | null
+    priority: number | null
+    requiredProtocol: string | null
+    requiresExtendedThinking: boolean | null
+    requiresCacheControl: boolean | null
+    requiresVision: boolean | null
+    maxCostPerMToken: Decimal | null
+    isActive: boolean | null
+    isBuiltin: boolean | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type CapabilityTagCountAggregateOutputType = {
+    id: number
+    tagId: number
+    name: number
+    description: number
+    category: number
+    priority: number
+    requiredProtocol: number
+    requiredSkills: number
+    requiredModels: number
+    requiresExtendedThinking: number
+    requiresCacheControl: number
+    requiresVision: number
+    maxCostPerMToken: number
+    isActive: number
+    isBuiltin: number
+    isDeleted: number
+    createdAt: number
+    updatedAt: number
+    deletedAt: number
+    _all: number
+  }
+
+
+  export type CapabilityTagAvgAggregateInputType = {
+    priority?: true
+    maxCostPerMToken?: true
+  }
+
+  export type CapabilityTagSumAggregateInputType = {
+    priority?: true
+    maxCostPerMToken?: true
+  }
+
+  export type CapabilityTagMinAggregateInputType = {
+    id?: true
+    tagId?: true
+    name?: true
+    description?: true
+    category?: true
+    priority?: true
+    requiredProtocol?: true
+    requiresExtendedThinking?: true
+    requiresCacheControl?: true
+    requiresVision?: true
+    maxCostPerMToken?: true
+    isActive?: true
+    isBuiltin?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type CapabilityTagMaxAggregateInputType = {
+    id?: true
+    tagId?: true
+    name?: true
+    description?: true
+    category?: true
+    priority?: true
+    requiredProtocol?: true
+    requiresExtendedThinking?: true
+    requiresCacheControl?: true
+    requiresVision?: true
+    maxCostPerMToken?: true
+    isActive?: true
+    isBuiltin?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type CapabilityTagCountAggregateInputType = {
+    id?: true
+    tagId?: true
+    name?: true
+    description?: true
+    category?: true
+    priority?: true
+    requiredProtocol?: true
+    requiredSkills?: true
+    requiredModels?: true
+    requiresExtendedThinking?: true
+    requiresCacheControl?: true
+    requiresVision?: true
+    maxCostPerMToken?: true
+    isActive?: true
+    isBuiltin?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+    _all?: true
+  }
+
+  export type CapabilityTagAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CapabilityTag to aggregate.
+     */
+    where?: CapabilityTagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CapabilityTags to fetch.
+     */
+    orderBy?: CapabilityTagOrderByWithRelationInput | CapabilityTagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CapabilityTagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CapabilityTags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CapabilityTags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CapabilityTags
+    **/
+    _count?: true | CapabilityTagCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CapabilityTagAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CapabilityTagSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CapabilityTagMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CapabilityTagMaxAggregateInputType
+  }
+
+  export type GetCapabilityTagAggregateType<T extends CapabilityTagAggregateArgs> = {
+        [P in keyof T & keyof AggregateCapabilityTag]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCapabilityTag[P]>
+      : GetScalarType<T[P], AggregateCapabilityTag[P]>
+  }
+
+
+
+
+  export type CapabilityTagGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CapabilityTagWhereInput
+    orderBy?: CapabilityTagOrderByWithAggregationInput | CapabilityTagOrderByWithAggregationInput[]
+    by: CapabilityTagScalarFieldEnum[] | CapabilityTagScalarFieldEnum
+    having?: CapabilityTagScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CapabilityTagCountAggregateInputType | true
+    _avg?: CapabilityTagAvgAggregateInputType
+    _sum?: CapabilityTagSumAggregateInputType
+    _min?: CapabilityTagMinAggregateInputType
+    _max?: CapabilityTagMaxAggregateInputType
+  }
+
+  export type CapabilityTagGroupByOutputType = {
+    id: string
+    tagId: string
+    name: string
+    description: string | null
+    category: string
+    priority: number
+    requiredProtocol: string | null
+    requiredSkills: JsonValue | null
+    requiredModels: JsonValue | null
+    requiresExtendedThinking: boolean
+    requiresCacheControl: boolean
+    requiresVision: boolean
+    maxCostPerMToken: Decimal | null
+    isActive: boolean
+    isBuiltin: boolean
+    isDeleted: boolean
+    createdAt: Date
+    updatedAt: Date
+    deletedAt: Date | null
+    _count: CapabilityTagCountAggregateOutputType | null
+    _avg: CapabilityTagAvgAggregateOutputType | null
+    _sum: CapabilityTagSumAggregateOutputType | null
+    _min: CapabilityTagMinAggregateOutputType | null
+    _max: CapabilityTagMaxAggregateOutputType | null
+  }
+
+  type GetCapabilityTagGroupByPayload<T extends CapabilityTagGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CapabilityTagGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CapabilityTagGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CapabilityTagGroupByOutputType[P]>
+            : GetScalarType<T[P], CapabilityTagGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CapabilityTagSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tagId?: boolean
+    name?: boolean
+    description?: boolean
+    category?: boolean
+    priority?: boolean
+    requiredProtocol?: boolean
+    requiredSkills?: boolean
+    requiredModels?: boolean
+    requiresExtendedThinking?: boolean
+    requiresCacheControl?: boolean
+    requiresVision?: boolean
+    maxCostPerMToken?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["capabilityTag"]>
+
+  export type CapabilityTagSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tagId?: boolean
+    name?: boolean
+    description?: boolean
+    category?: boolean
+    priority?: boolean
+    requiredProtocol?: boolean
+    requiredSkills?: boolean
+    requiredModels?: boolean
+    requiresExtendedThinking?: boolean
+    requiresCacheControl?: boolean
+    requiresVision?: boolean
+    maxCostPerMToken?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["capabilityTag"]>
+
+  export type CapabilityTagSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tagId?: boolean
+    name?: boolean
+    description?: boolean
+    category?: boolean
+    priority?: boolean
+    requiredProtocol?: boolean
+    requiredSkills?: boolean
+    requiredModels?: boolean
+    requiresExtendedThinking?: boolean
+    requiresCacheControl?: boolean
+    requiresVision?: boolean
+    maxCostPerMToken?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["capabilityTag"]>
+
+  export type CapabilityTagSelectScalar = {
+    id?: boolean
+    tagId?: boolean
+    name?: boolean
+    description?: boolean
+    category?: boolean
+    priority?: boolean
+    requiredProtocol?: boolean
+    requiredSkills?: boolean
+    requiredModels?: boolean
+    requiresExtendedThinking?: boolean
+    requiresCacheControl?: boolean
+    requiresVision?: boolean
+    maxCostPerMToken?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }
+
+  export type CapabilityTagOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tagId" | "name" | "description" | "category" | "priority" | "requiredProtocol" | "requiredSkills" | "requiredModels" | "requiresExtendedThinking" | "requiresCacheControl" | "requiresVision" | "maxCostPerMToken" | "isActive" | "isBuiltin" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["capabilityTag"]>
+
+  export type $CapabilityTagPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CapabilityTag"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      /**
+       * 标签标识（如 deep-reasoning, cost-optimized, web-search）
+       */
+      tagId: string
+      /**
+       * 显示名称
+       */
+      name: string
+      /**
+       * 标签描述
+       */
+      description: string | null
+      /**
+       * 分类：reasoning | search | code | vision | audio | cost | context
+       */
+      category: string
+      /**
+       * 路由优先级（数值越高优先级越高）
+       */
+      priority: number
+      /**
+       * 要求的协议类型：openai-compatible | anthropic-native | null
+       */
+      requiredProtocol: string | null
+      /**
+       * 要求的 Skills（JSON 数组）如 ["web_search", "code_runner"]
+       */
+      requiredSkills: Prisma.JsonValue | null
+      /**
+       * 要求的模型列表（JSON 数组）如 ["claude-sonnet-4-*", "gpt-4o"]
+       */
+      requiredModels: Prisma.JsonValue | null
+      /**
+       * 是否要求 Extended Thinking
+       */
+      requiresExtendedThinking: boolean
+      /**
+       * 是否要求 Cache Control
+       */
+      requiresCacheControl: boolean
+      /**
+       * 是否要求视觉能力
+       */
+      requiresVision: boolean
+      /**
+       * 单次请求最大成本约束（美元）
+       */
+      maxCostPerMToken: Prisma.Decimal | null
+      /**
+       * 是否启用
+       */
+      isActive: boolean
+      /**
+       * 是否为内置标签
+       */
+      isBuiltin: boolean
+      isDeleted: boolean
+      createdAt: Date
+      updatedAt: Date
+      deletedAt: Date | null
+    }, ExtArgs["result"]["capabilityTag"]>
+    composites: {}
+  }
+
+  type CapabilityTagGetPayload<S extends boolean | null | undefined | CapabilityTagDefaultArgs> = $Result.GetResult<Prisma.$CapabilityTagPayload, S>
+
+  type CapabilityTagCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CapabilityTagFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CapabilityTagCountAggregateInputType | true
+    }
+
+  export interface CapabilityTagDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CapabilityTag'], meta: { name: 'CapabilityTag' } }
+    /**
+     * Find zero or one CapabilityTag that matches the filter.
+     * @param {CapabilityTagFindUniqueArgs} args - Arguments to find a CapabilityTag
+     * @example
+     * // Get one CapabilityTag
+     * const capabilityTag = await prisma.capabilityTag.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CapabilityTagFindUniqueArgs>(args: SelectSubset<T, CapabilityTagFindUniqueArgs<ExtArgs>>): Prisma__CapabilityTagClient<$Result.GetResult<Prisma.$CapabilityTagPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CapabilityTag that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CapabilityTagFindUniqueOrThrowArgs} args - Arguments to find a CapabilityTag
+     * @example
+     * // Get one CapabilityTag
+     * const capabilityTag = await prisma.capabilityTag.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CapabilityTagFindUniqueOrThrowArgs>(args: SelectSubset<T, CapabilityTagFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CapabilityTagClient<$Result.GetResult<Prisma.$CapabilityTagPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CapabilityTag that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapabilityTagFindFirstArgs} args - Arguments to find a CapabilityTag
+     * @example
+     * // Get one CapabilityTag
+     * const capabilityTag = await prisma.capabilityTag.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CapabilityTagFindFirstArgs>(args?: SelectSubset<T, CapabilityTagFindFirstArgs<ExtArgs>>): Prisma__CapabilityTagClient<$Result.GetResult<Prisma.$CapabilityTagPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CapabilityTag that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapabilityTagFindFirstOrThrowArgs} args - Arguments to find a CapabilityTag
+     * @example
+     * // Get one CapabilityTag
+     * const capabilityTag = await prisma.capabilityTag.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CapabilityTagFindFirstOrThrowArgs>(args?: SelectSubset<T, CapabilityTagFindFirstOrThrowArgs<ExtArgs>>): Prisma__CapabilityTagClient<$Result.GetResult<Prisma.$CapabilityTagPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CapabilityTags that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapabilityTagFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CapabilityTags
+     * const capabilityTags = await prisma.capabilityTag.findMany()
+     * 
+     * // Get first 10 CapabilityTags
+     * const capabilityTags = await prisma.capabilityTag.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const capabilityTagWithIdOnly = await prisma.capabilityTag.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CapabilityTagFindManyArgs>(args?: SelectSubset<T, CapabilityTagFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CapabilityTagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CapabilityTag.
+     * @param {CapabilityTagCreateArgs} args - Arguments to create a CapabilityTag.
+     * @example
+     * // Create one CapabilityTag
+     * const CapabilityTag = await prisma.capabilityTag.create({
+     *   data: {
+     *     // ... data to create a CapabilityTag
+     *   }
+     * })
+     * 
+     */
+    create<T extends CapabilityTagCreateArgs>(args: SelectSubset<T, CapabilityTagCreateArgs<ExtArgs>>): Prisma__CapabilityTagClient<$Result.GetResult<Prisma.$CapabilityTagPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CapabilityTags.
+     * @param {CapabilityTagCreateManyArgs} args - Arguments to create many CapabilityTags.
+     * @example
+     * // Create many CapabilityTags
+     * const capabilityTag = await prisma.capabilityTag.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CapabilityTagCreateManyArgs>(args?: SelectSubset<T, CapabilityTagCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CapabilityTags and returns the data saved in the database.
+     * @param {CapabilityTagCreateManyAndReturnArgs} args - Arguments to create many CapabilityTags.
+     * @example
+     * // Create many CapabilityTags
+     * const capabilityTag = await prisma.capabilityTag.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CapabilityTags and only return the `id`
+     * const capabilityTagWithIdOnly = await prisma.capabilityTag.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CapabilityTagCreateManyAndReturnArgs>(args?: SelectSubset<T, CapabilityTagCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CapabilityTagPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CapabilityTag.
+     * @param {CapabilityTagDeleteArgs} args - Arguments to delete one CapabilityTag.
+     * @example
+     * // Delete one CapabilityTag
+     * const CapabilityTag = await prisma.capabilityTag.delete({
+     *   where: {
+     *     // ... filter to delete one CapabilityTag
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CapabilityTagDeleteArgs>(args: SelectSubset<T, CapabilityTagDeleteArgs<ExtArgs>>): Prisma__CapabilityTagClient<$Result.GetResult<Prisma.$CapabilityTagPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CapabilityTag.
+     * @param {CapabilityTagUpdateArgs} args - Arguments to update one CapabilityTag.
+     * @example
+     * // Update one CapabilityTag
+     * const capabilityTag = await prisma.capabilityTag.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CapabilityTagUpdateArgs>(args: SelectSubset<T, CapabilityTagUpdateArgs<ExtArgs>>): Prisma__CapabilityTagClient<$Result.GetResult<Prisma.$CapabilityTagPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CapabilityTags.
+     * @param {CapabilityTagDeleteManyArgs} args - Arguments to filter CapabilityTags to delete.
+     * @example
+     * // Delete a few CapabilityTags
+     * const { count } = await prisma.capabilityTag.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CapabilityTagDeleteManyArgs>(args?: SelectSubset<T, CapabilityTagDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CapabilityTags.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapabilityTagUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CapabilityTags
+     * const capabilityTag = await prisma.capabilityTag.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CapabilityTagUpdateManyArgs>(args: SelectSubset<T, CapabilityTagUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CapabilityTags and returns the data updated in the database.
+     * @param {CapabilityTagUpdateManyAndReturnArgs} args - Arguments to update many CapabilityTags.
+     * @example
+     * // Update many CapabilityTags
+     * const capabilityTag = await prisma.capabilityTag.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CapabilityTags and only return the `id`
+     * const capabilityTagWithIdOnly = await prisma.capabilityTag.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CapabilityTagUpdateManyAndReturnArgs>(args: SelectSubset<T, CapabilityTagUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CapabilityTagPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CapabilityTag.
+     * @param {CapabilityTagUpsertArgs} args - Arguments to update or create a CapabilityTag.
+     * @example
+     * // Update or create a CapabilityTag
+     * const capabilityTag = await prisma.capabilityTag.upsert({
+     *   create: {
+     *     // ... data to create a CapabilityTag
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CapabilityTag we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CapabilityTagUpsertArgs>(args: SelectSubset<T, CapabilityTagUpsertArgs<ExtArgs>>): Prisma__CapabilityTagClient<$Result.GetResult<Prisma.$CapabilityTagPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CapabilityTags.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapabilityTagCountArgs} args - Arguments to filter CapabilityTags to count.
+     * @example
+     * // Count the number of CapabilityTags
+     * const count = await prisma.capabilityTag.count({
+     *   where: {
+     *     // ... the filter for the CapabilityTags we want to count
+     *   }
+     * })
+    **/
+    count<T extends CapabilityTagCountArgs>(
+      args?: Subset<T, CapabilityTagCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CapabilityTagCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CapabilityTag.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapabilityTagAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CapabilityTagAggregateArgs>(args: Subset<T, CapabilityTagAggregateArgs>): Prisma.PrismaPromise<GetCapabilityTagAggregateType<T>>
+
+    /**
+     * Group by CapabilityTag.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CapabilityTagGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CapabilityTagGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CapabilityTagGroupByArgs['orderBy'] }
+        : { orderBy?: CapabilityTagGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CapabilityTagGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCapabilityTagGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CapabilityTag model
+   */
+  readonly fields: CapabilityTagFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CapabilityTag.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CapabilityTagClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CapabilityTag model
+   */
+  interface CapabilityTagFieldRefs {
+    readonly id: FieldRef<"CapabilityTag", 'String'>
+    readonly tagId: FieldRef<"CapabilityTag", 'String'>
+    readonly name: FieldRef<"CapabilityTag", 'String'>
+    readonly description: FieldRef<"CapabilityTag", 'String'>
+    readonly category: FieldRef<"CapabilityTag", 'String'>
+    readonly priority: FieldRef<"CapabilityTag", 'Int'>
+    readonly requiredProtocol: FieldRef<"CapabilityTag", 'String'>
+    readonly requiredSkills: FieldRef<"CapabilityTag", 'Json'>
+    readonly requiredModels: FieldRef<"CapabilityTag", 'Json'>
+    readonly requiresExtendedThinking: FieldRef<"CapabilityTag", 'Boolean'>
+    readonly requiresCacheControl: FieldRef<"CapabilityTag", 'Boolean'>
+    readonly requiresVision: FieldRef<"CapabilityTag", 'Boolean'>
+    readonly maxCostPerMToken: FieldRef<"CapabilityTag", 'Decimal'>
+    readonly isActive: FieldRef<"CapabilityTag", 'Boolean'>
+    readonly isBuiltin: FieldRef<"CapabilityTag", 'Boolean'>
+    readonly isDeleted: FieldRef<"CapabilityTag", 'Boolean'>
+    readonly createdAt: FieldRef<"CapabilityTag", 'DateTime'>
+    readonly updatedAt: FieldRef<"CapabilityTag", 'DateTime'>
+    readonly deletedAt: FieldRef<"CapabilityTag", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CapabilityTag findUnique
+   */
+  export type CapabilityTagFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CapabilityTag
+     */
+    select?: CapabilityTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CapabilityTag
+     */
+    omit?: CapabilityTagOmit<ExtArgs> | null
+    /**
+     * Filter, which CapabilityTag to fetch.
+     */
+    where: CapabilityTagWhereUniqueInput
+  }
+
+  /**
+   * CapabilityTag findUniqueOrThrow
+   */
+  export type CapabilityTagFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CapabilityTag
+     */
+    select?: CapabilityTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CapabilityTag
+     */
+    omit?: CapabilityTagOmit<ExtArgs> | null
+    /**
+     * Filter, which CapabilityTag to fetch.
+     */
+    where: CapabilityTagWhereUniqueInput
+  }
+
+  /**
+   * CapabilityTag findFirst
+   */
+  export type CapabilityTagFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CapabilityTag
+     */
+    select?: CapabilityTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CapabilityTag
+     */
+    omit?: CapabilityTagOmit<ExtArgs> | null
+    /**
+     * Filter, which CapabilityTag to fetch.
+     */
+    where?: CapabilityTagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CapabilityTags to fetch.
+     */
+    orderBy?: CapabilityTagOrderByWithRelationInput | CapabilityTagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CapabilityTags.
+     */
+    cursor?: CapabilityTagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CapabilityTags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CapabilityTags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CapabilityTags.
+     */
+    distinct?: CapabilityTagScalarFieldEnum | CapabilityTagScalarFieldEnum[]
+  }
+
+  /**
+   * CapabilityTag findFirstOrThrow
+   */
+  export type CapabilityTagFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CapabilityTag
+     */
+    select?: CapabilityTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CapabilityTag
+     */
+    omit?: CapabilityTagOmit<ExtArgs> | null
+    /**
+     * Filter, which CapabilityTag to fetch.
+     */
+    where?: CapabilityTagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CapabilityTags to fetch.
+     */
+    orderBy?: CapabilityTagOrderByWithRelationInput | CapabilityTagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CapabilityTags.
+     */
+    cursor?: CapabilityTagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CapabilityTags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CapabilityTags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CapabilityTags.
+     */
+    distinct?: CapabilityTagScalarFieldEnum | CapabilityTagScalarFieldEnum[]
+  }
+
+  /**
+   * CapabilityTag findMany
+   */
+  export type CapabilityTagFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CapabilityTag
+     */
+    select?: CapabilityTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CapabilityTag
+     */
+    omit?: CapabilityTagOmit<ExtArgs> | null
+    /**
+     * Filter, which CapabilityTags to fetch.
+     */
+    where?: CapabilityTagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CapabilityTags to fetch.
+     */
+    orderBy?: CapabilityTagOrderByWithRelationInput | CapabilityTagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CapabilityTags.
+     */
+    cursor?: CapabilityTagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CapabilityTags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CapabilityTags.
+     */
+    skip?: number
+    distinct?: CapabilityTagScalarFieldEnum | CapabilityTagScalarFieldEnum[]
+  }
+
+  /**
+   * CapabilityTag create
+   */
+  export type CapabilityTagCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CapabilityTag
+     */
+    select?: CapabilityTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CapabilityTag
+     */
+    omit?: CapabilityTagOmit<ExtArgs> | null
+    /**
+     * The data needed to create a CapabilityTag.
+     */
+    data: XOR<CapabilityTagCreateInput, CapabilityTagUncheckedCreateInput>
+  }
+
+  /**
+   * CapabilityTag createMany
+   */
+  export type CapabilityTagCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CapabilityTags.
+     */
+    data: CapabilityTagCreateManyInput | CapabilityTagCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CapabilityTag createManyAndReturn
+   */
+  export type CapabilityTagCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CapabilityTag
+     */
+    select?: CapabilityTagSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CapabilityTag
+     */
+    omit?: CapabilityTagOmit<ExtArgs> | null
+    /**
+     * The data used to create many CapabilityTags.
+     */
+    data: CapabilityTagCreateManyInput | CapabilityTagCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CapabilityTag update
+   */
+  export type CapabilityTagUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CapabilityTag
+     */
+    select?: CapabilityTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CapabilityTag
+     */
+    omit?: CapabilityTagOmit<ExtArgs> | null
+    /**
+     * The data needed to update a CapabilityTag.
+     */
+    data: XOR<CapabilityTagUpdateInput, CapabilityTagUncheckedUpdateInput>
+    /**
+     * Choose, which CapabilityTag to update.
+     */
+    where: CapabilityTagWhereUniqueInput
+  }
+
+  /**
+   * CapabilityTag updateMany
+   */
+  export type CapabilityTagUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CapabilityTags.
+     */
+    data: XOR<CapabilityTagUpdateManyMutationInput, CapabilityTagUncheckedUpdateManyInput>
+    /**
+     * Filter which CapabilityTags to update
+     */
+    where?: CapabilityTagWhereInput
+    /**
+     * Limit how many CapabilityTags to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CapabilityTag updateManyAndReturn
+   */
+  export type CapabilityTagUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CapabilityTag
+     */
+    select?: CapabilityTagSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CapabilityTag
+     */
+    omit?: CapabilityTagOmit<ExtArgs> | null
+    /**
+     * The data used to update CapabilityTags.
+     */
+    data: XOR<CapabilityTagUpdateManyMutationInput, CapabilityTagUncheckedUpdateManyInput>
+    /**
+     * Filter which CapabilityTags to update
+     */
+    where?: CapabilityTagWhereInput
+    /**
+     * Limit how many CapabilityTags to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CapabilityTag upsert
+   */
+  export type CapabilityTagUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CapabilityTag
+     */
+    select?: CapabilityTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CapabilityTag
+     */
+    omit?: CapabilityTagOmit<ExtArgs> | null
+    /**
+     * The filter to search for the CapabilityTag to update in case it exists.
+     */
+    where: CapabilityTagWhereUniqueInput
+    /**
+     * In case the CapabilityTag found by the `where` argument doesn't exist, create a new CapabilityTag with this data.
+     */
+    create: XOR<CapabilityTagCreateInput, CapabilityTagUncheckedCreateInput>
+    /**
+     * In case the CapabilityTag was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CapabilityTagUpdateInput, CapabilityTagUncheckedUpdateInput>
+  }
+
+  /**
+   * CapabilityTag delete
+   */
+  export type CapabilityTagDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CapabilityTag
+     */
+    select?: CapabilityTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CapabilityTag
+     */
+    omit?: CapabilityTagOmit<ExtArgs> | null
+    /**
+     * Filter which CapabilityTag to delete.
+     */
+    where: CapabilityTagWhereUniqueInput
+  }
+
+  /**
+   * CapabilityTag deleteMany
+   */
+  export type CapabilityTagDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CapabilityTags to delete
+     */
+    where?: CapabilityTagWhereInput
+    /**
+     * Limit how many CapabilityTags to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CapabilityTag without action
+   */
+  export type CapabilityTagDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CapabilityTag
+     */
+    select?: CapabilityTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CapabilityTag
+     */
+    omit?: CapabilityTagOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model FallbackChain
+   */
+
+  export type AggregateFallbackChain = {
+    _count: FallbackChainCountAggregateOutputType | null
+    _avg: FallbackChainAvgAggregateOutputType | null
+    _sum: FallbackChainSumAggregateOutputType | null
+    _min: FallbackChainMinAggregateOutputType | null
+    _max: FallbackChainMaxAggregateOutputType | null
+  }
+
+  export type FallbackChainAvgAggregateOutputType = {
+    triggerTimeoutMs: number | null
+    maxRetries: number | null
+    retryDelayMs: number | null
+  }
+
+  export type FallbackChainSumAggregateOutputType = {
+    triggerTimeoutMs: number | null
+    maxRetries: number | null
+    retryDelayMs: number | null
+  }
+
+  export type FallbackChainMinAggregateOutputType = {
+    id: string | null
+    chainId: string | null
+    name: string | null
+    description: string | null
+    triggerTimeoutMs: number | null
+    maxRetries: number | null
+    retryDelayMs: number | null
+    preserveProtocol: boolean | null
+    isActive: boolean | null
+    isBuiltin: boolean | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type FallbackChainMaxAggregateOutputType = {
+    id: string | null
+    chainId: string | null
+    name: string | null
+    description: string | null
+    triggerTimeoutMs: number | null
+    maxRetries: number | null
+    retryDelayMs: number | null
+    preserveProtocol: boolean | null
+    isActive: boolean | null
+    isBuiltin: boolean | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type FallbackChainCountAggregateOutputType = {
+    id: number
+    chainId: number
+    name: number
+    description: number
+    models: number
+    triggerStatusCodes: number
+    triggerErrorTypes: number
+    triggerTimeoutMs: number
+    maxRetries: number
+    retryDelayMs: number
+    preserveProtocol: number
+    isActive: number
+    isBuiltin: number
+    isDeleted: number
+    createdAt: number
+    updatedAt: number
+    deletedAt: number
+    _all: number
+  }
+
+
+  export type FallbackChainAvgAggregateInputType = {
+    triggerTimeoutMs?: true
+    maxRetries?: true
+    retryDelayMs?: true
+  }
+
+  export type FallbackChainSumAggregateInputType = {
+    triggerTimeoutMs?: true
+    maxRetries?: true
+    retryDelayMs?: true
+  }
+
+  export type FallbackChainMinAggregateInputType = {
+    id?: true
+    chainId?: true
+    name?: true
+    description?: true
+    triggerTimeoutMs?: true
+    maxRetries?: true
+    retryDelayMs?: true
+    preserveProtocol?: true
+    isActive?: true
+    isBuiltin?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type FallbackChainMaxAggregateInputType = {
+    id?: true
+    chainId?: true
+    name?: true
+    description?: true
+    triggerTimeoutMs?: true
+    maxRetries?: true
+    retryDelayMs?: true
+    preserveProtocol?: true
+    isActive?: true
+    isBuiltin?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type FallbackChainCountAggregateInputType = {
+    id?: true
+    chainId?: true
+    name?: true
+    description?: true
+    models?: true
+    triggerStatusCodes?: true
+    triggerErrorTypes?: true
+    triggerTimeoutMs?: true
+    maxRetries?: true
+    retryDelayMs?: true
+    preserveProtocol?: true
+    isActive?: true
+    isBuiltin?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+    _all?: true
+  }
+
+  export type FallbackChainAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which FallbackChain to aggregate.
+     */
+    where?: FallbackChainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FallbackChains to fetch.
+     */
+    orderBy?: FallbackChainOrderByWithRelationInput | FallbackChainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: FallbackChainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FallbackChains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FallbackChains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned FallbackChains
+    **/
+    _count?: true | FallbackChainCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: FallbackChainAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: FallbackChainSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: FallbackChainMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: FallbackChainMaxAggregateInputType
+  }
+
+  export type GetFallbackChainAggregateType<T extends FallbackChainAggregateArgs> = {
+        [P in keyof T & keyof AggregateFallbackChain]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateFallbackChain[P]>
+      : GetScalarType<T[P], AggregateFallbackChain[P]>
+  }
+
+
+
+
+  export type FallbackChainGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: FallbackChainWhereInput
+    orderBy?: FallbackChainOrderByWithAggregationInput | FallbackChainOrderByWithAggregationInput[]
+    by: FallbackChainScalarFieldEnum[] | FallbackChainScalarFieldEnum
+    having?: FallbackChainScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: FallbackChainCountAggregateInputType | true
+    _avg?: FallbackChainAvgAggregateInputType
+    _sum?: FallbackChainSumAggregateInputType
+    _min?: FallbackChainMinAggregateInputType
+    _max?: FallbackChainMaxAggregateInputType
+  }
+
+  export type FallbackChainGroupByOutputType = {
+    id: string
+    chainId: string
+    name: string
+    description: string | null
+    models: JsonValue
+    triggerStatusCodes: JsonValue
+    triggerErrorTypes: JsonValue
+    triggerTimeoutMs: number
+    maxRetries: number
+    retryDelayMs: number
+    preserveProtocol: boolean
+    isActive: boolean
+    isBuiltin: boolean
+    isDeleted: boolean
+    createdAt: Date
+    updatedAt: Date
+    deletedAt: Date | null
+    _count: FallbackChainCountAggregateOutputType | null
+    _avg: FallbackChainAvgAggregateOutputType | null
+    _sum: FallbackChainSumAggregateOutputType | null
+    _min: FallbackChainMinAggregateOutputType | null
+    _max: FallbackChainMaxAggregateOutputType | null
+  }
+
+  type GetFallbackChainGroupByPayload<T extends FallbackChainGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<FallbackChainGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof FallbackChainGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], FallbackChainGroupByOutputType[P]>
+            : GetScalarType<T[P], FallbackChainGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type FallbackChainSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    chainId?: boolean
+    name?: boolean
+    description?: boolean
+    models?: boolean
+    triggerStatusCodes?: boolean
+    triggerErrorTypes?: boolean
+    triggerTimeoutMs?: boolean
+    maxRetries?: boolean
+    retryDelayMs?: boolean
+    preserveProtocol?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["fallbackChain"]>
+
+  export type FallbackChainSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    chainId?: boolean
+    name?: boolean
+    description?: boolean
+    models?: boolean
+    triggerStatusCodes?: boolean
+    triggerErrorTypes?: boolean
+    triggerTimeoutMs?: boolean
+    maxRetries?: boolean
+    retryDelayMs?: boolean
+    preserveProtocol?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["fallbackChain"]>
+
+  export type FallbackChainSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    chainId?: boolean
+    name?: boolean
+    description?: boolean
+    models?: boolean
+    triggerStatusCodes?: boolean
+    triggerErrorTypes?: boolean
+    triggerTimeoutMs?: boolean
+    maxRetries?: boolean
+    retryDelayMs?: boolean
+    preserveProtocol?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["fallbackChain"]>
+
+  export type FallbackChainSelectScalar = {
+    id?: boolean
+    chainId?: boolean
+    name?: boolean
+    description?: boolean
+    models?: boolean
+    triggerStatusCodes?: boolean
+    triggerErrorTypes?: boolean
+    triggerTimeoutMs?: boolean
+    maxRetries?: boolean
+    retryDelayMs?: boolean
+    preserveProtocol?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }
+
+  export type FallbackChainOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "chainId" | "name" | "description" | "models" | "triggerStatusCodes" | "triggerErrorTypes" | "triggerTimeoutMs" | "maxRetries" | "retryDelayMs" | "preserveProtocol" | "isActive" | "isBuiltin" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["fallbackChain"]>
+
+  export type $FallbackChainPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "FallbackChain"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      /**
+       * 链标识（如 default, deep-reasoning, cost-optimized）
+       */
+      chainId: string
+      /**
+       * 显示名称
+       */
+      name: string
+      /**
+       * 链描述
+       */
+      description: string | null
+      /**
+       * 模型链配置（JSON 数组，按优先级排序）
+       * [{ vendor: "anthropic", model: "claude-sonnet-4", protocol: "anthropic-native", features: {...} }]
+       */
+      models: Prisma.JsonValue
+      /**
+       * 触发 Fallback 的 HTTP 状态码（JSON 数组）
+       */
+      triggerStatusCodes: Prisma.JsonValue
+      /**
+       * 触发 Fallback 的错误类型（JSON 数组）
+       */
+      triggerErrorTypes: Prisma.JsonValue
+      /**
+       * 触发 Fallback 的超时时间（毫秒）
+       */
+      triggerTimeoutMs: number
+      /**
+       * 最大重试次数
+       */
+      maxRetries: number
+      /**
+       * 重试间隔（毫秒）
+       */
+      retryDelayMs: number
+      /**
+       * 是否保持协议一致（降级时是否允许切换协议）
+       */
+      preserveProtocol: boolean
+      /**
+       * 是否启用
+       */
+      isActive: boolean
+      /**
+       * 是否为内置链
+       */
+      isBuiltin: boolean
+      isDeleted: boolean
+      createdAt: Date
+      updatedAt: Date
+      deletedAt: Date | null
+    }, ExtArgs["result"]["fallbackChain"]>
+    composites: {}
+  }
+
+  type FallbackChainGetPayload<S extends boolean | null | undefined | FallbackChainDefaultArgs> = $Result.GetResult<Prisma.$FallbackChainPayload, S>
+
+  type FallbackChainCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<FallbackChainFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: FallbackChainCountAggregateInputType | true
+    }
+
+  export interface FallbackChainDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['FallbackChain'], meta: { name: 'FallbackChain' } }
+    /**
+     * Find zero or one FallbackChain that matches the filter.
+     * @param {FallbackChainFindUniqueArgs} args - Arguments to find a FallbackChain
+     * @example
+     * // Get one FallbackChain
+     * const fallbackChain = await prisma.fallbackChain.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends FallbackChainFindUniqueArgs>(args: SelectSubset<T, FallbackChainFindUniqueArgs<ExtArgs>>): Prisma__FallbackChainClient<$Result.GetResult<Prisma.$FallbackChainPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one FallbackChain that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {FallbackChainFindUniqueOrThrowArgs} args - Arguments to find a FallbackChain
+     * @example
+     * // Get one FallbackChain
+     * const fallbackChain = await prisma.fallbackChain.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends FallbackChainFindUniqueOrThrowArgs>(args: SelectSubset<T, FallbackChainFindUniqueOrThrowArgs<ExtArgs>>): Prisma__FallbackChainClient<$Result.GetResult<Prisma.$FallbackChainPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first FallbackChain that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FallbackChainFindFirstArgs} args - Arguments to find a FallbackChain
+     * @example
+     * // Get one FallbackChain
+     * const fallbackChain = await prisma.fallbackChain.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends FallbackChainFindFirstArgs>(args?: SelectSubset<T, FallbackChainFindFirstArgs<ExtArgs>>): Prisma__FallbackChainClient<$Result.GetResult<Prisma.$FallbackChainPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first FallbackChain that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FallbackChainFindFirstOrThrowArgs} args - Arguments to find a FallbackChain
+     * @example
+     * // Get one FallbackChain
+     * const fallbackChain = await prisma.fallbackChain.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends FallbackChainFindFirstOrThrowArgs>(args?: SelectSubset<T, FallbackChainFindFirstOrThrowArgs<ExtArgs>>): Prisma__FallbackChainClient<$Result.GetResult<Prisma.$FallbackChainPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more FallbackChains that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FallbackChainFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all FallbackChains
+     * const fallbackChains = await prisma.fallbackChain.findMany()
+     * 
+     * // Get first 10 FallbackChains
+     * const fallbackChains = await prisma.fallbackChain.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const fallbackChainWithIdOnly = await prisma.fallbackChain.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends FallbackChainFindManyArgs>(args?: SelectSubset<T, FallbackChainFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FallbackChainPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a FallbackChain.
+     * @param {FallbackChainCreateArgs} args - Arguments to create a FallbackChain.
+     * @example
+     * // Create one FallbackChain
+     * const FallbackChain = await prisma.fallbackChain.create({
+     *   data: {
+     *     // ... data to create a FallbackChain
+     *   }
+     * })
+     * 
+     */
+    create<T extends FallbackChainCreateArgs>(args: SelectSubset<T, FallbackChainCreateArgs<ExtArgs>>): Prisma__FallbackChainClient<$Result.GetResult<Prisma.$FallbackChainPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many FallbackChains.
+     * @param {FallbackChainCreateManyArgs} args - Arguments to create many FallbackChains.
+     * @example
+     * // Create many FallbackChains
+     * const fallbackChain = await prisma.fallbackChain.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends FallbackChainCreateManyArgs>(args?: SelectSubset<T, FallbackChainCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many FallbackChains and returns the data saved in the database.
+     * @param {FallbackChainCreateManyAndReturnArgs} args - Arguments to create many FallbackChains.
+     * @example
+     * // Create many FallbackChains
+     * const fallbackChain = await prisma.fallbackChain.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many FallbackChains and only return the `id`
+     * const fallbackChainWithIdOnly = await prisma.fallbackChain.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends FallbackChainCreateManyAndReturnArgs>(args?: SelectSubset<T, FallbackChainCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FallbackChainPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a FallbackChain.
+     * @param {FallbackChainDeleteArgs} args - Arguments to delete one FallbackChain.
+     * @example
+     * // Delete one FallbackChain
+     * const FallbackChain = await prisma.fallbackChain.delete({
+     *   where: {
+     *     // ... filter to delete one FallbackChain
+     *   }
+     * })
+     * 
+     */
+    delete<T extends FallbackChainDeleteArgs>(args: SelectSubset<T, FallbackChainDeleteArgs<ExtArgs>>): Prisma__FallbackChainClient<$Result.GetResult<Prisma.$FallbackChainPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one FallbackChain.
+     * @param {FallbackChainUpdateArgs} args - Arguments to update one FallbackChain.
+     * @example
+     * // Update one FallbackChain
+     * const fallbackChain = await prisma.fallbackChain.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends FallbackChainUpdateArgs>(args: SelectSubset<T, FallbackChainUpdateArgs<ExtArgs>>): Prisma__FallbackChainClient<$Result.GetResult<Prisma.$FallbackChainPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more FallbackChains.
+     * @param {FallbackChainDeleteManyArgs} args - Arguments to filter FallbackChains to delete.
+     * @example
+     * // Delete a few FallbackChains
+     * const { count } = await prisma.fallbackChain.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends FallbackChainDeleteManyArgs>(args?: SelectSubset<T, FallbackChainDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more FallbackChains.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FallbackChainUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many FallbackChains
+     * const fallbackChain = await prisma.fallbackChain.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends FallbackChainUpdateManyArgs>(args: SelectSubset<T, FallbackChainUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more FallbackChains and returns the data updated in the database.
+     * @param {FallbackChainUpdateManyAndReturnArgs} args - Arguments to update many FallbackChains.
+     * @example
+     * // Update many FallbackChains
+     * const fallbackChain = await prisma.fallbackChain.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more FallbackChains and only return the `id`
+     * const fallbackChainWithIdOnly = await prisma.fallbackChain.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends FallbackChainUpdateManyAndReturnArgs>(args: SelectSubset<T, FallbackChainUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FallbackChainPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one FallbackChain.
+     * @param {FallbackChainUpsertArgs} args - Arguments to update or create a FallbackChain.
+     * @example
+     * // Update or create a FallbackChain
+     * const fallbackChain = await prisma.fallbackChain.upsert({
+     *   create: {
+     *     // ... data to create a FallbackChain
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the FallbackChain we want to update
+     *   }
+     * })
+     */
+    upsert<T extends FallbackChainUpsertArgs>(args: SelectSubset<T, FallbackChainUpsertArgs<ExtArgs>>): Prisma__FallbackChainClient<$Result.GetResult<Prisma.$FallbackChainPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of FallbackChains.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FallbackChainCountArgs} args - Arguments to filter FallbackChains to count.
+     * @example
+     * // Count the number of FallbackChains
+     * const count = await prisma.fallbackChain.count({
+     *   where: {
+     *     // ... the filter for the FallbackChains we want to count
+     *   }
+     * })
+    **/
+    count<T extends FallbackChainCountArgs>(
+      args?: Subset<T, FallbackChainCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], FallbackChainCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a FallbackChain.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FallbackChainAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends FallbackChainAggregateArgs>(args: Subset<T, FallbackChainAggregateArgs>): Prisma.PrismaPromise<GetFallbackChainAggregateType<T>>
+
+    /**
+     * Group by FallbackChain.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FallbackChainGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends FallbackChainGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: FallbackChainGroupByArgs['orderBy'] }
+        : { orderBy?: FallbackChainGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, FallbackChainGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetFallbackChainGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the FallbackChain model
+   */
+  readonly fields: FallbackChainFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for FallbackChain.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__FallbackChainClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the FallbackChain model
+   */
+  interface FallbackChainFieldRefs {
+    readonly id: FieldRef<"FallbackChain", 'String'>
+    readonly chainId: FieldRef<"FallbackChain", 'String'>
+    readonly name: FieldRef<"FallbackChain", 'String'>
+    readonly description: FieldRef<"FallbackChain", 'String'>
+    readonly models: FieldRef<"FallbackChain", 'Json'>
+    readonly triggerStatusCodes: FieldRef<"FallbackChain", 'Json'>
+    readonly triggerErrorTypes: FieldRef<"FallbackChain", 'Json'>
+    readonly triggerTimeoutMs: FieldRef<"FallbackChain", 'Int'>
+    readonly maxRetries: FieldRef<"FallbackChain", 'Int'>
+    readonly retryDelayMs: FieldRef<"FallbackChain", 'Int'>
+    readonly preserveProtocol: FieldRef<"FallbackChain", 'Boolean'>
+    readonly isActive: FieldRef<"FallbackChain", 'Boolean'>
+    readonly isBuiltin: FieldRef<"FallbackChain", 'Boolean'>
+    readonly isDeleted: FieldRef<"FallbackChain", 'Boolean'>
+    readonly createdAt: FieldRef<"FallbackChain", 'DateTime'>
+    readonly updatedAt: FieldRef<"FallbackChain", 'DateTime'>
+    readonly deletedAt: FieldRef<"FallbackChain", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * FallbackChain findUnique
+   */
+  export type FallbackChainFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FallbackChain
+     */
+    select?: FallbackChainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FallbackChain
+     */
+    omit?: FallbackChainOmit<ExtArgs> | null
+    /**
+     * Filter, which FallbackChain to fetch.
+     */
+    where: FallbackChainWhereUniqueInput
+  }
+
+  /**
+   * FallbackChain findUniqueOrThrow
+   */
+  export type FallbackChainFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FallbackChain
+     */
+    select?: FallbackChainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FallbackChain
+     */
+    omit?: FallbackChainOmit<ExtArgs> | null
+    /**
+     * Filter, which FallbackChain to fetch.
+     */
+    where: FallbackChainWhereUniqueInput
+  }
+
+  /**
+   * FallbackChain findFirst
+   */
+  export type FallbackChainFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FallbackChain
+     */
+    select?: FallbackChainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FallbackChain
+     */
+    omit?: FallbackChainOmit<ExtArgs> | null
+    /**
+     * Filter, which FallbackChain to fetch.
+     */
+    where?: FallbackChainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FallbackChains to fetch.
+     */
+    orderBy?: FallbackChainOrderByWithRelationInput | FallbackChainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for FallbackChains.
+     */
+    cursor?: FallbackChainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FallbackChains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FallbackChains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FallbackChains.
+     */
+    distinct?: FallbackChainScalarFieldEnum | FallbackChainScalarFieldEnum[]
+  }
+
+  /**
+   * FallbackChain findFirstOrThrow
+   */
+  export type FallbackChainFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FallbackChain
+     */
+    select?: FallbackChainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FallbackChain
+     */
+    omit?: FallbackChainOmit<ExtArgs> | null
+    /**
+     * Filter, which FallbackChain to fetch.
+     */
+    where?: FallbackChainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FallbackChains to fetch.
+     */
+    orderBy?: FallbackChainOrderByWithRelationInput | FallbackChainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for FallbackChains.
+     */
+    cursor?: FallbackChainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FallbackChains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FallbackChains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FallbackChains.
+     */
+    distinct?: FallbackChainScalarFieldEnum | FallbackChainScalarFieldEnum[]
+  }
+
+  /**
+   * FallbackChain findMany
+   */
+  export type FallbackChainFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FallbackChain
+     */
+    select?: FallbackChainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FallbackChain
+     */
+    omit?: FallbackChainOmit<ExtArgs> | null
+    /**
+     * Filter, which FallbackChains to fetch.
+     */
+    where?: FallbackChainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FallbackChains to fetch.
+     */
+    orderBy?: FallbackChainOrderByWithRelationInput | FallbackChainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing FallbackChains.
+     */
+    cursor?: FallbackChainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FallbackChains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FallbackChains.
+     */
+    skip?: number
+    distinct?: FallbackChainScalarFieldEnum | FallbackChainScalarFieldEnum[]
+  }
+
+  /**
+   * FallbackChain create
+   */
+  export type FallbackChainCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FallbackChain
+     */
+    select?: FallbackChainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FallbackChain
+     */
+    omit?: FallbackChainOmit<ExtArgs> | null
+    /**
+     * The data needed to create a FallbackChain.
+     */
+    data: XOR<FallbackChainCreateInput, FallbackChainUncheckedCreateInput>
+  }
+
+  /**
+   * FallbackChain createMany
+   */
+  export type FallbackChainCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many FallbackChains.
+     */
+    data: FallbackChainCreateManyInput | FallbackChainCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * FallbackChain createManyAndReturn
+   */
+  export type FallbackChainCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FallbackChain
+     */
+    select?: FallbackChainSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the FallbackChain
+     */
+    omit?: FallbackChainOmit<ExtArgs> | null
+    /**
+     * The data used to create many FallbackChains.
+     */
+    data: FallbackChainCreateManyInput | FallbackChainCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * FallbackChain update
+   */
+  export type FallbackChainUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FallbackChain
+     */
+    select?: FallbackChainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FallbackChain
+     */
+    omit?: FallbackChainOmit<ExtArgs> | null
+    /**
+     * The data needed to update a FallbackChain.
+     */
+    data: XOR<FallbackChainUpdateInput, FallbackChainUncheckedUpdateInput>
+    /**
+     * Choose, which FallbackChain to update.
+     */
+    where: FallbackChainWhereUniqueInput
+  }
+
+  /**
+   * FallbackChain updateMany
+   */
+  export type FallbackChainUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update FallbackChains.
+     */
+    data: XOR<FallbackChainUpdateManyMutationInput, FallbackChainUncheckedUpdateManyInput>
+    /**
+     * Filter which FallbackChains to update
+     */
+    where?: FallbackChainWhereInput
+    /**
+     * Limit how many FallbackChains to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * FallbackChain updateManyAndReturn
+   */
+  export type FallbackChainUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FallbackChain
+     */
+    select?: FallbackChainSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the FallbackChain
+     */
+    omit?: FallbackChainOmit<ExtArgs> | null
+    /**
+     * The data used to update FallbackChains.
+     */
+    data: XOR<FallbackChainUpdateManyMutationInput, FallbackChainUncheckedUpdateManyInput>
+    /**
+     * Filter which FallbackChains to update
+     */
+    where?: FallbackChainWhereInput
+    /**
+     * Limit how many FallbackChains to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * FallbackChain upsert
+   */
+  export type FallbackChainUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FallbackChain
+     */
+    select?: FallbackChainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FallbackChain
+     */
+    omit?: FallbackChainOmit<ExtArgs> | null
+    /**
+     * The filter to search for the FallbackChain to update in case it exists.
+     */
+    where: FallbackChainWhereUniqueInput
+    /**
+     * In case the FallbackChain found by the `where` argument doesn't exist, create a new FallbackChain with this data.
+     */
+    create: XOR<FallbackChainCreateInput, FallbackChainUncheckedCreateInput>
+    /**
+     * In case the FallbackChain was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<FallbackChainUpdateInput, FallbackChainUncheckedUpdateInput>
+  }
+
+  /**
+   * FallbackChain delete
+   */
+  export type FallbackChainDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FallbackChain
+     */
+    select?: FallbackChainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FallbackChain
+     */
+    omit?: FallbackChainOmit<ExtArgs> | null
+    /**
+     * Filter which FallbackChain to delete.
+     */
+    where: FallbackChainWhereUniqueInput
+  }
+
+  /**
+   * FallbackChain deleteMany
+   */
+  export type FallbackChainDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which FallbackChains to delete
+     */
+    where?: FallbackChainWhereInput
+    /**
+     * Limit how many FallbackChains to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * FallbackChain without action
+   */
+  export type FallbackChainDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FallbackChain
+     */
+    select?: FallbackChainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FallbackChain
+     */
+    omit?: FallbackChainOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CostStrategy
+   */
+
+  export type AggregateCostStrategy = {
+    _count: CostStrategyCountAggregateOutputType | null
+    _avg: CostStrategyAvgAggregateOutputType | null
+    _sum: CostStrategySumAggregateOutputType | null
+    _min: CostStrategyMinAggregateOutputType | null
+    _max: CostStrategyMaxAggregateOutputType | null
+  }
+
+  export type CostStrategyAvgAggregateOutputType = {
+    costWeight: Decimal | null
+    performanceWeight: Decimal | null
+    capabilityWeight: Decimal | null
+    maxCostPerRequest: Decimal | null
+    maxLatencyMs: number | null
+    minCapabilityScore: number | null
+  }
+
+  export type CostStrategySumAggregateOutputType = {
+    costWeight: Decimal | null
+    performanceWeight: Decimal | null
+    capabilityWeight: Decimal | null
+    maxCostPerRequest: Decimal | null
+    maxLatencyMs: number | null
+    minCapabilityScore: number | null
+  }
+
+  export type CostStrategyMinAggregateOutputType = {
+    id: string | null
+    strategyId: string | null
+    name: string | null
+    description: string | null
+    costWeight: Decimal | null
+    performanceWeight: Decimal | null
+    capabilityWeight: Decimal | null
+    maxCostPerRequest: Decimal | null
+    maxLatencyMs: number | null
+    minCapabilityScore: number | null
+    isActive: boolean | null
+    isBuiltin: boolean | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type CostStrategyMaxAggregateOutputType = {
+    id: string | null
+    strategyId: string | null
+    name: string | null
+    description: string | null
+    costWeight: Decimal | null
+    performanceWeight: Decimal | null
+    capabilityWeight: Decimal | null
+    maxCostPerRequest: Decimal | null
+    maxLatencyMs: number | null
+    minCapabilityScore: number | null
+    isActive: boolean | null
+    isBuiltin: boolean | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    deletedAt: Date | null
+  }
+
+  export type CostStrategyCountAggregateOutputType = {
+    id: number
+    strategyId: number
+    name: number
+    description: number
+    costWeight: number
+    performanceWeight: number
+    capabilityWeight: number
+    maxCostPerRequest: number
+    maxLatencyMs: number
+    minCapabilityScore: number
+    scenarioWeights: number
+    isActive: number
+    isBuiltin: number
+    isDeleted: number
+    createdAt: number
+    updatedAt: number
+    deletedAt: number
+    _all: number
+  }
+
+
+  export type CostStrategyAvgAggregateInputType = {
+    costWeight?: true
+    performanceWeight?: true
+    capabilityWeight?: true
+    maxCostPerRequest?: true
+    maxLatencyMs?: true
+    minCapabilityScore?: true
+  }
+
+  export type CostStrategySumAggregateInputType = {
+    costWeight?: true
+    performanceWeight?: true
+    capabilityWeight?: true
+    maxCostPerRequest?: true
+    maxLatencyMs?: true
+    minCapabilityScore?: true
+  }
+
+  export type CostStrategyMinAggregateInputType = {
+    id?: true
+    strategyId?: true
+    name?: true
+    description?: true
+    costWeight?: true
+    performanceWeight?: true
+    capabilityWeight?: true
+    maxCostPerRequest?: true
+    maxLatencyMs?: true
+    minCapabilityScore?: true
+    isActive?: true
+    isBuiltin?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type CostStrategyMaxAggregateInputType = {
+    id?: true
+    strategyId?: true
+    name?: true
+    description?: true
+    costWeight?: true
+    performanceWeight?: true
+    capabilityWeight?: true
+    maxCostPerRequest?: true
+    maxLatencyMs?: true
+    minCapabilityScore?: true
+    isActive?: true
+    isBuiltin?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+  }
+
+  export type CostStrategyCountAggregateInputType = {
+    id?: true
+    strategyId?: true
+    name?: true
+    description?: true
+    costWeight?: true
+    performanceWeight?: true
+    capabilityWeight?: true
+    maxCostPerRequest?: true
+    maxLatencyMs?: true
+    minCapabilityScore?: true
+    scenarioWeights?: true
+    isActive?: true
+    isBuiltin?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    deletedAt?: true
+    _all?: true
+  }
+
+  export type CostStrategyAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CostStrategy to aggregate.
+     */
+    where?: CostStrategyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CostStrategies to fetch.
+     */
+    orderBy?: CostStrategyOrderByWithRelationInput | CostStrategyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CostStrategyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CostStrategies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CostStrategies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CostStrategies
+    **/
+    _count?: true | CostStrategyCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CostStrategyAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CostStrategySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CostStrategyMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CostStrategyMaxAggregateInputType
+  }
+
+  export type GetCostStrategyAggregateType<T extends CostStrategyAggregateArgs> = {
+        [P in keyof T & keyof AggregateCostStrategy]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCostStrategy[P]>
+      : GetScalarType<T[P], AggregateCostStrategy[P]>
+  }
+
+
+
+
+  export type CostStrategyGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CostStrategyWhereInput
+    orderBy?: CostStrategyOrderByWithAggregationInput | CostStrategyOrderByWithAggregationInput[]
+    by: CostStrategyScalarFieldEnum[] | CostStrategyScalarFieldEnum
+    having?: CostStrategyScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CostStrategyCountAggregateInputType | true
+    _avg?: CostStrategyAvgAggregateInputType
+    _sum?: CostStrategySumAggregateInputType
+    _min?: CostStrategyMinAggregateInputType
+    _max?: CostStrategyMaxAggregateInputType
+  }
+
+  export type CostStrategyGroupByOutputType = {
+    id: string
+    strategyId: string
+    name: string
+    description: string | null
+    costWeight: Decimal
+    performanceWeight: Decimal
+    capabilityWeight: Decimal
+    maxCostPerRequest: Decimal | null
+    maxLatencyMs: number | null
+    minCapabilityScore: number | null
+    scenarioWeights: JsonValue | null
+    isActive: boolean
+    isBuiltin: boolean
+    isDeleted: boolean
+    createdAt: Date
+    updatedAt: Date
+    deletedAt: Date | null
+    _count: CostStrategyCountAggregateOutputType | null
+    _avg: CostStrategyAvgAggregateOutputType | null
+    _sum: CostStrategySumAggregateOutputType | null
+    _min: CostStrategyMinAggregateOutputType | null
+    _max: CostStrategyMaxAggregateOutputType | null
+  }
+
+  type GetCostStrategyGroupByPayload<T extends CostStrategyGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CostStrategyGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CostStrategyGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CostStrategyGroupByOutputType[P]>
+            : GetScalarType<T[P], CostStrategyGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CostStrategySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    strategyId?: boolean
+    name?: boolean
+    description?: boolean
+    costWeight?: boolean
+    performanceWeight?: boolean
+    capabilityWeight?: boolean
+    maxCostPerRequest?: boolean
+    maxLatencyMs?: boolean
+    minCapabilityScore?: boolean
+    scenarioWeights?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["costStrategy"]>
+
+  export type CostStrategySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    strategyId?: boolean
+    name?: boolean
+    description?: boolean
+    costWeight?: boolean
+    performanceWeight?: boolean
+    capabilityWeight?: boolean
+    maxCostPerRequest?: boolean
+    maxLatencyMs?: boolean
+    minCapabilityScore?: boolean
+    scenarioWeights?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["costStrategy"]>
+
+  export type CostStrategySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    strategyId?: boolean
+    name?: boolean
+    description?: boolean
+    costWeight?: boolean
+    performanceWeight?: boolean
+    capabilityWeight?: boolean
+    maxCostPerRequest?: boolean
+    maxLatencyMs?: boolean
+    minCapabilityScore?: boolean
+    scenarioWeights?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }, ExtArgs["result"]["costStrategy"]>
+
+  export type CostStrategySelectScalar = {
+    id?: boolean
+    strategyId?: boolean
+    name?: boolean
+    description?: boolean
+    costWeight?: boolean
+    performanceWeight?: boolean
+    capabilityWeight?: boolean
+    maxCostPerRequest?: boolean
+    maxLatencyMs?: boolean
+    minCapabilityScore?: boolean
+    scenarioWeights?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+  }
+
+  export type CostStrategyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "strategyId" | "name" | "description" | "costWeight" | "performanceWeight" | "capabilityWeight" | "maxCostPerRequest" | "maxLatencyMs" | "minCapabilityScore" | "scenarioWeights" | "isActive" | "isBuiltin" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["costStrategy"]>
+
+  export type $CostStrategyPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CostStrategy"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      /**
+       * 策略标识（如 lowest-cost, best-value, performance-first, balanced）
+       */
+      strategyId: string
+      /**
+       * 显示名称
+       */
+      name: string
+      /**
+       * 策略描述
+       */
+      description: string | null
+      /**
+       * 成本权重
+       */
+      costWeight: Prisma.Decimal
+      /**
+       * 性能权重
+       */
+      performanceWeight: Prisma.Decimal
+      /**
+       * 能力权重
+       */
+      capabilityWeight: Prisma.Decimal
+      /**
+       * 单次请求最大成本（美元）
+       */
+      maxCostPerRequest: Prisma.Decimal | null
+      /**
+       * 最大延迟（毫秒）
+       */
+      maxLatencyMs: number | null
+      /**
+       * 最低能力评分
+       */
+      minCapabilityScore: number | null
+      /**
+       * 场景权重配置（JSON）
+       * { "reasoning": 0.5, "coding": 0.3, "creativity": 0.2, "speed": 0.5 }
+       */
+      scenarioWeights: Prisma.JsonValue | null
+      /**
+       * 是否启用
+       */
+      isActive: boolean
+      /**
+       * 是否为内置策略
+       */
+      isBuiltin: boolean
+      isDeleted: boolean
+      createdAt: Date
+      updatedAt: Date
+      deletedAt: Date | null
+    }, ExtArgs["result"]["costStrategy"]>
+    composites: {}
+  }
+
+  type CostStrategyGetPayload<S extends boolean | null | undefined | CostStrategyDefaultArgs> = $Result.GetResult<Prisma.$CostStrategyPayload, S>
+
+  type CostStrategyCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CostStrategyFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CostStrategyCountAggregateInputType | true
+    }
+
+  export interface CostStrategyDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CostStrategy'], meta: { name: 'CostStrategy' } }
+    /**
+     * Find zero or one CostStrategy that matches the filter.
+     * @param {CostStrategyFindUniqueArgs} args - Arguments to find a CostStrategy
+     * @example
+     * // Get one CostStrategy
+     * const costStrategy = await prisma.costStrategy.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CostStrategyFindUniqueArgs>(args: SelectSubset<T, CostStrategyFindUniqueArgs<ExtArgs>>): Prisma__CostStrategyClient<$Result.GetResult<Prisma.$CostStrategyPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CostStrategy that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CostStrategyFindUniqueOrThrowArgs} args - Arguments to find a CostStrategy
+     * @example
+     * // Get one CostStrategy
+     * const costStrategy = await prisma.costStrategy.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CostStrategyFindUniqueOrThrowArgs>(args: SelectSubset<T, CostStrategyFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CostStrategyClient<$Result.GetResult<Prisma.$CostStrategyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CostStrategy that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CostStrategyFindFirstArgs} args - Arguments to find a CostStrategy
+     * @example
+     * // Get one CostStrategy
+     * const costStrategy = await prisma.costStrategy.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CostStrategyFindFirstArgs>(args?: SelectSubset<T, CostStrategyFindFirstArgs<ExtArgs>>): Prisma__CostStrategyClient<$Result.GetResult<Prisma.$CostStrategyPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CostStrategy that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CostStrategyFindFirstOrThrowArgs} args - Arguments to find a CostStrategy
+     * @example
+     * // Get one CostStrategy
+     * const costStrategy = await prisma.costStrategy.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CostStrategyFindFirstOrThrowArgs>(args?: SelectSubset<T, CostStrategyFindFirstOrThrowArgs<ExtArgs>>): Prisma__CostStrategyClient<$Result.GetResult<Prisma.$CostStrategyPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CostStrategies that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CostStrategyFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CostStrategies
+     * const costStrategies = await prisma.costStrategy.findMany()
+     * 
+     * // Get first 10 CostStrategies
+     * const costStrategies = await prisma.costStrategy.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const costStrategyWithIdOnly = await prisma.costStrategy.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CostStrategyFindManyArgs>(args?: SelectSubset<T, CostStrategyFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CostStrategyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CostStrategy.
+     * @param {CostStrategyCreateArgs} args - Arguments to create a CostStrategy.
+     * @example
+     * // Create one CostStrategy
+     * const CostStrategy = await prisma.costStrategy.create({
+     *   data: {
+     *     // ... data to create a CostStrategy
+     *   }
+     * })
+     * 
+     */
+    create<T extends CostStrategyCreateArgs>(args: SelectSubset<T, CostStrategyCreateArgs<ExtArgs>>): Prisma__CostStrategyClient<$Result.GetResult<Prisma.$CostStrategyPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CostStrategies.
+     * @param {CostStrategyCreateManyArgs} args - Arguments to create many CostStrategies.
+     * @example
+     * // Create many CostStrategies
+     * const costStrategy = await prisma.costStrategy.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CostStrategyCreateManyArgs>(args?: SelectSubset<T, CostStrategyCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CostStrategies and returns the data saved in the database.
+     * @param {CostStrategyCreateManyAndReturnArgs} args - Arguments to create many CostStrategies.
+     * @example
+     * // Create many CostStrategies
+     * const costStrategy = await prisma.costStrategy.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CostStrategies and only return the `id`
+     * const costStrategyWithIdOnly = await prisma.costStrategy.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CostStrategyCreateManyAndReturnArgs>(args?: SelectSubset<T, CostStrategyCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CostStrategyPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CostStrategy.
+     * @param {CostStrategyDeleteArgs} args - Arguments to delete one CostStrategy.
+     * @example
+     * // Delete one CostStrategy
+     * const CostStrategy = await prisma.costStrategy.delete({
+     *   where: {
+     *     // ... filter to delete one CostStrategy
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CostStrategyDeleteArgs>(args: SelectSubset<T, CostStrategyDeleteArgs<ExtArgs>>): Prisma__CostStrategyClient<$Result.GetResult<Prisma.$CostStrategyPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CostStrategy.
+     * @param {CostStrategyUpdateArgs} args - Arguments to update one CostStrategy.
+     * @example
+     * // Update one CostStrategy
+     * const costStrategy = await prisma.costStrategy.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CostStrategyUpdateArgs>(args: SelectSubset<T, CostStrategyUpdateArgs<ExtArgs>>): Prisma__CostStrategyClient<$Result.GetResult<Prisma.$CostStrategyPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CostStrategies.
+     * @param {CostStrategyDeleteManyArgs} args - Arguments to filter CostStrategies to delete.
+     * @example
+     * // Delete a few CostStrategies
+     * const { count } = await prisma.costStrategy.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CostStrategyDeleteManyArgs>(args?: SelectSubset<T, CostStrategyDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CostStrategies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CostStrategyUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CostStrategies
+     * const costStrategy = await prisma.costStrategy.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CostStrategyUpdateManyArgs>(args: SelectSubset<T, CostStrategyUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CostStrategies and returns the data updated in the database.
+     * @param {CostStrategyUpdateManyAndReturnArgs} args - Arguments to update many CostStrategies.
+     * @example
+     * // Update many CostStrategies
+     * const costStrategy = await prisma.costStrategy.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CostStrategies and only return the `id`
+     * const costStrategyWithIdOnly = await prisma.costStrategy.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CostStrategyUpdateManyAndReturnArgs>(args: SelectSubset<T, CostStrategyUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CostStrategyPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CostStrategy.
+     * @param {CostStrategyUpsertArgs} args - Arguments to update or create a CostStrategy.
+     * @example
+     * // Update or create a CostStrategy
+     * const costStrategy = await prisma.costStrategy.upsert({
+     *   create: {
+     *     // ... data to create a CostStrategy
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CostStrategy we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CostStrategyUpsertArgs>(args: SelectSubset<T, CostStrategyUpsertArgs<ExtArgs>>): Prisma__CostStrategyClient<$Result.GetResult<Prisma.$CostStrategyPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CostStrategies.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CostStrategyCountArgs} args - Arguments to filter CostStrategies to count.
+     * @example
+     * // Count the number of CostStrategies
+     * const count = await prisma.costStrategy.count({
+     *   where: {
+     *     // ... the filter for the CostStrategies we want to count
+     *   }
+     * })
+    **/
+    count<T extends CostStrategyCountArgs>(
+      args?: Subset<T, CostStrategyCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CostStrategyCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CostStrategy.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CostStrategyAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CostStrategyAggregateArgs>(args: Subset<T, CostStrategyAggregateArgs>): Prisma.PrismaPromise<GetCostStrategyAggregateType<T>>
+
+    /**
+     * Group by CostStrategy.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CostStrategyGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CostStrategyGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CostStrategyGroupByArgs['orderBy'] }
+        : { orderBy?: CostStrategyGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CostStrategyGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCostStrategyGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CostStrategy model
+   */
+  readonly fields: CostStrategyFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CostStrategy.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CostStrategyClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CostStrategy model
+   */
+  interface CostStrategyFieldRefs {
+    readonly id: FieldRef<"CostStrategy", 'String'>
+    readonly strategyId: FieldRef<"CostStrategy", 'String'>
+    readonly name: FieldRef<"CostStrategy", 'String'>
+    readonly description: FieldRef<"CostStrategy", 'String'>
+    readonly costWeight: FieldRef<"CostStrategy", 'Decimal'>
+    readonly performanceWeight: FieldRef<"CostStrategy", 'Decimal'>
+    readonly capabilityWeight: FieldRef<"CostStrategy", 'Decimal'>
+    readonly maxCostPerRequest: FieldRef<"CostStrategy", 'Decimal'>
+    readonly maxLatencyMs: FieldRef<"CostStrategy", 'Int'>
+    readonly minCapabilityScore: FieldRef<"CostStrategy", 'Int'>
+    readonly scenarioWeights: FieldRef<"CostStrategy", 'Json'>
+    readonly isActive: FieldRef<"CostStrategy", 'Boolean'>
+    readonly isBuiltin: FieldRef<"CostStrategy", 'Boolean'>
+    readonly isDeleted: FieldRef<"CostStrategy", 'Boolean'>
+    readonly createdAt: FieldRef<"CostStrategy", 'DateTime'>
+    readonly updatedAt: FieldRef<"CostStrategy", 'DateTime'>
+    readonly deletedAt: FieldRef<"CostStrategy", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CostStrategy findUnique
+   */
+  export type CostStrategyFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CostStrategy
+     */
+    select?: CostStrategySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CostStrategy
+     */
+    omit?: CostStrategyOmit<ExtArgs> | null
+    /**
+     * Filter, which CostStrategy to fetch.
+     */
+    where: CostStrategyWhereUniqueInput
+  }
+
+  /**
+   * CostStrategy findUniqueOrThrow
+   */
+  export type CostStrategyFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CostStrategy
+     */
+    select?: CostStrategySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CostStrategy
+     */
+    omit?: CostStrategyOmit<ExtArgs> | null
+    /**
+     * Filter, which CostStrategy to fetch.
+     */
+    where: CostStrategyWhereUniqueInput
+  }
+
+  /**
+   * CostStrategy findFirst
+   */
+  export type CostStrategyFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CostStrategy
+     */
+    select?: CostStrategySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CostStrategy
+     */
+    omit?: CostStrategyOmit<ExtArgs> | null
+    /**
+     * Filter, which CostStrategy to fetch.
+     */
+    where?: CostStrategyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CostStrategies to fetch.
+     */
+    orderBy?: CostStrategyOrderByWithRelationInput | CostStrategyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CostStrategies.
+     */
+    cursor?: CostStrategyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CostStrategies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CostStrategies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CostStrategies.
+     */
+    distinct?: CostStrategyScalarFieldEnum | CostStrategyScalarFieldEnum[]
+  }
+
+  /**
+   * CostStrategy findFirstOrThrow
+   */
+  export type CostStrategyFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CostStrategy
+     */
+    select?: CostStrategySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CostStrategy
+     */
+    omit?: CostStrategyOmit<ExtArgs> | null
+    /**
+     * Filter, which CostStrategy to fetch.
+     */
+    where?: CostStrategyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CostStrategies to fetch.
+     */
+    orderBy?: CostStrategyOrderByWithRelationInput | CostStrategyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CostStrategies.
+     */
+    cursor?: CostStrategyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CostStrategies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CostStrategies.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CostStrategies.
+     */
+    distinct?: CostStrategyScalarFieldEnum | CostStrategyScalarFieldEnum[]
+  }
+
+  /**
+   * CostStrategy findMany
+   */
+  export type CostStrategyFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CostStrategy
+     */
+    select?: CostStrategySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CostStrategy
+     */
+    omit?: CostStrategyOmit<ExtArgs> | null
+    /**
+     * Filter, which CostStrategies to fetch.
+     */
+    where?: CostStrategyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CostStrategies to fetch.
+     */
+    orderBy?: CostStrategyOrderByWithRelationInput | CostStrategyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CostStrategies.
+     */
+    cursor?: CostStrategyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CostStrategies from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CostStrategies.
+     */
+    skip?: number
+    distinct?: CostStrategyScalarFieldEnum | CostStrategyScalarFieldEnum[]
+  }
+
+  /**
+   * CostStrategy create
+   */
+  export type CostStrategyCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CostStrategy
+     */
+    select?: CostStrategySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CostStrategy
+     */
+    omit?: CostStrategyOmit<ExtArgs> | null
+    /**
+     * The data needed to create a CostStrategy.
+     */
+    data: XOR<CostStrategyCreateInput, CostStrategyUncheckedCreateInput>
+  }
+
+  /**
+   * CostStrategy createMany
+   */
+  export type CostStrategyCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CostStrategies.
+     */
+    data: CostStrategyCreateManyInput | CostStrategyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CostStrategy createManyAndReturn
+   */
+  export type CostStrategyCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CostStrategy
+     */
+    select?: CostStrategySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CostStrategy
+     */
+    omit?: CostStrategyOmit<ExtArgs> | null
+    /**
+     * The data used to create many CostStrategies.
+     */
+    data: CostStrategyCreateManyInput | CostStrategyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CostStrategy update
+   */
+  export type CostStrategyUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CostStrategy
+     */
+    select?: CostStrategySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CostStrategy
+     */
+    omit?: CostStrategyOmit<ExtArgs> | null
+    /**
+     * The data needed to update a CostStrategy.
+     */
+    data: XOR<CostStrategyUpdateInput, CostStrategyUncheckedUpdateInput>
+    /**
+     * Choose, which CostStrategy to update.
+     */
+    where: CostStrategyWhereUniqueInput
+  }
+
+  /**
+   * CostStrategy updateMany
+   */
+  export type CostStrategyUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CostStrategies.
+     */
+    data: XOR<CostStrategyUpdateManyMutationInput, CostStrategyUncheckedUpdateManyInput>
+    /**
+     * Filter which CostStrategies to update
+     */
+    where?: CostStrategyWhereInput
+    /**
+     * Limit how many CostStrategies to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CostStrategy updateManyAndReturn
+   */
+  export type CostStrategyUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CostStrategy
+     */
+    select?: CostStrategySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CostStrategy
+     */
+    omit?: CostStrategyOmit<ExtArgs> | null
+    /**
+     * The data used to update CostStrategies.
+     */
+    data: XOR<CostStrategyUpdateManyMutationInput, CostStrategyUncheckedUpdateManyInput>
+    /**
+     * Filter which CostStrategies to update
+     */
+    where?: CostStrategyWhereInput
+    /**
+     * Limit how many CostStrategies to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CostStrategy upsert
+   */
+  export type CostStrategyUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CostStrategy
+     */
+    select?: CostStrategySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CostStrategy
+     */
+    omit?: CostStrategyOmit<ExtArgs> | null
+    /**
+     * The filter to search for the CostStrategy to update in case it exists.
+     */
+    where: CostStrategyWhereUniqueInput
+    /**
+     * In case the CostStrategy found by the `where` argument doesn't exist, create a new CostStrategy with this data.
+     */
+    create: XOR<CostStrategyCreateInput, CostStrategyUncheckedCreateInput>
+    /**
+     * In case the CostStrategy was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CostStrategyUpdateInput, CostStrategyUncheckedUpdateInput>
+  }
+
+  /**
+   * CostStrategy delete
+   */
+  export type CostStrategyDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CostStrategy
+     */
+    select?: CostStrategySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CostStrategy
+     */
+    omit?: CostStrategyOmit<ExtArgs> | null
+    /**
+     * Filter which CostStrategy to delete.
+     */
+    where: CostStrategyWhereUniqueInput
+  }
+
+  /**
+   * CostStrategy deleteMany
+   */
+  export type CostStrategyDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CostStrategies to delete
+     */
+    where?: CostStrategyWhereInput
+    /**
+     * Limit how many CostStrategies to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CostStrategy without action
+   */
+  export type CostStrategyDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CostStrategy
+     */
+    select?: CostStrategySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CostStrategy
+     */
+    omit?: CostStrategyOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BotRoutingConfig
+   */
+
+  export type AggregateBotRoutingConfig = {
+    _count: BotRoutingConfigCountAggregateOutputType | null
+    _avg: BotRoutingConfigAvgAggregateOutputType | null
+    _sum: BotRoutingConfigSumAggregateOutputType | null
+    _min: BotRoutingConfigMinAggregateOutputType | null
+    _max: BotRoutingConfigMaxAggregateOutputType | null
+  }
+
+  export type BotRoutingConfigAvgAggregateOutputType = {
+    dailyBudget: Decimal | null
+    monthlyBudget: Decimal | null
+    alertThreshold: Decimal | null
+  }
+
+  export type BotRoutingConfigSumAggregateOutputType = {
+    dailyBudget: Decimal | null
+    monthlyBudget: Decimal | null
+    alertThreshold: Decimal | null
+  }
+
+  export type BotRoutingConfigMinAggregateOutputType = {
+    id: string | null
+    botId: string | null
+    routingEnabled: boolean | null
+    routingMode: string | null
+    fallbackEnabled: boolean | null
+    fallbackChainId: string | null
+    costControlEnabled: boolean | null
+    costStrategyId: string | null
+    dailyBudget: Decimal | null
+    monthlyBudget: Decimal | null
+    alertThreshold: Decimal | null
+    autoDowngrade: boolean | null
+    downgradeModel: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BotRoutingConfigMaxAggregateOutputType = {
+    id: string | null
+    botId: string | null
+    routingEnabled: boolean | null
+    routingMode: string | null
+    fallbackEnabled: boolean | null
+    fallbackChainId: string | null
+    costControlEnabled: boolean | null
+    costStrategyId: string | null
+    dailyBudget: Decimal | null
+    monthlyBudget: Decimal | null
+    alertThreshold: Decimal | null
+    autoDowngrade: boolean | null
+    downgradeModel: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BotRoutingConfigCountAggregateOutputType = {
+    id: number
+    botId: number
+    routingEnabled: number
+    routingMode: number
+    fallbackEnabled: number
+    fallbackChainId: number
+    costControlEnabled: number
+    costStrategyId: number
+    dailyBudget: number
+    monthlyBudget: number
+    alertThreshold: number
+    autoDowngrade: number
+    downgradeModel: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type BotRoutingConfigAvgAggregateInputType = {
+    dailyBudget?: true
+    monthlyBudget?: true
+    alertThreshold?: true
+  }
+
+  export type BotRoutingConfigSumAggregateInputType = {
+    dailyBudget?: true
+    monthlyBudget?: true
+    alertThreshold?: true
+  }
+
+  export type BotRoutingConfigMinAggregateInputType = {
+    id?: true
+    botId?: true
+    routingEnabled?: true
+    routingMode?: true
+    fallbackEnabled?: true
+    fallbackChainId?: true
+    costControlEnabled?: true
+    costStrategyId?: true
+    dailyBudget?: true
+    monthlyBudget?: true
+    alertThreshold?: true
+    autoDowngrade?: true
+    downgradeModel?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BotRoutingConfigMaxAggregateInputType = {
+    id?: true
+    botId?: true
+    routingEnabled?: true
+    routingMode?: true
+    fallbackEnabled?: true
+    fallbackChainId?: true
+    costControlEnabled?: true
+    costStrategyId?: true
+    dailyBudget?: true
+    monthlyBudget?: true
+    alertThreshold?: true
+    autoDowngrade?: true
+    downgradeModel?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BotRoutingConfigCountAggregateInputType = {
+    id?: true
+    botId?: true
+    routingEnabled?: true
+    routingMode?: true
+    fallbackEnabled?: true
+    fallbackChainId?: true
+    costControlEnabled?: true
+    costStrategyId?: true
+    dailyBudget?: true
+    monthlyBudget?: true
+    alertThreshold?: true
+    autoDowngrade?: true
+    downgradeModel?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type BotRoutingConfigAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BotRoutingConfig to aggregate.
+     */
+    where?: BotRoutingConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotRoutingConfigs to fetch.
+     */
+    orderBy?: BotRoutingConfigOrderByWithRelationInput | BotRoutingConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BotRoutingConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotRoutingConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotRoutingConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BotRoutingConfigs
+    **/
+    _count?: true | BotRoutingConfigCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BotRoutingConfigAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BotRoutingConfigSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BotRoutingConfigMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BotRoutingConfigMaxAggregateInputType
+  }
+
+  export type GetBotRoutingConfigAggregateType<T extends BotRoutingConfigAggregateArgs> = {
+        [P in keyof T & keyof AggregateBotRoutingConfig]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBotRoutingConfig[P]>
+      : GetScalarType<T[P], AggregateBotRoutingConfig[P]>
+  }
+
+
+
+
+  export type BotRoutingConfigGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BotRoutingConfigWhereInput
+    orderBy?: BotRoutingConfigOrderByWithAggregationInput | BotRoutingConfigOrderByWithAggregationInput[]
+    by: BotRoutingConfigScalarFieldEnum[] | BotRoutingConfigScalarFieldEnum
+    having?: BotRoutingConfigScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BotRoutingConfigCountAggregateInputType | true
+    _avg?: BotRoutingConfigAvgAggregateInputType
+    _sum?: BotRoutingConfigSumAggregateInputType
+    _min?: BotRoutingConfigMinAggregateInputType
+    _max?: BotRoutingConfigMaxAggregateInputType
+  }
+
+  export type BotRoutingConfigGroupByOutputType = {
+    id: string
+    botId: string
+    routingEnabled: boolean
+    routingMode: string
+    fallbackEnabled: boolean
+    fallbackChainId: string | null
+    costControlEnabled: boolean
+    costStrategyId: string | null
+    dailyBudget: Decimal | null
+    monthlyBudget: Decimal | null
+    alertThreshold: Decimal | null
+    autoDowngrade: boolean
+    downgradeModel: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: BotRoutingConfigCountAggregateOutputType | null
+    _avg: BotRoutingConfigAvgAggregateOutputType | null
+    _sum: BotRoutingConfigSumAggregateOutputType | null
+    _min: BotRoutingConfigMinAggregateOutputType | null
+    _max: BotRoutingConfigMaxAggregateOutputType | null
+  }
+
+  type GetBotRoutingConfigGroupByPayload<T extends BotRoutingConfigGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BotRoutingConfigGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BotRoutingConfigGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BotRoutingConfigGroupByOutputType[P]>
+            : GetScalarType<T[P], BotRoutingConfigGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BotRoutingConfigSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    botId?: boolean
+    routingEnabled?: boolean
+    routingMode?: boolean
+    fallbackEnabled?: boolean
+    fallbackChainId?: boolean
+    costControlEnabled?: boolean
+    costStrategyId?: boolean
+    dailyBudget?: boolean
+    monthlyBudget?: boolean
+    alertThreshold?: boolean
+    autoDowngrade?: boolean
+    downgradeModel?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["botRoutingConfig"]>
+
+  export type BotRoutingConfigSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    botId?: boolean
+    routingEnabled?: boolean
+    routingMode?: boolean
+    fallbackEnabled?: boolean
+    fallbackChainId?: boolean
+    costControlEnabled?: boolean
+    costStrategyId?: boolean
+    dailyBudget?: boolean
+    monthlyBudget?: boolean
+    alertThreshold?: boolean
+    autoDowngrade?: boolean
+    downgradeModel?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["botRoutingConfig"]>
+
+  export type BotRoutingConfigSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    botId?: boolean
+    routingEnabled?: boolean
+    routingMode?: boolean
+    fallbackEnabled?: boolean
+    fallbackChainId?: boolean
+    costControlEnabled?: boolean
+    costStrategyId?: boolean
+    dailyBudget?: boolean
+    monthlyBudget?: boolean
+    alertThreshold?: boolean
+    autoDowngrade?: boolean
+    downgradeModel?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["botRoutingConfig"]>
+
+  export type BotRoutingConfigSelectScalar = {
+    id?: boolean
+    botId?: boolean
+    routingEnabled?: boolean
+    routingMode?: boolean
+    fallbackEnabled?: boolean
+    fallbackChainId?: boolean
+    costControlEnabled?: boolean
+    costStrategyId?: boolean
+    dailyBudget?: boolean
+    monthlyBudget?: boolean
+    alertThreshold?: boolean
+    autoDowngrade?: boolean
+    downgradeModel?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type BotRoutingConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "botId" | "routingEnabled" | "routingMode" | "fallbackEnabled" | "fallbackChainId" | "costControlEnabled" | "costStrategyId" | "dailyBudget" | "monthlyBudget" | "alertThreshold" | "autoDowngrade" | "downgradeModel" | "createdAt" | "updatedAt", ExtArgs["result"]["botRoutingConfig"]>
+  export type BotRoutingConfigInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }
+  export type BotRoutingConfigIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }
+  export type BotRoutingConfigIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bot?: boolean | BotDefaultArgs<ExtArgs>
+  }
+
+  export type $BotRoutingConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BotRoutingConfig"
+    objects: {
+      bot: Prisma.$BotPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      botId: string
+      /**
+       * 是否启用智能路由
+       */
+      routingEnabled: boolean
+      /**
+       * 路由模式：auto | manual | cost-optimized
+       */
+      routingMode: string
+      /**
+       * 是否启用 Fallback
+       */
+      fallbackEnabled: boolean
+      /**
+       * 默认 Fallback 链 ID
+       */
+      fallbackChainId: string | null
+      /**
+       * 是否启用成本控制
+       */
+      costControlEnabled: boolean
+      /**
+       * 成本策略 ID
+       */
+      costStrategyId: string | null
+      /**
+       * 每日预算（美元）
+       */
+      dailyBudget: Prisma.Decimal | null
+      /**
+       * 每月预算（美元）
+       */
+      monthlyBudget: Prisma.Decimal | null
+      /**
+       * 预算告警阈值（0-1）
+       */
+      alertThreshold: Prisma.Decimal | null
+      /**
+       * 是否启用自动降级
+       */
+      autoDowngrade: boolean
+      /**
+       * 降级目标模型
+       */
+      downgradeModel: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["botRoutingConfig"]>
+    composites: {}
+  }
+
+  type BotRoutingConfigGetPayload<S extends boolean | null | undefined | BotRoutingConfigDefaultArgs> = $Result.GetResult<Prisma.$BotRoutingConfigPayload, S>
+
+  type BotRoutingConfigCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BotRoutingConfigFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BotRoutingConfigCountAggregateInputType | true
+    }
+
+  export interface BotRoutingConfigDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BotRoutingConfig'], meta: { name: 'BotRoutingConfig' } }
+    /**
+     * Find zero or one BotRoutingConfig that matches the filter.
+     * @param {BotRoutingConfigFindUniqueArgs} args - Arguments to find a BotRoutingConfig
+     * @example
+     * // Get one BotRoutingConfig
+     * const botRoutingConfig = await prisma.botRoutingConfig.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BotRoutingConfigFindUniqueArgs>(args: SelectSubset<T, BotRoutingConfigFindUniqueArgs<ExtArgs>>): Prisma__BotRoutingConfigClient<$Result.GetResult<Prisma.$BotRoutingConfigPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BotRoutingConfig that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BotRoutingConfigFindUniqueOrThrowArgs} args - Arguments to find a BotRoutingConfig
+     * @example
+     * // Get one BotRoutingConfig
+     * const botRoutingConfig = await prisma.botRoutingConfig.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BotRoutingConfigFindUniqueOrThrowArgs>(args: SelectSubset<T, BotRoutingConfigFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BotRoutingConfigClient<$Result.GetResult<Prisma.$BotRoutingConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BotRoutingConfig that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotRoutingConfigFindFirstArgs} args - Arguments to find a BotRoutingConfig
+     * @example
+     * // Get one BotRoutingConfig
+     * const botRoutingConfig = await prisma.botRoutingConfig.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BotRoutingConfigFindFirstArgs>(args?: SelectSubset<T, BotRoutingConfigFindFirstArgs<ExtArgs>>): Prisma__BotRoutingConfigClient<$Result.GetResult<Prisma.$BotRoutingConfigPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BotRoutingConfig that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotRoutingConfigFindFirstOrThrowArgs} args - Arguments to find a BotRoutingConfig
+     * @example
+     * // Get one BotRoutingConfig
+     * const botRoutingConfig = await prisma.botRoutingConfig.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BotRoutingConfigFindFirstOrThrowArgs>(args?: SelectSubset<T, BotRoutingConfigFindFirstOrThrowArgs<ExtArgs>>): Prisma__BotRoutingConfigClient<$Result.GetResult<Prisma.$BotRoutingConfigPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BotRoutingConfigs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotRoutingConfigFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BotRoutingConfigs
+     * const botRoutingConfigs = await prisma.botRoutingConfig.findMany()
+     * 
+     * // Get first 10 BotRoutingConfigs
+     * const botRoutingConfigs = await prisma.botRoutingConfig.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const botRoutingConfigWithIdOnly = await prisma.botRoutingConfig.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BotRoutingConfigFindManyArgs>(args?: SelectSubset<T, BotRoutingConfigFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotRoutingConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BotRoutingConfig.
+     * @param {BotRoutingConfigCreateArgs} args - Arguments to create a BotRoutingConfig.
+     * @example
+     * // Create one BotRoutingConfig
+     * const BotRoutingConfig = await prisma.botRoutingConfig.create({
+     *   data: {
+     *     // ... data to create a BotRoutingConfig
+     *   }
+     * })
+     * 
+     */
+    create<T extends BotRoutingConfigCreateArgs>(args: SelectSubset<T, BotRoutingConfigCreateArgs<ExtArgs>>): Prisma__BotRoutingConfigClient<$Result.GetResult<Prisma.$BotRoutingConfigPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BotRoutingConfigs.
+     * @param {BotRoutingConfigCreateManyArgs} args - Arguments to create many BotRoutingConfigs.
+     * @example
+     * // Create many BotRoutingConfigs
+     * const botRoutingConfig = await prisma.botRoutingConfig.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BotRoutingConfigCreateManyArgs>(args?: SelectSubset<T, BotRoutingConfigCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BotRoutingConfigs and returns the data saved in the database.
+     * @param {BotRoutingConfigCreateManyAndReturnArgs} args - Arguments to create many BotRoutingConfigs.
+     * @example
+     * // Create many BotRoutingConfigs
+     * const botRoutingConfig = await prisma.botRoutingConfig.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BotRoutingConfigs and only return the `id`
+     * const botRoutingConfigWithIdOnly = await prisma.botRoutingConfig.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BotRoutingConfigCreateManyAndReturnArgs>(args?: SelectSubset<T, BotRoutingConfigCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotRoutingConfigPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BotRoutingConfig.
+     * @param {BotRoutingConfigDeleteArgs} args - Arguments to delete one BotRoutingConfig.
+     * @example
+     * // Delete one BotRoutingConfig
+     * const BotRoutingConfig = await prisma.botRoutingConfig.delete({
+     *   where: {
+     *     // ... filter to delete one BotRoutingConfig
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BotRoutingConfigDeleteArgs>(args: SelectSubset<T, BotRoutingConfigDeleteArgs<ExtArgs>>): Prisma__BotRoutingConfigClient<$Result.GetResult<Prisma.$BotRoutingConfigPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BotRoutingConfig.
+     * @param {BotRoutingConfigUpdateArgs} args - Arguments to update one BotRoutingConfig.
+     * @example
+     * // Update one BotRoutingConfig
+     * const botRoutingConfig = await prisma.botRoutingConfig.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BotRoutingConfigUpdateArgs>(args: SelectSubset<T, BotRoutingConfigUpdateArgs<ExtArgs>>): Prisma__BotRoutingConfigClient<$Result.GetResult<Prisma.$BotRoutingConfigPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BotRoutingConfigs.
+     * @param {BotRoutingConfigDeleteManyArgs} args - Arguments to filter BotRoutingConfigs to delete.
+     * @example
+     * // Delete a few BotRoutingConfigs
+     * const { count } = await prisma.botRoutingConfig.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BotRoutingConfigDeleteManyArgs>(args?: SelectSubset<T, BotRoutingConfigDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BotRoutingConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotRoutingConfigUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BotRoutingConfigs
+     * const botRoutingConfig = await prisma.botRoutingConfig.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BotRoutingConfigUpdateManyArgs>(args: SelectSubset<T, BotRoutingConfigUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BotRoutingConfigs and returns the data updated in the database.
+     * @param {BotRoutingConfigUpdateManyAndReturnArgs} args - Arguments to update many BotRoutingConfigs.
+     * @example
+     * // Update many BotRoutingConfigs
+     * const botRoutingConfig = await prisma.botRoutingConfig.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BotRoutingConfigs and only return the `id`
+     * const botRoutingConfigWithIdOnly = await prisma.botRoutingConfig.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BotRoutingConfigUpdateManyAndReturnArgs>(args: SelectSubset<T, BotRoutingConfigUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BotRoutingConfigPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BotRoutingConfig.
+     * @param {BotRoutingConfigUpsertArgs} args - Arguments to update or create a BotRoutingConfig.
+     * @example
+     * // Update or create a BotRoutingConfig
+     * const botRoutingConfig = await prisma.botRoutingConfig.upsert({
+     *   create: {
+     *     // ... data to create a BotRoutingConfig
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BotRoutingConfig we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BotRoutingConfigUpsertArgs>(args: SelectSubset<T, BotRoutingConfigUpsertArgs<ExtArgs>>): Prisma__BotRoutingConfigClient<$Result.GetResult<Prisma.$BotRoutingConfigPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BotRoutingConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotRoutingConfigCountArgs} args - Arguments to filter BotRoutingConfigs to count.
+     * @example
+     * // Count the number of BotRoutingConfigs
+     * const count = await prisma.botRoutingConfig.count({
+     *   where: {
+     *     // ... the filter for the BotRoutingConfigs we want to count
+     *   }
+     * })
+    **/
+    count<T extends BotRoutingConfigCountArgs>(
+      args?: Subset<T, BotRoutingConfigCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BotRoutingConfigCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BotRoutingConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotRoutingConfigAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BotRoutingConfigAggregateArgs>(args: Subset<T, BotRoutingConfigAggregateArgs>): Prisma.PrismaPromise<GetBotRoutingConfigAggregateType<T>>
+
+    /**
+     * Group by BotRoutingConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BotRoutingConfigGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BotRoutingConfigGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BotRoutingConfigGroupByArgs['orderBy'] }
+        : { orderBy?: BotRoutingConfigGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BotRoutingConfigGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBotRoutingConfigGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BotRoutingConfig model
+   */
+  readonly fields: BotRoutingConfigFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BotRoutingConfig.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BotRoutingConfigClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    bot<T extends BotDefaultArgs<ExtArgs> = {}>(args?: Subset<T, BotDefaultArgs<ExtArgs>>): Prisma__BotClient<$Result.GetResult<Prisma.$BotPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BotRoutingConfig model
+   */
+  interface BotRoutingConfigFieldRefs {
+    readonly id: FieldRef<"BotRoutingConfig", 'String'>
+    readonly botId: FieldRef<"BotRoutingConfig", 'String'>
+    readonly routingEnabled: FieldRef<"BotRoutingConfig", 'Boolean'>
+    readonly routingMode: FieldRef<"BotRoutingConfig", 'String'>
+    readonly fallbackEnabled: FieldRef<"BotRoutingConfig", 'Boolean'>
+    readonly fallbackChainId: FieldRef<"BotRoutingConfig", 'String'>
+    readonly costControlEnabled: FieldRef<"BotRoutingConfig", 'Boolean'>
+    readonly costStrategyId: FieldRef<"BotRoutingConfig", 'String'>
+    readonly dailyBudget: FieldRef<"BotRoutingConfig", 'Decimal'>
+    readonly monthlyBudget: FieldRef<"BotRoutingConfig", 'Decimal'>
+    readonly alertThreshold: FieldRef<"BotRoutingConfig", 'Decimal'>
+    readonly autoDowngrade: FieldRef<"BotRoutingConfig", 'Boolean'>
+    readonly downgradeModel: FieldRef<"BotRoutingConfig", 'String'>
+    readonly createdAt: FieldRef<"BotRoutingConfig", 'DateTime'>
+    readonly updatedAt: FieldRef<"BotRoutingConfig", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BotRoutingConfig findUnique
+   */
+  export type BotRoutingConfigFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotRoutingConfig
+     */
+    select?: BotRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotRoutingConfig
+     */
+    omit?: BotRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotRoutingConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which BotRoutingConfig to fetch.
+     */
+    where: BotRoutingConfigWhereUniqueInput
+  }
+
+  /**
+   * BotRoutingConfig findUniqueOrThrow
+   */
+  export type BotRoutingConfigFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotRoutingConfig
+     */
+    select?: BotRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotRoutingConfig
+     */
+    omit?: BotRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotRoutingConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which BotRoutingConfig to fetch.
+     */
+    where: BotRoutingConfigWhereUniqueInput
+  }
+
+  /**
+   * BotRoutingConfig findFirst
+   */
+  export type BotRoutingConfigFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotRoutingConfig
+     */
+    select?: BotRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotRoutingConfig
+     */
+    omit?: BotRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotRoutingConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which BotRoutingConfig to fetch.
+     */
+    where?: BotRoutingConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotRoutingConfigs to fetch.
+     */
+    orderBy?: BotRoutingConfigOrderByWithRelationInput | BotRoutingConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BotRoutingConfigs.
+     */
+    cursor?: BotRoutingConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotRoutingConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotRoutingConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BotRoutingConfigs.
+     */
+    distinct?: BotRoutingConfigScalarFieldEnum | BotRoutingConfigScalarFieldEnum[]
+  }
+
+  /**
+   * BotRoutingConfig findFirstOrThrow
+   */
+  export type BotRoutingConfigFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotRoutingConfig
+     */
+    select?: BotRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotRoutingConfig
+     */
+    omit?: BotRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotRoutingConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which BotRoutingConfig to fetch.
+     */
+    where?: BotRoutingConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotRoutingConfigs to fetch.
+     */
+    orderBy?: BotRoutingConfigOrderByWithRelationInput | BotRoutingConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BotRoutingConfigs.
+     */
+    cursor?: BotRoutingConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotRoutingConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotRoutingConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BotRoutingConfigs.
+     */
+    distinct?: BotRoutingConfigScalarFieldEnum | BotRoutingConfigScalarFieldEnum[]
+  }
+
+  /**
+   * BotRoutingConfig findMany
+   */
+  export type BotRoutingConfigFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotRoutingConfig
+     */
+    select?: BotRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotRoutingConfig
+     */
+    omit?: BotRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotRoutingConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which BotRoutingConfigs to fetch.
+     */
+    where?: BotRoutingConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BotRoutingConfigs to fetch.
+     */
+    orderBy?: BotRoutingConfigOrderByWithRelationInput | BotRoutingConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BotRoutingConfigs.
+     */
+    cursor?: BotRoutingConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BotRoutingConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BotRoutingConfigs.
+     */
+    skip?: number
+    distinct?: BotRoutingConfigScalarFieldEnum | BotRoutingConfigScalarFieldEnum[]
+  }
+
+  /**
+   * BotRoutingConfig create
+   */
+  export type BotRoutingConfigCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotRoutingConfig
+     */
+    select?: BotRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotRoutingConfig
+     */
+    omit?: BotRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotRoutingConfigInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BotRoutingConfig.
+     */
+    data: XOR<BotRoutingConfigCreateInput, BotRoutingConfigUncheckedCreateInput>
+  }
+
+  /**
+   * BotRoutingConfig createMany
+   */
+  export type BotRoutingConfigCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BotRoutingConfigs.
+     */
+    data: BotRoutingConfigCreateManyInput | BotRoutingConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BotRoutingConfig createManyAndReturn
+   */
+  export type BotRoutingConfigCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotRoutingConfig
+     */
+    select?: BotRoutingConfigSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotRoutingConfig
+     */
+    omit?: BotRoutingConfigOmit<ExtArgs> | null
+    /**
+     * The data used to create many BotRoutingConfigs.
+     */
+    data: BotRoutingConfigCreateManyInput | BotRoutingConfigCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotRoutingConfigIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BotRoutingConfig update
+   */
+  export type BotRoutingConfigUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotRoutingConfig
+     */
+    select?: BotRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotRoutingConfig
+     */
+    omit?: BotRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotRoutingConfigInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BotRoutingConfig.
+     */
+    data: XOR<BotRoutingConfigUpdateInput, BotRoutingConfigUncheckedUpdateInput>
+    /**
+     * Choose, which BotRoutingConfig to update.
+     */
+    where: BotRoutingConfigWhereUniqueInput
+  }
+
+  /**
+   * BotRoutingConfig updateMany
+   */
+  export type BotRoutingConfigUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BotRoutingConfigs.
+     */
+    data: XOR<BotRoutingConfigUpdateManyMutationInput, BotRoutingConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which BotRoutingConfigs to update
+     */
+    where?: BotRoutingConfigWhereInput
+    /**
+     * Limit how many BotRoutingConfigs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BotRoutingConfig updateManyAndReturn
+   */
+  export type BotRoutingConfigUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotRoutingConfig
+     */
+    select?: BotRoutingConfigSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotRoutingConfig
+     */
+    omit?: BotRoutingConfigOmit<ExtArgs> | null
+    /**
+     * The data used to update BotRoutingConfigs.
+     */
+    data: XOR<BotRoutingConfigUpdateManyMutationInput, BotRoutingConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which BotRoutingConfigs to update
+     */
+    where?: BotRoutingConfigWhereInput
+    /**
+     * Limit how many BotRoutingConfigs to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotRoutingConfigIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BotRoutingConfig upsert
+   */
+  export type BotRoutingConfigUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotRoutingConfig
+     */
+    select?: BotRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotRoutingConfig
+     */
+    omit?: BotRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotRoutingConfigInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BotRoutingConfig to update in case it exists.
+     */
+    where: BotRoutingConfigWhereUniqueInput
+    /**
+     * In case the BotRoutingConfig found by the `where` argument doesn't exist, create a new BotRoutingConfig with this data.
+     */
+    create: XOR<BotRoutingConfigCreateInput, BotRoutingConfigUncheckedCreateInput>
+    /**
+     * In case the BotRoutingConfig was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BotRoutingConfigUpdateInput, BotRoutingConfigUncheckedUpdateInput>
+  }
+
+  /**
+   * BotRoutingConfig delete
+   */
+  export type BotRoutingConfigDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotRoutingConfig
+     */
+    select?: BotRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotRoutingConfig
+     */
+    omit?: BotRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotRoutingConfigInclude<ExtArgs> | null
+    /**
+     * Filter which BotRoutingConfig to delete.
+     */
+    where: BotRoutingConfigWhereUniqueInput
+  }
+
+  /**
+   * BotRoutingConfig deleteMany
+   */
+  export type BotRoutingConfigDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BotRoutingConfigs to delete
+     */
+    where?: BotRoutingConfigWhereInput
+    /**
+     * Limit how many BotRoutingConfigs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BotRoutingConfig without action
+   */
+  export type BotRoutingConfigDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BotRoutingConfig
+     */
+    select?: BotRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BotRoutingConfig
+     */
+    omit?: BotRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BotRoutingConfigInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -34731,6 +43196,7 @@ export namespace Prisma {
     soulMarkdown: 'soulMarkdown',
     soulPreview: 'soulPreview',
     isSystem: 'isSystem',
+    locale: 'locale',
     createdById: 'createdById',
     isDeleted: 'isDeleted',
     createdAt: 'createdAt',
@@ -34899,9 +43365,6 @@ export namespace Prisma {
     id: 'id',
     name: 'name',
     hostname: 'hostname',
-    aiProvider: 'aiProvider',
-    model: 'model',
-    channelType: 'channelType',
     containerId: 'containerId',
     port: 'port',
     gatewayToken: 'gatewayToken',
@@ -34913,6 +43376,7 @@ export namespace Prisma {
     emoji: 'emoji',
     avatarFileId: 'avatarFileId',
     soulMarkdown: 'soulMarkdown',
+    pendingConfig: 'pendingConfig',
     healthStatus: 'healthStatus',
     lastHealthCheck: 'lastHealthCheck',
     isDeleted: 'isDeleted',
@@ -34967,7 +43431,19 @@ export namespace Prisma {
     model: 'model',
     endpoint: 'endpoint',
     durationMs: 'durationMs',
-    errorMessage: 'errorMessage'
+    errorMessage: 'errorMessage',
+    thinkingTokens: 'thinkingTokens',
+    cacheReadTokens: 'cacheReadTokens',
+    cacheWriteTokens: 'cacheWriteTokens',
+    protocolType: 'protocolType',
+    inputCost: 'inputCost',
+    outputCost: 'outputCost',
+    thinkingCost: 'thinkingCost',
+    cacheCost: 'cacheCost',
+    totalCost: 'totalCost',
+    fallbackUsed: 'fallbackUsed',
+    fallbackLevel: 'fallbackLevel',
+    originalModel: 'originalModel'
   };
 
   export type BotUsageLogScalarFieldEnum = (typeof BotUsageLogScalarFieldEnum)[keyof typeof BotUsageLogScalarFieldEnum]
@@ -35149,6 +43625,60 @@ export namespace Prisma {
   export type BotSkillScalarFieldEnum = (typeof BotSkillScalarFieldEnum)[keyof typeof BotSkillScalarFieldEnum]
 
 
+  export const ModelPricingScalarFieldEnum: {
+    id: 'id',
+    model: 'model',
+    vendor: 'vendor',
+    displayName: 'displayName',
+    description: 'description',
+    inputPrice: 'inputPrice',
+    outputPrice: 'outputPrice',
+    cacheReadPrice: 'cacheReadPrice',
+    cacheWritePrice: 'cacheWritePrice',
+    thinkingPrice: 'thinkingPrice',
+    reasoningScore: 'reasoningScore',
+    codingScore: 'codingScore',
+    creativityScore: 'creativityScore',
+    speedScore: 'speedScore',
+    contextLength: 'contextLength',
+    supportsExtendedThinking: 'supportsExtendedThinking',
+    supportsCacheControl: 'supportsCacheControl',
+    supportsVision: 'supportsVision',
+    supportsFunctionCalling: 'supportsFunctionCalling',
+    supportsStreaming: 'supportsStreaming',
+    recommendedScenarios: 'recommendedScenarios',
+    isEnabled: 'isEnabled',
+    isDeprecated: 'isDeprecated',
+    deprecationDate: 'deprecationDate',
+    priceUpdatedAt: 'priceUpdatedAt',
+    notes: 'notes',
+    metadata: 'metadata',
+    isDeleted: 'isDeleted',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    deletedAt: 'deletedAt'
+  };
+
+  export type ModelPricingScalarFieldEnum = (typeof ModelPricingScalarFieldEnum)[keyof typeof ModelPricingScalarFieldEnum]
+
+
+  export const BotModelRoutingScalarFieldEnum: {
+    id: 'id',
+    botId: 'botId',
+    routingType: 'routingType',
+    name: 'name',
+    config: 'config',
+    priority: 'priority',
+    isEnabled: 'isEnabled',
+    isDeleted: 'isDeleted',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    deletedAt: 'deletedAt'
+  };
+
+  export type BotModelRoutingScalarFieldEnum = (typeof BotModelRoutingScalarFieldEnum)[keyof typeof BotModelRoutingScalarFieldEnum]
+
+
   export const BotChannelScalarFieldEnum: {
     id: 'id',
     botId: 'botId',
@@ -35167,6 +43697,98 @@ export namespace Prisma {
   };
 
   export type BotChannelScalarFieldEnum = (typeof BotChannelScalarFieldEnum)[keyof typeof BotChannelScalarFieldEnum]
+
+
+  export const CapabilityTagScalarFieldEnum: {
+    id: 'id',
+    tagId: 'tagId',
+    name: 'name',
+    description: 'description',
+    category: 'category',
+    priority: 'priority',
+    requiredProtocol: 'requiredProtocol',
+    requiredSkills: 'requiredSkills',
+    requiredModels: 'requiredModels',
+    requiresExtendedThinking: 'requiresExtendedThinking',
+    requiresCacheControl: 'requiresCacheControl',
+    requiresVision: 'requiresVision',
+    maxCostPerMToken: 'maxCostPerMToken',
+    isActive: 'isActive',
+    isBuiltin: 'isBuiltin',
+    isDeleted: 'isDeleted',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    deletedAt: 'deletedAt'
+  };
+
+  export type CapabilityTagScalarFieldEnum = (typeof CapabilityTagScalarFieldEnum)[keyof typeof CapabilityTagScalarFieldEnum]
+
+
+  export const FallbackChainScalarFieldEnum: {
+    id: 'id',
+    chainId: 'chainId',
+    name: 'name',
+    description: 'description',
+    models: 'models',
+    triggerStatusCodes: 'triggerStatusCodes',
+    triggerErrorTypes: 'triggerErrorTypes',
+    triggerTimeoutMs: 'triggerTimeoutMs',
+    maxRetries: 'maxRetries',
+    retryDelayMs: 'retryDelayMs',
+    preserveProtocol: 'preserveProtocol',
+    isActive: 'isActive',
+    isBuiltin: 'isBuiltin',
+    isDeleted: 'isDeleted',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    deletedAt: 'deletedAt'
+  };
+
+  export type FallbackChainScalarFieldEnum = (typeof FallbackChainScalarFieldEnum)[keyof typeof FallbackChainScalarFieldEnum]
+
+
+  export const CostStrategyScalarFieldEnum: {
+    id: 'id',
+    strategyId: 'strategyId',
+    name: 'name',
+    description: 'description',
+    costWeight: 'costWeight',
+    performanceWeight: 'performanceWeight',
+    capabilityWeight: 'capabilityWeight',
+    maxCostPerRequest: 'maxCostPerRequest',
+    maxLatencyMs: 'maxLatencyMs',
+    minCapabilityScore: 'minCapabilityScore',
+    scenarioWeights: 'scenarioWeights',
+    isActive: 'isActive',
+    isBuiltin: 'isBuiltin',
+    isDeleted: 'isDeleted',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    deletedAt: 'deletedAt'
+  };
+
+  export type CostStrategyScalarFieldEnum = (typeof CostStrategyScalarFieldEnum)[keyof typeof CostStrategyScalarFieldEnum]
+
+
+  export const BotRoutingConfigScalarFieldEnum: {
+    id: 'id',
+    botId: 'botId',
+    routingEnabled: 'routingEnabled',
+    routingMode: 'routingMode',
+    fallbackEnabled: 'fallbackEnabled',
+    fallbackChainId: 'fallbackChainId',
+    costControlEnabled: 'costControlEnabled',
+    costStrategyId: 'costStrategyId',
+    dailyBudget: 'dailyBudget',
+    monthlyBudget: 'monthlyBudget',
+    alertThreshold: 'alertThreshold',
+    autoDowngrade: 'autoDowngrade',
+    downgradeModel: 'downgradeModel',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type BotRoutingConfigScalarFieldEnum = (typeof BotRoutingConfigScalarFieldEnum)[keyof typeof BotRoutingConfigScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -35412,6 +44034,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Decimal'
+   */
+  export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
+    
+
+
+  /**
+   * Reference to a field of type 'Decimal[]'
+   */
+  export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
+    
+
+
+  /**
    * Reference to a field of type 'OperateType'
    */
   export type EnumOperateTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OperateType'>
@@ -35450,6 +44086,20 @@ export namespace Prisma {
    * Reference to a field of type 'PluginCategory[]'
    */
   export type ListEnumPluginCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PluginCategory[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ModelRoutingType'
+   */
+  export type EnumModelRoutingTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ModelRoutingType'>
+    
+
+
+  /**
+   * Reference to a field of type 'ModelRoutingType[]'
+   */
+  export type ListEnumModelRoutingTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ModelRoutingType[]'>
     
 
 
@@ -35640,6 +44290,7 @@ export namespace Prisma {
     soulMarkdown?: StringFilter<"PersonaTemplate"> | string
     soulPreview?: StringNullableFilter<"PersonaTemplate"> | string | null
     isSystem?: BoolFilter<"PersonaTemplate"> | boolean
+    locale?: StringFilter<"PersonaTemplate"> | string
     createdById?: UuidNullableFilter<"PersonaTemplate"> | string | null
     isDeleted?: BoolFilter<"PersonaTemplate"> | boolean
     createdAt?: DateTimeFilter<"PersonaTemplate"> | Date | string
@@ -35659,6 +44310,7 @@ export namespace Prisma {
     soulMarkdown?: SortOrder
     soulPreview?: SortOrderInput | SortOrder
     isSystem?: SortOrder
+    locale?: SortOrder
     createdById?: SortOrderInput | SortOrder
     isDeleted?: SortOrder
     createdAt?: SortOrder
@@ -35681,6 +44333,7 @@ export namespace Prisma {
     soulMarkdown?: StringFilter<"PersonaTemplate"> | string
     soulPreview?: StringNullableFilter<"PersonaTemplate"> | string | null
     isSystem?: BoolFilter<"PersonaTemplate"> | boolean
+    locale?: StringFilter<"PersonaTemplate"> | string
     createdById?: UuidNullableFilter<"PersonaTemplate"> | string | null
     isDeleted?: BoolFilter<"PersonaTemplate"> | boolean
     createdAt?: DateTimeFilter<"PersonaTemplate"> | Date | string
@@ -35700,6 +44353,7 @@ export namespace Prisma {
     soulMarkdown?: SortOrder
     soulPreview?: SortOrderInput | SortOrder
     isSystem?: SortOrder
+    locale?: SortOrder
     createdById?: SortOrderInput | SortOrder
     isDeleted?: SortOrder
     createdAt?: SortOrder
@@ -35722,6 +44376,7 @@ export namespace Prisma {
     soulMarkdown?: StringWithAggregatesFilter<"PersonaTemplate"> | string
     soulPreview?: StringNullableWithAggregatesFilter<"PersonaTemplate"> | string | null
     isSystem?: BoolWithAggregatesFilter<"PersonaTemplate"> | boolean
+    locale?: StringWithAggregatesFilter<"PersonaTemplate"> | string
     createdById?: UuidNullableWithAggregatesFilter<"PersonaTemplate"> | string | null
     isDeleted?: BoolWithAggregatesFilter<"PersonaTemplate"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"PersonaTemplate"> | Date | string
@@ -36512,9 +45167,6 @@ export namespace Prisma {
     id?: UuidFilter<"Bot"> | string
     name?: StringFilter<"Bot"> | string
     hostname?: StringFilter<"Bot"> | string
-    aiProvider?: StringFilter<"Bot"> | string
-    model?: StringFilter<"Bot"> | string
-    channelType?: StringFilter<"Bot"> | string
     containerId?: StringNullableFilter<"Bot"> | string | null
     port?: IntNullableFilter<"Bot"> | number | null
     gatewayToken?: StringNullableFilter<"Bot"> | string | null
@@ -36526,6 +45178,7 @@ export namespace Prisma {
     emoji?: StringNullableFilter<"Bot"> | string | null
     avatarFileId?: UuidNullableFilter<"Bot"> | string | null
     soulMarkdown?: StringNullableFilter<"Bot"> | string | null
+    pendingConfig?: JsonNullableFilter<"Bot">
     healthStatus?: EnumHealthStatusFilter<"Bot"> | $Enums.HealthStatus
     lastHealthCheck?: DateTimeNullableFilter<"Bot"> | Date | string | null
     isDeleted?: BoolFilter<"Bot"> | boolean
@@ -36541,15 +45194,14 @@ export namespace Prisma {
     plugins?: BotPluginListRelationFilter
     skills?: BotSkillListRelationFilter
     channels?: BotChannelListRelationFilter
+    modelRoutings?: BotModelRoutingListRelationFilter
+    routingConfig?: XOR<BotRoutingConfigNullableScalarRelationFilter, BotRoutingConfigWhereInput> | null
   }
 
   export type BotOrderByWithRelationInput = {
     id?: SortOrder
     name?: SortOrder
     hostname?: SortOrder
-    aiProvider?: SortOrder
-    model?: SortOrder
-    channelType?: SortOrder
     containerId?: SortOrderInput | SortOrder
     port?: SortOrderInput | SortOrder
     gatewayToken?: SortOrderInput | SortOrder
@@ -36561,6 +45213,7 @@ export namespace Prisma {
     emoji?: SortOrderInput | SortOrder
     avatarFileId?: SortOrderInput | SortOrder
     soulMarkdown?: SortOrderInput | SortOrder
+    pendingConfig?: SortOrderInput | SortOrder
     healthStatus?: SortOrder
     lastHealthCheck?: SortOrderInput | SortOrder
     isDeleted?: SortOrder
@@ -36576,6 +45229,8 @@ export namespace Prisma {
     plugins?: BotPluginOrderByRelationAggregateInput
     skills?: BotSkillOrderByRelationAggregateInput
     channels?: BotChannelOrderByRelationAggregateInput
+    modelRoutings?: BotModelRoutingOrderByRelationAggregateInput
+    routingConfig?: BotRoutingConfigOrderByWithRelationInput
   }
 
   export type BotWhereUniqueInput = Prisma.AtLeast<{
@@ -36585,9 +45240,6 @@ export namespace Prisma {
     NOT?: BotWhereInput | BotWhereInput[]
     name?: StringFilter<"Bot"> | string
     hostname?: StringFilter<"Bot"> | string
-    aiProvider?: StringFilter<"Bot"> | string
-    model?: StringFilter<"Bot"> | string
-    channelType?: StringFilter<"Bot"> | string
     containerId?: StringNullableFilter<"Bot"> | string | null
     port?: IntNullableFilter<"Bot"> | number | null
     gatewayToken?: StringNullableFilter<"Bot"> | string | null
@@ -36599,6 +45251,7 @@ export namespace Prisma {
     emoji?: StringNullableFilter<"Bot"> | string | null
     avatarFileId?: UuidNullableFilter<"Bot"> | string | null
     soulMarkdown?: StringNullableFilter<"Bot"> | string | null
+    pendingConfig?: JsonNullableFilter<"Bot">
     healthStatus?: EnumHealthStatusFilter<"Bot"> | $Enums.HealthStatus
     lastHealthCheck?: DateTimeNullableFilter<"Bot"> | Date | string | null
     isDeleted?: BoolFilter<"Bot"> | boolean
@@ -36614,15 +45267,14 @@ export namespace Prisma {
     plugins?: BotPluginListRelationFilter
     skills?: BotSkillListRelationFilter
     channels?: BotChannelListRelationFilter
+    modelRoutings?: BotModelRoutingListRelationFilter
+    routingConfig?: XOR<BotRoutingConfigNullableScalarRelationFilter, BotRoutingConfigWhereInput> | null
   }, "id">
 
   export type BotOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
     hostname?: SortOrder
-    aiProvider?: SortOrder
-    model?: SortOrder
-    channelType?: SortOrder
     containerId?: SortOrderInput | SortOrder
     port?: SortOrderInput | SortOrder
     gatewayToken?: SortOrderInput | SortOrder
@@ -36634,6 +45286,7 @@ export namespace Prisma {
     emoji?: SortOrderInput | SortOrder
     avatarFileId?: SortOrderInput | SortOrder
     soulMarkdown?: SortOrderInput | SortOrder
+    pendingConfig?: SortOrderInput | SortOrder
     healthStatus?: SortOrder
     lastHealthCheck?: SortOrderInput | SortOrder
     isDeleted?: SortOrder
@@ -36654,9 +45307,6 @@ export namespace Prisma {
     id?: UuidWithAggregatesFilter<"Bot"> | string
     name?: StringWithAggregatesFilter<"Bot"> | string
     hostname?: StringWithAggregatesFilter<"Bot"> | string
-    aiProvider?: StringWithAggregatesFilter<"Bot"> | string
-    model?: StringWithAggregatesFilter<"Bot"> | string
-    channelType?: StringWithAggregatesFilter<"Bot"> | string
     containerId?: StringNullableWithAggregatesFilter<"Bot"> | string | null
     port?: IntNullableWithAggregatesFilter<"Bot"> | number | null
     gatewayToken?: StringNullableWithAggregatesFilter<"Bot"> | string | null
@@ -36668,6 +45318,7 @@ export namespace Prisma {
     emoji?: StringNullableWithAggregatesFilter<"Bot"> | string | null
     avatarFileId?: UuidNullableWithAggregatesFilter<"Bot"> | string | null
     soulMarkdown?: StringNullableWithAggregatesFilter<"Bot"> | string | null
+    pendingConfig?: JsonNullableWithAggregatesFilter<"Bot">
     healthStatus?: EnumHealthStatusWithAggregatesFilter<"Bot"> | $Enums.HealthStatus
     lastHealthCheck?: DateTimeNullableWithAggregatesFilter<"Bot"> | Date | string | null
     isDeleted?: BoolWithAggregatesFilter<"Bot"> | boolean
@@ -36861,6 +45512,18 @@ export namespace Prisma {
     endpoint?: StringNullableFilter<"BotUsageLog"> | string | null
     durationMs?: IntNullableFilter<"BotUsageLog"> | number | null
     errorMessage?: StringNullableFilter<"BotUsageLog"> | string | null
+    thinkingTokens?: IntNullableFilter<"BotUsageLog"> | number | null
+    cacheReadTokens?: IntNullableFilter<"BotUsageLog"> | number | null
+    cacheWriteTokens?: IntNullableFilter<"BotUsageLog"> | number | null
+    protocolType?: StringNullableFilter<"BotUsageLog"> | string | null
+    inputCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    outputCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    totalCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: BoolNullableFilter<"BotUsageLog"> | boolean | null
+    fallbackLevel?: IntNullableFilter<"BotUsageLog"> | number | null
+    originalModel?: StringNullableFilter<"BotUsageLog"> | string | null
     bot?: XOR<BotScalarRelationFilter, BotWhereInput>
     providerKey?: XOR<ProviderKeyNullableScalarRelationFilter, ProviderKeyWhereInput> | null
   }
@@ -36878,6 +45541,18 @@ export namespace Prisma {
     endpoint?: SortOrderInput | SortOrder
     durationMs?: SortOrderInput | SortOrder
     errorMessage?: SortOrderInput | SortOrder
+    thinkingTokens?: SortOrderInput | SortOrder
+    cacheReadTokens?: SortOrderInput | SortOrder
+    cacheWriteTokens?: SortOrderInput | SortOrder
+    protocolType?: SortOrderInput | SortOrder
+    inputCost?: SortOrderInput | SortOrder
+    outputCost?: SortOrderInput | SortOrder
+    thinkingCost?: SortOrderInput | SortOrder
+    cacheCost?: SortOrderInput | SortOrder
+    totalCost?: SortOrderInput | SortOrder
+    fallbackUsed?: SortOrderInput | SortOrder
+    fallbackLevel?: SortOrderInput | SortOrder
+    originalModel?: SortOrderInput | SortOrder
     bot?: BotOrderByWithRelationInput
     providerKey?: ProviderKeyOrderByWithRelationInput
   }
@@ -36898,6 +45573,18 @@ export namespace Prisma {
     endpoint?: StringNullableFilter<"BotUsageLog"> | string | null
     durationMs?: IntNullableFilter<"BotUsageLog"> | number | null
     errorMessage?: StringNullableFilter<"BotUsageLog"> | string | null
+    thinkingTokens?: IntNullableFilter<"BotUsageLog"> | number | null
+    cacheReadTokens?: IntNullableFilter<"BotUsageLog"> | number | null
+    cacheWriteTokens?: IntNullableFilter<"BotUsageLog"> | number | null
+    protocolType?: StringNullableFilter<"BotUsageLog"> | string | null
+    inputCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    outputCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    totalCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: BoolNullableFilter<"BotUsageLog"> | boolean | null
+    fallbackLevel?: IntNullableFilter<"BotUsageLog"> | number | null
+    originalModel?: StringNullableFilter<"BotUsageLog"> | string | null
     bot?: XOR<BotScalarRelationFilter, BotWhereInput>
     providerKey?: XOR<ProviderKeyNullableScalarRelationFilter, ProviderKeyWhereInput> | null
   }, "id">
@@ -36915,6 +45602,18 @@ export namespace Prisma {
     endpoint?: SortOrderInput | SortOrder
     durationMs?: SortOrderInput | SortOrder
     errorMessage?: SortOrderInput | SortOrder
+    thinkingTokens?: SortOrderInput | SortOrder
+    cacheReadTokens?: SortOrderInput | SortOrder
+    cacheWriteTokens?: SortOrderInput | SortOrder
+    protocolType?: SortOrderInput | SortOrder
+    inputCost?: SortOrderInput | SortOrder
+    outputCost?: SortOrderInput | SortOrder
+    thinkingCost?: SortOrderInput | SortOrder
+    cacheCost?: SortOrderInput | SortOrder
+    totalCost?: SortOrderInput | SortOrder
+    fallbackUsed?: SortOrderInput | SortOrder
+    fallbackLevel?: SortOrderInput | SortOrder
+    originalModel?: SortOrderInput | SortOrder
     _count?: BotUsageLogCountOrderByAggregateInput
     _avg?: BotUsageLogAvgOrderByAggregateInput
     _max?: BotUsageLogMaxOrderByAggregateInput
@@ -36938,6 +45637,18 @@ export namespace Prisma {
     endpoint?: StringNullableWithAggregatesFilter<"BotUsageLog"> | string | null
     durationMs?: IntNullableWithAggregatesFilter<"BotUsageLog"> | number | null
     errorMessage?: StringNullableWithAggregatesFilter<"BotUsageLog"> | string | null
+    thinkingTokens?: IntNullableWithAggregatesFilter<"BotUsageLog"> | number | null
+    cacheReadTokens?: IntNullableWithAggregatesFilter<"BotUsageLog"> | number | null
+    cacheWriteTokens?: IntNullableWithAggregatesFilter<"BotUsageLog"> | number | null
+    protocolType?: StringNullableWithAggregatesFilter<"BotUsageLog"> | string | null
+    inputCost?: DecimalNullableWithAggregatesFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    outputCost?: DecimalNullableWithAggregatesFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: DecimalNullableWithAggregatesFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: DecimalNullableWithAggregatesFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    totalCost?: DecimalNullableWithAggregatesFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: BoolNullableWithAggregatesFilter<"BotUsageLog"> | boolean | null
+    fallbackLevel?: IntNullableWithAggregatesFilter<"BotUsageLog"> | number | null
+    originalModel?: StringNullableWithAggregatesFilter<"BotUsageLog"> | string | null
   }
 
   export type ProxyTokenWhereInput = {
@@ -37846,6 +46557,277 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"BotSkill"> | Date | string
   }
 
+  export type ModelPricingWhereInput = {
+    AND?: ModelPricingWhereInput | ModelPricingWhereInput[]
+    OR?: ModelPricingWhereInput[]
+    NOT?: ModelPricingWhereInput | ModelPricingWhereInput[]
+    id?: UuidFilter<"ModelPricing"> | string
+    model?: StringFilter<"ModelPricing"> | string
+    vendor?: StringFilter<"ModelPricing"> | string
+    displayName?: StringNullableFilter<"ModelPricing"> | string | null
+    description?: StringNullableFilter<"ModelPricing"> | string | null
+    inputPrice?: DecimalFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string
+    outputPrice?: DecimalFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string
+    cacheReadPrice?: DecimalNullableFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string | null
+    cacheWritePrice?: DecimalNullableFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string | null
+    thinkingPrice?: DecimalNullableFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string | null
+    reasoningScore?: IntFilter<"ModelPricing"> | number
+    codingScore?: IntFilter<"ModelPricing"> | number
+    creativityScore?: IntFilter<"ModelPricing"> | number
+    speedScore?: IntFilter<"ModelPricing"> | number
+    contextLength?: IntFilter<"ModelPricing"> | number
+    supportsExtendedThinking?: BoolFilter<"ModelPricing"> | boolean
+    supportsCacheControl?: BoolFilter<"ModelPricing"> | boolean
+    supportsVision?: BoolFilter<"ModelPricing"> | boolean
+    supportsFunctionCalling?: BoolFilter<"ModelPricing"> | boolean
+    supportsStreaming?: BoolFilter<"ModelPricing"> | boolean
+    recommendedScenarios?: JsonNullableFilter<"ModelPricing">
+    isEnabled?: BoolFilter<"ModelPricing"> | boolean
+    isDeprecated?: BoolFilter<"ModelPricing"> | boolean
+    deprecationDate?: DateTimeNullableFilter<"ModelPricing"> | Date | string | null
+    priceUpdatedAt?: DateTimeFilter<"ModelPricing"> | Date | string
+    notes?: StringNullableFilter<"ModelPricing"> | string | null
+    metadata?: JsonNullableFilter<"ModelPricing">
+    isDeleted?: BoolFilter<"ModelPricing"> | boolean
+    createdAt?: DateTimeFilter<"ModelPricing"> | Date | string
+    updatedAt?: DateTimeFilter<"ModelPricing"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"ModelPricing"> | Date | string | null
+  }
+
+  export type ModelPricingOrderByWithRelationInput = {
+    id?: SortOrder
+    model?: SortOrder
+    vendor?: SortOrder
+    displayName?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    inputPrice?: SortOrder
+    outputPrice?: SortOrder
+    cacheReadPrice?: SortOrderInput | SortOrder
+    cacheWritePrice?: SortOrderInput | SortOrder
+    thinkingPrice?: SortOrderInput | SortOrder
+    reasoningScore?: SortOrder
+    codingScore?: SortOrder
+    creativityScore?: SortOrder
+    speedScore?: SortOrder
+    contextLength?: SortOrder
+    supportsExtendedThinking?: SortOrder
+    supportsCacheControl?: SortOrder
+    supportsVision?: SortOrder
+    supportsFunctionCalling?: SortOrder
+    supportsStreaming?: SortOrder
+    recommendedScenarios?: SortOrderInput | SortOrder
+    isEnabled?: SortOrder
+    isDeprecated?: SortOrder
+    deprecationDate?: SortOrderInput | SortOrder
+    priceUpdatedAt?: SortOrder
+    notes?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+  }
+
+  export type ModelPricingWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    model?: string
+    AND?: ModelPricingWhereInput | ModelPricingWhereInput[]
+    OR?: ModelPricingWhereInput[]
+    NOT?: ModelPricingWhereInput | ModelPricingWhereInput[]
+    vendor?: StringFilter<"ModelPricing"> | string
+    displayName?: StringNullableFilter<"ModelPricing"> | string | null
+    description?: StringNullableFilter<"ModelPricing"> | string | null
+    inputPrice?: DecimalFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string
+    outputPrice?: DecimalFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string
+    cacheReadPrice?: DecimalNullableFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string | null
+    cacheWritePrice?: DecimalNullableFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string | null
+    thinkingPrice?: DecimalNullableFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string | null
+    reasoningScore?: IntFilter<"ModelPricing"> | number
+    codingScore?: IntFilter<"ModelPricing"> | number
+    creativityScore?: IntFilter<"ModelPricing"> | number
+    speedScore?: IntFilter<"ModelPricing"> | number
+    contextLength?: IntFilter<"ModelPricing"> | number
+    supportsExtendedThinking?: BoolFilter<"ModelPricing"> | boolean
+    supportsCacheControl?: BoolFilter<"ModelPricing"> | boolean
+    supportsVision?: BoolFilter<"ModelPricing"> | boolean
+    supportsFunctionCalling?: BoolFilter<"ModelPricing"> | boolean
+    supportsStreaming?: BoolFilter<"ModelPricing"> | boolean
+    recommendedScenarios?: JsonNullableFilter<"ModelPricing">
+    isEnabled?: BoolFilter<"ModelPricing"> | boolean
+    isDeprecated?: BoolFilter<"ModelPricing"> | boolean
+    deprecationDate?: DateTimeNullableFilter<"ModelPricing"> | Date | string | null
+    priceUpdatedAt?: DateTimeFilter<"ModelPricing"> | Date | string
+    notes?: StringNullableFilter<"ModelPricing"> | string | null
+    metadata?: JsonNullableFilter<"ModelPricing">
+    isDeleted?: BoolFilter<"ModelPricing"> | boolean
+    createdAt?: DateTimeFilter<"ModelPricing"> | Date | string
+    updatedAt?: DateTimeFilter<"ModelPricing"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"ModelPricing"> | Date | string | null
+  }, "id" | "model">
+
+  export type ModelPricingOrderByWithAggregationInput = {
+    id?: SortOrder
+    model?: SortOrder
+    vendor?: SortOrder
+    displayName?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    inputPrice?: SortOrder
+    outputPrice?: SortOrder
+    cacheReadPrice?: SortOrderInput | SortOrder
+    cacheWritePrice?: SortOrderInput | SortOrder
+    thinkingPrice?: SortOrderInput | SortOrder
+    reasoningScore?: SortOrder
+    codingScore?: SortOrder
+    creativityScore?: SortOrder
+    speedScore?: SortOrder
+    contextLength?: SortOrder
+    supportsExtendedThinking?: SortOrder
+    supportsCacheControl?: SortOrder
+    supportsVision?: SortOrder
+    supportsFunctionCalling?: SortOrder
+    supportsStreaming?: SortOrder
+    recommendedScenarios?: SortOrderInput | SortOrder
+    isEnabled?: SortOrder
+    isDeprecated?: SortOrder
+    deprecationDate?: SortOrderInput | SortOrder
+    priceUpdatedAt?: SortOrder
+    notes?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    _count?: ModelPricingCountOrderByAggregateInput
+    _avg?: ModelPricingAvgOrderByAggregateInput
+    _max?: ModelPricingMaxOrderByAggregateInput
+    _min?: ModelPricingMinOrderByAggregateInput
+    _sum?: ModelPricingSumOrderByAggregateInput
+  }
+
+  export type ModelPricingScalarWhereWithAggregatesInput = {
+    AND?: ModelPricingScalarWhereWithAggregatesInput | ModelPricingScalarWhereWithAggregatesInput[]
+    OR?: ModelPricingScalarWhereWithAggregatesInput[]
+    NOT?: ModelPricingScalarWhereWithAggregatesInput | ModelPricingScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"ModelPricing"> | string
+    model?: StringWithAggregatesFilter<"ModelPricing"> | string
+    vendor?: StringWithAggregatesFilter<"ModelPricing"> | string
+    displayName?: StringNullableWithAggregatesFilter<"ModelPricing"> | string | null
+    description?: StringNullableWithAggregatesFilter<"ModelPricing"> | string | null
+    inputPrice?: DecimalWithAggregatesFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string
+    outputPrice?: DecimalWithAggregatesFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string
+    cacheReadPrice?: DecimalNullableWithAggregatesFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string | null
+    cacheWritePrice?: DecimalNullableWithAggregatesFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string | null
+    thinkingPrice?: DecimalNullableWithAggregatesFilter<"ModelPricing"> | Decimal | DecimalJsLike | number | string | null
+    reasoningScore?: IntWithAggregatesFilter<"ModelPricing"> | number
+    codingScore?: IntWithAggregatesFilter<"ModelPricing"> | number
+    creativityScore?: IntWithAggregatesFilter<"ModelPricing"> | number
+    speedScore?: IntWithAggregatesFilter<"ModelPricing"> | number
+    contextLength?: IntWithAggregatesFilter<"ModelPricing"> | number
+    supportsExtendedThinking?: BoolWithAggregatesFilter<"ModelPricing"> | boolean
+    supportsCacheControl?: BoolWithAggregatesFilter<"ModelPricing"> | boolean
+    supportsVision?: BoolWithAggregatesFilter<"ModelPricing"> | boolean
+    supportsFunctionCalling?: BoolWithAggregatesFilter<"ModelPricing"> | boolean
+    supportsStreaming?: BoolWithAggregatesFilter<"ModelPricing"> | boolean
+    recommendedScenarios?: JsonNullableWithAggregatesFilter<"ModelPricing">
+    isEnabled?: BoolWithAggregatesFilter<"ModelPricing"> | boolean
+    isDeprecated?: BoolWithAggregatesFilter<"ModelPricing"> | boolean
+    deprecationDate?: DateTimeNullableWithAggregatesFilter<"ModelPricing"> | Date | string | null
+    priceUpdatedAt?: DateTimeWithAggregatesFilter<"ModelPricing"> | Date | string
+    notes?: StringNullableWithAggregatesFilter<"ModelPricing"> | string | null
+    metadata?: JsonNullableWithAggregatesFilter<"ModelPricing">
+    isDeleted?: BoolWithAggregatesFilter<"ModelPricing"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"ModelPricing"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ModelPricing"> | Date | string
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"ModelPricing"> | Date | string | null
+  }
+
+  export type BotModelRoutingWhereInput = {
+    AND?: BotModelRoutingWhereInput | BotModelRoutingWhereInput[]
+    OR?: BotModelRoutingWhereInput[]
+    NOT?: BotModelRoutingWhereInput | BotModelRoutingWhereInput[]
+    id?: UuidFilter<"BotModelRouting"> | string
+    botId?: UuidFilter<"BotModelRouting"> | string
+    routingType?: EnumModelRoutingTypeFilter<"BotModelRouting"> | $Enums.ModelRoutingType
+    name?: StringFilter<"BotModelRouting"> | string
+    config?: JsonFilter<"BotModelRouting">
+    priority?: IntFilter<"BotModelRouting"> | number
+    isEnabled?: BoolFilter<"BotModelRouting"> | boolean
+    isDeleted?: BoolFilter<"BotModelRouting"> | boolean
+    createdAt?: DateTimeFilter<"BotModelRouting"> | Date | string
+    updatedAt?: DateTimeFilter<"BotModelRouting"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"BotModelRouting"> | Date | string | null
+    bot?: XOR<BotScalarRelationFilter, BotWhereInput>
+  }
+
+  export type BotModelRoutingOrderByWithRelationInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingType?: SortOrder
+    name?: SortOrder
+    config?: SortOrder
+    priority?: SortOrder
+    isEnabled?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    bot?: BotOrderByWithRelationInput
+  }
+
+  export type BotModelRoutingWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: BotModelRoutingWhereInput | BotModelRoutingWhereInput[]
+    OR?: BotModelRoutingWhereInput[]
+    NOT?: BotModelRoutingWhereInput | BotModelRoutingWhereInput[]
+    botId?: UuidFilter<"BotModelRouting"> | string
+    routingType?: EnumModelRoutingTypeFilter<"BotModelRouting"> | $Enums.ModelRoutingType
+    name?: StringFilter<"BotModelRouting"> | string
+    config?: JsonFilter<"BotModelRouting">
+    priority?: IntFilter<"BotModelRouting"> | number
+    isEnabled?: BoolFilter<"BotModelRouting"> | boolean
+    isDeleted?: BoolFilter<"BotModelRouting"> | boolean
+    createdAt?: DateTimeFilter<"BotModelRouting"> | Date | string
+    updatedAt?: DateTimeFilter<"BotModelRouting"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"BotModelRouting"> | Date | string | null
+    bot?: XOR<BotScalarRelationFilter, BotWhereInput>
+  }, "id">
+
+  export type BotModelRoutingOrderByWithAggregationInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingType?: SortOrder
+    name?: SortOrder
+    config?: SortOrder
+    priority?: SortOrder
+    isEnabled?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    _count?: BotModelRoutingCountOrderByAggregateInput
+    _avg?: BotModelRoutingAvgOrderByAggregateInput
+    _max?: BotModelRoutingMaxOrderByAggregateInput
+    _min?: BotModelRoutingMinOrderByAggregateInput
+    _sum?: BotModelRoutingSumOrderByAggregateInput
+  }
+
+  export type BotModelRoutingScalarWhereWithAggregatesInput = {
+    AND?: BotModelRoutingScalarWhereWithAggregatesInput | BotModelRoutingScalarWhereWithAggregatesInput[]
+    OR?: BotModelRoutingScalarWhereWithAggregatesInput[]
+    NOT?: BotModelRoutingScalarWhereWithAggregatesInput | BotModelRoutingScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"BotModelRouting"> | string
+    botId?: UuidWithAggregatesFilter<"BotModelRouting"> | string
+    routingType?: EnumModelRoutingTypeWithAggregatesFilter<"BotModelRouting"> | $Enums.ModelRoutingType
+    name?: StringWithAggregatesFilter<"BotModelRouting"> | string
+    config?: JsonWithAggregatesFilter<"BotModelRouting">
+    priority?: IntWithAggregatesFilter<"BotModelRouting"> | number
+    isEnabled?: BoolWithAggregatesFilter<"BotModelRouting"> | boolean
+    isDeleted?: BoolWithAggregatesFilter<"BotModelRouting"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"BotModelRouting"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"BotModelRouting"> | Date | string
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"BotModelRouting"> | Date | string | null
+  }
+
   export type BotChannelWhereInput = {
     AND?: BotChannelWhereInput | BotChannelWhereInput[]
     OR?: BotChannelWhereInput[]
@@ -37945,6 +46927,465 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"BotChannel"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"BotChannel"> | Date | string
     deletedAt?: DateTimeNullableWithAggregatesFilter<"BotChannel"> | Date | string | null
+  }
+
+  export type CapabilityTagWhereInput = {
+    AND?: CapabilityTagWhereInput | CapabilityTagWhereInput[]
+    OR?: CapabilityTagWhereInput[]
+    NOT?: CapabilityTagWhereInput | CapabilityTagWhereInput[]
+    id?: UuidFilter<"CapabilityTag"> | string
+    tagId?: StringFilter<"CapabilityTag"> | string
+    name?: StringFilter<"CapabilityTag"> | string
+    description?: StringNullableFilter<"CapabilityTag"> | string | null
+    category?: StringFilter<"CapabilityTag"> | string
+    priority?: IntFilter<"CapabilityTag"> | number
+    requiredProtocol?: StringNullableFilter<"CapabilityTag"> | string | null
+    requiredSkills?: JsonNullableFilter<"CapabilityTag">
+    requiredModels?: JsonNullableFilter<"CapabilityTag">
+    requiresExtendedThinking?: BoolFilter<"CapabilityTag"> | boolean
+    requiresCacheControl?: BoolFilter<"CapabilityTag"> | boolean
+    requiresVision?: BoolFilter<"CapabilityTag"> | boolean
+    maxCostPerMToken?: DecimalNullableFilter<"CapabilityTag"> | Decimal | DecimalJsLike | number | string | null
+    isActive?: BoolFilter<"CapabilityTag"> | boolean
+    isBuiltin?: BoolFilter<"CapabilityTag"> | boolean
+    isDeleted?: BoolFilter<"CapabilityTag"> | boolean
+    createdAt?: DateTimeFilter<"CapabilityTag"> | Date | string
+    updatedAt?: DateTimeFilter<"CapabilityTag"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"CapabilityTag"> | Date | string | null
+  }
+
+  export type CapabilityTagOrderByWithRelationInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    category?: SortOrder
+    priority?: SortOrder
+    requiredProtocol?: SortOrderInput | SortOrder
+    requiredSkills?: SortOrderInput | SortOrder
+    requiredModels?: SortOrderInput | SortOrder
+    requiresExtendedThinking?: SortOrder
+    requiresCacheControl?: SortOrder
+    requiresVision?: SortOrder
+    maxCostPerMToken?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+  }
+
+  export type CapabilityTagWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    tagId?: string
+    AND?: CapabilityTagWhereInput | CapabilityTagWhereInput[]
+    OR?: CapabilityTagWhereInput[]
+    NOT?: CapabilityTagWhereInput | CapabilityTagWhereInput[]
+    name?: StringFilter<"CapabilityTag"> | string
+    description?: StringNullableFilter<"CapabilityTag"> | string | null
+    category?: StringFilter<"CapabilityTag"> | string
+    priority?: IntFilter<"CapabilityTag"> | number
+    requiredProtocol?: StringNullableFilter<"CapabilityTag"> | string | null
+    requiredSkills?: JsonNullableFilter<"CapabilityTag">
+    requiredModels?: JsonNullableFilter<"CapabilityTag">
+    requiresExtendedThinking?: BoolFilter<"CapabilityTag"> | boolean
+    requiresCacheControl?: BoolFilter<"CapabilityTag"> | boolean
+    requiresVision?: BoolFilter<"CapabilityTag"> | boolean
+    maxCostPerMToken?: DecimalNullableFilter<"CapabilityTag"> | Decimal | DecimalJsLike | number | string | null
+    isActive?: BoolFilter<"CapabilityTag"> | boolean
+    isBuiltin?: BoolFilter<"CapabilityTag"> | boolean
+    isDeleted?: BoolFilter<"CapabilityTag"> | boolean
+    createdAt?: DateTimeFilter<"CapabilityTag"> | Date | string
+    updatedAt?: DateTimeFilter<"CapabilityTag"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"CapabilityTag"> | Date | string | null
+  }, "id" | "tagId">
+
+  export type CapabilityTagOrderByWithAggregationInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    category?: SortOrder
+    priority?: SortOrder
+    requiredProtocol?: SortOrderInput | SortOrder
+    requiredSkills?: SortOrderInput | SortOrder
+    requiredModels?: SortOrderInput | SortOrder
+    requiresExtendedThinking?: SortOrder
+    requiresCacheControl?: SortOrder
+    requiresVision?: SortOrder
+    maxCostPerMToken?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    _count?: CapabilityTagCountOrderByAggregateInput
+    _avg?: CapabilityTagAvgOrderByAggregateInput
+    _max?: CapabilityTagMaxOrderByAggregateInput
+    _min?: CapabilityTagMinOrderByAggregateInput
+    _sum?: CapabilityTagSumOrderByAggregateInput
+  }
+
+  export type CapabilityTagScalarWhereWithAggregatesInput = {
+    AND?: CapabilityTagScalarWhereWithAggregatesInput | CapabilityTagScalarWhereWithAggregatesInput[]
+    OR?: CapabilityTagScalarWhereWithAggregatesInput[]
+    NOT?: CapabilityTagScalarWhereWithAggregatesInput | CapabilityTagScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"CapabilityTag"> | string
+    tagId?: StringWithAggregatesFilter<"CapabilityTag"> | string
+    name?: StringWithAggregatesFilter<"CapabilityTag"> | string
+    description?: StringNullableWithAggregatesFilter<"CapabilityTag"> | string | null
+    category?: StringWithAggregatesFilter<"CapabilityTag"> | string
+    priority?: IntWithAggregatesFilter<"CapabilityTag"> | number
+    requiredProtocol?: StringNullableWithAggregatesFilter<"CapabilityTag"> | string | null
+    requiredSkills?: JsonNullableWithAggregatesFilter<"CapabilityTag">
+    requiredModels?: JsonNullableWithAggregatesFilter<"CapabilityTag">
+    requiresExtendedThinking?: BoolWithAggregatesFilter<"CapabilityTag"> | boolean
+    requiresCacheControl?: BoolWithAggregatesFilter<"CapabilityTag"> | boolean
+    requiresVision?: BoolWithAggregatesFilter<"CapabilityTag"> | boolean
+    maxCostPerMToken?: DecimalNullableWithAggregatesFilter<"CapabilityTag"> | Decimal | DecimalJsLike | number | string | null
+    isActive?: BoolWithAggregatesFilter<"CapabilityTag"> | boolean
+    isBuiltin?: BoolWithAggregatesFilter<"CapabilityTag"> | boolean
+    isDeleted?: BoolWithAggregatesFilter<"CapabilityTag"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"CapabilityTag"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CapabilityTag"> | Date | string
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"CapabilityTag"> | Date | string | null
+  }
+
+  export type FallbackChainWhereInput = {
+    AND?: FallbackChainWhereInput | FallbackChainWhereInput[]
+    OR?: FallbackChainWhereInput[]
+    NOT?: FallbackChainWhereInput | FallbackChainWhereInput[]
+    id?: UuidFilter<"FallbackChain"> | string
+    chainId?: StringFilter<"FallbackChain"> | string
+    name?: StringFilter<"FallbackChain"> | string
+    description?: StringNullableFilter<"FallbackChain"> | string | null
+    models?: JsonFilter<"FallbackChain">
+    triggerStatusCodes?: JsonFilter<"FallbackChain">
+    triggerErrorTypes?: JsonFilter<"FallbackChain">
+    triggerTimeoutMs?: IntFilter<"FallbackChain"> | number
+    maxRetries?: IntFilter<"FallbackChain"> | number
+    retryDelayMs?: IntFilter<"FallbackChain"> | number
+    preserveProtocol?: BoolFilter<"FallbackChain"> | boolean
+    isActive?: BoolFilter<"FallbackChain"> | boolean
+    isBuiltin?: BoolFilter<"FallbackChain"> | boolean
+    isDeleted?: BoolFilter<"FallbackChain"> | boolean
+    createdAt?: DateTimeFilter<"FallbackChain"> | Date | string
+    updatedAt?: DateTimeFilter<"FallbackChain"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"FallbackChain"> | Date | string | null
+  }
+
+  export type FallbackChainOrderByWithRelationInput = {
+    id?: SortOrder
+    chainId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    models?: SortOrder
+    triggerStatusCodes?: SortOrder
+    triggerErrorTypes?: SortOrder
+    triggerTimeoutMs?: SortOrder
+    maxRetries?: SortOrder
+    retryDelayMs?: SortOrder
+    preserveProtocol?: SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+  }
+
+  export type FallbackChainWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    chainId?: string
+    AND?: FallbackChainWhereInput | FallbackChainWhereInput[]
+    OR?: FallbackChainWhereInput[]
+    NOT?: FallbackChainWhereInput | FallbackChainWhereInput[]
+    name?: StringFilter<"FallbackChain"> | string
+    description?: StringNullableFilter<"FallbackChain"> | string | null
+    models?: JsonFilter<"FallbackChain">
+    triggerStatusCodes?: JsonFilter<"FallbackChain">
+    triggerErrorTypes?: JsonFilter<"FallbackChain">
+    triggerTimeoutMs?: IntFilter<"FallbackChain"> | number
+    maxRetries?: IntFilter<"FallbackChain"> | number
+    retryDelayMs?: IntFilter<"FallbackChain"> | number
+    preserveProtocol?: BoolFilter<"FallbackChain"> | boolean
+    isActive?: BoolFilter<"FallbackChain"> | boolean
+    isBuiltin?: BoolFilter<"FallbackChain"> | boolean
+    isDeleted?: BoolFilter<"FallbackChain"> | boolean
+    createdAt?: DateTimeFilter<"FallbackChain"> | Date | string
+    updatedAt?: DateTimeFilter<"FallbackChain"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"FallbackChain"> | Date | string | null
+  }, "id" | "chainId">
+
+  export type FallbackChainOrderByWithAggregationInput = {
+    id?: SortOrder
+    chainId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    models?: SortOrder
+    triggerStatusCodes?: SortOrder
+    triggerErrorTypes?: SortOrder
+    triggerTimeoutMs?: SortOrder
+    maxRetries?: SortOrder
+    retryDelayMs?: SortOrder
+    preserveProtocol?: SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    _count?: FallbackChainCountOrderByAggregateInput
+    _avg?: FallbackChainAvgOrderByAggregateInput
+    _max?: FallbackChainMaxOrderByAggregateInput
+    _min?: FallbackChainMinOrderByAggregateInput
+    _sum?: FallbackChainSumOrderByAggregateInput
+  }
+
+  export type FallbackChainScalarWhereWithAggregatesInput = {
+    AND?: FallbackChainScalarWhereWithAggregatesInput | FallbackChainScalarWhereWithAggregatesInput[]
+    OR?: FallbackChainScalarWhereWithAggregatesInput[]
+    NOT?: FallbackChainScalarWhereWithAggregatesInput | FallbackChainScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"FallbackChain"> | string
+    chainId?: StringWithAggregatesFilter<"FallbackChain"> | string
+    name?: StringWithAggregatesFilter<"FallbackChain"> | string
+    description?: StringNullableWithAggregatesFilter<"FallbackChain"> | string | null
+    models?: JsonWithAggregatesFilter<"FallbackChain">
+    triggerStatusCodes?: JsonWithAggregatesFilter<"FallbackChain">
+    triggerErrorTypes?: JsonWithAggregatesFilter<"FallbackChain">
+    triggerTimeoutMs?: IntWithAggregatesFilter<"FallbackChain"> | number
+    maxRetries?: IntWithAggregatesFilter<"FallbackChain"> | number
+    retryDelayMs?: IntWithAggregatesFilter<"FallbackChain"> | number
+    preserveProtocol?: BoolWithAggregatesFilter<"FallbackChain"> | boolean
+    isActive?: BoolWithAggregatesFilter<"FallbackChain"> | boolean
+    isBuiltin?: BoolWithAggregatesFilter<"FallbackChain"> | boolean
+    isDeleted?: BoolWithAggregatesFilter<"FallbackChain"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"FallbackChain"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"FallbackChain"> | Date | string
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"FallbackChain"> | Date | string | null
+  }
+
+  export type CostStrategyWhereInput = {
+    AND?: CostStrategyWhereInput | CostStrategyWhereInput[]
+    OR?: CostStrategyWhereInput[]
+    NOT?: CostStrategyWhereInput | CostStrategyWhereInput[]
+    id?: UuidFilter<"CostStrategy"> | string
+    strategyId?: StringFilter<"CostStrategy"> | string
+    name?: StringFilter<"CostStrategy"> | string
+    description?: StringNullableFilter<"CostStrategy"> | string | null
+    costWeight?: DecimalFilter<"CostStrategy"> | Decimal | DecimalJsLike | number | string
+    performanceWeight?: DecimalFilter<"CostStrategy"> | Decimal | DecimalJsLike | number | string
+    capabilityWeight?: DecimalFilter<"CostStrategy"> | Decimal | DecimalJsLike | number | string
+    maxCostPerRequest?: DecimalNullableFilter<"CostStrategy"> | Decimal | DecimalJsLike | number | string | null
+    maxLatencyMs?: IntNullableFilter<"CostStrategy"> | number | null
+    minCapabilityScore?: IntNullableFilter<"CostStrategy"> | number | null
+    scenarioWeights?: JsonNullableFilter<"CostStrategy">
+    isActive?: BoolFilter<"CostStrategy"> | boolean
+    isBuiltin?: BoolFilter<"CostStrategy"> | boolean
+    isDeleted?: BoolFilter<"CostStrategy"> | boolean
+    createdAt?: DateTimeFilter<"CostStrategy"> | Date | string
+    updatedAt?: DateTimeFilter<"CostStrategy"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"CostStrategy"> | Date | string | null
+  }
+
+  export type CostStrategyOrderByWithRelationInput = {
+    id?: SortOrder
+    strategyId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    costWeight?: SortOrder
+    performanceWeight?: SortOrder
+    capabilityWeight?: SortOrder
+    maxCostPerRequest?: SortOrderInput | SortOrder
+    maxLatencyMs?: SortOrderInput | SortOrder
+    minCapabilityScore?: SortOrderInput | SortOrder
+    scenarioWeights?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+  }
+
+  export type CostStrategyWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    strategyId?: string
+    AND?: CostStrategyWhereInput | CostStrategyWhereInput[]
+    OR?: CostStrategyWhereInput[]
+    NOT?: CostStrategyWhereInput | CostStrategyWhereInput[]
+    name?: StringFilter<"CostStrategy"> | string
+    description?: StringNullableFilter<"CostStrategy"> | string | null
+    costWeight?: DecimalFilter<"CostStrategy"> | Decimal | DecimalJsLike | number | string
+    performanceWeight?: DecimalFilter<"CostStrategy"> | Decimal | DecimalJsLike | number | string
+    capabilityWeight?: DecimalFilter<"CostStrategy"> | Decimal | DecimalJsLike | number | string
+    maxCostPerRequest?: DecimalNullableFilter<"CostStrategy"> | Decimal | DecimalJsLike | number | string | null
+    maxLatencyMs?: IntNullableFilter<"CostStrategy"> | number | null
+    minCapabilityScore?: IntNullableFilter<"CostStrategy"> | number | null
+    scenarioWeights?: JsonNullableFilter<"CostStrategy">
+    isActive?: BoolFilter<"CostStrategy"> | boolean
+    isBuiltin?: BoolFilter<"CostStrategy"> | boolean
+    isDeleted?: BoolFilter<"CostStrategy"> | boolean
+    createdAt?: DateTimeFilter<"CostStrategy"> | Date | string
+    updatedAt?: DateTimeFilter<"CostStrategy"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"CostStrategy"> | Date | string | null
+  }, "id" | "strategyId">
+
+  export type CostStrategyOrderByWithAggregationInput = {
+    id?: SortOrder
+    strategyId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    costWeight?: SortOrder
+    performanceWeight?: SortOrder
+    capabilityWeight?: SortOrder
+    maxCostPerRequest?: SortOrderInput | SortOrder
+    maxLatencyMs?: SortOrderInput | SortOrder
+    minCapabilityScore?: SortOrderInput | SortOrder
+    scenarioWeights?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    _count?: CostStrategyCountOrderByAggregateInput
+    _avg?: CostStrategyAvgOrderByAggregateInput
+    _max?: CostStrategyMaxOrderByAggregateInput
+    _min?: CostStrategyMinOrderByAggregateInput
+    _sum?: CostStrategySumOrderByAggregateInput
+  }
+
+  export type CostStrategyScalarWhereWithAggregatesInput = {
+    AND?: CostStrategyScalarWhereWithAggregatesInput | CostStrategyScalarWhereWithAggregatesInput[]
+    OR?: CostStrategyScalarWhereWithAggregatesInput[]
+    NOT?: CostStrategyScalarWhereWithAggregatesInput | CostStrategyScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"CostStrategy"> | string
+    strategyId?: StringWithAggregatesFilter<"CostStrategy"> | string
+    name?: StringWithAggregatesFilter<"CostStrategy"> | string
+    description?: StringNullableWithAggregatesFilter<"CostStrategy"> | string | null
+    costWeight?: DecimalWithAggregatesFilter<"CostStrategy"> | Decimal | DecimalJsLike | number | string
+    performanceWeight?: DecimalWithAggregatesFilter<"CostStrategy"> | Decimal | DecimalJsLike | number | string
+    capabilityWeight?: DecimalWithAggregatesFilter<"CostStrategy"> | Decimal | DecimalJsLike | number | string
+    maxCostPerRequest?: DecimalNullableWithAggregatesFilter<"CostStrategy"> | Decimal | DecimalJsLike | number | string | null
+    maxLatencyMs?: IntNullableWithAggregatesFilter<"CostStrategy"> | number | null
+    minCapabilityScore?: IntNullableWithAggregatesFilter<"CostStrategy"> | number | null
+    scenarioWeights?: JsonNullableWithAggregatesFilter<"CostStrategy">
+    isActive?: BoolWithAggregatesFilter<"CostStrategy"> | boolean
+    isBuiltin?: BoolWithAggregatesFilter<"CostStrategy"> | boolean
+    isDeleted?: BoolWithAggregatesFilter<"CostStrategy"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"CostStrategy"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CostStrategy"> | Date | string
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"CostStrategy"> | Date | string | null
+  }
+
+  export type BotRoutingConfigWhereInput = {
+    AND?: BotRoutingConfigWhereInput | BotRoutingConfigWhereInput[]
+    OR?: BotRoutingConfigWhereInput[]
+    NOT?: BotRoutingConfigWhereInput | BotRoutingConfigWhereInput[]
+    id?: UuidFilter<"BotRoutingConfig"> | string
+    botId?: UuidFilter<"BotRoutingConfig"> | string
+    routingEnabled?: BoolFilter<"BotRoutingConfig"> | boolean
+    routingMode?: StringFilter<"BotRoutingConfig"> | string
+    fallbackEnabled?: BoolFilter<"BotRoutingConfig"> | boolean
+    fallbackChainId?: StringNullableFilter<"BotRoutingConfig"> | string | null
+    costControlEnabled?: BoolFilter<"BotRoutingConfig"> | boolean
+    costStrategyId?: StringNullableFilter<"BotRoutingConfig"> | string | null
+    dailyBudget?: DecimalNullableFilter<"BotRoutingConfig"> | Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: DecimalNullableFilter<"BotRoutingConfig"> | Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: DecimalNullableFilter<"BotRoutingConfig"> | Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: BoolFilter<"BotRoutingConfig"> | boolean
+    downgradeModel?: StringNullableFilter<"BotRoutingConfig"> | string | null
+    createdAt?: DateTimeFilter<"BotRoutingConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"BotRoutingConfig"> | Date | string
+    bot?: XOR<BotScalarRelationFilter, BotWhereInput>
+  }
+
+  export type BotRoutingConfigOrderByWithRelationInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingEnabled?: SortOrder
+    routingMode?: SortOrder
+    fallbackEnabled?: SortOrder
+    fallbackChainId?: SortOrderInput | SortOrder
+    costControlEnabled?: SortOrder
+    costStrategyId?: SortOrderInput | SortOrder
+    dailyBudget?: SortOrderInput | SortOrder
+    monthlyBudget?: SortOrderInput | SortOrder
+    alertThreshold?: SortOrderInput | SortOrder
+    autoDowngrade?: SortOrder
+    downgradeModel?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    bot?: BotOrderByWithRelationInput
+  }
+
+  export type BotRoutingConfigWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    botId?: string
+    AND?: BotRoutingConfigWhereInput | BotRoutingConfigWhereInput[]
+    OR?: BotRoutingConfigWhereInput[]
+    NOT?: BotRoutingConfigWhereInput | BotRoutingConfigWhereInput[]
+    routingEnabled?: BoolFilter<"BotRoutingConfig"> | boolean
+    routingMode?: StringFilter<"BotRoutingConfig"> | string
+    fallbackEnabled?: BoolFilter<"BotRoutingConfig"> | boolean
+    fallbackChainId?: StringNullableFilter<"BotRoutingConfig"> | string | null
+    costControlEnabled?: BoolFilter<"BotRoutingConfig"> | boolean
+    costStrategyId?: StringNullableFilter<"BotRoutingConfig"> | string | null
+    dailyBudget?: DecimalNullableFilter<"BotRoutingConfig"> | Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: DecimalNullableFilter<"BotRoutingConfig"> | Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: DecimalNullableFilter<"BotRoutingConfig"> | Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: BoolFilter<"BotRoutingConfig"> | boolean
+    downgradeModel?: StringNullableFilter<"BotRoutingConfig"> | string | null
+    createdAt?: DateTimeFilter<"BotRoutingConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"BotRoutingConfig"> | Date | string
+    bot?: XOR<BotScalarRelationFilter, BotWhereInput>
+  }, "id" | "botId">
+
+  export type BotRoutingConfigOrderByWithAggregationInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingEnabled?: SortOrder
+    routingMode?: SortOrder
+    fallbackEnabled?: SortOrder
+    fallbackChainId?: SortOrderInput | SortOrder
+    costControlEnabled?: SortOrder
+    costStrategyId?: SortOrderInput | SortOrder
+    dailyBudget?: SortOrderInput | SortOrder
+    monthlyBudget?: SortOrderInput | SortOrder
+    alertThreshold?: SortOrderInput | SortOrder
+    autoDowngrade?: SortOrder
+    downgradeModel?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: BotRoutingConfigCountOrderByAggregateInput
+    _avg?: BotRoutingConfigAvgOrderByAggregateInput
+    _max?: BotRoutingConfigMaxOrderByAggregateInput
+    _min?: BotRoutingConfigMinOrderByAggregateInput
+    _sum?: BotRoutingConfigSumOrderByAggregateInput
+  }
+
+  export type BotRoutingConfigScalarWhereWithAggregatesInput = {
+    AND?: BotRoutingConfigScalarWhereWithAggregatesInput | BotRoutingConfigScalarWhereWithAggregatesInput[]
+    OR?: BotRoutingConfigScalarWhereWithAggregatesInput[]
+    NOT?: BotRoutingConfigScalarWhereWithAggregatesInput | BotRoutingConfigScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"BotRoutingConfig"> | string
+    botId?: UuidWithAggregatesFilter<"BotRoutingConfig"> | string
+    routingEnabled?: BoolWithAggregatesFilter<"BotRoutingConfig"> | boolean
+    routingMode?: StringWithAggregatesFilter<"BotRoutingConfig"> | string
+    fallbackEnabled?: BoolWithAggregatesFilter<"BotRoutingConfig"> | boolean
+    fallbackChainId?: StringNullableWithAggregatesFilter<"BotRoutingConfig"> | string | null
+    costControlEnabled?: BoolWithAggregatesFilter<"BotRoutingConfig"> | boolean
+    costStrategyId?: StringNullableWithAggregatesFilter<"BotRoutingConfig"> | string | null
+    dailyBudget?: DecimalNullableWithAggregatesFilter<"BotRoutingConfig"> | Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: DecimalNullableWithAggregatesFilter<"BotRoutingConfig"> | Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: DecimalNullableWithAggregatesFilter<"BotRoutingConfig"> | Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: BoolWithAggregatesFilter<"BotRoutingConfig"> | boolean
+    downgradeModel?: StringNullableWithAggregatesFilter<"BotRoutingConfig"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"BotRoutingConfig"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"BotRoutingConfig"> | Date | string
   }
 
   export type UserInfoCreateInput = {
@@ -38152,6 +47593,7 @@ export namespace Prisma {
     soulMarkdown: string
     soulPreview?: string | null
     isSystem?: boolean
+    locale?: string
     isDeleted?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -38170,6 +47612,7 @@ export namespace Prisma {
     soulMarkdown: string
     soulPreview?: string | null
     isSystem?: boolean
+    locale?: string
     createdById?: string | null
     isDeleted?: boolean
     createdAt?: Date | string
@@ -38186,6 +47629,7 @@ export namespace Prisma {
     soulMarkdown?: StringFieldUpdateOperationsInput | string
     soulPreview?: NullableStringFieldUpdateOperationsInput | string | null
     isSystem?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -38204,6 +47648,7 @@ export namespace Prisma {
     soulMarkdown?: StringFieldUpdateOperationsInput | string
     soulPreview?: NullableStringFieldUpdateOperationsInput | string | null
     isSystem?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -38221,6 +47666,7 @@ export namespace Prisma {
     soulMarkdown: string
     soulPreview?: string | null
     isSystem?: boolean
+    locale?: string
     createdById?: string | null
     isDeleted?: boolean
     createdAt?: Date | string
@@ -38236,6 +47682,7 @@ export namespace Prisma {
     soulMarkdown?: StringFieldUpdateOperationsInput | string
     soulPreview?: NullableStringFieldUpdateOperationsInput | string | null
     isSystem?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -38251,6 +47698,7 @@ export namespace Prisma {
     soulMarkdown?: StringFieldUpdateOperationsInput | string
     soulPreview?: NullableStringFieldUpdateOperationsInput | string | null
     isSystem?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -39158,9 +48606,6 @@ export namespace Prisma {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -39169,6 +48614,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -39184,15 +48630,14 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigCreateNestedOneWithoutBotInput
   }
 
   export type BotUncheckedCreateInput = {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -39204,6 +48649,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -39216,15 +48662,14 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigUncheckedCreateNestedOneWithoutBotInput
   }
 
   export type BotUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -39233,6 +48678,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -39248,15 +48694,14 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUpdateOneWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -39268,6 +48713,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -39280,15 +48726,14 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUncheckedUpdateOneWithoutBotNestedInput
   }
 
   export type BotCreateManyInput = {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -39300,6 +48745,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -39312,9 +48758,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -39323,6 +48766,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -39335,9 +48779,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -39349,6 +48790,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -39552,6 +48994,18 @@ export namespace Prisma {
     endpoint?: string | null
     durationMs?: number | null
     errorMessage?: string | null
+    thinkingTokens?: number | null
+    cacheReadTokens?: number | null
+    cacheWriteTokens?: number | null
+    protocolType?: string | null
+    inputCost?: Decimal | DecimalJsLike | number | string | null
+    outputCost?: Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: Decimal | DecimalJsLike | number | string | null
+    cacheCost?: Decimal | DecimalJsLike | number | string | null
+    totalCost?: Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: boolean | null
+    fallbackLevel?: number | null
+    originalModel?: string | null
     bot: BotCreateNestedOneWithoutUsageLogsInput
     providerKey?: ProviderKeyCreateNestedOneWithoutUsageLogsInput
   }
@@ -39569,6 +49023,18 @@ export namespace Prisma {
     endpoint?: string | null
     durationMs?: number | null
     errorMessage?: string | null
+    thinkingTokens?: number | null
+    cacheReadTokens?: number | null
+    cacheWriteTokens?: number | null
+    protocolType?: string | null
+    inputCost?: Decimal | DecimalJsLike | number | string | null
+    outputCost?: Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: Decimal | DecimalJsLike | number | string | null
+    cacheCost?: Decimal | DecimalJsLike | number | string | null
+    totalCost?: Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: boolean | null
+    fallbackLevel?: number | null
+    originalModel?: string | null
   }
 
   export type BotUsageLogUpdateInput = {
@@ -39582,6 +49048,18 @@ export namespace Prisma {
     endpoint?: NullableStringFieldUpdateOperationsInput | string | null
     durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    thinkingTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheReadTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheWriteTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    protocolType?: NullableStringFieldUpdateOperationsInput | string | null
+    inputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    outputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    totalCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    fallbackLevel?: NullableIntFieldUpdateOperationsInput | number | null
+    originalModel?: NullableStringFieldUpdateOperationsInput | string | null
     bot?: BotUpdateOneRequiredWithoutUsageLogsNestedInput
     providerKey?: ProviderKeyUpdateOneWithoutUsageLogsNestedInput
   }
@@ -39599,6 +49077,18 @@ export namespace Prisma {
     endpoint?: NullableStringFieldUpdateOperationsInput | string | null
     durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    thinkingTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheReadTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheWriteTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    protocolType?: NullableStringFieldUpdateOperationsInput | string | null
+    inputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    outputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    totalCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    fallbackLevel?: NullableIntFieldUpdateOperationsInput | number | null
+    originalModel?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type BotUsageLogCreateManyInput = {
@@ -39614,6 +49104,18 @@ export namespace Prisma {
     endpoint?: string | null
     durationMs?: number | null
     errorMessage?: string | null
+    thinkingTokens?: number | null
+    cacheReadTokens?: number | null
+    cacheWriteTokens?: number | null
+    protocolType?: string | null
+    inputCost?: Decimal | DecimalJsLike | number | string | null
+    outputCost?: Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: Decimal | DecimalJsLike | number | string | null
+    cacheCost?: Decimal | DecimalJsLike | number | string | null
+    totalCost?: Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: boolean | null
+    fallbackLevel?: number | null
+    originalModel?: string | null
   }
 
   export type BotUsageLogUpdateManyMutationInput = {
@@ -39627,6 +49129,18 @@ export namespace Prisma {
     endpoint?: NullableStringFieldUpdateOperationsInput | string | null
     durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    thinkingTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheReadTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheWriteTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    protocolType?: NullableStringFieldUpdateOperationsInput | string | null
+    inputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    outputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    totalCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    fallbackLevel?: NullableIntFieldUpdateOperationsInput | number | null
+    originalModel?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type BotUsageLogUncheckedUpdateManyInput = {
@@ -39642,6 +49156,18 @@ export namespace Prisma {
     endpoint?: NullableStringFieldUpdateOperationsInput | string | null
     durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    thinkingTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheReadTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheWriteTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    protocolType?: NullableStringFieldUpdateOperationsInput | string | null
+    inputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    outputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    totalCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    fallbackLevel?: NullableIntFieldUpdateOperationsInput | number | null
+    originalModel?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ProxyTokenCreateInput = {
@@ -40671,6 +50197,341 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ModelPricingCreateInput = {
+    id?: string
+    model: string
+    vendor: string
+    displayName?: string | null
+    description?: string | null
+    inputPrice: Decimal | DecimalJsLike | number | string
+    outputPrice: Decimal | DecimalJsLike | number | string
+    cacheReadPrice?: Decimal | DecimalJsLike | number | string | null
+    cacheWritePrice?: Decimal | DecimalJsLike | number | string | null
+    thinkingPrice?: Decimal | DecimalJsLike | number | string | null
+    reasoningScore?: number
+    codingScore?: number
+    creativityScore?: number
+    speedScore?: number
+    contextLength?: number
+    supportsExtendedThinking?: boolean
+    supportsCacheControl?: boolean
+    supportsVision?: boolean
+    supportsFunctionCalling?: boolean
+    supportsStreaming?: boolean
+    recommendedScenarios?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: boolean
+    isDeprecated?: boolean
+    deprecationDate?: Date | string | null
+    priceUpdatedAt?: Date | string
+    notes?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type ModelPricingUncheckedCreateInput = {
+    id?: string
+    model: string
+    vendor: string
+    displayName?: string | null
+    description?: string | null
+    inputPrice: Decimal | DecimalJsLike | number | string
+    outputPrice: Decimal | DecimalJsLike | number | string
+    cacheReadPrice?: Decimal | DecimalJsLike | number | string | null
+    cacheWritePrice?: Decimal | DecimalJsLike | number | string | null
+    thinkingPrice?: Decimal | DecimalJsLike | number | string | null
+    reasoningScore?: number
+    codingScore?: number
+    creativityScore?: number
+    speedScore?: number
+    contextLength?: number
+    supportsExtendedThinking?: boolean
+    supportsCacheControl?: boolean
+    supportsVision?: boolean
+    supportsFunctionCalling?: boolean
+    supportsStreaming?: boolean
+    recommendedScenarios?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: boolean
+    isDeprecated?: boolean
+    deprecationDate?: Date | string | null
+    priceUpdatedAt?: Date | string
+    notes?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type ModelPricingUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    vendor?: StringFieldUpdateOperationsInput | string
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    inputPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outputPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    cacheReadPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheWritePrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    reasoningScore?: IntFieldUpdateOperationsInput | number
+    codingScore?: IntFieldUpdateOperationsInput | number
+    creativityScore?: IntFieldUpdateOperationsInput | number
+    speedScore?: IntFieldUpdateOperationsInput | number
+    contextLength?: IntFieldUpdateOperationsInput | number
+    supportsExtendedThinking?: BoolFieldUpdateOperationsInput | boolean
+    supportsCacheControl?: BoolFieldUpdateOperationsInput | boolean
+    supportsVision?: BoolFieldUpdateOperationsInput | boolean
+    supportsFunctionCalling?: BoolFieldUpdateOperationsInput | boolean
+    supportsStreaming?: BoolFieldUpdateOperationsInput | boolean
+    recommendedScenarios?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeprecated?: BoolFieldUpdateOperationsInput | boolean
+    deprecationDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    priceUpdatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ModelPricingUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    vendor?: StringFieldUpdateOperationsInput | string
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    inputPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outputPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    cacheReadPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheWritePrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    reasoningScore?: IntFieldUpdateOperationsInput | number
+    codingScore?: IntFieldUpdateOperationsInput | number
+    creativityScore?: IntFieldUpdateOperationsInput | number
+    speedScore?: IntFieldUpdateOperationsInput | number
+    contextLength?: IntFieldUpdateOperationsInput | number
+    supportsExtendedThinking?: BoolFieldUpdateOperationsInput | boolean
+    supportsCacheControl?: BoolFieldUpdateOperationsInput | boolean
+    supportsVision?: BoolFieldUpdateOperationsInput | boolean
+    supportsFunctionCalling?: BoolFieldUpdateOperationsInput | boolean
+    supportsStreaming?: BoolFieldUpdateOperationsInput | boolean
+    recommendedScenarios?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeprecated?: BoolFieldUpdateOperationsInput | boolean
+    deprecationDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    priceUpdatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ModelPricingCreateManyInput = {
+    id?: string
+    model: string
+    vendor: string
+    displayName?: string | null
+    description?: string | null
+    inputPrice: Decimal | DecimalJsLike | number | string
+    outputPrice: Decimal | DecimalJsLike | number | string
+    cacheReadPrice?: Decimal | DecimalJsLike | number | string | null
+    cacheWritePrice?: Decimal | DecimalJsLike | number | string | null
+    thinkingPrice?: Decimal | DecimalJsLike | number | string | null
+    reasoningScore?: number
+    codingScore?: number
+    creativityScore?: number
+    speedScore?: number
+    contextLength?: number
+    supportsExtendedThinking?: boolean
+    supportsCacheControl?: boolean
+    supportsVision?: boolean
+    supportsFunctionCalling?: boolean
+    supportsStreaming?: boolean
+    recommendedScenarios?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: boolean
+    isDeprecated?: boolean
+    deprecationDate?: Date | string | null
+    priceUpdatedAt?: Date | string
+    notes?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type ModelPricingUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    vendor?: StringFieldUpdateOperationsInput | string
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    inputPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outputPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    cacheReadPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheWritePrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    reasoningScore?: IntFieldUpdateOperationsInput | number
+    codingScore?: IntFieldUpdateOperationsInput | number
+    creativityScore?: IntFieldUpdateOperationsInput | number
+    speedScore?: IntFieldUpdateOperationsInput | number
+    contextLength?: IntFieldUpdateOperationsInput | number
+    supportsExtendedThinking?: BoolFieldUpdateOperationsInput | boolean
+    supportsCacheControl?: BoolFieldUpdateOperationsInput | boolean
+    supportsVision?: BoolFieldUpdateOperationsInput | boolean
+    supportsFunctionCalling?: BoolFieldUpdateOperationsInput | boolean
+    supportsStreaming?: BoolFieldUpdateOperationsInput | boolean
+    recommendedScenarios?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeprecated?: BoolFieldUpdateOperationsInput | boolean
+    deprecationDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    priceUpdatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type ModelPricingUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    vendor?: StringFieldUpdateOperationsInput | string
+    displayName?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    inputPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    outputPrice?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    cacheReadPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheWritePrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    reasoningScore?: IntFieldUpdateOperationsInput | number
+    codingScore?: IntFieldUpdateOperationsInput | number
+    creativityScore?: IntFieldUpdateOperationsInput | number
+    speedScore?: IntFieldUpdateOperationsInput | number
+    contextLength?: IntFieldUpdateOperationsInput | number
+    supportsExtendedThinking?: BoolFieldUpdateOperationsInput | boolean
+    supportsCacheControl?: BoolFieldUpdateOperationsInput | boolean
+    supportsVision?: BoolFieldUpdateOperationsInput | boolean
+    supportsFunctionCalling?: BoolFieldUpdateOperationsInput | boolean
+    supportsStreaming?: BoolFieldUpdateOperationsInput | boolean
+    recommendedScenarios?: NullableJsonNullValueInput | InputJsonValue
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeprecated?: BoolFieldUpdateOperationsInput | boolean
+    deprecationDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    priceUpdatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BotModelRoutingCreateInput = {
+    id?: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonNullValueInput | InputJsonValue
+    priority?: number
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    bot: BotCreateNestedOneWithoutModelRoutingsInput
+  }
+
+  export type BotModelRoutingUncheckedCreateInput = {
+    id?: string
+    botId: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonNullValueInput | InputJsonValue
+    priority?: number
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type BotModelRoutingUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    bot?: BotUpdateOneRequiredWithoutModelRoutingsNestedInput
+  }
+
+  export type BotModelRoutingUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    botId?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BotModelRoutingCreateManyInput = {
+    id?: string
+    botId: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonNullValueInput | InputJsonValue
+    priority?: number
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type BotModelRoutingUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BotModelRoutingUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    botId?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type BotChannelCreateInput = {
     id?: string
     channelType: string
@@ -40787,6 +50648,565 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type CapabilityTagCreateInput = {
+    id?: string
+    tagId: string
+    name: string
+    description?: string | null
+    category: string
+    priority?: number
+    requiredProtocol?: string | null
+    requiredSkills?: NullableJsonNullValueInput | InputJsonValue
+    requiredModels?: NullableJsonNullValueInput | InputJsonValue
+    requiresExtendedThinking?: boolean
+    requiresCacheControl?: boolean
+    requiresVision?: boolean
+    maxCostPerMToken?: Decimal | DecimalJsLike | number | string | null
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type CapabilityTagUncheckedCreateInput = {
+    id?: string
+    tagId: string
+    name: string
+    description?: string | null
+    category: string
+    priority?: number
+    requiredProtocol?: string | null
+    requiredSkills?: NullableJsonNullValueInput | InputJsonValue
+    requiredModels?: NullableJsonNullValueInput | InputJsonValue
+    requiresExtendedThinking?: boolean
+    requiresCacheControl?: boolean
+    requiresVision?: boolean
+    maxCostPerMToken?: Decimal | DecimalJsLike | number | string | null
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type CapabilityTagUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tagId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    priority?: IntFieldUpdateOperationsInput | number
+    requiredProtocol?: NullableStringFieldUpdateOperationsInput | string | null
+    requiredSkills?: NullableJsonNullValueInput | InputJsonValue
+    requiredModels?: NullableJsonNullValueInput | InputJsonValue
+    requiresExtendedThinking?: BoolFieldUpdateOperationsInput | boolean
+    requiresCacheControl?: BoolFieldUpdateOperationsInput | boolean
+    requiresVision?: BoolFieldUpdateOperationsInput | boolean
+    maxCostPerMToken?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type CapabilityTagUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tagId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    priority?: IntFieldUpdateOperationsInput | number
+    requiredProtocol?: NullableStringFieldUpdateOperationsInput | string | null
+    requiredSkills?: NullableJsonNullValueInput | InputJsonValue
+    requiredModels?: NullableJsonNullValueInput | InputJsonValue
+    requiresExtendedThinking?: BoolFieldUpdateOperationsInput | boolean
+    requiresCacheControl?: BoolFieldUpdateOperationsInput | boolean
+    requiresVision?: BoolFieldUpdateOperationsInput | boolean
+    maxCostPerMToken?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type CapabilityTagCreateManyInput = {
+    id?: string
+    tagId: string
+    name: string
+    description?: string | null
+    category: string
+    priority?: number
+    requiredProtocol?: string | null
+    requiredSkills?: NullableJsonNullValueInput | InputJsonValue
+    requiredModels?: NullableJsonNullValueInput | InputJsonValue
+    requiresExtendedThinking?: boolean
+    requiresCacheControl?: boolean
+    requiresVision?: boolean
+    maxCostPerMToken?: Decimal | DecimalJsLike | number | string | null
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type CapabilityTagUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tagId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    priority?: IntFieldUpdateOperationsInput | number
+    requiredProtocol?: NullableStringFieldUpdateOperationsInput | string | null
+    requiredSkills?: NullableJsonNullValueInput | InputJsonValue
+    requiredModels?: NullableJsonNullValueInput | InputJsonValue
+    requiresExtendedThinking?: BoolFieldUpdateOperationsInput | boolean
+    requiresCacheControl?: BoolFieldUpdateOperationsInput | boolean
+    requiresVision?: BoolFieldUpdateOperationsInput | boolean
+    maxCostPerMToken?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type CapabilityTagUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tagId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: StringFieldUpdateOperationsInput | string
+    priority?: IntFieldUpdateOperationsInput | number
+    requiredProtocol?: NullableStringFieldUpdateOperationsInput | string | null
+    requiredSkills?: NullableJsonNullValueInput | InputJsonValue
+    requiredModels?: NullableJsonNullValueInput | InputJsonValue
+    requiresExtendedThinking?: BoolFieldUpdateOperationsInput | boolean
+    requiresCacheControl?: BoolFieldUpdateOperationsInput | boolean
+    requiresVision?: BoolFieldUpdateOperationsInput | boolean
+    maxCostPerMToken?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type FallbackChainCreateInput = {
+    id?: string
+    chainId: string
+    name: string
+    description?: string | null
+    models: JsonNullValueInput | InputJsonValue
+    triggerStatusCodes?: JsonNullValueInput | InputJsonValue
+    triggerErrorTypes?: JsonNullValueInput | InputJsonValue
+    triggerTimeoutMs?: number
+    maxRetries?: number
+    retryDelayMs?: number
+    preserveProtocol?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type FallbackChainUncheckedCreateInput = {
+    id?: string
+    chainId: string
+    name: string
+    description?: string | null
+    models: JsonNullValueInput | InputJsonValue
+    triggerStatusCodes?: JsonNullValueInput | InputJsonValue
+    triggerErrorTypes?: JsonNullValueInput | InputJsonValue
+    triggerTimeoutMs?: number
+    maxRetries?: number
+    retryDelayMs?: number
+    preserveProtocol?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type FallbackChainUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    chainId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    models?: JsonNullValueInput | InputJsonValue
+    triggerStatusCodes?: JsonNullValueInput | InputJsonValue
+    triggerErrorTypes?: JsonNullValueInput | InputJsonValue
+    triggerTimeoutMs?: IntFieldUpdateOperationsInput | number
+    maxRetries?: IntFieldUpdateOperationsInput | number
+    retryDelayMs?: IntFieldUpdateOperationsInput | number
+    preserveProtocol?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type FallbackChainUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    chainId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    models?: JsonNullValueInput | InputJsonValue
+    triggerStatusCodes?: JsonNullValueInput | InputJsonValue
+    triggerErrorTypes?: JsonNullValueInput | InputJsonValue
+    triggerTimeoutMs?: IntFieldUpdateOperationsInput | number
+    maxRetries?: IntFieldUpdateOperationsInput | number
+    retryDelayMs?: IntFieldUpdateOperationsInput | number
+    preserveProtocol?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type FallbackChainCreateManyInput = {
+    id?: string
+    chainId: string
+    name: string
+    description?: string | null
+    models: JsonNullValueInput | InputJsonValue
+    triggerStatusCodes?: JsonNullValueInput | InputJsonValue
+    triggerErrorTypes?: JsonNullValueInput | InputJsonValue
+    triggerTimeoutMs?: number
+    maxRetries?: number
+    retryDelayMs?: number
+    preserveProtocol?: boolean
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type FallbackChainUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    chainId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    models?: JsonNullValueInput | InputJsonValue
+    triggerStatusCodes?: JsonNullValueInput | InputJsonValue
+    triggerErrorTypes?: JsonNullValueInput | InputJsonValue
+    triggerTimeoutMs?: IntFieldUpdateOperationsInput | number
+    maxRetries?: IntFieldUpdateOperationsInput | number
+    retryDelayMs?: IntFieldUpdateOperationsInput | number
+    preserveProtocol?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type FallbackChainUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    chainId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    models?: JsonNullValueInput | InputJsonValue
+    triggerStatusCodes?: JsonNullValueInput | InputJsonValue
+    triggerErrorTypes?: JsonNullValueInput | InputJsonValue
+    triggerTimeoutMs?: IntFieldUpdateOperationsInput | number
+    maxRetries?: IntFieldUpdateOperationsInput | number
+    retryDelayMs?: IntFieldUpdateOperationsInput | number
+    preserveProtocol?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type CostStrategyCreateInput = {
+    id?: string
+    strategyId: string
+    name: string
+    description?: string | null
+    costWeight?: Decimal | DecimalJsLike | number | string
+    performanceWeight?: Decimal | DecimalJsLike | number | string
+    capabilityWeight?: Decimal | DecimalJsLike | number | string
+    maxCostPerRequest?: Decimal | DecimalJsLike | number | string | null
+    maxLatencyMs?: number | null
+    minCapabilityScore?: number | null
+    scenarioWeights?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type CostStrategyUncheckedCreateInput = {
+    id?: string
+    strategyId: string
+    name: string
+    description?: string | null
+    costWeight?: Decimal | DecimalJsLike | number | string
+    performanceWeight?: Decimal | DecimalJsLike | number | string
+    capabilityWeight?: Decimal | DecimalJsLike | number | string
+    maxCostPerRequest?: Decimal | DecimalJsLike | number | string | null
+    maxLatencyMs?: number | null
+    minCapabilityScore?: number | null
+    scenarioWeights?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type CostStrategyUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    strategyId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    costWeight?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    performanceWeight?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    capabilityWeight?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxCostPerRequest?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    maxLatencyMs?: NullableIntFieldUpdateOperationsInput | number | null
+    minCapabilityScore?: NullableIntFieldUpdateOperationsInput | number | null
+    scenarioWeights?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type CostStrategyUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    strategyId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    costWeight?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    performanceWeight?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    capabilityWeight?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxCostPerRequest?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    maxLatencyMs?: NullableIntFieldUpdateOperationsInput | number | null
+    minCapabilityScore?: NullableIntFieldUpdateOperationsInput | number | null
+    scenarioWeights?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type CostStrategyCreateManyInput = {
+    id?: string
+    strategyId: string
+    name: string
+    description?: string | null
+    costWeight?: Decimal | DecimalJsLike | number | string
+    performanceWeight?: Decimal | DecimalJsLike | number | string
+    capabilityWeight?: Decimal | DecimalJsLike | number | string
+    maxCostPerRequest?: Decimal | DecimalJsLike | number | string | null
+    maxLatencyMs?: number | null
+    minCapabilityScore?: number | null
+    scenarioWeights?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type CostStrategyUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    strategyId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    costWeight?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    performanceWeight?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    capabilityWeight?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxCostPerRequest?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    maxLatencyMs?: NullableIntFieldUpdateOperationsInput | number | null
+    minCapabilityScore?: NullableIntFieldUpdateOperationsInput | number | null
+    scenarioWeights?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type CostStrategyUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    strategyId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    costWeight?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    performanceWeight?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    capabilityWeight?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxCostPerRequest?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    maxLatencyMs?: NullableIntFieldUpdateOperationsInput | number | null
+    minCapabilityScore?: NullableIntFieldUpdateOperationsInput | number | null
+    scenarioWeights?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BotRoutingConfigCreateInput = {
+    id?: string
+    routingEnabled?: boolean
+    routingMode?: string
+    fallbackEnabled?: boolean
+    fallbackChainId?: string | null
+    costControlEnabled?: boolean
+    costStrategyId?: string | null
+    dailyBudget?: Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: boolean
+    downgradeModel?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bot: BotCreateNestedOneWithoutRoutingConfigInput
+  }
+
+  export type BotRoutingConfigUncheckedCreateInput = {
+    id?: string
+    botId: string
+    routingEnabled?: boolean
+    routingMode?: string
+    fallbackEnabled?: boolean
+    fallbackChainId?: string | null
+    costControlEnabled?: boolean
+    costStrategyId?: string | null
+    dailyBudget?: Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: boolean
+    downgradeModel?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BotRoutingConfigUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingEnabled?: BoolFieldUpdateOperationsInput | boolean
+    routingMode?: StringFieldUpdateOperationsInput | string
+    fallbackEnabled?: BoolFieldUpdateOperationsInput | boolean
+    fallbackChainId?: NullableStringFieldUpdateOperationsInput | string | null
+    costControlEnabled?: BoolFieldUpdateOperationsInput | boolean
+    costStrategyId?: NullableStringFieldUpdateOperationsInput | string | null
+    dailyBudget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: BoolFieldUpdateOperationsInput | boolean
+    downgradeModel?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bot?: BotUpdateOneRequiredWithoutRoutingConfigNestedInput
+  }
+
+  export type BotRoutingConfigUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    botId?: StringFieldUpdateOperationsInput | string
+    routingEnabled?: BoolFieldUpdateOperationsInput | boolean
+    routingMode?: StringFieldUpdateOperationsInput | string
+    fallbackEnabled?: BoolFieldUpdateOperationsInput | boolean
+    fallbackChainId?: NullableStringFieldUpdateOperationsInput | string | null
+    costControlEnabled?: BoolFieldUpdateOperationsInput | boolean
+    costStrategyId?: NullableStringFieldUpdateOperationsInput | string | null
+    dailyBudget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: BoolFieldUpdateOperationsInput | boolean
+    downgradeModel?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BotRoutingConfigCreateManyInput = {
+    id?: string
+    botId: string
+    routingEnabled?: boolean
+    routingMode?: string
+    fallbackEnabled?: boolean
+    fallbackChainId?: string | null
+    costControlEnabled?: boolean
+    costStrategyId?: string | null
+    dailyBudget?: Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: boolean
+    downgradeModel?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BotRoutingConfigUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingEnabled?: BoolFieldUpdateOperationsInput | boolean
+    routingMode?: StringFieldUpdateOperationsInput | string
+    fallbackEnabled?: BoolFieldUpdateOperationsInput | boolean
+    fallbackChainId?: NullableStringFieldUpdateOperationsInput | string | null
+    costControlEnabled?: BoolFieldUpdateOperationsInput | boolean
+    costStrategyId?: NullableStringFieldUpdateOperationsInput | string | null
+    dailyBudget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: BoolFieldUpdateOperationsInput | boolean
+    downgradeModel?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BotRoutingConfigUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    botId?: StringFieldUpdateOperationsInput | string
+    routingEnabled?: BoolFieldUpdateOperationsInput | boolean
+    routingMode?: StringFieldUpdateOperationsInput | string
+    fallbackEnabled?: BoolFieldUpdateOperationsInput | boolean
+    fallbackChainId?: NullableStringFieldUpdateOperationsInput | string | null
+    costControlEnabled?: BoolFieldUpdateOperationsInput | boolean
+    costStrategyId?: NullableStringFieldUpdateOperationsInput | string | null
+    dailyBudget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: BoolFieldUpdateOperationsInput | boolean
+    downgradeModel?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type UuidFilter<$PrismaModel = never> = {
@@ -41164,6 +51584,7 @@ export namespace Prisma {
     soulMarkdown?: SortOrder
     soulPreview?: SortOrder
     isSystem?: SortOrder
+    locale?: SortOrder
     createdById?: SortOrder
     isDeleted?: SortOrder
     createdAt?: SortOrder
@@ -41180,6 +51601,7 @@ export namespace Prisma {
     soulMarkdown?: SortOrder
     soulPreview?: SortOrder
     isSystem?: SortOrder
+    locale?: SortOrder
     createdById?: SortOrder
     isDeleted?: SortOrder
     createdAt?: SortOrder
@@ -41196,6 +51618,7 @@ export namespace Prisma {
     soulMarkdown?: SortOrder
     soulPreview?: SortOrder
     isSystem?: SortOrder
+    locale?: SortOrder
     createdById?: SortOrder
     isDeleted?: SortOrder
     createdAt?: SortOrder
@@ -41888,6 +52311,17 @@ export namespace Prisma {
     none?: BotChannelWhereInput
   }
 
+  export type BotModelRoutingListRelationFilter = {
+    every?: BotModelRoutingWhereInput
+    some?: BotModelRoutingWhereInput
+    none?: BotModelRoutingWhereInput
+  }
+
+  export type BotRoutingConfigNullableScalarRelationFilter = {
+    is?: BotRoutingConfigWhereInput | null
+    isNot?: BotRoutingConfigWhereInput | null
+  }
+
   export type BotProviderKeyOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -41908,13 +52342,14 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type BotModelRoutingOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type BotCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     hostname?: SortOrder
-    aiProvider?: SortOrder
-    model?: SortOrder
-    channelType?: SortOrder
     containerId?: SortOrder
     port?: SortOrder
     gatewayToken?: SortOrder
@@ -41926,6 +52361,7 @@ export namespace Prisma {
     emoji?: SortOrder
     avatarFileId?: SortOrder
     soulMarkdown?: SortOrder
+    pendingConfig?: SortOrder
     healthStatus?: SortOrder
     lastHealthCheck?: SortOrder
     isDeleted?: SortOrder
@@ -41942,9 +52378,6 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     hostname?: SortOrder
-    aiProvider?: SortOrder
-    model?: SortOrder
-    channelType?: SortOrder
     containerId?: SortOrder
     port?: SortOrder
     gatewayToken?: SortOrder
@@ -41967,9 +52400,6 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     hostname?: SortOrder
-    aiProvider?: SortOrder
-    model?: SortOrder
-    channelType?: SortOrder
     containerId?: SortOrder
     port?: SortOrder
     gatewayToken?: SortOrder
@@ -42148,6 +52578,22 @@ export namespace Prisma {
     createdAt?: SortOrder
   }
 
+  export type DecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type BoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+  }
+
   export type ProviderKeyNullableScalarRelationFilter = {
     is?: ProviderKeyWhereInput | null
     isNot?: ProviderKeyWhereInput | null
@@ -42166,6 +52612,18 @@ export namespace Prisma {
     endpoint?: SortOrder
     durationMs?: SortOrder
     errorMessage?: SortOrder
+    thinkingTokens?: SortOrder
+    cacheReadTokens?: SortOrder
+    cacheWriteTokens?: SortOrder
+    protocolType?: SortOrder
+    inputCost?: SortOrder
+    outputCost?: SortOrder
+    thinkingCost?: SortOrder
+    cacheCost?: SortOrder
+    totalCost?: SortOrder
+    fallbackUsed?: SortOrder
+    fallbackLevel?: SortOrder
+    originalModel?: SortOrder
   }
 
   export type BotUsageLogAvgOrderByAggregateInput = {
@@ -42173,6 +52631,15 @@ export namespace Prisma {
     requestTokens?: SortOrder
     responseTokens?: SortOrder
     durationMs?: SortOrder
+    thinkingTokens?: SortOrder
+    cacheReadTokens?: SortOrder
+    cacheWriteTokens?: SortOrder
+    inputCost?: SortOrder
+    outputCost?: SortOrder
+    thinkingCost?: SortOrder
+    cacheCost?: SortOrder
+    totalCost?: SortOrder
+    fallbackLevel?: SortOrder
   }
 
   export type BotUsageLogMaxOrderByAggregateInput = {
@@ -42188,6 +52655,18 @@ export namespace Prisma {
     endpoint?: SortOrder
     durationMs?: SortOrder
     errorMessage?: SortOrder
+    thinkingTokens?: SortOrder
+    cacheReadTokens?: SortOrder
+    cacheWriteTokens?: SortOrder
+    protocolType?: SortOrder
+    inputCost?: SortOrder
+    outputCost?: SortOrder
+    thinkingCost?: SortOrder
+    cacheCost?: SortOrder
+    totalCost?: SortOrder
+    fallbackUsed?: SortOrder
+    fallbackLevel?: SortOrder
+    originalModel?: SortOrder
   }
 
   export type BotUsageLogMinOrderByAggregateInput = {
@@ -42203,6 +52682,18 @@ export namespace Prisma {
     endpoint?: SortOrder
     durationMs?: SortOrder
     errorMessage?: SortOrder
+    thinkingTokens?: SortOrder
+    cacheReadTokens?: SortOrder
+    cacheWriteTokens?: SortOrder
+    protocolType?: SortOrder
+    inputCost?: SortOrder
+    outputCost?: SortOrder
+    thinkingCost?: SortOrder
+    cacheCost?: SortOrder
+    totalCost?: SortOrder
+    fallbackUsed?: SortOrder
+    fallbackLevel?: SortOrder
+    originalModel?: SortOrder
   }
 
   export type BotUsageLogSumOrderByAggregateInput = {
@@ -42210,6 +52701,39 @@ export namespace Prisma {
     requestTokens?: SortOrder
     responseTokens?: SortOrder
     durationMs?: SortOrder
+    thinkingTokens?: SortOrder
+    cacheReadTokens?: SortOrder
+    cacheWriteTokens?: SortOrder
+    inputCost?: SortOrder
+    outputCost?: SortOrder
+    thinkingCost?: SortOrder
+    cacheCost?: SortOrder
+    totalCost?: SortOrder
+    fallbackLevel?: SortOrder
+  }
+
+  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
+  export type BoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedBoolNullableFilter<$PrismaModel>
+    _max?: NestedBoolNullableFilter<$PrismaModel>
   }
 
   export type ProxyTokenCountOrderByAggregateInput = {
@@ -42805,6 +53329,222 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type DecimalFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type ModelPricingCountOrderByAggregateInput = {
+    id?: SortOrder
+    model?: SortOrder
+    vendor?: SortOrder
+    displayName?: SortOrder
+    description?: SortOrder
+    inputPrice?: SortOrder
+    outputPrice?: SortOrder
+    cacheReadPrice?: SortOrder
+    cacheWritePrice?: SortOrder
+    thinkingPrice?: SortOrder
+    reasoningScore?: SortOrder
+    codingScore?: SortOrder
+    creativityScore?: SortOrder
+    speedScore?: SortOrder
+    contextLength?: SortOrder
+    supportsExtendedThinking?: SortOrder
+    supportsCacheControl?: SortOrder
+    supportsVision?: SortOrder
+    supportsFunctionCalling?: SortOrder
+    supportsStreaming?: SortOrder
+    recommendedScenarios?: SortOrder
+    isEnabled?: SortOrder
+    isDeprecated?: SortOrder
+    deprecationDate?: SortOrder
+    priceUpdatedAt?: SortOrder
+    notes?: SortOrder
+    metadata?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type ModelPricingAvgOrderByAggregateInput = {
+    inputPrice?: SortOrder
+    outputPrice?: SortOrder
+    cacheReadPrice?: SortOrder
+    cacheWritePrice?: SortOrder
+    thinkingPrice?: SortOrder
+    reasoningScore?: SortOrder
+    codingScore?: SortOrder
+    creativityScore?: SortOrder
+    speedScore?: SortOrder
+    contextLength?: SortOrder
+  }
+
+  export type ModelPricingMaxOrderByAggregateInput = {
+    id?: SortOrder
+    model?: SortOrder
+    vendor?: SortOrder
+    displayName?: SortOrder
+    description?: SortOrder
+    inputPrice?: SortOrder
+    outputPrice?: SortOrder
+    cacheReadPrice?: SortOrder
+    cacheWritePrice?: SortOrder
+    thinkingPrice?: SortOrder
+    reasoningScore?: SortOrder
+    codingScore?: SortOrder
+    creativityScore?: SortOrder
+    speedScore?: SortOrder
+    contextLength?: SortOrder
+    supportsExtendedThinking?: SortOrder
+    supportsCacheControl?: SortOrder
+    supportsVision?: SortOrder
+    supportsFunctionCalling?: SortOrder
+    supportsStreaming?: SortOrder
+    isEnabled?: SortOrder
+    isDeprecated?: SortOrder
+    deprecationDate?: SortOrder
+    priceUpdatedAt?: SortOrder
+    notes?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type ModelPricingMinOrderByAggregateInput = {
+    id?: SortOrder
+    model?: SortOrder
+    vendor?: SortOrder
+    displayName?: SortOrder
+    description?: SortOrder
+    inputPrice?: SortOrder
+    outputPrice?: SortOrder
+    cacheReadPrice?: SortOrder
+    cacheWritePrice?: SortOrder
+    thinkingPrice?: SortOrder
+    reasoningScore?: SortOrder
+    codingScore?: SortOrder
+    creativityScore?: SortOrder
+    speedScore?: SortOrder
+    contextLength?: SortOrder
+    supportsExtendedThinking?: SortOrder
+    supportsCacheControl?: SortOrder
+    supportsVision?: SortOrder
+    supportsFunctionCalling?: SortOrder
+    supportsStreaming?: SortOrder
+    isEnabled?: SortOrder
+    isDeprecated?: SortOrder
+    deprecationDate?: SortOrder
+    priceUpdatedAt?: SortOrder
+    notes?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type ModelPricingSumOrderByAggregateInput = {
+    inputPrice?: SortOrder
+    outputPrice?: SortOrder
+    cacheReadPrice?: SortOrder
+    cacheWritePrice?: SortOrder
+    thinkingPrice?: SortOrder
+    reasoningScore?: SortOrder
+    codingScore?: SortOrder
+    creativityScore?: SortOrder
+    speedScore?: SortOrder
+    contextLength?: SortOrder
+  }
+
+  export type DecimalWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedDecimalFilter<$PrismaModel>
+    _sum?: NestedDecimalFilter<$PrismaModel>
+    _min?: NestedDecimalFilter<$PrismaModel>
+    _max?: NestedDecimalFilter<$PrismaModel>
+  }
+
+  export type EnumModelRoutingTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModelRoutingType | EnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumModelRoutingTypeFilter<$PrismaModel> | $Enums.ModelRoutingType
+  }
+
+  export type BotModelRoutingCountOrderByAggregateInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingType?: SortOrder
+    name?: SortOrder
+    config?: SortOrder
+    priority?: SortOrder
+    isEnabled?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type BotModelRoutingAvgOrderByAggregateInput = {
+    priority?: SortOrder
+  }
+
+  export type BotModelRoutingMaxOrderByAggregateInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingType?: SortOrder
+    name?: SortOrder
+    priority?: SortOrder
+    isEnabled?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type BotModelRoutingMinOrderByAggregateInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingType?: SortOrder
+    name?: SortOrder
+    priority?: SortOrder
+    isEnabled?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type BotModelRoutingSumOrderByAggregateInput = {
+    priority?: SortOrder
+  }
+
+  export type EnumModelRoutingTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModelRoutingType | EnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumModelRoutingTypeWithAggregatesFilter<$PrismaModel> | $Enums.ModelRoutingType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumModelRoutingTypeFilter<$PrismaModel>
+    _max?: NestedEnumModelRoutingTypeFilter<$PrismaModel>
+  }
+
   export type EnumChannelConnectionStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.ChannelConnectionStatus | EnumChannelConnectionStatusFieldRefInput<$PrismaModel>
     in?: $Enums.ChannelConnectionStatus[] | ListEnumChannelConnectionStatusFieldRefInput<$PrismaModel>
@@ -42875,6 +53615,286 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumChannelConnectionStatusFilter<$PrismaModel>
     _max?: NestedEnumChannelConnectionStatusFilter<$PrismaModel>
+  }
+
+  export type CapabilityTagCountOrderByAggregateInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    category?: SortOrder
+    priority?: SortOrder
+    requiredProtocol?: SortOrder
+    requiredSkills?: SortOrder
+    requiredModels?: SortOrder
+    requiresExtendedThinking?: SortOrder
+    requiresCacheControl?: SortOrder
+    requiresVision?: SortOrder
+    maxCostPerMToken?: SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type CapabilityTagAvgOrderByAggregateInput = {
+    priority?: SortOrder
+    maxCostPerMToken?: SortOrder
+  }
+
+  export type CapabilityTagMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    category?: SortOrder
+    priority?: SortOrder
+    requiredProtocol?: SortOrder
+    requiresExtendedThinking?: SortOrder
+    requiresCacheControl?: SortOrder
+    requiresVision?: SortOrder
+    maxCostPerMToken?: SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type CapabilityTagMinOrderByAggregateInput = {
+    id?: SortOrder
+    tagId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    category?: SortOrder
+    priority?: SortOrder
+    requiredProtocol?: SortOrder
+    requiresExtendedThinking?: SortOrder
+    requiresCacheControl?: SortOrder
+    requiresVision?: SortOrder
+    maxCostPerMToken?: SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type CapabilityTagSumOrderByAggregateInput = {
+    priority?: SortOrder
+    maxCostPerMToken?: SortOrder
+  }
+
+  export type FallbackChainCountOrderByAggregateInput = {
+    id?: SortOrder
+    chainId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    models?: SortOrder
+    triggerStatusCodes?: SortOrder
+    triggerErrorTypes?: SortOrder
+    triggerTimeoutMs?: SortOrder
+    maxRetries?: SortOrder
+    retryDelayMs?: SortOrder
+    preserveProtocol?: SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type FallbackChainAvgOrderByAggregateInput = {
+    triggerTimeoutMs?: SortOrder
+    maxRetries?: SortOrder
+    retryDelayMs?: SortOrder
+  }
+
+  export type FallbackChainMaxOrderByAggregateInput = {
+    id?: SortOrder
+    chainId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    triggerTimeoutMs?: SortOrder
+    maxRetries?: SortOrder
+    retryDelayMs?: SortOrder
+    preserveProtocol?: SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type FallbackChainMinOrderByAggregateInput = {
+    id?: SortOrder
+    chainId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    triggerTimeoutMs?: SortOrder
+    maxRetries?: SortOrder
+    retryDelayMs?: SortOrder
+    preserveProtocol?: SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type FallbackChainSumOrderByAggregateInput = {
+    triggerTimeoutMs?: SortOrder
+    maxRetries?: SortOrder
+    retryDelayMs?: SortOrder
+  }
+
+  export type CostStrategyCountOrderByAggregateInput = {
+    id?: SortOrder
+    strategyId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    costWeight?: SortOrder
+    performanceWeight?: SortOrder
+    capabilityWeight?: SortOrder
+    maxCostPerRequest?: SortOrder
+    maxLatencyMs?: SortOrder
+    minCapabilityScore?: SortOrder
+    scenarioWeights?: SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type CostStrategyAvgOrderByAggregateInput = {
+    costWeight?: SortOrder
+    performanceWeight?: SortOrder
+    capabilityWeight?: SortOrder
+    maxCostPerRequest?: SortOrder
+    maxLatencyMs?: SortOrder
+    minCapabilityScore?: SortOrder
+  }
+
+  export type CostStrategyMaxOrderByAggregateInput = {
+    id?: SortOrder
+    strategyId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    costWeight?: SortOrder
+    performanceWeight?: SortOrder
+    capabilityWeight?: SortOrder
+    maxCostPerRequest?: SortOrder
+    maxLatencyMs?: SortOrder
+    minCapabilityScore?: SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type CostStrategyMinOrderByAggregateInput = {
+    id?: SortOrder
+    strategyId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    costWeight?: SortOrder
+    performanceWeight?: SortOrder
+    capabilityWeight?: SortOrder
+    maxCostPerRequest?: SortOrder
+    maxLatencyMs?: SortOrder
+    minCapabilityScore?: SortOrder
+    isActive?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    deletedAt?: SortOrder
+  }
+
+  export type CostStrategySumOrderByAggregateInput = {
+    costWeight?: SortOrder
+    performanceWeight?: SortOrder
+    capabilityWeight?: SortOrder
+    maxCostPerRequest?: SortOrder
+    maxLatencyMs?: SortOrder
+    minCapabilityScore?: SortOrder
+  }
+
+  export type BotRoutingConfigCountOrderByAggregateInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingEnabled?: SortOrder
+    routingMode?: SortOrder
+    fallbackEnabled?: SortOrder
+    fallbackChainId?: SortOrder
+    costControlEnabled?: SortOrder
+    costStrategyId?: SortOrder
+    dailyBudget?: SortOrder
+    monthlyBudget?: SortOrder
+    alertThreshold?: SortOrder
+    autoDowngrade?: SortOrder
+    downgradeModel?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BotRoutingConfigAvgOrderByAggregateInput = {
+    dailyBudget?: SortOrder
+    monthlyBudget?: SortOrder
+    alertThreshold?: SortOrder
+  }
+
+  export type BotRoutingConfigMaxOrderByAggregateInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingEnabled?: SortOrder
+    routingMode?: SortOrder
+    fallbackEnabled?: SortOrder
+    fallbackChainId?: SortOrder
+    costControlEnabled?: SortOrder
+    costStrategyId?: SortOrder
+    dailyBudget?: SortOrder
+    monthlyBudget?: SortOrder
+    alertThreshold?: SortOrder
+    autoDowngrade?: SortOrder
+    downgradeModel?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BotRoutingConfigMinOrderByAggregateInput = {
+    id?: SortOrder
+    botId?: SortOrder
+    routingEnabled?: SortOrder
+    routingMode?: SortOrder
+    fallbackEnabled?: SortOrder
+    fallbackChainId?: SortOrder
+    costControlEnabled?: SortOrder
+    costStrategyId?: SortOrder
+    dailyBudget?: SortOrder
+    monthlyBudget?: SortOrder
+    alertThreshold?: SortOrder
+    autoDowngrade?: SortOrder
+    downgradeModel?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BotRoutingConfigSumOrderByAggregateInput = {
+    dailyBudget?: SortOrder
+    monthlyBudget?: SortOrder
+    alertThreshold?: SortOrder
   }
 
   export type FileSourceCreateNestedOneWithoutUserAvatarsInput = {
@@ -43703,6 +54723,19 @@ export namespace Prisma {
     connect?: BotChannelWhereUniqueInput | BotChannelWhereUniqueInput[]
   }
 
+  export type BotModelRoutingCreateNestedManyWithoutBotInput = {
+    create?: XOR<BotModelRoutingCreateWithoutBotInput, BotModelRoutingUncheckedCreateWithoutBotInput> | BotModelRoutingCreateWithoutBotInput[] | BotModelRoutingUncheckedCreateWithoutBotInput[]
+    connectOrCreate?: BotModelRoutingCreateOrConnectWithoutBotInput | BotModelRoutingCreateOrConnectWithoutBotInput[]
+    createMany?: BotModelRoutingCreateManyBotInputEnvelope
+    connect?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+  }
+
+  export type BotRoutingConfigCreateNestedOneWithoutBotInput = {
+    create?: XOR<BotRoutingConfigCreateWithoutBotInput, BotRoutingConfigUncheckedCreateWithoutBotInput>
+    connectOrCreate?: BotRoutingConfigCreateOrConnectWithoutBotInput
+    connect?: BotRoutingConfigWhereUniqueInput
+  }
+
   export type BotProviderKeyUncheckedCreateNestedManyWithoutBotInput = {
     create?: XOR<BotProviderKeyCreateWithoutBotInput, BotProviderKeyUncheckedCreateWithoutBotInput> | BotProviderKeyCreateWithoutBotInput[] | BotProviderKeyUncheckedCreateWithoutBotInput[]
     connectOrCreate?: BotProviderKeyCreateOrConnectWithoutBotInput | BotProviderKeyCreateOrConnectWithoutBotInput[]
@@ -43742,6 +54775,19 @@ export namespace Prisma {
     connectOrCreate?: BotChannelCreateOrConnectWithoutBotInput | BotChannelCreateOrConnectWithoutBotInput[]
     createMany?: BotChannelCreateManyBotInputEnvelope
     connect?: BotChannelWhereUniqueInput | BotChannelWhereUniqueInput[]
+  }
+
+  export type BotModelRoutingUncheckedCreateNestedManyWithoutBotInput = {
+    create?: XOR<BotModelRoutingCreateWithoutBotInput, BotModelRoutingUncheckedCreateWithoutBotInput> | BotModelRoutingCreateWithoutBotInput[] | BotModelRoutingUncheckedCreateWithoutBotInput[]
+    connectOrCreate?: BotModelRoutingCreateOrConnectWithoutBotInput | BotModelRoutingCreateOrConnectWithoutBotInput[]
+    createMany?: BotModelRoutingCreateManyBotInputEnvelope
+    connect?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+  }
+
+  export type BotRoutingConfigUncheckedCreateNestedOneWithoutBotInput = {
+    create?: XOR<BotRoutingConfigCreateWithoutBotInput, BotRoutingConfigUncheckedCreateWithoutBotInput>
+    connectOrCreate?: BotRoutingConfigCreateOrConnectWithoutBotInput
+    connect?: BotRoutingConfigWhereUniqueInput
   }
 
   export type NullableIntFieldUpdateOperationsInput = {
@@ -43873,6 +54919,30 @@ export namespace Prisma {
     deleteMany?: BotChannelScalarWhereInput | BotChannelScalarWhereInput[]
   }
 
+  export type BotModelRoutingUpdateManyWithoutBotNestedInput = {
+    create?: XOR<BotModelRoutingCreateWithoutBotInput, BotModelRoutingUncheckedCreateWithoutBotInput> | BotModelRoutingCreateWithoutBotInput[] | BotModelRoutingUncheckedCreateWithoutBotInput[]
+    connectOrCreate?: BotModelRoutingCreateOrConnectWithoutBotInput | BotModelRoutingCreateOrConnectWithoutBotInput[]
+    upsert?: BotModelRoutingUpsertWithWhereUniqueWithoutBotInput | BotModelRoutingUpsertWithWhereUniqueWithoutBotInput[]
+    createMany?: BotModelRoutingCreateManyBotInputEnvelope
+    set?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    disconnect?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    delete?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    connect?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    update?: BotModelRoutingUpdateWithWhereUniqueWithoutBotInput | BotModelRoutingUpdateWithWhereUniqueWithoutBotInput[]
+    updateMany?: BotModelRoutingUpdateManyWithWhereWithoutBotInput | BotModelRoutingUpdateManyWithWhereWithoutBotInput[]
+    deleteMany?: BotModelRoutingScalarWhereInput | BotModelRoutingScalarWhereInput[]
+  }
+
+  export type BotRoutingConfigUpdateOneWithoutBotNestedInput = {
+    create?: XOR<BotRoutingConfigCreateWithoutBotInput, BotRoutingConfigUncheckedCreateWithoutBotInput>
+    connectOrCreate?: BotRoutingConfigCreateOrConnectWithoutBotInput
+    upsert?: BotRoutingConfigUpsertWithoutBotInput
+    disconnect?: BotRoutingConfigWhereInput | boolean
+    delete?: BotRoutingConfigWhereInput | boolean
+    connect?: BotRoutingConfigWhereUniqueInput
+    update?: XOR<XOR<BotRoutingConfigUpdateToOneWithWhereWithoutBotInput, BotRoutingConfigUpdateWithoutBotInput>, BotRoutingConfigUncheckedUpdateWithoutBotInput>
+  }
+
   export type BotProviderKeyUncheckedUpdateManyWithoutBotNestedInput = {
     create?: XOR<BotProviderKeyCreateWithoutBotInput, BotProviderKeyUncheckedCreateWithoutBotInput> | BotProviderKeyCreateWithoutBotInput[] | BotProviderKeyUncheckedCreateWithoutBotInput[]
     connectOrCreate?: BotProviderKeyCreateOrConnectWithoutBotInput | BotProviderKeyCreateOrConnectWithoutBotInput[]
@@ -43951,6 +55021,30 @@ export namespace Prisma {
     update?: BotChannelUpdateWithWhereUniqueWithoutBotInput | BotChannelUpdateWithWhereUniqueWithoutBotInput[]
     updateMany?: BotChannelUpdateManyWithWhereWithoutBotInput | BotChannelUpdateManyWithWhereWithoutBotInput[]
     deleteMany?: BotChannelScalarWhereInput | BotChannelScalarWhereInput[]
+  }
+
+  export type BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput = {
+    create?: XOR<BotModelRoutingCreateWithoutBotInput, BotModelRoutingUncheckedCreateWithoutBotInput> | BotModelRoutingCreateWithoutBotInput[] | BotModelRoutingUncheckedCreateWithoutBotInput[]
+    connectOrCreate?: BotModelRoutingCreateOrConnectWithoutBotInput | BotModelRoutingCreateOrConnectWithoutBotInput[]
+    upsert?: BotModelRoutingUpsertWithWhereUniqueWithoutBotInput | BotModelRoutingUpsertWithWhereUniqueWithoutBotInput[]
+    createMany?: BotModelRoutingCreateManyBotInputEnvelope
+    set?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    disconnect?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    delete?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    connect?: BotModelRoutingWhereUniqueInput | BotModelRoutingWhereUniqueInput[]
+    update?: BotModelRoutingUpdateWithWhereUniqueWithoutBotInput | BotModelRoutingUpdateWithWhereUniqueWithoutBotInput[]
+    updateMany?: BotModelRoutingUpdateManyWithWhereWithoutBotInput | BotModelRoutingUpdateManyWithWhereWithoutBotInput[]
+    deleteMany?: BotModelRoutingScalarWhereInput | BotModelRoutingScalarWhereInput[]
+  }
+
+  export type BotRoutingConfigUncheckedUpdateOneWithoutBotNestedInput = {
+    create?: XOR<BotRoutingConfigCreateWithoutBotInput, BotRoutingConfigUncheckedCreateWithoutBotInput>
+    connectOrCreate?: BotRoutingConfigCreateOrConnectWithoutBotInput
+    upsert?: BotRoutingConfigUpsertWithoutBotInput
+    disconnect?: BotRoutingConfigWhereInput | boolean
+    delete?: BotRoutingConfigWhereInput | boolean
+    connect?: BotRoutingConfigWhereUniqueInput
+    update?: XOR<XOR<BotRoutingConfigUpdateToOneWithWhereWithoutBotInput, BotRoutingConfigUpdateWithoutBotInput>, BotRoutingConfigUncheckedUpdateWithoutBotInput>
   }
 
   export type UserInfoCreateNestedOneWithoutProviderKeysInput = {
@@ -44144,6 +55238,18 @@ export namespace Prisma {
     create?: XOR<ProviderKeyCreateWithoutUsageLogsInput, ProviderKeyUncheckedCreateWithoutUsageLogsInput>
     connectOrCreate?: ProviderKeyCreateOrConnectWithoutUsageLogsInput
     connect?: ProviderKeyWhereUniqueInput
+  }
+
+  export type NullableDecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string | null
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
+  }
+
+  export type NullableBoolFieldUpdateOperationsInput = {
+    set?: boolean | null
   }
 
   export type BotUpdateOneRequiredWithoutUsageLogsNestedInput = {
@@ -44518,6 +55624,32 @@ export namespace Prisma {
     update?: XOR<XOR<SkillUpdateToOneWithWhereWithoutInstallationsInput, SkillUpdateWithoutInstallationsInput>, SkillUncheckedUpdateWithoutInstallationsInput>
   }
 
+  export type DecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
+  }
+
+  export type BotCreateNestedOneWithoutModelRoutingsInput = {
+    create?: XOR<BotCreateWithoutModelRoutingsInput, BotUncheckedCreateWithoutModelRoutingsInput>
+    connectOrCreate?: BotCreateOrConnectWithoutModelRoutingsInput
+    connect?: BotWhereUniqueInput
+  }
+
+  export type EnumModelRoutingTypeFieldUpdateOperationsInput = {
+    set?: $Enums.ModelRoutingType
+  }
+
+  export type BotUpdateOneRequiredWithoutModelRoutingsNestedInput = {
+    create?: XOR<BotCreateWithoutModelRoutingsInput, BotUncheckedCreateWithoutModelRoutingsInput>
+    connectOrCreate?: BotCreateOrConnectWithoutModelRoutingsInput
+    upsert?: BotUpsertWithoutModelRoutingsInput
+    connect?: BotWhereUniqueInput
+    update?: XOR<XOR<BotUpdateToOneWithWhereWithoutModelRoutingsInput, BotUpdateWithoutModelRoutingsInput>, BotUncheckedUpdateWithoutModelRoutingsInput>
+  }
+
   export type BotCreateNestedOneWithoutChannelsInput = {
     create?: XOR<BotCreateWithoutChannelsInput, BotUncheckedCreateWithoutChannelsInput>
     connectOrCreate?: BotCreateOrConnectWithoutChannelsInput
@@ -44534,6 +55666,20 @@ export namespace Prisma {
     upsert?: BotUpsertWithoutChannelsInput
     connect?: BotWhereUniqueInput
     update?: XOR<XOR<BotUpdateToOneWithWhereWithoutChannelsInput, BotUpdateWithoutChannelsInput>, BotUncheckedUpdateWithoutChannelsInput>
+  }
+
+  export type BotCreateNestedOneWithoutRoutingConfigInput = {
+    create?: XOR<BotCreateWithoutRoutingConfigInput, BotUncheckedCreateWithoutRoutingConfigInput>
+    connectOrCreate?: BotCreateOrConnectWithoutRoutingConfigInput
+    connect?: BotWhereUniqueInput
+  }
+
+  export type BotUpdateOneRequiredWithoutRoutingConfigNestedInput = {
+    create?: XOR<BotCreateWithoutRoutingConfigInput, BotUncheckedCreateWithoutRoutingConfigInput>
+    connectOrCreate?: BotCreateOrConnectWithoutRoutingConfigInput
+    upsert?: BotUpsertWithoutRoutingConfigInput
+    connect?: BotWhereUniqueInput
+    update?: XOR<XOR<BotUpdateToOneWithWhereWithoutRoutingConfigInput, BotUpdateWithoutRoutingConfigInput>, BotUncheckedUpdateWithoutRoutingConfigInput>
   }
 
   export type NestedUuidFilter<$PrismaModel = never> = {
@@ -44961,6 +56107,46 @@ export namespace Prisma {
     _min?: NestedBytesFilter<$PrismaModel>
     _max?: NestedBytesFilter<$PrismaModel>
   }
+
+  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type NestedBoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+  }
+
+  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
+  export type NestedBoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedBoolNullableFilter<$PrismaModel>
+    _max?: NestedBoolNullableFilter<$PrismaModel>
+  }
   export type NestedJsonFilter<$PrismaModel = never> =
     | PatchUndefined<
         Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
@@ -45034,6 +56220,50 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumPluginCategoryFilter<$PrismaModel>
     _max?: NestedEnumPluginCategoryFilter<$PrismaModel>
+  }
+
+  export type NestedDecimalFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type NestedDecimalWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel>
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedDecimalFilter<$PrismaModel>
+    _sum?: NestedDecimalFilter<$PrismaModel>
+    _min?: NestedDecimalFilter<$PrismaModel>
+    _max?: NestedDecimalFilter<$PrismaModel>
+  }
+
+  export type NestedEnumModelRoutingTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModelRoutingType | EnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumModelRoutingTypeFilter<$PrismaModel> | $Enums.ModelRoutingType
+  }
+
+  export type NestedEnumModelRoutingTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModelRoutingType | EnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ModelRoutingType[] | ListEnumModelRoutingTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumModelRoutingTypeWithAggregatesFilter<$PrismaModel> | $Enums.ModelRoutingType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumModelRoutingTypeFilter<$PrismaModel>
+    _max?: NestedEnumModelRoutingTypeFilter<$PrismaModel>
   }
 
   export type NestedEnumChannelConnectionStatusFilter<$PrismaModel = never> = {
@@ -45327,9 +56557,6 @@ export namespace Prisma {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -45338,6 +56565,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -45352,15 +56580,14 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigCreateNestedOneWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutCreatedByInput = {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -45371,6 +56598,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -45383,6 +56611,8 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigUncheckedCreateNestedOneWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutCreatedByInput = {
@@ -45447,6 +56677,7 @@ export namespace Prisma {
     soulMarkdown: string
     soulPreview?: string | null
     isSystem?: boolean
+    locale?: string
     isDeleted?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -45464,6 +56695,7 @@ export namespace Prisma {
     soulMarkdown: string
     soulPreview?: string | null
     isSystem?: boolean
+    locale?: string
     isDeleted?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -45839,9 +57071,6 @@ export namespace Prisma {
     id?: UuidFilter<"Bot"> | string
     name?: StringFilter<"Bot"> | string
     hostname?: StringFilter<"Bot"> | string
-    aiProvider?: StringFilter<"Bot"> | string
-    model?: StringFilter<"Bot"> | string
-    channelType?: StringFilter<"Bot"> | string
     containerId?: StringNullableFilter<"Bot"> | string | null
     port?: IntNullableFilter<"Bot"> | number | null
     gatewayToken?: StringNullableFilter<"Bot"> | string | null
@@ -45853,6 +57082,7 @@ export namespace Prisma {
     emoji?: StringNullableFilter<"Bot"> | string | null
     avatarFileId?: UuidNullableFilter<"Bot"> | string | null
     soulMarkdown?: StringNullableFilter<"Bot"> | string | null
+    pendingConfig?: JsonNullableFilter<"Bot">
     healthStatus?: EnumHealthStatusFilter<"Bot"> | $Enums.HealthStatus
     lastHealthCheck?: DateTimeNullableFilter<"Bot"> | Date | string | null
     isDeleted?: BoolFilter<"Bot"> | boolean
@@ -45923,6 +57153,7 @@ export namespace Prisma {
     soulMarkdown?: StringFilter<"PersonaTemplate"> | string
     soulPreview?: StringNullableFilter<"PersonaTemplate"> | string | null
     isSystem?: BoolFilter<"PersonaTemplate"> | boolean
+    locale?: StringFilter<"PersonaTemplate"> | string
     createdById?: UuidNullableFilter<"PersonaTemplate"> | string | null
     isDeleted?: BoolFilter<"PersonaTemplate"> | boolean
     createdAt?: DateTimeFilter<"PersonaTemplate"> | Date | string
@@ -46102,9 +57333,6 @@ export namespace Prisma {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -46113,6 +57341,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -46127,15 +57356,14 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigCreateNestedOneWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutPersonaTemplateInput = {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -46146,6 +57374,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -46158,6 +57387,8 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigUncheckedCreateNestedOneWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutPersonaTemplateInput = {
@@ -47136,6 +58367,7 @@ export namespace Prisma {
     soulMarkdown: string
     soulPreview?: string | null
     isSystem?: boolean
+    locale?: string
     isDeleted?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47152,6 +58384,7 @@ export namespace Prisma {
     soulMarkdown: string
     soulPreview?: string | null
     isSystem?: boolean
+    locale?: string
     createdById?: string | null
     isDeleted?: boolean
     createdAt?: Date | string
@@ -47174,9 +58407,6 @@ export namespace Prisma {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -47185,6 +58415,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -47199,15 +58430,14 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigCreateNestedOneWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutAvatarFileInput = {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -47218,6 +58448,7 @@ export namespace Prisma {
     personaTemplateId?: string | null
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -47230,6 +58461,8 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigUncheckedCreateNestedOneWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutAvatarFileInput = {
@@ -47392,6 +58625,7 @@ export namespace Prisma {
     soulMarkdown: string
     soulPreview?: string | null
     isSystem?: boolean
+    locale?: string
     isDeleted?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -47409,6 +58643,7 @@ export namespace Prisma {
     soulMarkdown: string
     soulPreview?: string | null
     isSystem?: boolean
+    locale?: string
     createdById?: string | null
     isDeleted?: boolean
     createdAt?: Date | string
@@ -47527,6 +58762,18 @@ export namespace Prisma {
     endpoint?: string | null
     durationMs?: number | null
     errorMessage?: string | null
+    thinkingTokens?: number | null
+    cacheReadTokens?: number | null
+    cacheWriteTokens?: number | null
+    protocolType?: string | null
+    inputCost?: Decimal | DecimalJsLike | number | string | null
+    outputCost?: Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: Decimal | DecimalJsLike | number | string | null
+    cacheCost?: Decimal | DecimalJsLike | number | string | null
+    totalCost?: Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: boolean | null
+    fallbackLevel?: number | null
+    originalModel?: string | null
     providerKey?: ProviderKeyCreateNestedOneWithoutUsageLogsInput
   }
 
@@ -47542,6 +58789,18 @@ export namespace Prisma {
     endpoint?: string | null
     durationMs?: number | null
     errorMessage?: string | null
+    thinkingTokens?: number | null
+    cacheReadTokens?: number | null
+    cacheWriteTokens?: number | null
+    protocolType?: string | null
+    inputCost?: Decimal | DecimalJsLike | number | string | null
+    outputCost?: Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: Decimal | DecimalJsLike | number | string | null
+    cacheCost?: Decimal | DecimalJsLike | number | string | null
+    totalCost?: Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: boolean | null
+    fallbackLevel?: number | null
+    originalModel?: string | null
   }
 
   export type BotUsageLogCreateOrConnectWithoutBotInput = {
@@ -47685,6 +58944,81 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type BotModelRoutingCreateWithoutBotInput = {
+    id?: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonNullValueInput | InputJsonValue
+    priority?: number
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type BotModelRoutingUncheckedCreateWithoutBotInput = {
+    id?: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonNullValueInput | InputJsonValue
+    priority?: number
+    isEnabled?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type BotModelRoutingCreateOrConnectWithoutBotInput = {
+    where: BotModelRoutingWhereUniqueInput
+    create: XOR<BotModelRoutingCreateWithoutBotInput, BotModelRoutingUncheckedCreateWithoutBotInput>
+  }
+
+  export type BotModelRoutingCreateManyBotInputEnvelope = {
+    data: BotModelRoutingCreateManyBotInput | BotModelRoutingCreateManyBotInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type BotRoutingConfigCreateWithoutBotInput = {
+    id?: string
+    routingEnabled?: boolean
+    routingMode?: string
+    fallbackEnabled?: boolean
+    fallbackChainId?: string | null
+    costControlEnabled?: boolean
+    costStrategyId?: string | null
+    dailyBudget?: Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: boolean
+    downgradeModel?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BotRoutingConfigUncheckedCreateWithoutBotInput = {
+    id?: string
+    routingEnabled?: boolean
+    routingMode?: string
+    fallbackEnabled?: boolean
+    fallbackChainId?: string | null
+    costControlEnabled?: boolean
+    costStrategyId?: string | null
+    dailyBudget?: Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: boolean
+    downgradeModel?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BotRoutingConfigCreateOrConnectWithoutBotInput = {
+    where: BotRoutingConfigWhereUniqueInput
+    create: XOR<BotRoutingConfigCreateWithoutBotInput, BotRoutingConfigUncheckedCreateWithoutBotInput>
+  }
+
   export type UserInfoUpsertWithoutBotsInput = {
     update: XOR<UserInfoUpdateWithoutBotsInput, UserInfoUncheckedUpdateWithoutBotsInput>
     create: XOR<UserInfoCreateWithoutBotsInput, UserInfoUncheckedCreateWithoutBotsInput>
@@ -47779,6 +59113,7 @@ export namespace Prisma {
     soulMarkdown?: StringFieldUpdateOperationsInput | string
     soulPreview?: NullableStringFieldUpdateOperationsInput | string | null
     isSystem?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47796,6 +59131,7 @@ export namespace Prisma {
     soulMarkdown?: StringFieldUpdateOperationsInput | string
     soulPreview?: NullableStringFieldUpdateOperationsInput | string | null
     isSystem?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47937,6 +59273,18 @@ export namespace Prisma {
     endpoint?: StringNullableFilter<"BotUsageLog"> | string | null
     durationMs?: IntNullableFilter<"BotUsageLog"> | number | null
     errorMessage?: StringNullableFilter<"BotUsageLog"> | string | null
+    thinkingTokens?: IntNullableFilter<"BotUsageLog"> | number | null
+    cacheReadTokens?: IntNullableFilter<"BotUsageLog"> | number | null
+    cacheWriteTokens?: IntNullableFilter<"BotUsageLog"> | number | null
+    protocolType?: StringNullableFilter<"BotUsageLog"> | string | null
+    inputCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    outputCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    totalCost?: DecimalNullableFilter<"BotUsageLog"> | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: BoolNullableFilter<"BotUsageLog"> | boolean | null
+    fallbackLevel?: IntNullableFilter<"BotUsageLog"> | number | null
+    originalModel?: StringNullableFilter<"BotUsageLog"> | string | null
   }
 
   export type ProxyTokenUpsertWithoutBotInput = {
@@ -48072,6 +59420,84 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"BotChannel"> | Date | string | null
   }
 
+  export type BotModelRoutingUpsertWithWhereUniqueWithoutBotInput = {
+    where: BotModelRoutingWhereUniqueInput
+    update: XOR<BotModelRoutingUpdateWithoutBotInput, BotModelRoutingUncheckedUpdateWithoutBotInput>
+    create: XOR<BotModelRoutingCreateWithoutBotInput, BotModelRoutingUncheckedCreateWithoutBotInput>
+  }
+
+  export type BotModelRoutingUpdateWithWhereUniqueWithoutBotInput = {
+    where: BotModelRoutingWhereUniqueInput
+    data: XOR<BotModelRoutingUpdateWithoutBotInput, BotModelRoutingUncheckedUpdateWithoutBotInput>
+  }
+
+  export type BotModelRoutingUpdateManyWithWhereWithoutBotInput = {
+    where: BotModelRoutingScalarWhereInput
+    data: XOR<BotModelRoutingUpdateManyMutationInput, BotModelRoutingUncheckedUpdateManyWithoutBotInput>
+  }
+
+  export type BotModelRoutingScalarWhereInput = {
+    AND?: BotModelRoutingScalarWhereInput | BotModelRoutingScalarWhereInput[]
+    OR?: BotModelRoutingScalarWhereInput[]
+    NOT?: BotModelRoutingScalarWhereInput | BotModelRoutingScalarWhereInput[]
+    id?: UuidFilter<"BotModelRouting"> | string
+    botId?: UuidFilter<"BotModelRouting"> | string
+    routingType?: EnumModelRoutingTypeFilter<"BotModelRouting"> | $Enums.ModelRoutingType
+    name?: StringFilter<"BotModelRouting"> | string
+    config?: JsonFilter<"BotModelRouting">
+    priority?: IntFilter<"BotModelRouting"> | number
+    isEnabled?: BoolFilter<"BotModelRouting"> | boolean
+    isDeleted?: BoolFilter<"BotModelRouting"> | boolean
+    createdAt?: DateTimeFilter<"BotModelRouting"> | Date | string
+    updatedAt?: DateTimeFilter<"BotModelRouting"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"BotModelRouting"> | Date | string | null
+  }
+
+  export type BotRoutingConfigUpsertWithoutBotInput = {
+    update: XOR<BotRoutingConfigUpdateWithoutBotInput, BotRoutingConfigUncheckedUpdateWithoutBotInput>
+    create: XOR<BotRoutingConfigCreateWithoutBotInput, BotRoutingConfigUncheckedCreateWithoutBotInput>
+    where?: BotRoutingConfigWhereInput
+  }
+
+  export type BotRoutingConfigUpdateToOneWithWhereWithoutBotInput = {
+    where?: BotRoutingConfigWhereInput
+    data: XOR<BotRoutingConfigUpdateWithoutBotInput, BotRoutingConfigUncheckedUpdateWithoutBotInput>
+  }
+
+  export type BotRoutingConfigUpdateWithoutBotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingEnabled?: BoolFieldUpdateOperationsInput | boolean
+    routingMode?: StringFieldUpdateOperationsInput | string
+    fallbackEnabled?: BoolFieldUpdateOperationsInput | boolean
+    fallbackChainId?: NullableStringFieldUpdateOperationsInput | string | null
+    costControlEnabled?: BoolFieldUpdateOperationsInput | boolean
+    costStrategyId?: NullableStringFieldUpdateOperationsInput | string | null
+    dailyBudget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: BoolFieldUpdateOperationsInput | boolean
+    downgradeModel?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BotRoutingConfigUncheckedUpdateWithoutBotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingEnabled?: BoolFieldUpdateOperationsInput | boolean
+    routingMode?: StringFieldUpdateOperationsInput | string
+    fallbackEnabled?: BoolFieldUpdateOperationsInput | boolean
+    fallbackChainId?: NullableStringFieldUpdateOperationsInput | string | null
+    costControlEnabled?: BoolFieldUpdateOperationsInput | boolean
+    costStrategyId?: NullableStringFieldUpdateOperationsInput | string | null
+    dailyBudget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    monthlyBudget?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    alertThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    autoDowngrade?: BoolFieldUpdateOperationsInput | boolean
+    downgradeModel?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type UserInfoCreateWithoutProviderKeysInput = {
     id?: string
     nickname?: string
@@ -48180,6 +59606,18 @@ export namespace Prisma {
     endpoint?: string | null
     durationMs?: number | null
     errorMessage?: string | null
+    thinkingTokens?: number | null
+    cacheReadTokens?: number | null
+    cacheWriteTokens?: number | null
+    protocolType?: string | null
+    inputCost?: Decimal | DecimalJsLike | number | string | null
+    outputCost?: Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: Decimal | DecimalJsLike | number | string | null
+    cacheCost?: Decimal | DecimalJsLike | number | string | null
+    totalCost?: Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: boolean | null
+    fallbackLevel?: number | null
+    originalModel?: string | null
     bot: BotCreateNestedOneWithoutUsageLogsInput
   }
 
@@ -48195,6 +59633,18 @@ export namespace Prisma {
     endpoint?: string | null
     durationMs?: number | null
     errorMessage?: string | null
+    thinkingTokens?: number | null
+    cacheReadTokens?: number | null
+    cacheWriteTokens?: number | null
+    protocolType?: string | null
+    inputCost?: Decimal | DecimalJsLike | number | string | null
+    outputCost?: Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: Decimal | DecimalJsLike | number | string | null
+    cacheCost?: Decimal | DecimalJsLike | number | string | null
+    totalCost?: Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: boolean | null
+    fallbackLevel?: number | null
+    originalModel?: string | null
   }
 
   export type BotUsageLogCreateOrConnectWithoutProviderKeyInput = {
@@ -48390,9 +59840,6 @@ export namespace Prisma {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -48401,6 +59848,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -48415,15 +59863,14 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigCreateNestedOneWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutProviderKeysInput = {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -48435,6 +59882,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -48446,6 +59894,8 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigUncheckedCreateNestedOneWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutProviderKeysInput = {
@@ -48507,9 +59957,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -48518,6 +59965,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -48532,15 +59980,14 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUpdateOneWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutProviderKeysInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -48552,6 +59999,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -48563,6 +60011,8 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUncheckedUpdateOneWithoutBotNestedInput
   }
 
   export type ProviderKeyUpsertWithoutBotProviderKeysInput = {
@@ -48614,9 +60064,6 @@ export namespace Prisma {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -48625,6 +60072,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -48639,15 +60087,14 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigCreateNestedOneWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutUsageLogsInput = {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -48659,6 +60106,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -48670,6 +60118,8 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigUncheckedCreateNestedOneWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutUsageLogsInput = {
@@ -48731,9 +60181,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -48742,6 +60189,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -48756,15 +60204,14 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUpdateOneWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutUsageLogsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -48776,6 +60223,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -48787,6 +60235,8 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUncheckedUpdateOneWithoutBotNestedInput
   }
 
   export type ProviderKeyUpsertWithoutUsageLogsInput = {
@@ -48838,9 +60288,6 @@ export namespace Prisma {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -48849,6 +60296,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -48863,15 +60311,14 @@ export namespace Prisma {
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigCreateNestedOneWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutProxyTokenInput = {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -48883,6 +60330,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -48894,6 +60342,8 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigUncheckedCreateNestedOneWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutProxyTokenInput = {
@@ -48955,9 +60405,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -48966,6 +60413,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -48980,15 +60428,14 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUpdateOneWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutProxyTokenInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -49000,6 +60447,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -49011,6 +60459,8 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUncheckedUpdateOneWithoutBotNestedInput
   }
 
   export type ProviderKeyUpsertWithoutProxyTokensInput = {
@@ -49810,9 +61260,6 @@ export namespace Prisma {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -49821,6 +61268,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -49835,15 +61283,14 @@ export namespace Prisma {
     proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigCreateNestedOneWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutPluginsInput = {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -49855,6 +61302,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -49866,6 +61314,8 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigUncheckedCreateNestedOneWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutPluginsInput = {
@@ -49939,9 +61389,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -49950,6 +61397,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -49964,15 +61412,14 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUpdateOneWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutPluginsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -49984,6 +61431,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -49995,6 +61443,8 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUncheckedUpdateOneWithoutBotNestedInput
   }
 
   export type PluginUpsertWithoutInstallationsInput = {
@@ -50102,9 +61552,6 @@ export namespace Prisma {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -50113,6 +61560,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -50127,15 +61575,14 @@ export namespace Prisma {
     proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigCreateNestedOneWithoutBotInput
   }
 
   export type BotUncheckedCreateWithoutSkillsInput = {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -50147,6 +61594,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -50158,6 +61606,8 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigUncheckedCreateNestedOneWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutSkillsInput = {
@@ -50221,9 +61671,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50232,6 +61679,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -50246,15 +61694,14 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUpdateOneWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutSkillsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50266,6 +61713,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -50277,6 +61725,8 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUncheckedUpdateOneWithoutBotNestedInput
   }
 
   export type SkillUpsertWithoutInstallationsInput = {
@@ -50326,13 +61776,10 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
-  export type BotCreateWithoutChannelsInput = {
+  export type BotCreateWithoutModelRoutingsInput = {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -50341,6 +61788,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -50355,15 +61803,14 @@ export namespace Prisma {
     proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
     plugins?: BotPluginCreateNestedManyWithoutBotInput
     skills?: BotSkillCreateNestedManyWithoutBotInput
+    channels?: BotChannelCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigCreateNestedOneWithoutBotInput
   }
 
-  export type BotUncheckedCreateWithoutChannelsInput = {
+  export type BotUncheckedCreateWithoutModelRoutingsInput = {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -50375,6 +61822,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -50386,6 +61834,148 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
     plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
     skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
+    channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigUncheckedCreateNestedOneWithoutBotInput
+  }
+
+  export type BotCreateOrConnectWithoutModelRoutingsInput = {
+    where: BotWhereUniqueInput
+    create: XOR<BotCreateWithoutModelRoutingsInput, BotUncheckedCreateWithoutModelRoutingsInput>
+  }
+
+  export type BotUpsertWithoutModelRoutingsInput = {
+    update: XOR<BotUpdateWithoutModelRoutingsInput, BotUncheckedUpdateWithoutModelRoutingsInput>
+    create: XOR<BotCreateWithoutModelRoutingsInput, BotUncheckedCreateWithoutModelRoutingsInput>
+    where?: BotWhereInput
+  }
+
+  export type BotUpdateToOneWithWhereWithoutModelRoutingsInput = {
+    where?: BotWhereInput
+    data: XOR<BotUpdateWithoutModelRoutingsInput, BotUncheckedUpdateWithoutModelRoutingsInput>
+  }
+
+  export type BotUpdateWithoutModelRoutingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    containerId?: NullableStringFieldUpdateOperationsInput | string | null
+    port?: NullableIntFieldUpdateOperationsInput | number | null
+    gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
+    proxyTokenHash?: NullableStringFieldUpdateOperationsInput | string | null
+    tags?: BotUpdatetagsInput | string[]
+    status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
+    emoji?: NullableStringFieldUpdateOperationsInput | string | null
+    soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
+    healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
+    lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: UserInfoUpdateOneRequiredWithoutBotsNestedInput
+    personaTemplate?: PersonaTemplateUpdateOneWithoutBotsNestedInput
+    avatarFile?: FileSourceUpdateOneWithoutBotAvatarsNestedInput
+    providerKeys?: BotProviderKeyUpdateManyWithoutBotNestedInput
+    usageLogs?: BotUsageLogUpdateManyWithoutBotNestedInput
+    proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
+    plugins?: BotPluginUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUpdateManyWithoutBotNestedInput
+    channels?: BotChannelUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUpdateOneWithoutBotNestedInput
+  }
+
+  export type BotUncheckedUpdateWithoutModelRoutingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    containerId?: NullableStringFieldUpdateOperationsInput | string | null
+    port?: NullableIntFieldUpdateOperationsInput | number | null
+    gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
+    proxyTokenHash?: NullableStringFieldUpdateOperationsInput | string | null
+    tags?: BotUpdatetagsInput | string[]
+    status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
+    createdById?: StringFieldUpdateOperationsInput | string
+    personaTemplateId?: NullableStringFieldUpdateOperationsInput | string | null
+    emoji?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
+    soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
+    healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
+    lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    providerKeys?: BotProviderKeyUncheckedUpdateManyWithoutBotNestedInput
+    usageLogs?: BotUsageLogUncheckedUpdateManyWithoutBotNestedInput
+    proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
+    plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
+    channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUncheckedUpdateOneWithoutBotNestedInput
+  }
+
+  export type BotCreateWithoutChannelsInput = {
+    id?: string
+    name: string
+    hostname: string
+    containerId?: string | null
+    port?: number | null
+    gatewayToken?: string | null
+    proxyTokenHash?: string | null
+    tags?: BotCreatetagsInput | string[]
+    status?: $Enums.BotStatus
+    emoji?: string | null
+    soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
+    healthStatus?: $Enums.HealthStatus
+    lastHealthCheck?: Date | string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    createdBy: UserInfoCreateNestedOneWithoutBotsInput
+    personaTemplate?: PersonaTemplateCreateNestedOneWithoutBotsInput
+    avatarFile?: FileSourceCreateNestedOneWithoutBotAvatarsInput
+    providerKeys?: BotProviderKeyCreateNestedManyWithoutBotInput
+    usageLogs?: BotUsageLogCreateNestedManyWithoutBotInput
+    proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
+    plugins?: BotPluginCreateNestedManyWithoutBotInput
+    skills?: BotSkillCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigCreateNestedOneWithoutBotInput
+  }
+
+  export type BotUncheckedCreateWithoutChannelsInput = {
+    id?: string
+    name: string
+    hostname: string
+    containerId?: string | null
+    port?: number | null
+    gatewayToken?: string | null
+    proxyTokenHash?: string | null
+    tags?: BotCreatetagsInput | string[]
+    status?: $Enums.BotStatus
+    createdById: string
+    personaTemplateId?: string | null
+    emoji?: string | null
+    avatarFileId?: string | null
+    soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
+    healthStatus?: $Enums.HealthStatus
+    lastHealthCheck?: Date | string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    providerKeys?: BotProviderKeyUncheckedCreateNestedManyWithoutBotInput
+    usageLogs?: BotUsageLogUncheckedCreateNestedManyWithoutBotInput
+    proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
+    plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
+    skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
+    routingConfig?: BotRoutingConfigUncheckedCreateNestedOneWithoutBotInput
   }
 
   export type BotCreateOrConnectWithoutChannelsInput = {
@@ -50408,9 +61998,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50419,6 +62006,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -50433,15 +62021,14 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUpdateOneWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutChannelsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50453,6 +62040,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -50464,6 +62052,148 @@ export namespace Prisma {
     proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUncheckedUpdateOneWithoutBotNestedInput
+  }
+
+  export type BotCreateWithoutRoutingConfigInput = {
+    id?: string
+    name: string
+    hostname: string
+    containerId?: string | null
+    port?: number | null
+    gatewayToken?: string | null
+    proxyTokenHash?: string | null
+    tags?: BotCreatetagsInput | string[]
+    status?: $Enums.BotStatus
+    emoji?: string | null
+    soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
+    healthStatus?: $Enums.HealthStatus
+    lastHealthCheck?: Date | string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    createdBy: UserInfoCreateNestedOneWithoutBotsInput
+    personaTemplate?: PersonaTemplateCreateNestedOneWithoutBotsInput
+    avatarFile?: FileSourceCreateNestedOneWithoutBotAvatarsInput
+    providerKeys?: BotProviderKeyCreateNestedManyWithoutBotInput
+    usageLogs?: BotUsageLogCreateNestedManyWithoutBotInput
+    proxyToken?: ProxyTokenCreateNestedOneWithoutBotInput
+    plugins?: BotPluginCreateNestedManyWithoutBotInput
+    skills?: BotSkillCreateNestedManyWithoutBotInput
+    channels?: BotChannelCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingCreateNestedManyWithoutBotInput
+  }
+
+  export type BotUncheckedCreateWithoutRoutingConfigInput = {
+    id?: string
+    name: string
+    hostname: string
+    containerId?: string | null
+    port?: number | null
+    gatewayToken?: string | null
+    proxyTokenHash?: string | null
+    tags?: BotCreatetagsInput | string[]
+    status?: $Enums.BotStatus
+    createdById: string
+    personaTemplateId?: string | null
+    emoji?: string | null
+    avatarFileId?: string | null
+    soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
+    healthStatus?: $Enums.HealthStatus
+    lastHealthCheck?: Date | string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    providerKeys?: BotProviderKeyUncheckedCreateNestedManyWithoutBotInput
+    usageLogs?: BotUsageLogUncheckedCreateNestedManyWithoutBotInput
+    proxyToken?: ProxyTokenUncheckedCreateNestedOneWithoutBotInput
+    plugins?: BotPluginUncheckedCreateNestedManyWithoutBotInput
+    skills?: BotSkillUncheckedCreateNestedManyWithoutBotInput
+    channels?: BotChannelUncheckedCreateNestedManyWithoutBotInput
+    modelRoutings?: BotModelRoutingUncheckedCreateNestedManyWithoutBotInput
+  }
+
+  export type BotCreateOrConnectWithoutRoutingConfigInput = {
+    where: BotWhereUniqueInput
+    create: XOR<BotCreateWithoutRoutingConfigInput, BotUncheckedCreateWithoutRoutingConfigInput>
+  }
+
+  export type BotUpsertWithoutRoutingConfigInput = {
+    update: XOR<BotUpdateWithoutRoutingConfigInput, BotUncheckedUpdateWithoutRoutingConfigInput>
+    create: XOR<BotCreateWithoutRoutingConfigInput, BotUncheckedCreateWithoutRoutingConfigInput>
+    where?: BotWhereInput
+  }
+
+  export type BotUpdateToOneWithWhereWithoutRoutingConfigInput = {
+    where?: BotWhereInput
+    data: XOR<BotUpdateWithoutRoutingConfigInput, BotUncheckedUpdateWithoutRoutingConfigInput>
+  }
+
+  export type BotUpdateWithoutRoutingConfigInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    containerId?: NullableStringFieldUpdateOperationsInput | string | null
+    port?: NullableIntFieldUpdateOperationsInput | number | null
+    gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
+    proxyTokenHash?: NullableStringFieldUpdateOperationsInput | string | null
+    tags?: BotUpdatetagsInput | string[]
+    status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
+    emoji?: NullableStringFieldUpdateOperationsInput | string | null
+    soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
+    healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
+    lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: UserInfoUpdateOneRequiredWithoutBotsNestedInput
+    personaTemplate?: PersonaTemplateUpdateOneWithoutBotsNestedInput
+    avatarFile?: FileSourceUpdateOneWithoutBotAvatarsNestedInput
+    providerKeys?: BotProviderKeyUpdateManyWithoutBotNestedInput
+    usageLogs?: BotUsageLogUpdateManyWithoutBotNestedInput
+    proxyToken?: ProxyTokenUpdateOneWithoutBotNestedInput
+    plugins?: BotPluginUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUpdateManyWithoutBotNestedInput
+    channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
+  }
+
+  export type BotUncheckedUpdateWithoutRoutingConfigInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    containerId?: NullableStringFieldUpdateOperationsInput | string | null
+    port?: NullableIntFieldUpdateOperationsInput | number | null
+    gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
+    proxyTokenHash?: NullableStringFieldUpdateOperationsInput | string | null
+    tags?: BotUpdatetagsInput | string[]
+    status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
+    createdById?: StringFieldUpdateOperationsInput | string
+    personaTemplateId?: NullableStringFieldUpdateOperationsInput | string | null
+    emoji?: NullableStringFieldUpdateOperationsInput | string | null
+    avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
+    soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
+    healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
+    lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    providerKeys?: BotProviderKeyUncheckedUpdateManyWithoutBotNestedInput
+    usageLogs?: BotUsageLogUncheckedUpdateManyWithoutBotNestedInput
+    proxyToken?: ProxyTokenUncheckedUpdateOneWithoutBotNestedInput
+    plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
+    skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
+    channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
   }
 
   export type MessageCreateManySenderInput = {
@@ -50493,9 +62223,6 @@ export namespace Prisma {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -50506,6 +62233,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -50537,6 +62265,7 @@ export namespace Prisma {
     soulMarkdown: string
     soulPreview?: string | null
     isSystem?: boolean
+    locale?: string
     isDeleted?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -50630,9 +62359,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50641,6 +62367,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -50655,15 +62382,14 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUpdateOneWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutCreatedByInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50674,6 +62400,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -50686,15 +62413,14 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUncheckedUpdateOneWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateManyWithoutCreatedByInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50705,6 +62431,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -50769,6 +62496,7 @@ export namespace Prisma {
     soulMarkdown?: StringFieldUpdateOperationsInput | string
     soulPreview?: NullableStringFieldUpdateOperationsInput | string | null
     isSystem?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -50786,6 +62514,7 @@ export namespace Prisma {
     soulMarkdown?: StringFieldUpdateOperationsInput | string
     soulPreview?: NullableStringFieldUpdateOperationsInput | string | null
     isSystem?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -50802,6 +62531,7 @@ export namespace Prisma {
     soulMarkdown?: StringFieldUpdateOperationsInput | string
     soulPreview?: NullableStringFieldUpdateOperationsInput | string | null
     isSystem?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -50848,9 +62578,6 @@ export namespace Prisma {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -50861,6 +62588,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -50873,9 +62601,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50884,6 +62609,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -50898,15 +62624,14 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUpdateOneWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutPersonaTemplateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50917,6 +62642,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -50929,15 +62655,14 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUncheckedUpdateOneWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateManyWithoutPersonaTemplateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -50948,6 +62673,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -50985,6 +62711,7 @@ export namespace Prisma {
     soulMarkdown: string
     soulPreview?: string | null
     isSystem?: boolean
+    locale?: string
     createdById?: string | null
     isDeleted?: boolean
     createdAt?: Date | string
@@ -50996,9 +62723,6 @@ export namespace Prisma {
     id?: string
     name: string
     hostname: string
-    aiProvider: string
-    model: string
-    channelType: string
     containerId?: string | null
     port?: number | null
     gatewayToken?: string | null
@@ -51009,6 +62733,7 @@ export namespace Prisma {
     personaTemplateId?: string | null
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -51110,6 +62835,7 @@ export namespace Prisma {
     soulMarkdown?: StringFieldUpdateOperationsInput | string
     soulPreview?: NullableStringFieldUpdateOperationsInput | string | null
     isSystem?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -51126,6 +62852,7 @@ export namespace Prisma {
     soulMarkdown?: StringFieldUpdateOperationsInput | string
     soulPreview?: NullableStringFieldUpdateOperationsInput | string | null
     isSystem?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -51142,6 +62869,7 @@ export namespace Prisma {
     soulMarkdown?: StringFieldUpdateOperationsInput | string
     soulPreview?: NullableStringFieldUpdateOperationsInput | string | null
     isSystem?: BoolFieldUpdateOperationsInput | boolean
+    locale?: StringFieldUpdateOperationsInput | string
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -51153,9 +62881,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -51164,6 +62889,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -51178,15 +62904,14 @@ export namespace Prisma {
     plugins?: BotPluginUpdateManyWithoutBotNestedInput
     skills?: BotSkillUpdateManyWithoutBotNestedInput
     channels?: BotChannelUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUpdateOneWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateWithoutAvatarFileInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -51197,6 +62922,7 @@ export namespace Prisma {
     personaTemplateId?: NullableStringFieldUpdateOperationsInput | string | null
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -51209,15 +62935,14 @@ export namespace Prisma {
     plugins?: BotPluginUncheckedUpdateManyWithoutBotNestedInput
     skills?: BotSkillUncheckedUpdateManyWithoutBotNestedInput
     channels?: BotChannelUncheckedUpdateManyWithoutBotNestedInput
+    modelRoutings?: BotModelRoutingUncheckedUpdateManyWithoutBotNestedInput
+    routingConfig?: BotRoutingConfigUncheckedUpdateOneWithoutBotNestedInput
   }
 
   export type BotUncheckedUpdateManyWithoutAvatarFileInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     hostname?: StringFieldUpdateOperationsInput | string
-    aiProvider?: StringFieldUpdateOperationsInput | string
-    model?: StringFieldUpdateOperationsInput | string
-    channelType?: StringFieldUpdateOperationsInput | string
     containerId?: NullableStringFieldUpdateOperationsInput | string | null
     port?: NullableIntFieldUpdateOperationsInput | number | null
     gatewayToken?: NullableStringFieldUpdateOperationsInput | string | null
@@ -51228,6 +62953,7 @@ export namespace Prisma {
     personaTemplateId?: NullableStringFieldUpdateOperationsInput | string | null
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -51257,6 +62983,18 @@ export namespace Prisma {
     endpoint?: string | null
     durationMs?: number | null
     errorMessage?: string | null
+    thinkingTokens?: number | null
+    cacheReadTokens?: number | null
+    cacheWriteTokens?: number | null
+    protocolType?: string | null
+    inputCost?: Decimal | DecimalJsLike | number | string | null
+    outputCost?: Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: Decimal | DecimalJsLike | number | string | null
+    cacheCost?: Decimal | DecimalJsLike | number | string | null
+    totalCost?: Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: boolean | null
+    fallbackLevel?: number | null
+    originalModel?: string | null
   }
 
   export type BotPluginCreateManyBotInput = {
@@ -51287,6 +63025,19 @@ export namespace Prisma {
     connectionStatus?: $Enums.ChannelConnectionStatus
     lastConnectedAt?: Date | string | null
     lastError?: string | null
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type BotModelRoutingCreateManyBotInput = {
+    id?: string
+    routingType: $Enums.ModelRoutingType
+    name: string
+    config: JsonNullValueInput | InputJsonValue
+    priority?: number
+    isEnabled?: boolean
     isDeleted?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -51331,6 +63082,18 @@ export namespace Prisma {
     endpoint?: NullableStringFieldUpdateOperationsInput | string | null
     durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    thinkingTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheReadTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheWriteTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    protocolType?: NullableStringFieldUpdateOperationsInput | string | null
+    inputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    outputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    totalCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    fallbackLevel?: NullableIntFieldUpdateOperationsInput | number | null
+    originalModel?: NullableStringFieldUpdateOperationsInput | string | null
     providerKey?: ProviderKeyUpdateOneWithoutUsageLogsNestedInput
   }
 
@@ -51346,6 +63109,18 @@ export namespace Prisma {
     endpoint?: NullableStringFieldUpdateOperationsInput | string | null
     durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    thinkingTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheReadTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheWriteTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    protocolType?: NullableStringFieldUpdateOperationsInput | string | null
+    inputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    outputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    totalCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    fallbackLevel?: NullableIntFieldUpdateOperationsInput | number | null
+    originalModel?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type BotUsageLogUncheckedUpdateManyWithoutBotInput = {
@@ -51360,6 +63135,18 @@ export namespace Prisma {
     endpoint?: NullableStringFieldUpdateOperationsInput | string | null
     durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    thinkingTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheReadTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheWriteTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    protocolType?: NullableStringFieldUpdateOperationsInput | string | null
+    inputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    outputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    totalCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    fallbackLevel?: NullableIntFieldUpdateOperationsInput | number | null
+    originalModel?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type BotPluginUpdateWithoutBotInput = {
@@ -51464,6 +63251,45 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
+  export type BotModelRoutingUpdateWithoutBotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BotModelRoutingUncheckedUpdateWithoutBotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BotModelRoutingUncheckedUpdateManyWithoutBotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    routingType?: EnumModelRoutingTypeFieldUpdateOperationsInput | $Enums.ModelRoutingType
+    name?: StringFieldUpdateOperationsInput | string
+    config?: JsonNullValueInput | InputJsonValue
+    priority?: IntFieldUpdateOperationsInput | number
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type BotProviderKeyCreateManyProviderKeyInput = {
     id?: string
     botId: string
@@ -51485,6 +63311,18 @@ export namespace Prisma {
     endpoint?: string | null
     durationMs?: number | null
     errorMessage?: string | null
+    thinkingTokens?: number | null
+    cacheReadTokens?: number | null
+    cacheWriteTokens?: number | null
+    protocolType?: string | null
+    inputCost?: Decimal | DecimalJsLike | number | string | null
+    outputCost?: Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: Decimal | DecimalJsLike | number | string | null
+    cacheCost?: Decimal | DecimalJsLike | number | string | null
+    totalCost?: Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: boolean | null
+    fallbackLevel?: number | null
+    originalModel?: string | null
   }
 
   export type ProxyTokenCreateManyProviderKeyInput = {
@@ -51539,6 +63377,18 @@ export namespace Prisma {
     endpoint?: NullableStringFieldUpdateOperationsInput | string | null
     durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    thinkingTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheReadTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheWriteTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    protocolType?: NullableStringFieldUpdateOperationsInput | string | null
+    inputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    outputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    totalCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    fallbackLevel?: NullableIntFieldUpdateOperationsInput | number | null
+    originalModel?: NullableStringFieldUpdateOperationsInput | string | null
     bot?: BotUpdateOneRequiredWithoutUsageLogsNestedInput
   }
 
@@ -51554,6 +63404,18 @@ export namespace Prisma {
     endpoint?: NullableStringFieldUpdateOperationsInput | string | null
     durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    thinkingTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheReadTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheWriteTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    protocolType?: NullableStringFieldUpdateOperationsInput | string | null
+    inputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    outputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    totalCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    fallbackLevel?: NullableIntFieldUpdateOperationsInput | number | null
+    originalModel?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type BotUsageLogUncheckedUpdateManyWithoutProviderKeyInput = {
@@ -51568,6 +63430,18 @@ export namespace Prisma {
     endpoint?: NullableStringFieldUpdateOperationsInput | string | null
     durationMs?: NullableIntFieldUpdateOperationsInput | number | null
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    thinkingTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheReadTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    cacheWriteTokens?: NullableIntFieldUpdateOperationsInput | number | null
+    protocolType?: NullableStringFieldUpdateOperationsInput | string | null
+    inputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    outputCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    thinkingCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    cacheCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    totalCost?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fallbackUsed?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    fallbackLevel?: NullableIntFieldUpdateOperationsInput | number | null
+    originalModel?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ProxyTokenUpdateWithoutProviderKeyInput = {

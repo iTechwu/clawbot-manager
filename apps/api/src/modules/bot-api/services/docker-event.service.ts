@@ -35,6 +35,7 @@ export class DockerEventService implements OnModuleInit, OnModuleDestroy {
   private eventStream: NodeJS.ReadableStream | null = null;
   private reconnectTimer: NodeJS.Timeout | null = null;
   private isShuttingDown = false;
+  private buffer = ''; // Buffer for incomplete JSON lines
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
@@ -75,16 +76,34 @@ export class DockerEventService implements OnModuleInit, OnModuleDestroy {
       });
 
       this.eventStream.on('data', (chunk: Buffer) => {
-        try {
-          const event: DockerEvent = JSON.parse(chunk.toString());
-          this.handleContainerEvent(event);
-        } catch (error) {
-          this.logger.error('Failed to parse Docker event', { error });
+        // Docker events are newline-delimited JSON (NDJSON)
+        // Buffer the data and process complete lines
+        this.buffer += chunk.toString();
+        const lines = this.buffer.split('\n');
+
+        // Keep the last incomplete line in the buffer
+        this.buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine) continue;
+
+          try {
+            const event: DockerEvent = JSON.parse(trimmedLine);
+            this.handleContainerEvent(event);
+          } catch (error) {
+            this.logger.error('Failed to parse Docker event', {
+              error,
+              line: trimmedLine.slice(0, 200),
+            });
+          }
         }
       });
 
       this.eventStream.on('error', (error: Error) => {
-        this.logger.error('Docker event stream error', { error: error.message });
+        this.logger.error('Docker event stream error', {
+          error: error.message,
+        });
         this.scheduleReconnect();
       });
 
@@ -110,7 +129,10 @@ export class DockerEventService implements OnModuleInit, OnModuleDestroy {
       try {
         // Use removeAllListeners and unpipe to stop the stream
         this.eventStream.removeAllListeners();
-        if ('destroy' in this.eventStream && typeof (this.eventStream as any).destroy === 'function') {
+        if (
+          'destroy' in this.eventStream &&
+          typeof (this.eventStream as any).destroy === 'function'
+        ) {
           (this.eventStream as any).destroy();
         }
       } catch {
@@ -118,6 +140,9 @@ export class DockerEventService implements OnModuleInit, OnModuleDestroy {
       }
       this.eventStream = null;
     }
+
+    // Clear the buffer
+    this.buffer = '';
 
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);

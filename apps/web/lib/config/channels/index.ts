@@ -1,6 +1,7 @@
 import type { ChannelDefinition } from './types';
 import {
   feishu,
+  wechat,
   telegram,
   discord,
   slack,
@@ -13,7 +14,6 @@ import {
   instagram,
   teams,
   line,
-  wechat,
   viber,
   kik,
   twitch,
@@ -30,6 +30,7 @@ import {
   googlechat,
   webex,
   web,
+  webchat,
   webhook,
 } from './definitions';
 
@@ -37,6 +38,7 @@ export type { ChannelDefinition };
 
 export const CHANNELS: ChannelDefinition[] = [
   feishu,
+  wechat,
   telegram,
   discord,
   slack,
@@ -49,7 +51,6 @@ export const CHANNELS: ChannelDefinition[] = [
   instagram,
   teams,
   line,
-  wechat,
   viber,
   kik,
   twitch,
@@ -66,6 +67,7 @@ export const CHANNELS: ChannelDefinition[] = [
   googlechat,
   webex,
   web,
+  webchat,
   webhook,
 ];
 
@@ -79,6 +81,7 @@ export function getChannel(id: string): ChannelDefinition | undefined {
 // Re-export individual channels for direct import
 export {
   feishu,
+  wechat,
   telegram,
   discord,
   slack,
@@ -91,7 +94,6 @@ export {
   instagram,
   teams,
   line,
-  wechat,
   viber,
   kik,
   twitch,
@@ -108,5 +110,6 @@ export {
   googlechat,
   webex,
   web,
+  webchat,
   webhook,
 };

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -10,6 +10,9 @@ import {
   OperateLogModule,
   PersonaTemplateModule,
   BotUsageLogModule,
+  BotChannelModule,
+  ModelPricingModule,
+  BotModelRoutingModule,
 } from '@app/db';
 import { PrismaModule } from '@app/prisma';
 import { AuthModule } from '@app/auth';
@@ -27,6 +30,9 @@ import { DockerEventService } from './services/docker-event.service';
 import { BotSseService } from './services/bot-sse.service';
 import { BotUsageAnalyticsService } from './services/bot-usage-analytics.service';
 import { HealthCheckService } from './services/health-check.service';
+import { BotConfigResolverService } from './services/bot-config-resolver.service';
+import { ModelRoutingModule } from './model-routing.module';
+import { ModelRoutingController } from './model-routing.controller';
 
 @Module({
   imports: [
@@ -36,6 +42,7 @@ import { HealthCheckService } from './services/health-check.service';
     BotModule,
     ProviderKeyModule,
     BotProviderKeyModule,
+    BotChannelModule,
     UserInfoModule,
     OperateLogModule,
     AuthModule,
@@ -45,9 +52,12 @@ import { HealthCheckService } from './services/health-check.service';
     ProviderVerifyModule,
     ProxyModule,
     BotUsageLogModule,
+    ModelPricingModule,
+    BotModelRoutingModule,
+    ModelRoutingModule,
     PrismaModule,
   ],
-  controllers: [BotApiController],
+  controllers: [BotApiController, ModelRoutingController],
   providers: [
     BotApiService,
     EncryptionService,
@@ -58,6 +68,7 @@ import { HealthCheckService } from './services/health-check.service';
     BotSseService,
     BotUsageAnalyticsService,
     HealthCheckService,
+    BotConfigResolverService,
   ],
   exports: [
     BotApiService,
@@ -68,6 +79,8 @@ import { HealthCheckService } from './services/health-check.service';
     BotSseService,
     BotUsageAnalyticsService,
     HealthCheckService,
+    BotConfigResolverService,
+    ModelRoutingModule,
   ],
 })
 export class BotApiModule {}

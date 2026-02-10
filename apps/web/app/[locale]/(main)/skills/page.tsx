@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { skillApi } from '@/lib/api/contracts/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   Card,
   CardContent,
@@ -27,6 +29,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  Label,
+  Textarea,
 } from '@repo/ui';
 import {
   Search,
@@ -36,8 +41,9 @@ import {
   Plus,
   Sparkles,
   User,
+  Loader2,
 } from 'lucide-react';
-import type { SkillType } from '@repo/contracts';
+import type { SkillType, CreateSkillRequest } from '@repo/contracts';
 
 /**
  * 技能类型图标映射
@@ -142,6 +148,149 @@ function SkillCardSkeleton() {
 }
 
 /**
+ * 创建技能表单组件
+ */
+function CreateSkillForm({
+  onSuccess,
+  onCancel,
+  t,
+}: {
+  onSuccess: () => void;
+  onCancel: () => void;
+  t: (key: string) => string;
+}) {
+  const queryClient = useQueryClient();
+  const [formData, setFormData] = useState<Partial<CreateSkillRequest>>({
+    name: '',
+    slug: '',
+    description: '',
+    version: '1.0.0',
+    skillType: 'tool',
+    definition: {},
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name || !formData.slug || !formData.skillType) {
+      toast.error(t('fillRequiredFields'));
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await skillApi.create.mutation({
+        body: {
+          name: formData.name,
+          slug: formData.slug,
+          description: formData.description || undefined,
+          version: formData.version || '1.0.0',
+          skillType: formData.skillType,
+          definition: formData.definition || {},
+        },
+      });
+
+      if (response.status === 200) {
+        toast.success(t('createSuccess'));
+        queryClient.invalidateQueries({ queryKey: ['skills'] });
+        onSuccess();
+      } else {
+        toast.error(t('createFailed'));
+      }
+    } catch {
+      toast.error(t('createFailed'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleNameChange = (name: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      name,
+      slug: prev.slug || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+    }));
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">{t('form.name')} *</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => handleNameChange(e.target.value)}
+          placeholder={t('form.namePlaceholder')}
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="slug">{t('form.slug')} *</Label>
+        <Input
+          id="slug"
+          value={formData.slug}
+          onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
+          placeholder={t('form.slugPlaceholder')}
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="skillType">{t('form.type')} *</Label>
+        <Select
+          value={formData.skillType}
+          onValueChange={(v) => setFormData((prev) => ({ ...prev, skillType: v as SkillType }))}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {skillTypeKeys.map((key) => (
+              <SelectItem key={key} value={key}>
+                {t(`types.${key}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">{t('form.description')}</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+          placeholder={t('form.descriptionPlaceholder')}
+          rows={3}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="version">{t('form.version')}</Label>
+        <Input
+          id="version"
+          value={formData.version}
+          onChange={(e) => setFormData((prev) => ({ ...prev, version: e.target.value }))}
+          placeholder="1.0.0"
+        />
+      </div>
+
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onCancel}>
+          {t('form.cancel')}
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {t('form.create')}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+/**
  * 技能管理页面
  */
 export default function SkillsPage() {
@@ -151,6 +300,7 @@ export default function SkillsPage() {
   const [sourceFilter, setSourceFilter] = useState<'all' | 'system' | 'custom'>(
     'all',
   );
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const { data: response, isLoading } = skillApi.list.useQuery(
     ['skills', { search, skillType, sourceFilter }],
@@ -183,7 +333,7 @@ export default function SkillsPage() {
           <h1 className="text-2xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground text-sm">{t('description')}</p>
         </div>
-        <Dialog>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -197,10 +347,11 @@ export default function SkillsPage() {
                 {t('createSkillDescription')}
               </DialogDescription>
             </DialogHeader>
-            {/* TODO: Add create skill form */}
-            <div className="text-muted-foreground py-8 text-center text-sm">
-              {t('comingSoon')}
-            </div>
+            <CreateSkillForm
+              t={t}
+              onSuccess={() => setIsCreateDialogOpen(false)}
+              onCancel={() => setIsCreateDialogOpen(false)}
+            />
           </DialogContent>
         </Dialog>
       </div>

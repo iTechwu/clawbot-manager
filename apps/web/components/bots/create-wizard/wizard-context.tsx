@@ -7,18 +7,11 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
-import type { CreateBotInput } from '@repo/contracts';
+import type { SimpleCreateBotInput } from '@repo/contracts';
 import { SCRATCH_TEMPLATE } from '@/lib/config';
-import { getDefaultModel } from '@/lib/config';
-
-type SessionScope = 'user' | 'channel' | 'global';
-
-// Step 4 sub-steps
-export type Step4SubStep = 'llm' | 'channels' | 'features';
 
 export interface WizardState {
   step: number;
-  step4SubStep: Step4SubStep;
   selectedTemplateId: string | null;
   botName: string;
   hostname: string;
@@ -27,22 +20,7 @@ export interface WizardState {
   avatarFile: File | null;
   avatarPreviewUrl: string;
   soulMarkdown: string;
-  enabledProviders: string[];
-  enabledChannels: string[];
-  routingTags: string[];
-  features: {
-    commands: boolean;
-    tts: boolean;
-    ttsVoice: string;
-    sandbox: boolean;
-    sandboxTimeout: number;
-    sessionScope: SessionScope;
-  };
-  providerConfigs: Record<
-    string,
-    { models: string[]; primaryModel?: string; keyId?: string }
-  >;
-  channelConfigs: Record<string, Record<string, string>>;
+  tags: string[];
 }
 
 export interface ValidationResult {
@@ -52,7 +30,6 @@ export interface ValidationResult {
 
 type WizardAction =
   | { type: 'SET_STEP'; step: number }
-  | { type: 'SET_STEP4_SUBSTEP'; subStep: Step4SubStep }
   | {
       type: 'SELECT_TEMPLATE';
       templateId: string;
@@ -64,35 +41,11 @@ type WizardAction =
   | { type: 'SET_AVATAR'; fileId: string; previewUrl: string }
   | { type: 'CLEAR_AVATAR' }
   | { type: 'SET_SOUL_MARKDOWN'; markdown: string }
-  | { type: 'TOGGLE_PROVIDER'; providerId: string }
-  | { type: 'TOGGLE_CHANNEL'; channelId: string }
-  | { type: 'SET_ROUTING_TAGS'; tags: string[] }
-  | {
-      type: 'SET_FEATURE';
-      feature: keyof WizardState['features'];
-      value: unknown;
-    }
-  | {
-      type: 'SET_PROVIDER_CONFIG';
-      providerId: string;
-      config: { models?: string[]; primaryModel?: string; keyId?: string };
-    }
-  | {
-      type: 'SET_CHANNEL_CONFIG';
-      channelId: string;
-      config: Record<string, string>;
-    }
-  | {
-      type: 'SET_CHANNEL_CREDENTIAL';
-      channelId: string;
-      key: string;
-      value: string;
-    }
+  | { type: 'SET_TAGS'; tags: string[] }
   | { type: 'RESET' };
 
 const initialState: WizardState = {
   step: 1,
-  step4SubStep: 'llm',
   selectedTemplateId: null,
   botName: '',
   hostname: '',
@@ -101,21 +54,7 @@ const initialState: WizardState = {
   avatarFile: null,
   avatarPreviewUrl: '',
   soulMarkdown: '',
-  enabledProviders: [],
-  enabledChannels: ['feishu'],
-  routingTags: [],
-  features: {
-    commands: true,
-    tts: true,
-    ttsVoice: 'alloy',
-    sandbox: true,
-    sandboxTimeout: 30,
-    sessionScope: 'user',
-  },
-  providerConfigs: {},
-  channelConfigs: {
-    feishu: {},
-  },
+  tags: [],
 };
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
@@ -123,11 +62,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
     case 'SET_STEP':
       return { ...state, step: action.step };
 
-    case 'SET_STEP4_SUBSTEP':
-      return { ...state, step4SubStep: action.subStep };
-
     case 'SELECT_TEMPLATE': {
-      // Use provided template data or fallback to SCRATCH_TEMPLATE for 'scratch'
       const template =
         action.templateId === 'scratch' ? SCRATCH_TEMPLATE : action.template;
       if (!template) return state;
@@ -175,106 +110,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
     case 'SET_SOUL_MARKDOWN':
       return { ...state, soulMarkdown: action.markdown };
 
-    case 'TOGGLE_PROVIDER': {
-      const { providerId } = action;
-      const enabled = state.enabledProviders.includes(providerId);
-      if (enabled) {
-        const { [providerId]: _, ...remainingConfigs } = state.providerConfigs;
-        return {
-          ...state,
-          enabledProviders: state.enabledProviders.filter(
-            (p) => p !== providerId,
-          ),
-          providerConfigs: remainingConfigs,
-        };
-      } else {
-        const defaultModel = getDefaultModel(providerId);
-        return {
-          ...state,
-          enabledProviders: [...state.enabledProviders, providerId],
-          providerConfigs: {
-            ...state.providerConfigs,
-            [providerId]: {
-              models: defaultModel ? [defaultModel] : [],
-              primaryModel: defaultModel || undefined,
-            },
-          },
-        };
-      }
-    }
-
-    case 'TOGGLE_CHANNEL': {
-      const { channelId } = action;
-      const enabled = state.enabledChannels.includes(channelId);
-      if (enabled) {
-        const { [channelId]: _, ...remainingConfigs } = state.channelConfigs;
-        return {
-          ...state,
-          enabledChannels: state.enabledChannels.filter((c) => c !== channelId),
-          channelConfigs: remainingConfigs,
-        };
-      } else {
-        return {
-          ...state,
-          enabledChannels: [...state.enabledChannels, channelId],
-          channelConfigs: {
-            ...state.channelConfigs,
-            [channelId]: {},
-          },
-        };
-      }
-    }
-
-    case 'SET_ROUTING_TAGS':
-      return { ...state, routingTags: action.tags };
-
-    case 'SET_FEATURE':
-      return {
-        ...state,
-        features: {
-          ...state.features,
-          [action.feature]: action.value,
-        },
-      };
-
-    case 'SET_PROVIDER_CONFIG': {
-      const existingConfig = state.providerConfigs[action.providerId] || {
-        models: [],
-      };
-      return {
-        ...state,
-        providerConfigs: {
-          ...state.providerConfigs,
-          [action.providerId]: {
-            ...existingConfig,
-            ...action.config,
-          },
-        },
-      };
-    }
-
-    case 'SET_CHANNEL_CONFIG':
-      return {
-        ...state,
-        channelConfigs: {
-          ...state.channelConfigs,
-          [action.channelId]: action.config,
-        },
-      };
-
-    case 'SET_CHANNEL_CREDENTIAL': {
-      const existingConfig = state.channelConfigs[action.channelId] || {};
-      return {
-        ...state,
-        channelConfigs: {
-          ...state.channelConfigs,
-          [action.channelId]: {
-            ...existingConfig,
-            [action.key]: action.value,
-          },
-        },
-      };
-    }
+    case 'SET_TAGS':
+      return { ...state, tags: action.tags };
 
     case 'RESET':
       return initialState;
@@ -290,11 +127,11 @@ export function validateStep(
 ): ValidationResult {
   switch (step) {
     case 1:
-      // Templates - no required selection
+      // Template selection - optional but recommended
       return { valid: true };
 
     case 2:
-      // Personality
+      // Basic info validation
       if (!state.botName.trim()) {
         return { valid: false, error: 'Bot name is required' };
       }
@@ -323,22 +160,7 @@ export function validateStep(
       return { valid: true };
 
     case 3:
-      // Features & Toggles
-      if (state.enabledProviders.length === 0) {
-        return { valid: false, error: 'Select at least one LLM provider' };
-      }
-      if (state.enabledChannels.length === 0) {
-        return { valid: false, error: 'Select at least one channel' };
-      }
-      return { valid: true };
-
-    case 4:
-      // Config details - validation is now optional since credentials vary by channel
-      // The actual validation will be done on the backend
-      return { valid: true };
-
-    case 5:
-      // Summary - review only
+      // Persona - no required validation (system prompt is optional)
       return { valid: true };
 
     default:
@@ -346,92 +168,12 @@ export function validateStep(
   }
 }
 
-/**
- * Get available sub-steps for step 4 based on current state
- */
-export function getAvailableSubSteps(state: WizardState): Step4SubStep[] {
-  const subSteps: Step4SubStep[] = [];
-
-  if (state.enabledProviders.length > 0) {
-    subSteps.push('llm');
-  }
-  if (state.enabledChannels.length > 0) {
-    subSteps.push('channels');
-  }
-  if (state.features.tts || state.features.sandbox) {
-    subSteps.push('features');
-  }
-
-  return subSteps;
-}
-
-/**
- * Get the next sub-step in step 4
- */
-export function getNextSubStep(state: WizardState): Step4SubStep | null {
-  const available = getAvailableSubSteps(state);
-  const currentIndex = available.indexOf(state.step4SubStep);
-
-  if (currentIndex === -1 || currentIndex >= available.length - 1) {
-    return null;
-  }
-
-  return available[currentIndex + 1] ?? null;
-}
-
-/**
- * Get the previous sub-step in step 4
- */
-export function getPrevSubStep(state: WizardState): Step4SubStep | null {
-  const available = getAvailableSubSteps(state);
-  const currentIndex = available.indexOf(state.step4SubStep);
-
-  if (currentIndex <= 0) {
-    return null;
-  }
-
-  return available[currentIndex - 1] ?? null;
-}
-
-/**
- * Check if current sub-step is the last one
- */
-export function isLastSubStep(state: WizardState): boolean {
-  const available = getAvailableSubSteps(state);
-  const currentIndex = available.indexOf(state.step4SubStep);
-  return currentIndex === available.length - 1;
-}
-
-/**
- * Check if current sub-step is the first one
- */
-export function isFirstSubStep(state: WizardState): boolean {
-  const available = getAvailableSubSteps(state);
-  const currentIndex = available.indexOf(state.step4SubStep);
-  return currentIndex === 0;
-}
-
-export function buildCreateBotInput(state: WizardState): CreateBotInput {
-  const providers = state.enabledProviders.map((providerId) => {
-    const config = state.providerConfigs[providerId];
-    return {
-      providerId,
-      models: config?.models || [],
-      primaryModel: config?.primaryModel,
-      keyId: config?.keyId,
-    };
-  });
-
-  const channels = state.enabledChannels.map((channelType) => ({
-    channelType,
-    credentials: state.channelConfigs[channelType] || {},
-  }));
-
+export function buildSimpleCreateBotInput(
+  state: WizardState,
+): SimpleCreateBotInput {
   return {
     name: state.botName,
     hostname: state.hostname,
-    providers,
-    channels,
     personaTemplateId:
       state.selectedTemplateId && state.selectedTemplateId !== 'scratch'
         ? state.selectedTemplateId
@@ -443,17 +185,7 @@ export function buildCreateBotInput(state: WizardState): CreateBotInput {
       avatarFileId: state.avatarFileId || undefined,
       avatarUrl: state.avatarPreviewUrl || undefined,
     },
-    features: {
-      commands: state.features.commands,
-      tts: state.features.tts,
-      ttsVoice: state.features.tts ? state.features.ttsVoice : undefined,
-      sandbox: state.features.sandbox,
-      sandboxTimeout: state.features.sandbox
-        ? state.features.sandboxTimeout
-        : undefined,
-      sessionScope: state.features.sessionScope,
-    },
-    tags: state.routingTags.length > 0 ? state.routingTags : undefined,
+    tags: state.tags.length > 0 ? state.tags : undefined,
   };
 }
 
@@ -461,7 +193,7 @@ interface WizardContextValue {
   state: WizardState;
   dispatch: React.Dispatch<WizardAction>;
   validate: (step: number) => ValidationResult;
-  buildInput: () => CreateBotInput;
+  buildInput: () => SimpleCreateBotInput;
   canProceed: () => boolean;
 }
 
@@ -475,7 +207,10 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     [state],
   );
 
-  const buildInput = useCallback(() => buildCreateBotInput(state), [state]);
+  const buildInput = useCallback(
+    () => buildSimpleCreateBotInput(state),
+    [state],
+  );
 
   const canProceed = useCallback(() => {
     const result = validateStep(state.step, state);

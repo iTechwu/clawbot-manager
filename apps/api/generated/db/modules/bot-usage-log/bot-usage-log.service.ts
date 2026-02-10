@@ -119,4 +119,127 @@ export class BotUsageLogService extends TransactionalServiceBase {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  /**
+   * 获取路由统计信息
+   * 根据 botId 和可选的模型过滤条件统计请求数据
+   */
+  @HandlePrismaError(DbOperationType.QUERY)
+  async getRoutingStats(
+    botId: string,
+    options?: {
+      models?: string[];
+      startDate?: Date;
+      endDate?: Date;
+    },
+  ): Promise<{
+    totalRequests: number;
+    successCount: number;
+    failureCount: number;
+    avgLatencyMs: number;
+    targetStats: Array<{
+      model: string;
+      vendor: string;
+      requestCount: number;
+      successCount: number;
+      failureCount: number;
+      avgLatencyMs: number;
+      totalCost: number;
+    }>;
+  }> {
+    const where: Prisma.BotUsageLogWhereInput = { botId };
+
+    if (options?.models && options.models.length > 0) {
+      where.model = { in: options.models };
+    }
+    if (options?.startDate) {
+      where.createdAt = { gte: options.startDate };
+    }
+    if (options?.endDate) {
+      where.createdAt = {
+        ...((where.createdAt as object) || {}),
+        lte: options.endDate,
+      };
+    }
+
+    // 获取所有匹配的日志
+    const logs = await this.getReadClient().botUsageLog.findMany({
+      where,
+      select: {
+        model: true,
+        vendor: true,
+        statusCode: true,
+        durationMs: true,
+        totalCost: true,
+      },
+    });
+
+    // 计算总体统计
+    const totalRequests = logs.length;
+    const successCount = logs.filter(
+      (l) => l.statusCode && l.statusCode >= 200 && l.statusCode < 300,
+    ).length;
+    const failureCount = totalRequests - successCount;
+    const avgLatencyMs =
+      totalRequests > 0
+        ? logs.reduce((sum, l) => sum + (l.durationMs || 0), 0) / totalRequests
+        : 0;
+
+    // 按模型分组统计
+    const modelStats = new Map<
+      string,
+      {
+        model: string;
+        vendor: string;
+        requestCount: number;
+        successCount: number;
+        failureCount: number;
+        totalLatency: number;
+        totalCost: number;
+      }
+    >();
+
+    for (const log of logs) {
+      const key = `${log.vendor}:${log.model || 'unknown'}`;
+      const existing = modelStats.get(key) || {
+        model: log.model || 'unknown',
+        vendor: log.vendor,
+        requestCount: 0,
+        successCount: 0,
+        failureCount: 0,
+        totalLatency: 0,
+        totalCost: 0,
+      };
+
+      existing.requestCount++;
+      if (log.statusCode && log.statusCode >= 200 && log.statusCode < 300) {
+        existing.successCount++;
+      } else {
+        existing.failureCount++;
+      }
+      existing.totalLatency += log.durationMs || 0;
+      existing.totalCost += log.totalCost ? Number(log.totalCost) : 0;
+
+      modelStats.set(key, existing);
+    }
+
+    const targetStats = Array.from(modelStats.values()).map((stat) => ({
+      model: stat.model,
+      vendor: stat.vendor,
+      requestCount: stat.requestCount,
+      successCount: stat.successCount,
+      failureCount: stat.failureCount,
+      avgLatencyMs:
+        stat.requestCount > 0 ? stat.totalLatency / stat.requestCount : 0,
+      totalCost: stat.totalCost,
+    }));
+
+    return {
+      totalRequests,
+      successCount,
+      failureCount,
+      avgLatencyMs,
+      targetStats,
+    };
+  }
 }

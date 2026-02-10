@@ -8,13 +8,10 @@ import { KeyringProxyService } from './keyring-proxy.service';
 import { UpstreamService } from './upstream.service';
 import { QuotaService } from './quota.service';
 import type { TokenUsage } from './token-extractor.service';
-import {
-  getVendorConfigWithCustomUrl,
-  isVendorSupported,
-} from '../config/vendor.config';
+import { getVendorConfigWithCustomUrl } from '../config/vendor.config';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import { PROVIDER_CONFIGS } from '@repo/contracts';
+import { normalizeModelForProxy } from '@/utils/model-normalizer';
 
 /**
  * 代理请求参数
@@ -45,6 +42,12 @@ export interface ProxyResult {
  * - 密钥选择
  * - 请求转发
  * - 使用日志记录
+ *
+ * Vendor 映射规则：
+ * - URL vendor 格式: ${apiType}${isCustom ? '-compatible' : ''}
+ * - 例如: openai-compatible → apiType=openai, isCustom=true
+ * - 例如: openai → apiType=openai, isCustom=false
+ * - ProxyToken 注册时使用 apiType 作为 vendor
  */
 @Injectable()
 export class ProxyService {
@@ -72,6 +75,39 @@ export class ProxyService {
   ): Promise<ProxyResult> {
     const { vendor, path, method, headers, body, botToken } = params;
 
+    // Log incoming request from openclawClient (concise summary)
+    this.logger.info(`[Proxy] Incoming request: ${method} ${vendor}${path}`);
+    if (body && body.length > 0) {
+      try {
+        const bodyJson = JSON.parse(body.toString('utf-8'));
+        // Log only key fields to avoid verbose output
+        const summary = {
+          model: bodyJson.model,
+          stream: bodyJson.stream,
+          messagesCount: Array.isArray(bodyJson.messages)
+            ? bodyJson.messages.length
+            : Array.isArray(bodyJson.input)
+              ? bodyJson.input.length
+              : 0,
+          toolsCount: Array.isArray(bodyJson.tools) ? bodyJson.tools.length : 0,
+          max_tokens:
+            bodyJson.max_tokens ||
+            bodyJson.max_output_tokens ||
+            bodyJson.max_completion_tokens,
+        };
+        this.logger.info(`[Proxy] Request summary: ${JSON.stringify(summary)}`);
+      } catch {
+        this.logger.info(
+          `[Proxy] Request body (raw, truncated): ${body.toString('utf-8').substring(0, 500)}`,
+        );
+      }
+    }
+
+    // 解析 URL vendor 获取 apiType 和是否为 custom provider
+    // 规则: ${apiType}${isCustom ? '-compatible' : ''}
+    // 例如: openai-compatible → apiType=openai, isCustom=true
+    const { apiType: urlApiType, isCustom } = this.parseUrlVendor(vendor);
+
     // 检查是否启用 Zero-Trust Mode
     const isZeroTrust = this.keyringProxyService.isZeroTrustEnabled();
 
@@ -79,6 +115,7 @@ export class ProxyService {
     let keyId: string;
     let apiKey: string;
     let baseUrl: string | null | undefined;
+    let effectiveApiType: string;
 
     if (isZeroTrust) {
       // Zero-Trust Mode: 使用 ProxyToken 验证
@@ -87,8 +124,27 @@ export class ProxyService {
         return { success: false, error: 'Invalid or expired proxy token' };
       }
 
+      this.logger.info(
+        `Token validation: vendor=${validation.vendor}, apiType=${validation.apiType}, urlVendor=${vendor}, urlApiType=${urlApiType}`,
+      );
+
       // 验证 vendor 匹配
-      if (validation.vendor !== vendor) {
+      // ProxyToken 注册时使用 apiType 作为 vendor（新行为）
+      // 但旧的 token 可能使用 "custom" 作为 vendor（旧行为）
+      // URL vendor 可能是 apiType 或 apiType-compatible
+      // 所以我们需要兼容两种情况：
+      // 1. 新 token: validation.vendor === urlApiType (e.g., "openai" === "openai")
+      // 2. 旧 token: validation.vendor === "custom" && isCustom && validation.apiType === urlApiType
+      const isVendorMatch =
+        validation.vendor === urlApiType ||
+        (validation.vendor === 'custom' &&
+          isCustom &&
+          validation.apiType === urlApiType);
+
+      if (!isVendorMatch) {
+        this.logger.warn(
+          `Vendor mismatch: token vendor=${validation.vendor}, token apiType=${validation.apiType}, url apiType=${urlApiType}`,
+        );
         return {
           success: false,
           error: `Token not authorized for vendor: ${vendor}`,
@@ -99,6 +155,8 @@ export class ProxyService {
       keyId = validation.keyId!;
       apiKey = validation.apiKey!;
       baseUrl = validation.baseUrl;
+      // 使用 token 中的 apiType，如果没有则使用 URL 解析的 apiType
+      effectiveApiType = validation.apiType || urlApiType;
     } else {
       // Direct Mode: 使用 Bot.proxyTokenHash 验证
       const tokenHash = this.encryptionService.hashToken(botToken);
@@ -126,19 +184,31 @@ export class ProxyService {
       keyId = keySelection.keyId;
       apiKey = keySelection.secret;
       baseUrl = keySelection.baseUrl;
+      effectiveApiType = urlApiType;
     }
 
     // 获取 vendor 配置
-    const providerConfig =
-      PROVIDER_CONFIGS[vendor as keyof typeof PROVIDER_CONFIGS];
-    const apiType = providerConfig?.apiType;
-    const vendorConfig = getVendorConfigWithCustomUrl(vendor, baseUrl, apiType);
+    // 使用 effectiveApiType 来获取正确的认证配置
+    // 如果有 baseUrl，使用自定义 URL 配置
+    const vendorConfig = getVendorConfigWithCustomUrl(
+      effectiveApiType,
+      baseUrl,
+      effectiveApiType as any,
+    );
 
     if (!vendorConfig) {
       if (!baseUrl) {
         return { success: false, error: `Unknown vendor: ${vendor}` };
       }
     }
+
+    // Normalize model name in request body
+    // OpenClaw sends model names with provider prefix (e.g., openai-compatible/gpt-4o)
+    // We need to strip the prefix before forwarding to the upstream
+    const normalizedBody = this.normalizeRequestBody(body, effectiveApiType);
+
+    // 记录请求开始时间
+    const startTime = Date.now();
 
     // 转发请求到上游
     try {
@@ -149,16 +219,28 @@ export class ProxyService {
             path,
             method,
             headers,
-            body,
+            body: normalizedBody,
             apiKey,
             customUrl: baseUrl || undefined,
           },
           rawResponse,
-          vendor,
+          effectiveApiType,
         );
 
-      // 记录使用日志（包含 token 使用量）
-      await this.logUsage(botId, vendor, keyId, statusCode, path, tokenUsage);
+      // 计算请求耗时
+      const durationMs = Date.now() - startTime;
+
+      // 记录使用日志（包含 token 使用量和耗时）
+      await this.logUsage(
+        botId,
+        effectiveApiType,
+        keyId,
+        statusCode,
+        path,
+        tokenUsage,
+        undefined,
+        durationMs,
+      );
 
       // 检查配额并发送通知（异步，不阻塞响应）
       this.quotaService.checkAndNotify(botId).catch((err) => {
@@ -171,8 +253,20 @@ export class ProxyService {
         error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Upstream error for bot ${botId}:`, error);
 
+      // 计算请求耗时（即使失败也记录）
+      const durationMs = Date.now() - startTime;
+
       // 记录失败日志
-      await this.logUsage(botId, vendor, keyId, null, path, null, errorMessage);
+      await this.logUsage(
+        botId,
+        effectiveApiType,
+        keyId,
+        null,
+        path,
+        null,
+        errorMessage,
+        durationMs,
+      );
 
       return { success: false, error: `Upstream error: ${errorMessage}` };
     }
@@ -189,6 +283,7 @@ export class ProxyService {
     endpoint?: string,
     tokenUsage?: TokenUsage | null,
     errorMessage?: string,
+    durationMs?: number,
   ): Promise<void> {
     try {
       await this.botUsageLogService.create({
@@ -201,6 +296,7 @@ export class ProxyService {
         requestTokens: tokenUsage?.requestTokens ?? null,
         responseTokens: tokenUsage?.responseTokens ?? null,
         errorMessage: errorMessage || null,
+        durationMs: durationMs ?? null,
       });
     } catch (error) {
       this.logger.error('Failed to log usage:', error);
@@ -224,5 +320,104 @@ export class ProxyService {
    */
   async revokeProxyToken(botId: string): Promise<void> {
     await this.botService.update({ id: botId }, { proxyTokenHash: null });
+  }
+
+  /**
+   * Normalize model name in request body and inject stream_options for usage tracking
+   *
+   * OpenClaw and other clients may send model names with provider prefixes like:
+   * - openai-compatible/gpt-4o
+   * - openai/gpt-4o
+   *
+   * This method:
+   * 1. Strips the provider prefix to get the raw model name
+   * 2. Injects stream_options: { include_usage: true } for streaming requests
+   *    to ensure token usage data is returned in the response
+   *
+   * @param body - The request body buffer
+   * @param vendor - The target vendor for alias normalization
+   * @returns The normalized request body buffer
+   */
+  private normalizeRequestBody(
+    body: Buffer | null,
+    vendor: string,
+  ): Buffer | null {
+    if (!body || body.length === 0) {
+      return body;
+    }
+
+    try {
+      const bodyStr = body.toString('utf-8');
+      const bodyJson = JSON.parse(bodyStr);
+      let modified = false;
+
+      // Check if there's a model field and normalize it
+      if (bodyJson.model && typeof bodyJson.model === 'string') {
+        const originalModel = bodyJson.model;
+        const normalizedModel = normalizeModelForProxy(originalModel, vendor);
+
+        if (normalizedModel !== originalModel) {
+          this.logger.debug(
+            `Normalized model name: ${originalModel} -> ${normalizedModel}`,
+          );
+          bodyJson.model = normalizedModel;
+          modified = true;
+        }
+      }
+
+      // Inject stream_options for streaming requests to get usage data
+      // This is required for OpenAI-compatible APIs to return token usage in streaming responses
+      if (bodyJson.stream === true) {
+        // Only inject if not already present
+        if (!bodyJson.stream_options) {
+          bodyJson.stream_options = { include_usage: true };
+          modified = true;
+          this.logger.debug('Injected stream_options for usage tracking');
+        } else if (!bodyJson.stream_options.include_usage) {
+          bodyJson.stream_options.include_usage = true;
+          modified = true;
+          this.logger.debug('Enabled include_usage in stream_options');
+        }
+      }
+
+      if (modified) {
+        return Buffer.from(JSON.stringify(bodyJson), 'utf-8');
+      }
+
+      return body;
+    } catch {
+      // If parsing fails, return original body
+      return body;
+    }
+  }
+
+  /**
+   * 解析 URL vendor 获取 apiType 和是否为 custom provider
+   *
+   * URL vendor 格式规则: ${apiType}${isCustom ? '-compatible' : ''}
+   * 例如:
+   * - openai-compatible → apiType=openai, isCustom=true
+   * - anthropic-compatible → apiType=anthropic, isCustom=true
+   * - openai → apiType=openai, isCustom=false
+   * - anthropic → apiType=anthropic, isCustom=false
+   *
+   * @param vendor - URL 中的 vendor 参数
+   * @returns { apiType: string, isCustom: boolean }
+   */
+  private parseUrlVendor(vendor: string): {
+    apiType: string;
+    isCustom: boolean;
+  } {
+    const compatibleSuffix = '-compatible';
+    if (vendor.endsWith(compatibleSuffix)) {
+      return {
+        apiType: vendor.slice(0, -compatibleSuffix.length),
+        isCustom: true,
+      };
+    }
+    return {
+      apiType: vendor,
+      isCustom: false,
+    };
   }
 }

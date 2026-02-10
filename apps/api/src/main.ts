@@ -172,10 +172,16 @@ async function bootstrap() {
           ? `^https?://(.*\\.)?${corsDomains.join('|').replace(/\*/g, '.*')}(:[0-9]+)?$`
           : `^https?://(.*\\.)?${corsDomains.join('|').replace(/\*/g, '.*')}$`;
         const regex = new RegExp(domainPattern);
+        // 检查是否为局域网地址
+        const isLanOrigin =
+          /^https?:\/\/(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$/.test(
+            origin,
+          );
         if (
           regex.test(origin) ||
           origin.includes('localhost') ||
-          origin.includes('127.0.0.1')
+          origin.includes('127.0.0.1') ||
+          isLanOrigin
         ) {
           callback(null, true);
         } else {

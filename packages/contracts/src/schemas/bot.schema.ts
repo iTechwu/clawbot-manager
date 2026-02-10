@@ -40,13 +40,14 @@ export type ContainerStatus = z.infer<typeof ContainerStatusSchema>;
 // Bot Schema
 // ============================================================================
 
+// 注意：aiProvider、model、channelType 字段已移除
+// 这些值现在从 BotProviderKey 和 BotChannel 动态派生
+// 使用 BotConfigResolverService.getBotRuntimeConfig() 获取这些值
+
 export const BotSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   hostname: z.string(),
-  aiProvider: z.string(),
-  model: z.string(),
-  channelType: z.string(),
   containerId: z.string().nullable(),
   port: z.number().nullable(),
   gatewayToken: z.string().nullable(),
@@ -58,9 +59,17 @@ export const BotSchema = z.object({
   avatarFileId: z.string().uuid().nullable(),
   avatarUrl: z.string().nullable(),
   soulMarkdown: z.string().nullable(),
+  // 待生效配置：存储修改后尚未重启生效的配置
+  // 使用 z.unknown() 以兼容 Prisma 的 JsonValue 类型
+  // 实际类型为 PendingConfig，在使用时需要进行类型断言
+  pendingConfig: z.unknown().nullable().optional(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   containerStatus: ContainerStatusSchema.nullable().optional(),
+  // Tokenized URLs for accessing the bot's OpenClaw gateway
+  // These URLs include the gateway token for WebSocket authentication
+  dashboardUrl: z.string().nullable().optional(),
+  chatUrl: z.string().nullable().optional(),
 });
 
 export type Bot = z.infer<typeof BotSchema>;
@@ -88,7 +97,9 @@ export const BotProviderKeyResponseSchema = z.object({
   createdAt: z.coerce.date(),
 });
 
-export type BotProviderKeyResponse = z.infer<typeof BotProviderKeyResponseSchema>;
+export type BotProviderKeyResponse = z.infer<
+  typeof BotProviderKeyResponseSchema
+>;
 
 /** @deprecated 使用 BotProviderConfigSchema 代替 */
 export const ProviderConfigSchema = BotProviderConfigSchema;
@@ -137,6 +148,72 @@ export const CreateBotInputSchema = z.object({
 });
 
 export type CreateBotInput = z.infer<typeof CreateBotInputSchema>;
+
+// ============================================================================
+// Simple Create Bot Schema - 简化创建
+// ============================================================================
+
+/**
+ * 简化创建 Bot 输入 Schema
+ * 只需要基本信息和人设，Provider 和 Channel 在创建后配置
+ */
+export const SimpleCreateBotInputSchema = z.object({
+  name: z.string().min(1).max(255),
+  hostname: z.string().regex(/^[a-z0-9-]{1,64}$/, {
+    message:
+      'Hostname must be lowercase alphanumeric with hyphens, max 64 chars',
+  }),
+  persona: PersonaSchema,
+  personaTemplateId: z.string().uuid().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+export type SimpleCreateBotInput = z.infer<typeof SimpleCreateBotInputSchema>;
+
+// ============================================================================
+// Update Bot Schema - 更新 Bot 配置
+// ============================================================================
+
+/**
+ * 待生效配置 Schema
+ * 存储修改后尚未重启生效的配置
+ */
+export const PendingConfigSchema = z.object({
+  name: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  soulMarkdown: z.string().optional(),
+  emoji: z.string().optional(),
+  avatarFileId: z.string().uuid().optional(),
+});
+
+export type PendingConfig = z.infer<typeof PendingConfigSchema>;
+
+/**
+ * 更新 Bot 输入 Schema
+ * 所有字段都是可选的，只更新提供的字段
+ * 更新会存储到 pendingConfig，需要重启后生效
+ */
+export const UpdateBotInputSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  tags: z.array(z.string()).optional(),
+  soulMarkdown: z.string().optional(),
+  emoji: z.string().max(10).optional(),
+  avatarFileId: z.string().uuid().optional(),
+});
+
+export type UpdateBotInput = z.infer<typeof UpdateBotInputSchema>;
+
+/**
+ * 应用待生效配置的响应
+ */
+export const ApplyPendingConfigResponseSchema = z.object({
+  success: z.boolean(),
+  appliedFields: z.array(z.string()),
+});
+
+export type ApplyPendingConfigResponse = z.infer<
+  typeof ApplyPendingConfigResponseSchema
+>;
 
 // ============================================================================
 // Container Stats Schema
@@ -251,6 +328,8 @@ export const VerifyProviderKeyInputSchema = z.object({
     .url({ message: 'Must be a valid URL' })
     .optional()
     .transform((val) => (val?.trim() === '' ? undefined : val)),
+  /** API protocol type - overrides the default from PROVIDER_CONFIGS */
+  apiType: ProviderApiTypeSchema.optional(),
 });
 
 export type VerifyProviderKeyInput = z.infer<
@@ -282,3 +361,103 @@ export const VerifyProviderKeyResponseSchema = z.object({
 export type VerifyProviderKeyResponse = z.infer<
   typeof VerifyProviderKeyResponseSchema
 >;
+
+// ============================================================================
+// Bot Provider Management Schemas
+// ============================================================================
+
+/**
+ * Bot Provider 详情 Schema - 用于 API 响应
+ */
+export const BotProviderDetailSchema = z.object({
+  id: z.string().uuid(),
+  providerKeyId: z.string().uuid(),
+  vendor: ProviderVendorSchema,
+  apiType: ProviderApiTypeSchema.nullable(),
+  label: z.string(),
+  apiKeyMasked: z.string(),
+  baseUrl: z.string().nullable(),
+  isPrimary: z.boolean(),
+  allowedModels: z.array(z.string()),
+  primaryModel: z.string().nullable(),
+  createdAt: z.coerce.date(),
+});
+
+export type BotProviderDetail = z.infer<typeof BotProviderDetailSchema>;
+
+/**
+ * 添加 Bot Provider 输入 Schema
+ */
+export const AddBotProviderInputSchema = z.object({
+  keyId: z.string().uuid(),
+  models: z.array(z.string()).min(1, 'At least one model is required'),
+  primaryModel: z.string().optional(),
+  isPrimary: z.boolean().optional().default(false),
+});
+
+export type AddBotProviderInput = z.infer<typeof AddBotProviderInputSchema>;
+
+/**
+ * 设置主模型输入 Schema
+ */
+export const SetPrimaryModelInputSchema = z.object({
+  modelId: z.string(),
+});
+
+export type SetPrimaryModelInput = z.infer<typeof SetPrimaryModelInputSchema>;
+
+// ============================================================================
+// Bot Diagnostics Schemas
+// ============================================================================
+
+/**
+ * 诊断检查类型
+ */
+export const DiagnosticCheckTypeSchema = z.enum([
+  'provider_key',
+  'model_access',
+  'channel_tokens',
+  'container',
+  'network',
+]);
+
+export type DiagnosticCheckType = z.infer<typeof DiagnosticCheckTypeSchema>;
+
+/**
+ * 诊断状态
+ */
+export const DiagnosticStatusSchema = z.enum(['pass', 'warning', 'fail']);
+
+export type DiagnosticStatus = z.infer<typeof DiagnosticStatusSchema>;
+
+/**
+ * 单个诊断检查结果
+ */
+export const DiagnosticCheckResultSchema = z.object({
+  name: z.string(),
+  status: DiagnosticStatusSchema,
+  message: z.string(),
+  latency: z.number().optional(),
+});
+
+export type DiagnosticCheckResult = z.infer<typeof DiagnosticCheckResultSchema>;
+
+/**
+ * 诊断请求输入 Schema
+ */
+export const BotDiagnoseInputSchema = z.object({
+  checks: z.array(DiagnosticCheckTypeSchema).optional(),
+});
+
+export type BotDiagnoseInput = z.infer<typeof BotDiagnoseInputSchema>;
+
+/**
+ * 诊断响应 Schema
+ */
+export const BotDiagnoseResponseSchema = z.object({
+  overall: z.enum(['healthy', 'warning', 'error']),
+  checks: z.array(DiagnosticCheckResultSchema),
+  recommendations: z.array(z.string()),
+});
+
+export type BotDiagnoseResponse = z.infer<typeof BotDiagnoseResponseSchema>;

@@ -21,6 +21,7 @@
       "settings": "设置"
     },
     "user": {
+      "apiKeys": "API 密钥",
       "profile": "个人资料",
       "settings": "设置",
       "logout": "退出登录",
@@ -37,6 +38,7 @@
     "templates": "人设模板",
     "secrets": "API密钥",
     "diagnostics": "诊断",
+    "routing": "路由配置",
     "settings": "设置"
   },
   "actions": {

@@ -1,6 +1,7 @@
 'use client';
 
 import { Component, type ReactNode, type ErrorInfo } from 'react';
+import { trackError } from '@/lib/errors/error-tracking';
 
 /**
  * Error Boundary Props
@@ -92,10 +93,10 @@ export class ErrorBoundary extends Component<
     // 调用错误回调
     this.props.onError?.(error, errorInfo);
 
-    // 在生产环境中，可以发送到错误追踪服务
-    if (process.env.NODE_ENV === 'production') {
-      // TODO: 发送到错误追踪服务 (如 Sentry)
-    }
+    // 发送到错误追踪服务
+    trackError(error, errorInfo, {
+      metadata: { source: 'ErrorBoundary' },
+    });
   }
 
   handleRetry = () => {

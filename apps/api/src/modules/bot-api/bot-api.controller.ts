@@ -1,4 +1,11 @@
-import { Controller, Get, MessageEvent, Req, Sse, VERSION_NEUTRAL } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  MessageEvent,
+  Req,
+  Sse,
+  VERSION_NEUTRAL,
+} from '@nestjs/common';
 import { TsRestHandler, tsRestHandler } from '@ts-rest/nest';
 import {
   botContract as bc,
@@ -9,7 +16,7 @@ import { success, created } from '@/common/ts-rest/response.helper';
 import { BotApiService } from './bot-api.service';
 import { BotUsageAnalyticsService } from './services/bot-usage-analytics.service';
 import { BotSseService } from './services/bot-sse.service';
-import { AuthenticatedRequest, Auth } from '@app/auth';
+import { AuthenticatedRequest, Auth, SseAuth } from '@app/auth';
 import type { Observable } from 'rxjs';
 
 /**
@@ -66,11 +73,54 @@ export class BotApiController {
     });
   }
 
+  @TsRestHandler(bc.createSimple)
+  async createBotSimple(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bc.createSimple, async ({ body }) => {
+      const userId = req.userId;
+      const bot = await this.botApiService.createBotSimple(body, userId);
+      return created(bot);
+    });
+  }
+
   @TsRestHandler(bc.delete)
   async deleteBot(@Req() req: AuthenticatedRequest): Promise<any> {
     return tsRestHandler(bc.delete, async ({ params }) => {
       const userId = req.userId;
       await this.botApiService.deleteBot(params.hostname, userId);
+      return success({ success: true });
+    });
+  }
+
+  @TsRestHandler(bc.update)
+  async updateBot(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bc.update, async ({ params, body }) => {
+      const userId = req.userId;
+      const bot = await this.botApiService.updateBot(
+        params.hostname,
+        userId,
+        body,
+      );
+      return success(bot);
+    });
+  }
+
+  @TsRestHandler(bc.applyPendingConfig)
+  async applyPendingConfig(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bc.applyPendingConfig, async ({ params }) => {
+      const userId = req.userId;
+      const result = await this.botApiService.applyPendingConfig(
+        params.hostname,
+        userId,
+      );
+      return success(result);
+    });
+  }
+
+  @TsRestHandler(bc.clearPendingConfig)
+  async clearPendingConfig(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bc.clearPendingConfig, async ({ params }) => {
+      const userId = req.userId;
+      await this.botApiService.clearPendingConfig(params.hostname, userId);
       return success({ success: true });
     });
   }
@@ -98,7 +148,7 @@ export class BotApiController {
   }
 
   // ============================================================================
-  // Diagnostics (TODO: Implement)
+  // Container Diagnostics
   // ============================================================================
 
   @TsRestHandler(bc.getStats)
@@ -125,6 +175,96 @@ export class BotApiController {
       const userId = req.userId;
       const cleanupReport = await this.botApiService.cleanupOrphans(userId);
       return success(cleanupReport);
+    });
+  }
+
+  // ============================================================================
+  // Bot Provider Management
+  // ============================================================================
+
+  @TsRestHandler(bc.getProviders)
+  async getBotProviders(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bc.getProviders, async ({ params }) => {
+      const userId = req.userId;
+      const providers = await this.botApiService.getBotProviders(
+        params.hostname,
+        userId,
+      );
+      return success({ providers });
+    });
+  }
+
+  @TsRestHandler(bc.addProvider)
+  async addBotProvider(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bc.addProvider, async ({ params, body }) => {
+      const userId = req.userId;
+      const provider = await this.botApiService.addBotProvider(
+        params.hostname,
+        userId,
+        body,
+      );
+      return created(provider);
+    });
+  }
+
+  @TsRestHandler(bc.removeProvider)
+  async removeBotProvider(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bc.removeProvider, async ({ params }) => {
+      const userId = req.userId;
+      const result = await this.botApiService.removeBotProvider(
+        params.hostname,
+        userId,
+        params.keyId,
+      );
+      return success(result);
+    });
+  }
+
+  @TsRestHandler(bc.setPrimaryModel)
+  async setBotPrimaryModel(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bc.setPrimaryModel, async ({ params, body }) => {
+      const userId = req.userId;
+      const result = await this.botApiService.setBotPrimaryModel(
+        params.hostname,
+        userId,
+        params.keyId,
+        body.modelId,
+      );
+      return success(result);
+    });
+  }
+
+  // ============================================================================
+  // Bot Diagnostics
+  // ============================================================================
+
+  @TsRestHandler(bc.diagnose)
+  async diagnoseBot(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bc.diagnose, async ({ params, body }) => {
+      const userId = req.userId;
+      const result = await this.botApiService.diagnoseBot(
+        params.hostname,
+        userId,
+        body.checks,
+      );
+      return success(result);
+    });
+  }
+
+  // ============================================================================
+  // Bot Logs
+  // ============================================================================
+
+  @TsRestHandler(bc.getLogs)
+  async getBotLogs(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bc.getLogs, async ({ params, query }) => {
+      const userId = req.userId;
+      const result = await this.botApiService.getBotLogs(
+        params.hostname,
+        userId,
+        query,
+      );
+      return success(result);
     });
   }
 
@@ -248,16 +388,18 @@ export class BotApiController {
   }
 
   // ============================================================================
-  // Real-time Status Stream (SSE)
+  // Real-time Status Stream (SSE) - 已迁移到 SseApiModule
   // ============================================================================
+  // SSE 端点已迁移到 /api/sse/bot/status-stream
+  // 请使用 SseApiController 中的端点
+  // 保留此端点用于向后兼容，将在未来版本中移除
 
   /**
+   * @deprecated 请使用 /api/sse/bot/status-stream
    * SSE 端点：实时推送 Bot 状态变更
-   * 客户端连接后会收到：
-   * - bot-status: Bot 运行状态变更（running, stopped, error）
-   * - bot-health: Bot 健康状态变更（HEALTHY, UNHEALTHY）
    */
   @Get('bot/status-stream')
+  @SseAuth()
   @Sse()
   statusStream(@Req() req: AuthenticatedRequest): Observable<MessageEvent> {
     const userId = req.userId;

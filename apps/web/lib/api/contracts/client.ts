@@ -23,6 +23,9 @@ import {
   botPluginContract,
   skillContract,
   botSkillContract,
+  modelRoutingContract,
+  routingAdminContract,
+  notificationContract,
 } from '@repo/contracts';
 import { getHeaders } from '@repo/utils/headers';
 import { API_VERSION_HEADER, APP_BUILD_HEADER } from '@repo/constants';
@@ -465,6 +468,48 @@ export const botChannelClient = initClient(botChannelContract, clientOptions);
  */
 export const botChannelApi = initQueryClient(botChannelContract, clientOptions);
 
+/**
+ * Model Routing API - Direct client
+ */
+export const modelRoutingClient = initClient(
+  modelRoutingContract,
+  clientOptions,
+);
+
+/**
+ * Model Routing API - React Query hooks
+ */
+export const modelRoutingApi = initQueryClient(
+  modelRoutingContract,
+  clientOptions,
+);
+
+/**
+ * Routing Admin API - Direct client
+ */
+export const routingAdminClient = initClient(
+  routingAdminContract,
+  clientOptions,
+);
+
+/**
+ * Routing Admin API - React Query hooks
+ */
+export const routingAdminApi = initQueryClient(
+  routingAdminContract,
+  clientOptions,
+);
+
+/**
+ * Notification API - Direct client
+ */
+export const notificationClient = initClient(notificationContract, clientOptions);
+
+/**
+ * Notification API - React Query hooks
+ */
+export const notificationApi = initQueryClient(notificationContract, clientOptions);
+
 // ============================================================================
 // Generic ts-rest Client (for custom contracts)
 // ============================================================================
@@ -497,6 +542,9 @@ export const tsRestClient = {
   botPlugin: botPluginApi,
   skill: skillApi,
   botSkill: botSkillApi,
+  modelRouting: modelRoutingApi,
+  routingAdmin: routingAdminApi,
+  notification: notificationApi,
   // Direct clients (for imperative calls)
   analyticsClient,
   botClient,
@@ -510,4 +558,7 @@ export const tsRestClient = {
   botPluginClient,
   skillClient,
   botSkillClient,
+  modelRoutingClient,
+  routingAdminClient,
+  notificationClient,
 };

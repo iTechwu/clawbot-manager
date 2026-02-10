@@ -1,10 +1,6 @@
 import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
-import {
-  ApiResponseSchema,
-  withVersion,
-  API_VERSION,
-} from '../base';
+import { ApiResponseSchema, withVersion, API_VERSION } from '../base';
 import {
   ChannelDefinitionSchema,
   ChannelDefinitionListResponseSchema,
@@ -13,6 +9,9 @@ import {
   CreateBotChannelRequestSchema,
   UpdateBotChannelRequestSchema,
   BotChannelConnectionActionSchema,
+  ChannelTestRequestSchema,
+  ChannelTestResponseSchema,
+  ValidateCredentialsRequestSchema,
 } from '../schemas/channel.schema';
 
 const c = initContract();
@@ -149,6 +148,36 @@ export const botChannelContract = c.router(
       },
       summary: '连接或断开渠道',
     },
+
+    /**
+     * POST /bot/:hostname/channels/:channelId/test - 快速测试渠道
+     */
+    test: {
+      method: 'POST',
+      path: '/:channelId/test',
+      pathParams: z.object({ channelId: z.string().uuid() }),
+      body: ChannelTestRequestSchema,
+      responses: {
+        200: ApiResponseSchema(ChannelTestResponseSchema),
+        400: ApiResponseSchema(z.object({ error: z.string() })),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '快速测试渠道配置',
+    },
+
+    /**
+     * POST /bot/:hostname/channels/validate - 验证凭证（保存前验证）
+     */
+    validateCredentials: {
+      method: 'POST',
+      path: '/validate',
+      body: ValidateCredentialsRequestSchema,
+      responses: {
+        200: ApiResponseSchema(ChannelTestResponseSchema),
+        400: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '验证渠道凭证（保存前验证）',
+    },
   },
   {
     pathPrefix: '/bot/:hostname/channels',
@@ -158,21 +187,15 @@ export const botChannelContract = c.router(
 /**
  * 带版本元数据的 Channel Contract
  */
-export const channelContractVersioned = withVersion(
-  channelContract,
-  {
-    version: API_VERSION.V1,
-    pathPrefix: '/channel',
-  },
-);
+export const channelContractVersioned = withVersion(channelContract, {
+  version: API_VERSION.V1,
+  pathPrefix: '/channel',
+});
 
-export const botChannelContractVersioned = withVersion(
-  botChannelContract,
-  {
-    version: API_VERSION.V1,
-    pathPrefix: '/bot/:hostname/channels',
-  },
-);
+export const botChannelContractVersioned = withVersion(botChannelContract, {
+  version: API_VERSION.V1,
+  pathPrefix: '/bot/:hostname/channels',
+});
 
 export type ChannelContract = typeof channelContract;
 export type BotChannelContract = typeof botChannelContract;

@@ -21,6 +21,7 @@
       "settings": "Settings"
     },
     "user": {
+      "apiKeys": "API Keys",
       "profile": "Profile",
       "settings": "Settings",
       "logout": "Log out",
@@ -37,6 +38,7 @@
     "templates": "Templates",
     "secrets": "API Keys",
     "diagnostics": "Diagnostics",
+    "routing": "Routing",
     "settings": "Settings"
   },
   "actions": {

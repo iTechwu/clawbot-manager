@@ -7,12 +7,6 @@
  */
 
 import { botUsageApi } from '@/lib/api/contracts/client';
-import type {
-  UsageStatsQuery,
-  UsageTrendQuery,
-  UsageBreakdownQuery,
-  UsageLogListQuery,
-} from '@repo/contracts';
 
 /**
  * 用量统计查询参数
@@ -79,6 +73,7 @@ export const usageKeys = {
 export function useBotUsageStats(params: UsageStatsParams) {
   const { hostname, period = 'week', startDate, endDate } = params;
 
+  // ts-rest v4 API: useQuery(queryKey, args)
   return botUsageApi.getStats.useQuery(
     usageKeys.stats(hostname, { period, startDate, endDate }),
     {
@@ -87,12 +82,7 @@ export function useBotUsageStats(params: UsageStatsParams) {
         period,
         startDate,
         endDate,
-      } as UsageStatsQuery,
-    },
-    {
-      enabled: !!hostname,
-      staleTime: 30000, // 30 秒
-      refetchInterval: 60000, // 1 分钟自动刷新
+      },
     },
   );
 }
@@ -103,6 +93,7 @@ export function useBotUsageStats(params: UsageStatsParams) {
 export function useBotUsageTrend(params: UsageTrendParams) {
   const { hostname, granularity = 'day', startDate, endDate } = params;
 
+  // ts-rest v4 API: useQuery(queryKey, args)
   return botUsageApi.getTrend.useQuery(
     usageKeys.trend(hostname, { granularity, startDate, endDate }),
     {
@@ -111,11 +102,7 @@ export function useBotUsageTrend(params: UsageTrendParams) {
         granularity,
         startDate,
         endDate,
-      } as UsageTrendQuery,
-    },
-    {
-      enabled: !!hostname && !!startDate && !!endDate,
-      staleTime: 60000, // 1 分钟
+      },
     },
   );
 }
@@ -126,6 +113,7 @@ export function useBotUsageTrend(params: UsageTrendParams) {
 export function useBotUsageBreakdown(params: UsageBreakdownParams) {
   const { hostname, groupBy = 'vendor', startDate, endDate } = params;
 
+  // ts-rest v4 API: useQuery(queryKey, args)
   return botUsageApi.getBreakdown.useQuery(
     usageKeys.breakdown(hostname, { groupBy, startDate, endDate }),
     {
@@ -134,11 +122,7 @@ export function useBotUsageBreakdown(params: UsageBreakdownParams) {
         groupBy,
         startDate,
         endDate,
-      } as UsageBreakdownQuery,
-    },
-    {
-      enabled: !!hostname,
-      staleTime: 60000, // 1 分钟
+      },
     },
   );
 }
@@ -158,6 +142,7 @@ export function useBotUsageLogs(params: UsageLogsParams) {
     endDate,
   } = params;
 
+  // ts-rest v4 API: useQuery(queryKey, args)
   return botUsageApi.getLogs.useQuery(
     usageKeys.logs(hostname, {
       page,
@@ -178,11 +163,7 @@ export function useBotUsageLogs(params: UsageLogsParams) {
         statusCode,
         startDate,
         endDate,
-      } as UsageLogListQuery,
-    },
-    {
-      enabled: !!hostname,
-      staleTime: 30000, // 30 秒
+      },
     },
   );
 }

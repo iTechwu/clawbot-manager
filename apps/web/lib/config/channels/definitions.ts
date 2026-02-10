@@ -403,7 +403,7 @@ export const wechat: ChannelDefinition = {
   id: 'wechat',
   label: 'WeChat',
   icon: 'WC',
-  popular: false,
+  popular: true,
   tokenHint: 'WeChat Official Account access token',
   tokenPlaceholder: 'Access token...',
   credentials: [
@@ -948,6 +948,32 @@ export const web: ChannelDefinition = {
     },
   ],
   helpText: 'Web Chat - 配置',
+};
+
+export const webchat: ChannelDefinition = {
+  id: 'webchat',
+  label: 'Web Chat',
+  icon: 'WC',
+  popular: true,
+  tokenHint: 'Web Chat 嵌入式聊天组件配置',
+  tokenPlaceholder: 'API key...',
+  credentials: [
+    {
+      key: 'apiKey',
+      label: 'API Key',
+      placeholder: 'xxx...',
+      type: 'password',
+      required: false,
+    },
+    {
+      key: 'allowedOrigins',
+      label: 'Allowed Origins',
+      placeholder: 'https://example.com, https://app.example.com',
+      type: 'text',
+      required: false,
+    },
+  ],
+  helpText: 'Web Chat - 嵌入式网页聊天组件',
 };
 
 export const webhook: ChannelDefinition = {

@@ -28,6 +28,7 @@
     "db:generate": "prisma generate && node scripts/generate-db-crud.js",
     "db:format": "prisma format",
     "db:seed": "ts-node prisma/seed.ts",
+    "update:model-pricing": "ts-node scripts/update-model-pricing.ts",
     "validate:versions": "ts-node scripts/validate-api-versions.ts"
   },
   "devDependencies": {
@@ -91,6 +92,7 @@
     "@fastify/static": "^8.2.0",
     "@google-cloud/storage": "^7.12.0",
     "@google-cloud/vertexai": "^1.5.0",
+    "@larksuiteoapi/node-sdk": "^1.58.0",
     "@mapbox/node-pre-gyp": "^2.0.0",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/bullmq": "^11.0.4",
@@ -163,13 +165,13 @@
     "sharp": "^0.34.2",
     "socket.io": "^4.8.1",
     "tencentcloud-sdk-nodejs-sms": "^4.0.859",
+    "tsconfig-paths": "^4.2.0",
     "uniqid": "^5.4.0",
     "unleash-client": "^6.9.5",
     "uuid": "^11.1.0",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
     "ws": "^8.18.3",
-    "zod": "^4.3.6",
-    "tsconfig-paths": "^4.2.0"
+    "zod": "^4.3.6"
   }
 }

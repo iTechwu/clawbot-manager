@@ -39,7 +39,10 @@ const EXCLUDE_MODELS = new Set([
 ]);
 
 function pascalToKebab(str) {
-  return str.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
+  return str
+    .replace(/([A-Z])/g, '-$1')
+    .toLowerCase()
+    .replace(/^-/, '');
 }
 
 function pascalToCamel(str) {
@@ -108,7 +111,8 @@ function parseSchema(content) {
     const fieldName = fieldMatch[1];
     if (t.includes('@id')) current.idField = fieldName;
     if (t.includes('@unique') && !t.includes('@id')) {
-      if (!current.uniqueFields.includes(fieldName)) current.uniqueFields.push(fieldName);
+      if (!current.uniqueFields.includes(fieldName))
+        current.uniqueFields.push(fieldName);
     }
     if (fieldName === 'isDeleted') current.hasIsDeleted = true;
     if (fieldName === 'createdAt') current.hasCreatedAt = true;
@@ -118,7 +122,8 @@ function parseSchema(content) {
 }
 
 function jsTypeFromPrisma(fieldType) {
-  if (['String', 'DateTime'].includes(fieldType) || fieldType.endsWith('?')) return 'string';
+  if (['String', 'DateTime'].includes(fieldType) || fieldType.endsWith('?'))
+    return 'string';
   if (['Int', 'BigInt'].includes(fieldType.replace('?', ''))) return 'number';
   if (fieldType === 'Boolean' || fieldType === 'Boolean?') return 'boolean';
   return 'string';
@@ -142,7 +147,9 @@ function generateService(model) {
   const additionalType = `{ select?: ${selectType} }`;
 
   const softWhere = hasIsDeleted ? '{ ...where, isDeleted: false }' : 'where';
-  const softWhereUnique = hasIsDeleted ? '{ ...where, isDeleted: false }' : 'where';
+  const softWhereUnique = hasIsDeleted
+    ? '{ ...where, isDeleted: false }'
+    : 'where';
 
   let getByMethods = '';
   for (const f of uniqueFields) {
@@ -307,7 +314,11 @@ function main() {
   for (const model of models) {
     if (EXCLUDE_MODELS.has(model.name)) continue;
     if (!model.idField) {
-      console.warn('generate-db-crud: skip', model.name, '(no @id and no single @unique)');
+      console.warn(
+        'generate-db-crud: skip',
+        model.name,
+        '(no @id and no single @unique)',
+      );
       continue;
     }
 
@@ -318,6 +329,18 @@ function main() {
     const servicePath = path.join(dir, `${kebab}.service.ts`);
     const modulePath = path.join(dir, `${kebab}.module.ts`);
     const indexPath = path.join(dir, 'index.ts');
+
+    // 如果 service 文件已存在，跳过该模块（保留手动添加的函数）
+    if (fs.existsSync(servicePath)) {
+      console.log(
+        'generate-db-crud: skip',
+        kebab,
+        '(service file already exists, preserving manual changes)',
+      );
+      // 仍然需要将其添加到 generatedKebabs 以确保 index.ts 中有导出
+      generatedKebabs.push(kebab);
+      continue;
+    }
 
     fs.writeFileSync(servicePath, generateService(model), 'utf8');
     fs.writeFileSync(modulePath, generateModule(model), 'utf8');
@@ -335,11 +358,19 @@ function main() {
 function ensureExportsInIndex(generatedKebabs) {
   if (!fs.existsSync(DB_INDEX_PATH)) return;
   const content = fs.readFileSync(DB_INDEX_PATH, 'utf8');
-  const existing = new Set((content.match(/from\s+['\"]\.\/modules\/([^'"]+)['\"]/g) || []).map((m) => (m.match(/modules\/([^'"]+)/) || [])[1]));
+  const existing = new Set(
+    (content.match(/from\s+['\"]\.\/modules\/([^'"]+)['\"]/g) || []).map(
+      (m) => (m.match(/modules\/([^'"]+)/) || [])[1],
+    ),
+  );
   const toAdd = generatedKebabs.filter((k) => !existing.has(k));
   if (toAdd.length === 0) return;
   const append = toAdd.map((k) => `export * from './modules/${k}';`).join('\n');
-  fs.writeFileSync(DB_INDEX_PATH, content.trimEnd() + '\n' + append + '\n', 'utf8');
+  fs.writeFileSync(
+    DB_INDEX_PATH,
+    content.trimEnd() + '\n' + append + '\n',
+    'utf8',
+  );
   console.log('generate-db-crud: added exports for', toAdd.join(', '));
 }
 

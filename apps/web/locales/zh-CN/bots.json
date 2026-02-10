@@ -23,6 +23,7 @@
     "skills": "技能"
   },
   "status": {
+    "draft": "草稿",
     "created": "已创建",
     "starting": "启动中",
     "running": "运行中",
@@ -37,12 +38,23 @@
     "channel": "渠道",
     "port": "端口",
     "status": "状态",
-    "createdAt": "创建时间",
+    "createdAt": "创建于",
     "vendor": "供应商",
     "label": "标签",
     "tag": "标记",
     "apiKey": "API 密钥",
-    "actions": "操作"
+    "actions": "操作",
+    "containerId": "容器",
+    "dashboard": "设置",
+    "chat": "聊天",
+    "channels": "渠道"
+  },
+  "confirm": {
+    "stopTitle": "确认停止",
+    "stopDescription": "确定要停止 Bot「{name}」吗？停止后将无法接收消息。",
+    "deleteTitle": "确认删除",
+    "deleteDescription": "确定要删除 Bot「{name}」吗？此操作不可撤销。",
+    "inputHint": "请输入「{name}」以确认"
   },
   "providers": {
     "openai": "OpenAI",
@@ -60,7 +72,15 @@
   },
   "wizard": {
     "title": "创建新 Bot",
+    "prev": "上一步",
+    "next": "下一步",
+    "create": "创建 Bot",
+    "createSuccess": "Bot 创建成功！请配置 AI Provider 和消息渠道后启动。",
     "steps": {
+      "basic": "基本信息",
+      "basicDesc": "设置 Bot 名称和选择模板",
+      "persona": "预览",
+      "personaDesc": "自定义 Bot 的系统提示词",
       "template": "模板",
       "templateDesc": "选择人设模板",
       "personality": "个性",
@@ -73,8 +93,7 @@
       "reviewDesc": "审核并创建",
       "basicInfo": "基本信息",
       "provider": "AI 提供商",
-      "channel": "渠道",
-      "persona": "人设"
+      "channel": "渠道"
     },
     "completeStep": "请完成此步骤",
     "step1": {
@@ -106,8 +125,11 @@
       "systemPromptHint": "使用 Markdown 定义 Bot 的个性、行为和边界"
     },
     "step3": {
-      "title": "功能",
-      "description": "选择 API 密钥、渠道和 Bot 功能",
+      "title": "预览",
+      "description": "查看并自定义 Bot 的人设",
+      "systemPrompt": "系统提示词 (SOUL.md)",
+      "systemPromptPlaceholder": "# Soul\n\n## 核心身份\n你是一个有帮助的助手...\n\n## 个性\n- 友好且平易近人\n- 耐心且善解人意\n\n## 边界\n- 诚实面对局限性",
+      "systemPromptHint": "使用 Markdown 定义 Bot 的个性、行为和边界",
       "apiKeys": "API 密钥 *",
       "addApiKey": "添加密钥",
       "loadingKeys": "加载密钥中...",
@@ -350,6 +372,379 @@
       "refresh": "刷新",
       "noOrphanedResources": "没有孤立资源",
       "cleanedUp": "已清理 {count} 个孤立资源"
+    }
+  },
+  "detail": {
+    "backToBots": "返回 Bot 列表",
+    "nav": {
+      "overview": "概览",
+      "ai": "AI 配置",
+      "channels": "消息渠道",
+      "diagnostics": "测试诊断",
+      "logs": "应用日志",
+      "settings": "设置",
+      "plugins": "插件",
+      "skills": "技能",
+      "usage": "使用统计",
+      "more": "更多"
+    },
+    "status": {
+      "serviceRunning": "服务运行中",
+      "serviceStopped": "服务未启动"
+    },
+    "dashboard": {
+      "title": "概览",
+      "description": "服务状态、日志与快捷操作",
+      "serviceStatus": "服务状态",
+      "quickActions": "快捷操作",
+      "realtimeLogs": "实时日志",
+      "port": "端口",
+      "processId": "进程 ID",
+      "memory": "内存",
+      "uptime": "运行时间",
+      "start": "启动",
+      "stop": "停止",
+      "restart": "重启",
+      "diagnose": "诊断",
+      "noLogs": "暂无日志，请先启动服务",
+      "autoRefresh": "自动刷新",
+      "lines": "行",
+      "configRequired": {
+        "title": "配置未完成",
+        "description": "请先完成以下配置：{items}",
+        "provider": "AI Provider",
+        "channel": "消息渠道"
+      }
+    },
+    "draftGuide": {
+      "title": "完成配置",
+      "description": "请完成以下配置后启动 Bot：",
+      "configureProvider": "配置 AI Provider",
+      "configureProviderDesc": "添加 API Key 以启用 AI 功能",
+      "configureChannel": "配置消息渠道",
+      "configureChannelDesc": "添加 Telegram、Discord 等渠道",
+      "configure": "配置",
+      "readyToStart": "配置完成！现在可以启动 Bot 了。"
+    },
+    "ai": {
+      "title": "AI 模型配置",
+      "description": "配置 AI 提供商和模型",
+      "tabs": {
+        "providers": "AI 提供商",
+        "routing": "模型路由"
+      },
+      "addProvider": "添加 Provider",
+      "deleteProvider": "删除 Provider",
+      "setPrimary": "设为主模型",
+      "models": "模型",
+      "configured": "已配置",
+      "notConfigured": "未配置",
+      "noProviders": "尚未配置任何 AI Provider",
+      "addFirst": "添加第一个 Provider",
+      "fetchProvidersFailed": "获取 Provider 列表失败",
+      "setPrimarySuccess": "主模型设置成功",
+      "setFailed": "设置失败",
+      "deleteConfirm": "确定要删除此 Provider 吗？",
+      "deleteSuccess": "Provider 已删除",
+      "deleteFailed": "删除失败",
+      "selectProviderAndModel": "请选择 Provider 和至少一个模型",
+      "addSuccess": "Provider 添加成功",
+      "addFailed": "添加失败",
+      "dialogDescription": "从已配置的 API Keys 中选择一个 Provider 添加到此 Bot",
+      "selectApiKey": "选择 API Key",
+      "noApiKeys": "没有可用的 API Key，请先在设置中添加",
+      "selectApiKeyPlaceholder": "选择一个 API Key",
+      "selectModels": "选择模型",
+      "loadingModels": "加载模型列表...",
+      "noModels": "无可用模型",
+      "primaryModel": "主模型",
+      "setAsPrimary": "设为主模型",
+      "setAsPrimaryProvider": "设为主 Provider（Bot 默认使用此 Provider）",
+      "cancel": "取消",
+      "add": "添加"
+    },
+    "modelRouting": {
+      "title": "模型路由配置",
+      "description": "配置智能路由规则，根据消息内容自动选择最合适的模型",
+      "addRouting": "添加路由",
+      "editRouting": "编辑路由",
+      "deleteRouting": "删除路由",
+      "noRoutings": "尚未配置任何路由规则",
+      "addFirst": "添加第一个路由",
+      "enabled": "已启用",
+      "disabled": "已禁用",
+      "enable": "启用",
+      "disable": "禁用",
+      "priority": "优先级",
+      "routingType": "路由类型",
+      "types": {
+        "FUNCTION_ROUTE": "功能路由",
+        "FUNCTION_ROUTE_DESC": "根据消息内容匹配规则选择模型",
+        "LOAD_BALANCE": "负载均衡",
+        "LOAD_BALANCE_DESC": "在多个模型之间分配流量",
+        "FAILOVER": "故障转移",
+        "FAILOVER_DESC": "主模型失败时自动切换到备用模型"
+      },
+      "form": {
+        "name": "路由名称",
+        "namePlaceholder": "输入路由名称",
+        "selectType": "选择路由类型",
+        "priority": "优先级",
+        "priorityHint": "数值越小优先级越高",
+        "providerKey": "Provider Key",
+        "selectProviderKey": "选择 Provider Key",
+        "model": "模型",
+        "selectModel": "选择模型"
+      },
+      "functionRoute": {
+        "title": "功能路由规则",
+        "addRule": "添加规则",
+        "pattern": "匹配模式",
+        "patternPlaceholder": "输入关键词或正则表达式",
+        "matchType": "匹配类型",
+        "matchTypes": {
+          "keyword": "关键词",
+          "regex": "正则表达式",
+          "intent": "意图识别"
+        },
+        "target": "目标模型",
+        "defaultTarget": "默认目标",
+        "defaultTargetHint": "无匹配规则时使用",
+        "quickAdd": "快速添加",
+        "predefinedIntents": {
+          "title": "预设意图模板",
+          "code": {
+            "name": "代码编程",
+            "description": "代码编写、调试、解释相关",
+            "pattern": "代码|编程|调试|debug|code|程序|函数|bug|报错|编译",
+            "recommendedModels": "claude-3.5-sonnet, gpt-4o, deepseek-coder, codestral"
+          },
+          "translation": {
+            "name": "翻译",
+            "description": "语言翻译相关请求",
+            "pattern": "翻译|translate|英译中|中译英|转换成",
+            "recommendedModels": "gpt-4o, claude-3.5-sonnet, gemini-pro"
+          },
+          "math": {
+            "name": "数学计算",
+            "description": "数学问题和计算",
+            "pattern": "计算|数学|公式|方程|求解|算一下|多少钱|加减乘除",
+            "recommendedModels": "claude-3.5-sonnet, gpt-4o, deepseek-chat"
+          },
+          "creative": {
+            "name": "创意写作",
+            "description": "文案、故事、诗歌创作",
+            "pattern": "写一篇|创作|故事|诗歌|文案|小说|剧本|写作",
+            "recommendedModels": "claude-3-opus, gpt-4o, gemini-pro"
+          },
+          "analysis": {
+            "name": "数据分析",
+            "description": "数据处理和分析",
+            "pattern": "分析|数据|统计|报表|图表|趋势|对比",
+            "recommendedModels": "claude-3.5-sonnet, gpt-4o, gemini-pro"
+          },
+          "image": {
+            "name": "图像生成",
+            "description": "图片创建和编辑",
+            "pattern": "画一张|生成图片|图像|绘制|设计图|插画|画图",
+            "recommendedModels": "dall-e-3, stable-diffusion, midjourney"
+          },
+          "summary": {
+            "name": "内容总结",
+            "description": "文本摘要和总结",
+            "pattern": "总结|摘要|概括|归纳|要点|简述",
+            "recommendedModels": "claude-3-haiku, gpt-4o-mini, gemini-flash"
+          },
+          "knowledge": {
+            "name": "知识问答",
+            "description": "通用知识查询",
+            "pattern": "什么是|为什么|如何|怎么|是什么|解释一下",
+            "recommendedModels": "gpt-4o, claude-3.5-sonnet, gemini-pro"
+          },
+          "video": {
+            "name": "视频生成",
+            "description": "AI视频创作和编辑",
+            "pattern": "视频|生成视频|制作视频|video|动画|短片|剪辑",
+            "recommendedModels": "sora-2-pro, veo3.1-pro, kling-video-o1-pro, hailuo-2.3-pro"
+          },
+          "audio": {
+            "name": "音频生成",
+            "description": "语音合成和音频处理",
+            "pattern": "语音|音频|朗读|配音|TTS|音乐|声音|播报",
+            "recommendedModels": "speech-2.6-hd, gpt-4o-mini-tts, speech-2.5-hd-preview"
+          },
+          "3d": {
+            "name": "3D建模",
+            "description": "3D模型生成和渲染",
+            "pattern": "3D|三维|建模|模型|渲染|mesh|立体",
+            "recommendedModels": "tripo3d-v2.5"
+          },
+          "deepReasoning": {
+            "name": "深度推理",
+            "description": "复杂逻辑和深度思考",
+            "pattern": "推理|思考|逻辑|分析|深度|复杂问题|reasoning",
+            "recommendedModels": "o3, claude-opus-4-5-20251101, deepseek-r1, grok-3-reasoner"
+          },
+          "fastResponse": {
+            "name": "快速响应",
+            "description": "简单查询和快速回复",
+            "pattern": "快速|简单|查询|帮我|告诉我|是什么",
+            "recommendedModels": "gpt-4.1-mini, claude-haiku-4-20250801, gemini-2.5-flash"
+          },
+          "longContext": {
+            "name": "长文本处理",
+            "description": "处理超长文档和上下文",
+            "pattern": "长文|文档|全文|整篇|大量文本|上下文",
+            "recommendedModels": "gemini-2.5-pro, gpt-4.1, claude-sonnet-4-5-20250929"
+          }
+        },
+        "recommendedModels": {
+          "title": "推荐模型",
+          "dismiss": "关闭",
+          "primary": "首选",
+          "alternatives": "备选",
+          "applied": "已应用模型: {model}",
+          "notAvailable": "模型 {model} 不可用，请先在供应商中配置",
+          "noRuleToApply": "请先添加一条规则",
+          "availabilityHint": "灰色模型表示未在当前供应商中配置，数字表示可用的供应商数量"
+        }
+      },
+      "loadBalance": {
+        "title": "负载均衡配置",
+        "strategy": "均衡策略",
+        "strategies": {
+          "round_robin": "轮询",
+          "weighted": "加权",
+          "least_latency": "最低延迟"
+        },
+        "targets": "目标列表",
+        "addTarget": "添加目标",
+        "weight": "权重",
+        "weightHint": "0-100，权重越高被选中概率越大",
+        "quickAdd": "快速添加",
+        "templates": {
+          "title": "预设模板",
+          "dualEqual": {
+            "name": "双模型均衡",
+            "description": "2个模型平均分配流量"
+          },
+          "tripleEqual": {
+            "name": "三模型均衡",
+            "description": "3个模型平均分配流量"
+          },
+          "primaryHeavy": {
+            "name": "主模型优先",
+            "description": "主模型70%，备用30%"
+          }
+        }
+      },
+      "failover": {
+        "title": "故障转移配置",
+        "primary": "主要目标",
+        "fallbackChain": "备用链",
+        "addFallback": "添加备用",
+        "retry": "重试配置",
+        "maxAttempts": "最大重试次数",
+        "delayMs": "重试延迟 (ms)",
+        "quickAdd": "快速添加",
+        "templates": {
+          "title": "预设模板",
+          "singleFallback": {
+            "name": "单备用",
+            "description": "主模型 + 1个备用模型"
+          },
+          "doubleFallback": {
+            "name": "双备用",
+            "description": "主模型 + 2个备用模型"
+          },
+          "tripleFallback": {
+            "name": "三备用",
+            "description": "主模型 + 3个备用模型"
+          }
+        }
+      },
+      "test": {
+        "title": "测试路由",
+        "message": "测试消息",
+        "messagePlaceholder": "输入测试消息",
+        "run": "运行测试",
+        "result": "测试结果",
+        "selectedModel": "选中模型",
+        "selectedProvider": "选中 Provider",
+        "reason": "选择原因",
+        "matchedRule": "匹配规则"
+      },
+      "messages": {
+        "createSuccess": "路由配置创建成功",
+        "updateSuccess": "路由配置更新成功",
+        "deleteSuccess": "路由配置删除成功",
+        "enableSuccess": "路由已启用",
+        "disableSuccess": "路由已禁用",
+        "deleteConfirm": "确定要删除此路由配置吗？",
+        "suggestError": "获取路由建议失败",
+        "ruleApplied": "已添加规则: {name}"
+      },
+      "autoGenerate": {
+        "button": "AI 智能生成",
+        "title": "AI 路由建议",
+        "description": "根据您配置的模型能力，AI 自动分析并生成最优路由规则",
+        "suggestedRules": "建议的功能路由规则",
+        "suggestedFailover": "建议的故障转移配置",
+        "applyAll": "应用全部规则",
+        "applyFailover": "应用故障转移",
+        "close": "关闭",
+        "primary": "主模型",
+        "fallback": "备用",
+        "modelCapabilities": "模型能力分析",
+        "suggestedRoutingName": "AI 智能路由",
+        "suggestedFailoverName": "AI 故障转移"
+      }
+    },
+    "channels": {
+      "title": "消息渠道",
+      "description": "配置 Telegram、Discord、飞书等",
+      "saveConfig": "保存配置",
+      "quickTest": "快速测试",
+      "configured": "已配置",
+      "notConfigured": "未配置",
+      "selectChannel": "选择渠道进行配置"
+    },
+    "diagnostics": {
+      "title": "测试诊断",
+      "description": "检查 Bot 配置和连接状态",
+      "runDiagnostics": "运行诊断",
+      "providerKey": "Provider Key 验证",
+      "modelAccess": "模型可用性",
+      "channelTokens": "渠道 Token 验证",
+      "container": "容器健康",
+      "network": "网络连通性",
+      "pass": "通过",
+      "warning": "警告",
+      "fail": "失败",
+      "recommendations": "建议"
+    },
+    "logs": {
+      "title": "应用日志",
+      "description": "查看 Bot 运行日志",
+      "filter": "过滤",
+      "search": "搜索日志...",
+      "export": "导出",
+      "clear": "清空",
+      "all": "全部",
+      "info": "信息",
+      "warn": "警告",
+      "error": "错误",
+      "debug": "调试"
+    },
+    "settings": {
+      "title": "Bot 设置",
+      "description": "配置 Bot 基本信息和运行参数",
+      "basicInfo": "基本信息",
+      "runtime": "运行配置",
+      "security": "安全设置",
+      "danger": "危险操作",
+      "deleteBot": "删除 Bot",
+      "deleteConfirm": "确定要删除此 Bot 吗？此操作不可撤销。"
     }
   }
 }

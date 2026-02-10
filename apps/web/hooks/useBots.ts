@@ -2,7 +2,12 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { botApi } from '@/lib/api/contracts/client';
-import type { CreateBotInput, Bot } from '@repo/contracts';
+import type {
+  CreateBotInput,
+  SimpleCreateBotInput,
+  UpdateBotInput,
+  Bot,
+} from '@repo/contracts';
 
 /**
  * Query keys for bot-related queries
@@ -27,14 +32,19 @@ export function useBots() {
 
   // Query for listing all bots with polling
   // ts-rest v4 API: useQuery(queryKey, args, options)
-  const botsQuery = botApi.list.useQuery(
-    botKeys.list(),
-    {},
-    { refetchInterval: 5000 } as AnyQueryOptions,
-  );
+  const botsQuery = botApi.list.useQuery(botKeys.list(), {}, {
+    refetchInterval: 5000,
+  } as AnyQueryOptions);
 
   // Mutation for creating a bot
   const createMutation = botApi.create.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: botKeys.all });
+    },
+  });
+
+  // Mutation for simple bot creation (draft mode)
+  const createSimpleMutation = botApi.createSimple.useMutation({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: botKeys.all });
     },
@@ -61,11 +71,32 @@ export function useBots() {
     },
   });
 
+  // Mutation for updating a bot
+  const updateMutation = botApi.update.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: botKeys.all });
+    },
+  });
+
+  // Mutation for applying pending config
+  const applyPendingConfigMutation = botApi.applyPendingConfig.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: botKeys.all });
+    },
+  });
+
+  // Mutation for clearing pending config
+  const clearPendingConfigMutation = botApi.clearPendingConfig.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: botKeys.all });
+    },
+  });
+
   // Extract bots from response - handle both success and error cases
   const responseBody = botsQuery.data?.body;
   const bots: Bot[] =
     responseBody && 'data' in responseBody && responseBody.data
-      ? (responseBody.data as { bots: Bot[] }).bots ?? []
+      ? ((responseBody.data as { bots: Bot[] }).bots ?? [])
       : [];
 
   return {
@@ -80,6 +111,13 @@ export function useBots() {
       const result = await createMutation.mutateAsync({ body: input });
       if (result.body && 'data' in result.body) {
         return result.body.data;
+      }
+      return undefined;
+    },
+    handleCreateSimple: async (input: SimpleCreateBotInput) => {
+      const result = await createSimpleMutation.mutateAsync({ body: input });
+      if (result.body && 'data' in result.body) {
+        return result.body.data as Bot;
       }
       return undefined;
     },
@@ -113,17 +151,55 @@ export function useBots() {
       }
       return undefined;
     },
+    handleUpdate: async (hostname: string, input: UpdateBotInput) => {
+      const result = await updateMutation.mutateAsync({
+        params: { hostname },
+        body: input,
+      });
+      if (result.body && 'data' in result.body) {
+        return result.body.data as Bot;
+      }
+      return undefined;
+    },
+    handleApplyPendingConfig: async (hostname: string) => {
+      const result = await applyPendingConfigMutation.mutateAsync({
+        params: { hostname },
+        body: {},
+      });
+      if (result.body && 'data' in result.body) {
+        return result.body.data;
+      }
+      return undefined;
+    },
+    handleClearPendingConfig: async (hostname: string) => {
+      const result = await clearPendingConfigMutation.mutateAsync({
+        params: { hostname },
+        body: {},
+      });
+      if (result.body && 'data' in result.body) {
+        return result.body.data;
+      }
+      return undefined;
+    },
 
     // Loading states
     actionLoading:
       createMutation.isPending ||
+      createSimpleMutation.isPending ||
       startMutation.isPending ||
       stopMutation.isPending ||
-      deleteMutation.isPending,
+      deleteMutation.isPending ||
+      updateMutation.isPending ||
+      applyPendingConfigMutation.isPending ||
+      clearPendingConfigMutation.isPending,
     createLoading: createMutation.isPending,
+    createSimpleLoading: createSimpleMutation.isPending,
     startLoading: startMutation.isPending,
     stopLoading: stopMutation.isPending,
     deleteLoading: deleteMutation.isPending,
+    updateLoading: updateMutation.isPending,
+    applyPendingConfigLoading: applyPendingConfigMutation.isPending,
+    clearPendingConfigLoading: clearPendingConfigMutation.isPending,
   };
 }
 
@@ -157,16 +233,14 @@ export function useBot(hostname: string) {
  */
 export function useContainerStats() {
   // ts-rest v4 API: useQuery(queryKey, args, options)
-  const statsQuery = botApi.getStats.useQuery(
-    botKeys.stats(),
-    {},
-    { refetchInterval: 30000 } as AnyQueryOptions,
-  );
+  const statsQuery = botApi.getStats.useQuery(botKeys.stats(), {}, {
+    refetchInterval: 30000,
+  } as AnyQueryOptions);
 
   const responseBody = statsQuery.data?.body;
   const stats =
     responseBody && 'data' in responseBody && responseBody.data
-      ? (responseBody.data as { stats: unknown[] }).stats ?? []
+      ? ((responseBody.data as { stats: unknown[] }).stats ?? [])
       : [];
 
   return {
