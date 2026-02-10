@@ -9,6 +9,7 @@ import {
   HttpStatus,
   Query,
 } from '@nestjs/common';
+import { AdminAuth } from '@app/auth';
 import { RoutingEngineService } from './services/routing-engine.service';
 import { FallbackEngineService } from './services/fallback-engine.service';
 import { CostTrackerService } from './services/cost-tracker.service';
@@ -36,9 +37,10 @@ const now = new Date().toISOString();
  * - 成本策略管理
  * - 配置刷新
  *
- * 注意：此 API 应仅在内部网络中访问，不对外暴露
+ * 注意：此 API 仅限管理员访问 (isAdmin=true)
  */
 @Controller('proxy/admin/routing')
+@AdminAuth()
 export class RoutingAdminController {
   constructor(
     private readonly routingEngine: RoutingEngineService,

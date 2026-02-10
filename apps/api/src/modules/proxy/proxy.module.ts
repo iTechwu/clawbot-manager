@@ -8,12 +8,16 @@ import {
   ProxyTokenModule,
   BotProviderKeyModule,
   BotModelRoutingModule,
+  UserInfoModule,
   // Routing configuration DB modules
   ModelPricingModule,
   CapabilityTagModule,
   FallbackChainModule,
   CostStrategyModule,
 } from '@app/db';
+import { AuthModule } from '@app/auth';
+import { JwtModule } from '@app/jwt/jwt.module';
+import { RedisModule } from '@app/redis';
 import { ProxyController } from './proxy.controller';
 import { ProxyAdminController } from './proxy-admin.controller';
 import { RoutingAdminController } from './routing-admin.controller';
@@ -48,6 +52,10 @@ import { ConfigurationService } from './services/configuration.service';
 @Module({
   imports: [
     ConfigModule,
+    AuthModule,
+    JwtModule,
+    RedisModule,
+    UserInfoModule,
     ProviderKeyModule,
     BotModule,
     BotUsageLogModule,

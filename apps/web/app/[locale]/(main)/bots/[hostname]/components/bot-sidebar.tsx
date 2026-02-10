@@ -147,47 +147,49 @@ export function BotSidebar({
           })}
         </ul>
 
-        {/* 扩展导航（可折叠） */}
-        <div className="mt-4">
-          <button
-            onClick={() => setShowExtended(!showExtended)}
-            className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground w-full"
-          >
-            {showExtended ? (
-              <ChevronUp className="size-3" />
-            ) : (
-              <ChevronDown className="size-3" />
+        {/* 扩展导航（可折叠）- 仅在有扩展项时显示 */}
+        {botNavExtendedItems.length > 0 && (
+          <div className="mt-4">
+            <button
+              onClick={() => setShowExtended(!showExtended)}
+              className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground w-full"
+            >
+              {showExtended ? (
+                <ChevronUp className="size-3" />
+              ) : (
+                <ChevronDown className="size-3" />
+              )}
+              {t('nav.more')}
+            </button>
+
+            {showExtended && (
+              <ul className="space-y-1 mt-1">
+                {botNavExtendedItems.map((item) => {
+                  const active = isActive(item.href);
+                  const Icon = item.icon;
+                  const fullHref = `${basePath}${item.href}`;
+
+                  return (
+                    <li key={item.id}>
+                      <Link
+                        href={fullHref}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all',
+                          active
+                            ? 'bg-muted text-foreground'
+                            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                        )}
+                      >
+                        <Icon className="size-4" />
+                        <span>{t(`nav.${item.labelKey}`)}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
-            {t('nav.more')}
-          </button>
-
-          {showExtended && (
-            <ul className="space-y-1 mt-1">
-              {botNavExtendedItems.map((item) => {
-                const active = isActive(item.href);
-                const Icon = item.icon;
-                const fullHref = `${basePath}${item.href}`;
-
-                return (
-                  <li key={item.id}>
-                    <Link
-                      href={fullHref}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all',
-                        active
-                          ? 'bg-muted text-foreground'
-                          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
-                      )}
-                    >
-                      <Icon className="size-4" />
-                      <span>{t(`nav.${item.labelKey}`)}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
+          </div>
+        )}
       </nav>
 
       {/* 底部状态 */}

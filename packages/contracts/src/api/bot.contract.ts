@@ -10,6 +10,8 @@ import {
   BotSchema,
   CreateBotInputSchema,
   SimpleCreateBotInputSchema,
+  UpdateBotInputSchema,
+  ApplyPendingConfigResponseSchema,
   ContainerStatsSchema,
   OrphanReportSchema,
   CleanupReportSchema,
@@ -107,6 +109,56 @@ export const botContract = c.router(
         404: ApiResponseSchema(z.object({ error: z.string() })),
       },
       summary: '删除 bot',
+    },
+
+    /**
+     * PATCH /bot/:hostname - 更新 bot 配置
+     * 更新会存储到 pendingConfig，需要重启后生效
+     */
+    update: {
+      method: 'PATCH',
+      path: '/:hostname',
+      pathParams: z.object({ hostname: z.string() }),
+      body: UpdateBotInputSchema,
+      responses: {
+        200: ApiResponseSchema(BotSchema),
+        400: ApiResponseSchema(z.object({ error: z.string() })),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '更新 bot 配置（存储到待生效配置）',
+    },
+
+    /**
+     * POST /bot/:hostname/apply-config - 应用待生效配置
+     * 将 pendingConfig 应用到实际配置，并清空 pendingConfig
+     * 通常在重启 bot 时自动调用
+     */
+    applyPendingConfig: {
+      method: 'POST',
+      path: '/:hostname/apply-config',
+      pathParams: z.object({ hostname: z.string() }),
+      body: z.object({}).optional(),
+      responses: {
+        200: ApiResponseSchema(ApplyPendingConfigResponseSchema),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '应用待生效配置',
+    },
+
+    /**
+     * DELETE /bot/:hostname/pending-config - 清除待生效配置
+     * 放弃所有未生效的修改
+     */
+    clearPendingConfig: {
+      method: 'DELETE',
+      path: '/:hostname/pending-config',
+      pathParams: z.object({ hostname: z.string() }),
+      body: z.object({}).optional(),
+      responses: {
+        200: ApiResponseSchema(SuccessResponseSchema),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '清除待生效配置',
     },
 
     // ============================================================================

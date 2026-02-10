@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { AdminAuth } from '@app/auth';
 import { KeyringProxyService } from './services/keyring-proxy.service';
 import { ProxyTokenService } from '@app/db';
 
@@ -19,9 +20,10 @@ import { ProxyTokenService } from '@app/db';
  * - Token 撤销
  * - 健康检查
  *
- * 注意：此 API 应仅在内部网络中访问，不对外暴露
+ * 注意：此 API 仅限管理员访问 (isAdmin=true)
  */
 @Controller('proxy/admin')
+@AdminAuth()
 export class ProxyAdminController {
   constructor(
     private readonly keyringProxyService: KeyringProxyService,

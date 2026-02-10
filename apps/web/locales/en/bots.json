@@ -38,12 +38,23 @@
     "channel": "Channel",
     "port": "Port",
     "status": "Status",
-    "createdAt": "Created At",
+    "createdAt": "Created",
     "vendor": "Vendor",
     "label": "Label",
     "tag": "Tag",
     "apiKey": "API Key",
-    "actions": "Actions"
+    "actions": "Actions",
+    "containerId": "Container",
+    "dashboard": "Settings",
+    "chat": "Chat",
+    "channels": "Channels"
+  },
+  "confirm": {
+    "stopTitle": "Confirm Stop",
+    "stopDescription": "Are you sure you want to stop bot \"{name}\"? It will no longer receive messages.",
+    "deleteTitle": "Confirm Delete",
+    "deleteDescription": "Are you sure you want to delete bot \"{name}\"? This action cannot be undone.",
+    "inputHint": "Type \"{name}\" to confirm"
   },
   "providers": {
     "openai": "OpenAI",
@@ -546,7 +557,53 @@
             "description": "General knowledge queries",
             "pattern": "what is|why|how to|explain|define|tell me about|describe",
             "recommendedModels": "gpt-4o, claude-3.5-sonnet, gemini-pro"
+          },
+          "video": {
+            "name": "Video Generation",
+            "description": "AI video creation and editing",
+            "pattern": "video|generate video|create video|animation|clip|movie|film",
+            "recommendedModels": "sora-2-pro, veo3.1-pro, kling-video-o1-pro, hailuo-2.3-pro"
+          },
+          "audio": {
+            "name": "Audio Generation",
+            "description": "Speech synthesis and audio processing",
+            "pattern": "voice|audio|speech|narrate|TTS|music|sound|read aloud",
+            "recommendedModels": "speech-2.6-hd, gpt-4o-mini-tts, speech-2.5-hd-preview"
+          },
+          "3d": {
+            "name": "3D Modeling",
+            "description": "3D model generation and rendering",
+            "pattern": "3D|three-dimensional|modeling|model|render|mesh|sculpt",
+            "recommendedModels": "tripo3d-v2.5"
+          },
+          "deepReasoning": {
+            "name": "Deep Reasoning",
+            "description": "Complex logic and deep thinking",
+            "pattern": "reason|think|logic|analyze|deep|complex problem|reasoning",
+            "recommendedModels": "o3, claude-opus-4-5-20251101, deepseek-r1, grok-3-reasoner"
+          },
+          "fastResponse": {
+            "name": "Fast Response",
+            "description": "Simple queries and quick replies",
+            "pattern": "quick|simple|query|help me|tell me|what is",
+            "recommendedModels": "gpt-4.1-mini, claude-haiku-4-20250801, gemini-2.5-flash"
+          },
+          "longContext": {
+            "name": "Long Context",
+            "description": "Processing long documents and context",
+            "pattern": "long text|document|full text|entire|large text|context",
+            "recommendedModels": "gemini-2.5-pro, gpt-4.1, claude-sonnet-4-5-20250929"
           }
+        },
+        "recommendedModels": {
+          "title": "Recommended Models",
+          "dismiss": "Dismiss",
+          "primary": "Primary",
+          "alternatives": "Alternatives",
+          "applied": "Applied model: {model}",
+          "notAvailable": "Model {model} not available, please configure it in providers first",
+          "noRuleToApply": "Please add a rule first",
+          "availabilityHint": "Grayed models are not configured in current providers, numbers indicate available provider count"
         }
       },
       "loadBalance": {

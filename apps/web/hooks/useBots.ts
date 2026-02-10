@@ -5,6 +5,7 @@ import { botApi } from '@/lib/api/contracts/client';
 import type {
   CreateBotInput,
   SimpleCreateBotInput,
+  UpdateBotInput,
   Bot,
 } from '@repo/contracts';
 
@@ -70,6 +71,27 @@ export function useBots() {
     },
   });
 
+  // Mutation for updating a bot
+  const updateMutation = botApi.update.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: botKeys.all });
+    },
+  });
+
+  // Mutation for applying pending config
+  const applyPendingConfigMutation = botApi.applyPendingConfig.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: botKeys.all });
+    },
+  });
+
+  // Mutation for clearing pending config
+  const clearPendingConfigMutation = botApi.clearPendingConfig.useMutation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: botKeys.all });
+    },
+  });
+
   // Extract bots from response - handle both success and error cases
   const responseBody = botsQuery.data?.body;
   const bots: Bot[] =
@@ -129,6 +151,36 @@ export function useBots() {
       }
       return undefined;
     },
+    handleUpdate: async (hostname: string, input: UpdateBotInput) => {
+      const result = await updateMutation.mutateAsync({
+        params: { hostname },
+        body: input,
+      });
+      if (result.body && 'data' in result.body) {
+        return result.body.data as Bot;
+      }
+      return undefined;
+    },
+    handleApplyPendingConfig: async (hostname: string) => {
+      const result = await applyPendingConfigMutation.mutateAsync({
+        params: { hostname },
+        body: {},
+      });
+      if (result.body && 'data' in result.body) {
+        return result.body.data;
+      }
+      return undefined;
+    },
+    handleClearPendingConfig: async (hostname: string) => {
+      const result = await clearPendingConfigMutation.mutateAsync({
+        params: { hostname },
+        body: {},
+      });
+      if (result.body && 'data' in result.body) {
+        return result.body.data;
+      }
+      return undefined;
+    },
 
     // Loading states
     actionLoading:
@@ -136,12 +188,18 @@ export function useBots() {
       createSimpleMutation.isPending ||
       startMutation.isPending ||
       stopMutation.isPending ||
-      deleteMutation.isPending,
+      deleteMutation.isPending ||
+      updateMutation.isPending ||
+      applyPendingConfigMutation.isPending ||
+      clearPendingConfigMutation.isPending,
     createLoading: createMutation.isPending,
     createSimpleLoading: createSimpleMutation.isPending,
     startLoading: startMutation.isPending,
     stopLoading: stopMutation.isPending,
     deleteLoading: deleteMutation.isPending,
+    updateLoading: updateMutation.isPending,
+    applyPendingConfigLoading: applyPendingConfigMutation.isPending,
+    clearPendingConfigLoading: clearPendingConfigMutation.isPending,
   };
 }
 

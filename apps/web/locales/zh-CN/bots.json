@@ -38,12 +38,23 @@
     "channel": "渠道",
     "port": "端口",
     "status": "状态",
-    "createdAt": "创建时间",
+    "createdAt": "创建于",
     "vendor": "供应商",
     "label": "标签",
     "tag": "标记",
     "apiKey": "API 密钥",
-    "actions": "操作"
+    "actions": "操作",
+    "containerId": "容器",
+    "dashboard": "设置",
+    "chat": "聊天",
+    "channels": "渠道"
+  },
+  "confirm": {
+    "stopTitle": "确认停止",
+    "stopDescription": "确定要停止 Bot「{name}」吗？停止后将无法接收消息。",
+    "deleteTitle": "确认删除",
+    "deleteDescription": "确定要删除 Bot「{name}」吗？此操作不可撤销。",
+    "inputHint": "请输入「{name}」以确认"
   },
   "providers": {
     "openai": "OpenAI",
@@ -549,7 +560,53 @@
             "description": "通用知识查询",
             "pattern": "什么是|为什么|如何|怎么|是什么|解释一下",
             "recommendedModels": "gpt-4o, claude-3.5-sonnet, gemini-pro"
+          },
+          "video": {
+            "name": "视频生成",
+            "description": "AI视频创作和编辑",
+            "pattern": "视频|生成视频|制作视频|video|动画|短片|剪辑",
+            "recommendedModels": "sora-2-pro, veo3.1-pro, kling-video-o1-pro, hailuo-2.3-pro"
+          },
+          "audio": {
+            "name": "音频生成",
+            "description": "语音合成和音频处理",
+            "pattern": "语音|音频|朗读|配音|TTS|音乐|声音|播报",
+            "recommendedModels": "speech-2.6-hd, gpt-4o-mini-tts, speech-2.5-hd-preview"
+          },
+          "3d": {
+            "name": "3D建模",
+            "description": "3D模型生成和渲染",
+            "pattern": "3D|三维|建模|模型|渲染|mesh|立体",
+            "recommendedModels": "tripo3d-v2.5"
+          },
+          "deepReasoning": {
+            "name": "深度推理",
+            "description": "复杂逻辑和深度思考",
+            "pattern": "推理|思考|逻辑|分析|深度|复杂问题|reasoning",
+            "recommendedModels": "o3, claude-opus-4-5-20251101, deepseek-r1, grok-3-reasoner"
+          },
+          "fastResponse": {
+            "name": "快速响应",
+            "description": "简单查询和快速回复",
+            "pattern": "快速|简单|查询|帮我|告诉我|是什么",
+            "recommendedModels": "gpt-4.1-mini, claude-haiku-4-20250801, gemini-2.5-flash"
+          },
+          "longContext": {
+            "name": "长文本处理",
+            "description": "处理超长文档和上下文",
+            "pattern": "长文|文档|全文|整篇|大量文本|上下文",
+            "recommendedModels": "gemini-2.5-pro, gpt-4.1, claude-sonnet-4-5-20250929"
           }
+        },
+        "recommendedModels": {
+          "title": "推荐模型",
+          "dismiss": "关闭",
+          "primary": "首选",
+          "alternatives": "备选",
+          "applied": "已应用模型: {model}",
+          "notAvailable": "模型 {model} 不可用，请先在供应商中配置",
+          "noRuleToApply": "请先添加一条规则",
+          "availabilityHint": "灰色模型表示未在当前供应商中配置，数字表示可用的供应商数量"
         }
       },
       "loadBalance": {

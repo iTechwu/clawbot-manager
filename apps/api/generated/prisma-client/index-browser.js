@@ -301,6 +301,7 @@ exports.Prisma.BotScalarFieldEnum = {
   emoji: 'emoji',
   avatarFileId: 'avatarFileId',
   soulMarkdown: 'soulMarkdown',
+  pendingConfig: 'pendingConfig',
   healthStatus: 'healthStatus',
   lastHealthCheck: 'lastHealthCheck',
   isDeleted: 'isDeleted',

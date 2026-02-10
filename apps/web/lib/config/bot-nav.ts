@@ -31,6 +31,9 @@ export const botNavItems: BotNavItem[] = [
     icon: MessageSquare,
     href: '/channels',
   },
+  { id: 'plugins', labelKey: 'plugins', icon: Puzzle, href: '/plugins' },
+  { id: 'skills', labelKey: 'skills', icon: Sparkles, href: '/skills' },
+  { id: 'usage', labelKey: 'usage', icon: BarChart3, href: '/usage' },
   {
     id: 'diagnostics',
     labelKey: 'diagnostics',
@@ -42,10 +45,6 @@ export const botNavItems: BotNavItem[] = [
 ];
 
 /**
- * 扩展导航项（插件、技能、使用统计）
+ * 扩展导航项（暂无）
  */
-export const botNavExtendedItems: BotNavItem[] = [
-  { id: 'plugins', labelKey: 'plugins', icon: Puzzle, href: '/plugins' },
-  { id: 'skills', labelKey: 'skills', icon: Sparkles, href: '/skills' },
-  { id: 'usage', labelKey: 'usage', icon: BarChart3, href: '/usage' },
-];
+export const botNavExtendedItems: BotNavItem[] = [];

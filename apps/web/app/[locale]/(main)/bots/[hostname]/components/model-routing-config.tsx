@@ -84,9 +84,178 @@ const PREDEFINED_INTENT_KEYS = [
   'creative',
   'analysis',
   'image',
+  'video',
+  'audio',
+  '3d',
   'summary',
   'knowledge',
+  'deepReasoning',
+  'fastResponse',
+  'longContext',
 ] as const;
+
+// Model recommendations by scenario - based on model-pricing.data.ts
+// Updated with latest model versions (2026-02-10)
+const SCENARIO_MODEL_RECOMMENDATIONS: Record<
+  string,
+  { primary: string[]; alternatives: string[] }
+> = {
+  code: {
+    primary: [
+      'gpt-5.2-codex',
+      'claude-sonnet-4-5-20250929',
+      'deepseek-v3',
+      'grok-code-fast-1',
+    ],
+    alternatives: [
+      'gpt-5.1-codex',
+      'o4-mini',
+      'claude-sonnet-4-20250514',
+      'qwen3-max',
+    ],
+  },
+  translation: {
+    primary: [
+      'gpt-5.2',
+      'claude-sonnet-4-5-20250929',
+      'gemini-2.5-pro',
+      'doubao-seed-1-6-250615',
+    ],
+    alternatives: [
+      'gpt-4o',
+      'gpt-4o-mini',
+      'doubao-1-5-pro-32k-250115',
+      'qwen-plus',
+    ],
+  },
+  math: {
+    primary: ['o3', 'claude-opus-4-6', 'deepseek-r1', 'grok-3-reasoner-r'],
+    alternatives: [
+      'o4-mini',
+      'claude-opus-4-5-20251101',
+      'doubao-seed-1-6-thinking-250715',
+      'gemini-2.5-pro',
+    ],
+  },
+  creative: {
+    primary: ['claude-opus-4-6', 'gpt-5.2-pro', 'grok-4'],
+    alternatives: [
+      'claude-opus-4-5-20251101',
+      'gpt-5',
+      'claude-sonnet-4-5-20250929',
+      'gemini-2.5-pro',
+    ],
+  },
+  analysis: {
+    primary: ['claude-opus-4-6', 'gpt-5.2-pro', 'gemini-3-pro-preview'],
+    alternatives: [
+      'claude-opus-4-5-20251101',
+      'gemini-2.5-pro',
+      'claude-sonnet-4-5-20250929',
+      'deepseek-v3',
+    ],
+  },
+  image: {
+    primary: [
+      'Midjourney',
+      'gpt-image-1.5-plus',
+      'flux-kontext-max',
+      'grok-4-image',
+    ],
+    alternatives: [
+      'gpt-image-1.5',
+      'gpt-image-1',
+      'doubao-seedream-4-5-251128',
+      'seedream-4-5-251128',
+      'ideogram-generate-v3',
+      'qwen-image-plus',
+      'flux-kontext-pro',
+      'nai-diffusion-4-5-full',
+      'kling-image-o1',
+    ],
+  },
+  video: {
+    primary: [
+      'sora-2-pro',
+      'veo3.1-pro',
+      'kling-video-o1-pro',
+      'hailuo-2.3-pro',
+    ],
+    alternatives: [
+      'sora-2',
+      'veo3.1',
+      'veo3',
+      'kling-v2.6-pro',
+      'hailuo-02-pro',
+      'viduq3-pro',
+      'wan-2.6',
+      'doubao-seedance-1-5-pro-251215',
+      'seedance-1-5-pro-251215',
+    ],
+  },
+  audio: {
+    primary: ['speech-2.6-hd', 'gpt-4o-mini-tts', 'speech-2.5-hd-preview'],
+    alternatives: [
+      'speech-02-turbo',
+      'gemini-2.5-pro-preview-tts',
+      'gemini-2.5-flash-preview-tts',
+      'speech-2.5-turbo-preview',
+    ],
+  },
+  '3d': {
+    primary: ['tripo3d-v2.5'],
+    alternatives: [],
+  },
+  summary: {
+    primary: [
+      'gemini-3-flash-preview',
+      'claude-haiku-4-5-20251001',
+      'gpt-4o-mini',
+    ],
+    alternatives: [
+      'gemini-2.5-flash',
+      'gpt-4.1-mini',
+      'doubao-seed-1-6-flash-250615',
+      'qwen-turbo',
+    ],
+  },
+  knowledge: {
+    primary: ['gpt-5.2', 'claude-sonnet-4-5-20250929', 'gemini-2.5-pro'],
+    alternatives: ['gpt-4o', 'gpt-4.1', 'deepseek-v3', 'grok-3'],
+  },
+  deepReasoning: {
+    primary: ['o3', 'claude-opus-4-6', 'deepseek-r1', 'grok-3-reasoner-r'],
+    alternatives: [
+      'o4-mini',
+      'claude-opus-4-5-20251101',
+      'doubao-seed-1-6-thinking-250715',
+      'grok-4-1-fast-reasoning',
+    ],
+  },
+  fastResponse: {
+    primary: [
+      'gemini-3-flash-preview',
+      'gpt-4o-mini',
+      'claude-haiku-4-5-20251001',
+    ],
+    alternatives: [
+      'gemini-2.5-flash',
+      'gpt-4.1-nano',
+      'gpt-5-nano',
+      'doubao-seed-1-6-flash-250615',
+      'grok-3-mini',
+    ],
+  },
+  longContext: {
+    primary: ['gemini-3-pro-preview', 'gemini-2.5-pro', 'grok-4'],
+    alternatives: [
+      'claude-opus-4-6',
+      'claude-opus-4-5-20251101',
+      'gpt-5.2',
+      'claude-sonnet-4-5-20250929',
+    ],
+  },
+};
 
 const FAILOVER_TEMPLATE_KEYS = [
   'singleFallback',
@@ -107,11 +276,14 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
   const [botProviders, setBotProviders] = useState<BotProviderDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingRouting, setEditingRouting] = useState<BotModelRouting | null>(null);
+  const [editingRouting, setEditingRouting] = useState<BotModelRouting | null>(
+    null,
+  );
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState<RoutingSuggestionResult | null>(null);
+  const [suggestions, setSuggestions] =
+    useState<RoutingSuggestionResult | null>(null);
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
 
   // Form state
@@ -125,9 +297,12 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
     providerKeyId: '',
     model: '',
   });
+  const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
 
   // Load balance state
-  const [lbStrategy, setLbStrategy] = useState<'round_robin' | 'weighted' | 'least_latency'>('round_robin');
+  const [lbStrategy, setLbStrategy] = useState<
+    'round_robin' | 'weighted' | 'least_latency'
+  >('round_robin');
   const [lbTargets, setLbTargets] = useState<LoadBalanceTarget[]>([]);
 
   // Failover state
@@ -167,11 +342,72 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
   }, [fetchData]);
 
   // Get allowed models for a provider key
-  const getModelsForProvider = useCallback((providerKeyId: string): { id: string; name: string }[] => {
-    const provider = botProviders.find(p => p.providerKeyId === providerKeyId);
-    if (!provider) return [];
-    return provider.allowedModels.map(modelId => ({ id: modelId, name: modelId }));
-  }, [botProviders]);
+  const getModelsForProvider = useCallback(
+    (providerKeyId: string): { id: string; name: string }[] => {
+      const provider = botProviders.find(
+        (p) => p.providerKeyId === providerKeyId,
+      );
+      if (!provider) return [];
+      return provider.allowedModels.map((modelId) => ({
+        id: modelId,
+        name: modelId,
+      }));
+    },
+    [botProviders],
+  );
+
+  // Get all providers that have a specific model
+  const getProvidersForModel = useCallback(
+    (modelId: string): BotProviderDetail[] => {
+      return botProviders.filter((p) => p.allowedModels.includes(modelId));
+    },
+    [botProviders],
+  );
+
+  // Apply a recommended model to the last rule
+  const applyRecommendedModel = useCallback(
+    (model: string, providers: BotProviderDetail[]) => {
+      if (providers.length === 0) {
+        toast.error(
+          t('functionRoute.recommendedModels.notAvailable', { model }),
+        );
+        return;
+      }
+
+      if (functionRules.length === 0) {
+        toast.error(t('functionRoute.recommendedModels.noRuleToApply'));
+        return;
+      }
+
+      const lastRuleIndex = functionRules.length - 1;
+      const lastRule = functionRules[lastRuleIndex];
+      if (!lastRule) return;
+
+      // Use the first available provider
+      const provider = providers[0];
+      if (!provider) return;
+
+      const newRules = [...functionRules];
+      newRules[lastRuleIndex] = {
+        pattern: lastRule.pattern,
+        matchType: lastRule.matchType,
+        target: {
+          providerKeyId: provider.providerKeyId,
+          model,
+        },
+      };
+      setFunctionRules(newRules);
+
+      const providerInfo =
+        providers.length > 1 ? ` (${provider.label || provider.vendor})` : '';
+      toast.success(
+        t('functionRoute.recommendedModels.applied', {
+          model: model + providerInfo,
+        }),
+      );
+    },
+    [functionRules, t],
+  );
 
   const resetForm = () => {
     setFormName('');
@@ -315,13 +551,19 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
   const handleToggleEnabled = async (routing: BotModelRouting) => {
     setActionLoading(true);
     try {
-      const endpoint = routing.isEnabled ? modelRoutingClient.disable : modelRoutingClient.enable;
+      const endpoint = routing.isEnabled
+        ? modelRoutingClient.disable
+        : modelRoutingClient.enable;
       const response = await endpoint({
         params: { hostname, routingId: routing.id },
         body: {},
       });
       if (response.status === 200) {
-        toast.success(routing.isEnabled ? t('messages.disableSuccess') : t('messages.enableSuccess'));
+        toast.success(
+          routing.isEnabled
+            ? t('messages.disableSuccess')
+            : t('messages.enableSuccess'),
+        );
         await fetchData();
       }
     } catch {
@@ -452,7 +694,9 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
     onChange: (target: RoutingTarget) => void;
     label: string;
   }) => {
-    const models = target.providerKeyId ? getModelsForProvider(target.providerKeyId) : [];
+    const models = target.providerKeyId
+      ? getModelsForProvider(target.providerKeyId)
+      : [];
 
     return (
       <div className="space-y-2">
@@ -460,14 +704,19 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
         <div className="grid grid-cols-2 gap-2">
           <Select
             value={target.providerKeyId}
-            onValueChange={(value) => onChange({ ...target, providerKeyId: value, model: '' })}
+            onValueChange={(value) =>
+              onChange({ ...target, providerKeyId: value, model: '' })
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder={t('form.selectProviderKey')} />
             </SelectTrigger>
             <SelectContent>
               {botProviders.map((provider) => (
-                <SelectItem key={provider.providerKeyId} value={provider.providerKeyId}>
+                <SelectItem
+                  key={provider.providerKeyId}
+                  value={provider.providerKeyId}
+                >
                   {provider.label} ({provider.apiType || provider.vendor})
                 </SelectItem>
               ))}
@@ -565,12 +814,15 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{routing.name}</span>
-                        <Badge variant={routing.isEnabled ? 'default' : 'secondary'}>
+                        <Badge
+                          variant={routing.isEnabled ? 'default' : 'secondary'}
+                        >
                           {routing.isEnabled ? t('enabled') : t('disabled')}
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {t(`types.${routing.routingType}`)} · {t('priority')}: {routing.priority}
+                        {t(`types.${routing.routingType}`)} · {t('priority')}:{' '}
+                        {routing.priority}
                       </div>
                     </div>
                   </div>
@@ -583,7 +835,11 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setExpandedId(expandedId === routing.id ? null : routing.id)}
+                      onClick={() =>
+                        setExpandedId(
+                          expandedId === routing.id ? null : routing.id,
+                        )
+                      }
                     >
                       {expandedId === routing.id ? (
                         <ChevronUp className="size-4" />
@@ -622,18 +878,19 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
       </CardContent>
 
       {/* Create/Edit Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={(open) => {
-        if (!open) resetForm();
-        setIsDialogOpen(open);
-      }}>
+      <Dialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) resetForm();
+          setIsDialogOpen(open);
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingRouting ? t('editRouting') : t('addRouting')}
             </DialogTitle>
-            <DialogDescription>
-              {t('description')}
-            </DialogDescription>
+            <DialogDescription>{t('description')}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
@@ -652,9 +909,13 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                 <Input
                   type="number"
                   value={formPriority}
-                  onChange={(e) => setFormPriority(parseInt(e.target.value) || 100)}
+                  onChange={(e) =>
+                    setFormPriority(parseInt(e.target.value) || 100)
+                  }
                 />
-                <p className="text-xs text-muted-foreground">{t('form.priorityHint')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('form.priorityHint')}
+                </p>
               </div>
             </div>
 
@@ -662,7 +923,13 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
             <div className="space-y-2">
               <Label>{t('routingType')}</Label>
               <div className="grid grid-cols-3 gap-3">
-                {(['FUNCTION_ROUTE', 'LOAD_BALANCE', 'FAILOVER'] as RoutingType[]).map((type) => (
+                {(
+                  [
+                    'FUNCTION_ROUTE',
+                    'LOAD_BALANCE',
+                    'FAILOVER',
+                  ] as RoutingType[]
+                ).map((type) => (
                   <button
                     key={type}
                     type="button"
@@ -695,13 +962,22 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                 {/* Rules */}
                 <div className="space-y-3">
                   {functionRules.map((rule, index) => (
-                    <div key={index} className="border rounded-lg p-4 space-y-3">
+                    <div
+                      key={index}
+                      className="border rounded-lg p-4 space-y-3"
+                    >
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Rule {index + 1}</span>
+                        <span className="text-sm font-medium">
+                          Rule {index + 1}
+                        </span>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => setFunctionRules(functionRules.filter((_, i) => i !== index))}
+                          onClick={() =>
+                            setFunctionRules(
+                              functionRules.filter((_, i) => i !== index),
+                            )
+                          }
                         >
                           <Trash2 className="size-4 text-destructive" />
                         </Button>
@@ -713,7 +989,10 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                             value={rule.pattern}
                             onChange={(e) => {
                               const newRules = [...functionRules];
-                              newRules[index] = { ...rule, pattern: e.target.value };
+                              newRules[index] = {
+                                ...rule,
+                                pattern: e.target.value,
+                              };
                               setFunctionRules(newRules);
                             }}
                             placeholder={t('functionRoute.patternPlaceholder')}
@@ -723,7 +1002,9 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                           <Label>{t('functionRoute.matchType')}</Label>
                           <Select
                             value={rule.matchType}
-                            onValueChange={(value: 'keyword' | 'regex' | 'intent') => {
+                            onValueChange={(
+                              value: 'keyword' | 'regex' | 'intent',
+                            ) => {
                               const newRules = [...functionRules];
                               newRules[index] = { ...rule, matchType: value };
                               setFunctionRules(newRules);
@@ -733,9 +1014,15 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="keyword">{t('functionRoute.matchTypes.keyword')}</SelectItem>
-                              <SelectItem value="regex">{t('functionRoute.matchTypes.regex')}</SelectItem>
-                              <SelectItem value="intent">{t('functionRoute.matchTypes.intent')}</SelectItem>
+                              <SelectItem value="keyword">
+                                {t('functionRoute.matchTypes.keyword')}
+                              </SelectItem>
+                              <SelectItem value="regex">
+                                {t('functionRoute.matchTypes.regex')}
+                              </SelectItem>
+                              <SelectItem value="intent">
+                                {t('functionRoute.matchTypes.intent')}
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -754,10 +1041,16 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
-                      onClick={() => setFunctionRules([
-                        ...functionRules,
-                        { pattern: '', matchType: 'keyword', target: { providerKeyId: '', model: '' } },
-                      ])}
+                      onClick={() =>
+                        setFunctionRules([
+                          ...functionRules,
+                          {
+                            pattern: '',
+                            matchType: 'keyword',
+                            target: { providerKeyId: '', model: '' },
+                          },
+                        ])
+                      }
                     >
                       <Plus className="size-4 mr-2" />
                       {t('functionRoute.addRule')}
@@ -770,34 +1063,239 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                           <ChevronDown className="size-4 ml-2" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-80">
-                        <DropdownMenuLabel>{t('functionRoute.predefinedIntents.title')}</DropdownMenuLabel>
+                      <DropdownMenuContent
+                        align="start"
+                        className="w-96 max-h-[400px] overflow-y-auto"
+                      >
+                        <DropdownMenuLabel>
+                          {t('functionRoute.predefinedIntents.title')}
+                        </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {PREDEFINED_INTENT_KEYS.map((key) => (
-                          <DropdownMenuItem
-                            key={key}
-                            onClick={() => {
-                              const pattern = t(`functionRoute.predefinedIntents.${key}.pattern`);
-                              setFunctionRules([
-                                ...functionRules,
-                                { pattern, matchType: 'keyword', target: { providerKeyId: '', model: '' } },
-                              ]);
-                            }}
-                          >
-                            <div className="flex flex-col gap-0.5">
-                              <span className="font-medium">{t(`functionRoute.predefinedIntents.${key}.name`)}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {t(`functionRoute.predefinedIntents.${key}.description`)}
-                              </span>
-                              <span className="text-xs text-primary/70">
-                                ✨ {t(`functionRoute.predefinedIntents.${key}.recommendedModels`)}
-                              </span>
-                            </div>
-                          </DropdownMenuItem>
-                        ))}
+                        {PREDEFINED_INTENT_KEYS.map((key) => {
+                          const recommendations =
+                            SCENARIO_MODEL_RECOMMENDATIONS[key];
+                          return (
+                            <DropdownMenuItem
+                              key={key}
+                              onClick={() => {
+                                const pattern = t(
+                                  `functionRoute.predefinedIntents.${key}.pattern`,
+                                );
+                                setFunctionRules([
+                                  ...functionRules,
+                                  {
+                                    pattern,
+                                    matchType: 'keyword',
+                                    target: { providerKeyId: '', model: '' },
+                                  },
+                                ]);
+                                setSelectedScenario(key);
+                              }}
+                            >
+                              <div className="flex flex-col gap-1 w-full">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">
+                                    {t(
+                                      `functionRoute.predefinedIntents.${key}.name`,
+                                    )}
+                                  </span>
+                                  {(key === 'video' ||
+                                    key === 'audio' ||
+                                    key === '3d') && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-[10px] px-1 py-0"
+                                    >
+                                      {key === 'video'
+                                        ? 'Video'
+                                        : key === 'audio'
+                                          ? 'Audio'
+                                          : '3D'}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <span className="text-xs text-muted-foreground">
+                                  {t(
+                                    `functionRoute.predefinedIntents.${key}.description`,
+                                  )}
+                                </span>
+                                {recommendations && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {recommendations.primary
+                                      .slice(0, 3)
+                                      .map((model) => (
+                                        <Badge
+                                          key={model}
+                                          variant="outline"
+                                          className="text-[10px] px-1.5 py-0 bg-primary/5"
+                                        >
+                                          {model}
+                                        </Badge>
+                                      ))}
+                                    {recommendations.primary.length > 3 && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-[10px] px-1.5 py-0"
+                                      >
+                                        +{recommendations.primary.length - 3}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </DropdownMenuItem>
+                          );
+                        })}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
+
+                  {/* Model Recommendations Panel */}
+                  {selectedScenario &&
+                    SCENARIO_MODEL_RECOMMENDATIONS[selectedScenario] &&
+                    (() => {
+                      const recommendations =
+                        SCENARIO_MODEL_RECOMMENDATIONS[selectedScenario];
+                      return (
+                        <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="size-4 text-primary" />
+                              <span className="font-medium text-sm">
+                                {t('functionRoute.recommendedModels.title', {
+                                  scenario: t(
+                                    `functionRoute.predefinedIntents.${selectedScenario}.name`,
+                                  ),
+                                })}
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs"
+                              onClick={() => setSelectedScenario(null)}
+                            >
+                              {t('functionRoute.recommendedModels.dismiss')}
+                            </Button>
+                          </div>
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-xs text-muted-foreground mb-2">
+                                {t('functionRoute.recommendedModels.primary')}
+                              </p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {recommendations.primary.map((model) => {
+                                  const providers = getProvidersForModel(model);
+                                  const isAvailable = providers.length > 0;
+                                  return (
+                                    <Badge
+                                      key={model}
+                                      variant={
+                                        isAvailable ? 'default' : 'secondary'
+                                      }
+                                      className={`text-xs ${
+                                        isAvailable
+                                          ? 'cursor-pointer hover:bg-primary/80'
+                                          : 'opacity-50 cursor-not-allowed'
+                                      }`}
+                                      onClick={() => {
+                                        if (isAvailable) {
+                                          applyRecommendedModel(
+                                            model,
+                                            providers,
+                                          );
+                                        } else {
+                                          toast.error(
+                                            t(
+                                              'functionRoute.recommendedModels.notAvailable',
+                                              { model },
+                                            ),
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      {model}
+                                      {isAvailable && providers.length > 1 && (
+                                        <span className="ml-1 text-[10px] opacity-70">
+                                          ({providers.length})
+                                        </span>
+                                      )}
+                                      {!isAvailable && (
+                                        <span className="ml-1 text-[10px]">
+                                          ✗
+                                        </span>
+                                      )}
+                                    </Badge>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            {recommendations.alternatives.length > 0 && (
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  {t(
+                                    'functionRoute.recommendedModels.alternatives',
+                                  )}
+                                </p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {recommendations.alternatives.map((model) => {
+                                    const providers =
+                                      getProvidersForModel(model);
+                                    const isAvailable = providers.length > 0;
+                                    return (
+                                      <Badge
+                                        key={model}
+                                        variant="outline"
+                                        className={`text-xs ${
+                                          isAvailable
+                                            ? 'cursor-pointer hover:bg-muted'
+                                            : 'opacity-50 cursor-not-allowed'
+                                        }`}
+                                        onClick={() => {
+                                          if (isAvailable) {
+                                            applyRecommendedModel(
+                                              model,
+                                              providers,
+                                            );
+                                          } else {
+                                            toast.error(
+                                              t(
+                                                'functionRoute.recommendedModels.notAvailable',
+                                                { model },
+                                              ),
+                                            );
+                                          }
+                                        }}
+                                      >
+                                        {model}
+                                        {isAvailable &&
+                                          providers.length > 1 && (
+                                            <span className="ml-1 text-[10px] opacity-70">
+                                              ({providers.length})
+                                            </span>
+                                          )}
+                                        {!isAvailable && (
+                                          <span className="ml-1 text-[10px]">
+                                            ✗
+                                          </span>
+                                        )}
+                                      </Badge>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {/* Availability hint */}
+                          <p className="text-[10px] text-muted-foreground mt-3 flex items-center gap-1">
+                            <Info className="size-3" />
+                            {t(
+                              'functionRoute.recommendedModels.availabilityHint',
+                            )}
+                          </p>
+                        </div>
+                      );
+                    })()}
                 </div>
 
                 {/* Default Target */}
@@ -821,14 +1319,23 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                 {/* Strategy */}
                 <div className="space-y-2">
                   <Label>{t('loadBalance.strategy')}</Label>
-                  <Select value={lbStrategy} onValueChange={(v: typeof lbStrategy) => setLbStrategy(v)}>
+                  <Select
+                    value={lbStrategy}
+                    onValueChange={(v: typeof lbStrategy) => setLbStrategy(v)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="round_robin">{t('loadBalance.strategies.round_robin')}</SelectItem>
-                      <SelectItem value="weighted">{t('loadBalance.strategies.weighted')}</SelectItem>
-                      <SelectItem value="least_latency">{t('loadBalance.strategies.least_latency')}</SelectItem>
+                      <SelectItem value="round_robin">
+                        {t('loadBalance.strategies.round_robin')}
+                      </SelectItem>
+                      <SelectItem value="weighted">
+                        {t('loadBalance.strategies.weighted')}
+                      </SelectItem>
+                      <SelectItem value="least_latency">
+                        {t('loadBalance.strategies.least_latency')}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -837,13 +1344,22 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                 <div className="space-y-3">
                   <Label>{t('loadBalance.targets')}</Label>
                   {lbTargets.map((target, index) => (
-                    <div key={index} className="border rounded-lg p-4 space-y-3">
+                    <div
+                      key={index}
+                      className="border rounded-lg p-4 space-y-3"
+                    >
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Target {index + 1}</span>
+                        <span className="text-sm font-medium">
+                          Target {index + 1}
+                        </span>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => setLbTargets(lbTargets.filter((_, i) => i !== index))}
+                          onClick={() =>
+                            setLbTargets(
+                              lbTargets.filter((_, i) => i !== index),
+                            )
+                          }
                         >
                           <Trash2 className="size-4 text-destructive" />
                         </Button>
@@ -867,11 +1383,16 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                             value={target.weight}
                             onChange={(e) => {
                               const newTargets = [...lbTargets];
-                              newTargets[index] = { ...target, weight: parseInt(e.target.value) || 1 };
+                              newTargets[index] = {
+                                ...target,
+                                weight: parseInt(e.target.value) || 1,
+                              };
                               setLbTargets(newTargets);
                             }}
                           />
-                          <p className="text-xs text-muted-foreground">{t('loadBalance.weightHint')}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {t('loadBalance.weightHint')}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -879,10 +1400,12 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
-                      onClick={() => setLbTargets([
-                        ...lbTargets,
-                        { providerKeyId: '', model: '', weight: 1 },
-                      ])}
+                      onClick={() =>
+                        setLbTargets([
+                          ...lbTargets,
+                          { providerKeyId: '', model: '', weight: 1 },
+                        ])
+                      }
                     >
                       <Plus className="size-4 mr-2" />
                       {t('loadBalance.addTarget')}
@@ -896,7 +1419,9 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-64">
-                        <DropdownMenuLabel>{t('loadBalance.templates.title')}</DropdownMenuLabel>
+                        <DropdownMenuLabel>
+                          {t('loadBalance.templates.title')}
+                        </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {LOAD_BALANCE_TEMPLATE_KEYS.map((key) => (
                           <DropdownMenuItem
@@ -925,7 +1450,9 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                             }}
                           >
                             <div className="flex flex-col">
-                              <span className="font-medium">{t(`loadBalance.templates.${key}.name`)}</span>
+                              <span className="font-medium">
+                                {t(`loadBalance.templates.${key}.name`)}
+                              </span>
                               <span className="text-xs text-muted-foreground">
                                 {t(`loadBalance.templates.${key}.description`)}
                               </span>
@@ -954,13 +1481,22 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                 <div className="space-y-3">
                   <Label>{t('failover.fallbackChain')}</Label>
                   {failoverChain.map((target, index) => (
-                    <div key={index} className="border rounded-lg p-4 space-y-3">
+                    <div
+                      key={index}
+                      className="border rounded-lg p-4 space-y-3"
+                    >
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Fallback {index + 1}</span>
+                        <span className="text-sm font-medium">
+                          Fallback {index + 1}
+                        </span>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => setFailoverChain(failoverChain.filter((_, i) => i !== index))}
+                          onClick={() =>
+                            setFailoverChain(
+                              failoverChain.filter((_, i) => i !== index),
+                            )
+                          }
                         >
                           <Trash2 className="size-4 text-destructive" />
                         </Button>
@@ -979,10 +1515,12 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
-                      onClick={() => setFailoverChain([
-                        ...failoverChain,
-                        { providerKeyId: '', model: '' },
-                      ])}
+                      onClick={() =>
+                        setFailoverChain([
+                          ...failoverChain,
+                          { providerKeyId: '', model: '' },
+                        ])
+                      }
                     >
                       <Plus className="size-4 mr-2" />
                       {t('failover.addFallback')}
@@ -996,22 +1534,34 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-64">
-                        <DropdownMenuLabel>{t('failover.templates.title')}</DropdownMenuLabel>
+                        <DropdownMenuLabel>
+                          {t('failover.templates.title')}
+                        </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {FAILOVER_TEMPLATE_KEYS.map((key) => (
                           <DropdownMenuItem
                             key={key}
                             onClick={() => {
-                              const fallbackCount = key === 'singleFallback' ? 1 : key === 'doubleFallback' ? 2 : 3;
-                              const newChain = Array.from({ length: fallbackCount }, () => ({
-                                providerKeyId: '',
-                                model: '',
-                              }));
+                              const fallbackCount =
+                                key === 'singleFallback'
+                                  ? 1
+                                  : key === 'doubleFallback'
+                                    ? 2
+                                    : 3;
+                              const newChain = Array.from(
+                                { length: fallbackCount },
+                                () => ({
+                                  providerKeyId: '',
+                                  model: '',
+                                }),
+                              );
                               setFailoverChain(newChain);
                             }}
                           >
                             <div className="flex flex-col">
-                              <span className="font-medium">{t(`failover.templates.${key}.name`)}</span>
+                              <span className="font-medium">
+                                {t(`failover.templates.${key}.name`)}
+                              </span>
                               <span className="text-xs text-muted-foreground">
                                 {t(`failover.templates.${key}.description`)}
                               </span>
@@ -1034,7 +1584,9 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                         min={1}
                         max={5}
                         value={retryMaxAttempts}
-                        onChange={(e) => setRetryMaxAttempts(parseInt(e.target.value) || 3)}
+                        onChange={(e) =>
+                          setRetryMaxAttempts(parseInt(e.target.value) || 3)
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -1044,7 +1596,9 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                         min={100}
                         max={10000}
                         value={retryDelayMs}
-                        onChange={(e) => setRetryDelayMs(parseInt(e.target.value) || 1000)}
+                        onChange={(e) =>
+                          setRetryDelayMs(parseInt(e.target.value) || 1000)
+                        }
                       />
                     </div>
                   </div>
@@ -1054,11 +1608,20 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={actionLoading}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDialogOpen(false)}
+              disabled={actionLoading}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={actionLoading || !formName.trim()}>
-              {actionLoading && <Loader2 className="size-4 mr-2 animate-spin" />}
+            <Button
+              onClick={handleSave}
+              disabled={actionLoading || !formName.trim()}
+            >
+              {actionLoading && (
+                <Loader2 className="size-4 mr-2 animate-spin" />
+              )}
               {editingRouting ? 'Update' : 'Create'}
             </Button>
           </DialogFooter>
@@ -1093,11 +1656,16 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
               {/* Function Route Rules */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-medium">{t('autoGenerate.suggestedRules')}</h4>
+                  <h4 className="font-medium">
+                    {t('autoGenerate.suggestedRules')}
+                  </h4>
                   <Button
                     size="sm"
                     onClick={handleApplyAllSuggestions}
-                    disabled={actionLoading || suggestions.functionRouteRules.length === 0}
+                    disabled={
+                      actionLoading ||
+                      suggestions.functionRouteRules.length === 0
+                    }
                   >
                     {actionLoading ? (
                       <Loader2 className="size-4 mr-2 animate-spin" />
@@ -1111,7 +1679,7 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                   <div className="space-y-2 pr-4">
                     {suggestions.functionRouteRules.map((rule, index) => {
                       const provider = botProviders.find(
-                        (p) => p.providerKeyId === rule.target.providerKeyId
+                        (p) => p.providerKeyId === rule.target.providerKeyId,
                       );
                       return (
                         <div
@@ -1131,7 +1699,8 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                               </p>
                               <div className="flex items-center gap-2 text-xs">
                                 <Badge variant="secondary">
-                                  {provider?.label || rule.target.providerKeyId.slice(0, 8)}
+                                  {provider?.label ||
+                                    rule.target.providerKeyId.slice(0, 8)}
                                 </Badge>
                                 <span className="text-muted-foreground">→</span>
                                 <code className="bg-muted px-1.5 py-0.5 rounded">
@@ -1161,7 +1730,9 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
               {suggestions.failoverSuggestion && (
                 <div className="space-y-3 border-t pt-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium">{t('autoGenerate.suggestedFailover')}</h4>
+                    <h4 className="font-medium">
+                      {t('autoGenerate.suggestedFailover')}
+                    </h4>
                     <Button
                       size="sm"
                       variant="outline"
@@ -1179,13 +1750,17 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                   <div className="bg-muted/30 rounded-lg p-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="default">
-                        {t('autoGenerate.primary')}: {suggestions.failoverSuggestion.primary.model}
+                        {t('autoGenerate.primary')}:{' '}
+                        {suggestions.failoverSuggestion.primary.model}
                       </Badge>
-                      {suggestions.failoverSuggestion.fallbackChain.map((target, index) => (
-                        <Badge key={index} variant="secondary">
-                          {t('autoGenerate.fallback')} {index + 1}: {target.model}
-                        </Badge>
-                      ))}
+                      {suggestions.failoverSuggestion.fallbackChain.map(
+                        (target, index) => (
+                          <Badge key={index} variant="secondary">
+                            {t('autoGenerate.fallback')} {index + 1}:{' '}
+                            {target.model}
+                          </Badge>
+                        ),
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1193,23 +1768,35 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
 
               {/* Model Capabilities */}
               <div className="space-y-3 border-t pt-4">
-                <h4 className="font-medium">{t('autoGenerate.modelCapabilities')}</h4>
+                <h4 className="font-medium">
+                  {t('autoGenerate.modelCapabilities')}
+                </h4>
                 <div className="grid grid-cols-2 gap-2">
-                  {suggestions.analysis.modelCapabilities.slice(0, 6).map((cap, index) => (
-                    <div key={index} className="border rounded-lg p-2 text-sm">
-                      <div className="font-medium truncate">{cap.modelId}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {cap.strengths.slice(0, 3).join(', ')}
+                  {suggestions.analysis.modelCapabilities
+                    .slice(0, 6)
+                    .map((cap, index) => (
+                      <div
+                        key={index}
+                        className="border rounded-lg p-2 text-sm"
+                      >
+                        <div className="font-medium truncate">
+                          {cap.modelId}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {cap.strengths.slice(0, 3).join(', ')}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             </div>
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSuggestDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsSuggestDialogOpen(false)}
+            >
               {t('autoGenerate.close')}
             </Button>
           </DialogFooter>

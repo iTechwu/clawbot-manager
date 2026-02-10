@@ -91,6 +91,40 @@ export class BotApiController {
     });
   }
 
+  @TsRestHandler(bc.update)
+  async updateBot(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bc.update, async ({ params, body }) => {
+      const userId = req.userId;
+      const bot = await this.botApiService.updateBot(
+        params.hostname,
+        userId,
+        body,
+      );
+      return success(bot);
+    });
+  }
+
+  @TsRestHandler(bc.applyPendingConfig)
+  async applyPendingConfig(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bc.applyPendingConfig, async ({ params }) => {
+      const userId = req.userId;
+      const result = await this.botApiService.applyPendingConfig(
+        params.hostname,
+        userId,
+      );
+      return success(result);
+    });
+  }
+
+  @TsRestHandler(bc.clearPendingConfig)
+  async clearPendingConfig(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bc.clearPendingConfig, async ({ params }) => {
+      const userId = req.userId;
+      await this.botApiService.clearPendingConfig(params.hostname, userId);
+      return success({ success: true });
+    });
+  }
+
   // ============================================================================
   // Bot Lifecycle
   // ============================================================================

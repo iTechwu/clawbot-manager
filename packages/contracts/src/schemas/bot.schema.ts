@@ -59,6 +59,10 @@ export const BotSchema = z.object({
   avatarFileId: z.string().uuid().nullable(),
   avatarUrl: z.string().nullable(),
   soulMarkdown: z.string().nullable(),
+  // 待生效配置：存储修改后尚未重启生效的配置
+  // 使用 z.unknown() 以兼容 Prisma 的 JsonValue 类型
+  // 实际类型为 PendingConfig，在使用时需要进行类型断言
+  pendingConfig: z.unknown().nullable().optional(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   containerStatus: ContainerStatusSchema.nullable().optional(),
@@ -165,6 +169,51 @@ export const SimpleCreateBotInputSchema = z.object({
 });
 
 export type SimpleCreateBotInput = z.infer<typeof SimpleCreateBotInputSchema>;
+
+// ============================================================================
+// Update Bot Schema - 更新 Bot 配置
+// ============================================================================
+
+/**
+ * 待生效配置 Schema
+ * 存储修改后尚未重启生效的配置
+ */
+export const PendingConfigSchema = z.object({
+  name: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  soulMarkdown: z.string().optional(),
+  emoji: z.string().optional(),
+  avatarFileId: z.string().uuid().optional(),
+});
+
+export type PendingConfig = z.infer<typeof PendingConfigSchema>;
+
+/**
+ * 更新 Bot 输入 Schema
+ * 所有字段都是可选的，只更新提供的字段
+ * 更新会存储到 pendingConfig，需要重启后生效
+ */
+export const UpdateBotInputSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  tags: z.array(z.string()).optional(),
+  soulMarkdown: z.string().optional(),
+  emoji: z.string().max(10).optional(),
+  avatarFileId: z.string().uuid().optional(),
+});
+
+export type UpdateBotInput = z.infer<typeof UpdateBotInputSchema>;
+
+/**
+ * 应用待生效配置的响应
+ */
+export const ApplyPendingConfigResponseSchema = z.object({
+  success: z.boolean(),
+  appliedFields: z.array(z.string()),
+});
+
+export type ApplyPendingConfigResponse = z.infer<
+  typeof ApplyPendingConfigResponseSchema
+>;
 
 // ============================================================================
 // Container Stats Schema

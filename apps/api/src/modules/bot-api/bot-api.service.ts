@@ -19,7 +19,7 @@ import { EncryptionService } from './services/encryption.service';
 import { DockerService } from './services/docker.service';
 import { WorkspaceService } from './services/workspace.service';
 import { BotConfigResolverService } from './services/bot-config-resolver.service';
-import type { Bot, ProviderKey, BotStatus } from '@prisma/client';
+import type { Bot, ProviderKey, BotStatus, Prisma } from '@prisma/client';
 import type {
   CreateBotInput,
   SimpleCreateBotInput,
@@ -593,11 +593,162 @@ export class BotApiService {
     this.logger.log(`Bot deleted: ${hostname}`);
   }
 
+  /**
+   * 更新 Bot 配置
+   * 更新会存储到 pendingConfig，需要重启后生效
+   */
+  async updateBot(
+    hostname: string,
+    userId: string,
+    input: {
+      name?: string;
+      tags?: string[];
+      soulMarkdown?: string;
+      emoji?: string;
+      avatarFileId?: string;
+    },
+  ): Promise<Bot> {
+    const bot = await this.getBotByHostname(hostname, userId);
+
+    // 构建待生效配置
+    const pendingConfig: Record<string, unknown> = {};
+    if (input.name !== undefined) pendingConfig.name = input.name;
+    if (input.tags !== undefined) pendingConfig.tags = input.tags;
+    if (input.soulMarkdown !== undefined)
+      pendingConfig.soulMarkdown = input.soulMarkdown;
+    if (input.emoji !== undefined) pendingConfig.emoji = input.emoji;
+    if (input.avatarFileId !== undefined)
+      pendingConfig.avatarFileId = input.avatarFileId;
+
+    // 合并现有的 pendingConfig
+    const existingPending =
+      (bot.pendingConfig as Record<string, unknown>) || {};
+    const mergedPending = { ...existingPending, ...pendingConfig };
+
+    // 更新 pendingConfig
+    const updatedBot = await this.botService.update(
+      { id: bot.id },
+      { pendingConfig: mergedPending as Prisma.InputJsonValue },
+    );
+
+    // Log operation
+    await this.operateLogService.create({
+      user: { connect: { id: userId } },
+      operateType: 'UPDATE',
+      target: 'BOT',
+      targetId: bot.id,
+      targetName: bot.name,
+      detail: { hostname, pendingConfig: mergedPending } as Prisma.InputJsonValue,
+    });
+
+    this.logger.log(
+      `Bot ${hostname} config updated (pending): ${JSON.stringify(pendingConfig)}`,
+    );
+
+    // Build tokenized URLs
+    const tokenizedUrls = this.buildTokenizedUrls(updatedBot);
+    return { ...updatedBot, ...tokenizedUrls } as Bot;
+  }
+
+  /**
+   * 应用待生效配置
+   * 将 pendingConfig 应用到实际配置，并清空 pendingConfig
+   */
+  async applyPendingConfig(
+    hostname: string,
+    userId: string,
+  ): Promise<{ success: boolean; appliedFields: string[] }> {
+    const bot = await this.getBotByHostname(hostname, userId);
+
+    const pendingConfig = bot.pendingConfig as Record<string, unknown> | null;
+    if (!pendingConfig || Object.keys(pendingConfig).length === 0) {
+      return { success: true, appliedFields: [] };
+    }
+
+    // 构建更新数据
+    const updateData: Record<string, unknown> = {};
+    const appliedFields: string[] = [];
+
+    if (pendingConfig.name !== undefined) {
+      updateData.name = pendingConfig.name;
+      appliedFields.push('name');
+    }
+    if (pendingConfig.tags !== undefined) {
+      updateData.tags = pendingConfig.tags;
+      appliedFields.push('tags');
+    }
+    if (pendingConfig.soulMarkdown !== undefined) {
+      updateData.soulMarkdown = pendingConfig.soulMarkdown;
+      appliedFields.push('soulMarkdown');
+    }
+    if (pendingConfig.emoji !== undefined) {
+      updateData.emoji = pendingConfig.emoji;
+      appliedFields.push('emoji');
+    }
+    if (pendingConfig.avatarFileId !== undefined) {
+      updateData.avatarFileId = pendingConfig.avatarFileId;
+      appliedFields.push('avatarFileId');
+    }
+
+    // 应用配置并清空 pendingConfig
+    await this.botService.update(
+      { id: bot.id },
+      { ...updateData, pendingConfig: null },
+    );
+
+    // Log operation
+    await this.operateLogService.create({
+      user: { connect: { id: userId } },
+      operateType: 'UPDATE',
+      target: 'BOT',
+      targetId: bot.id,
+      targetName: bot.name,
+      detail: { hostname, appliedFields, appliedConfig: pendingConfig } as Prisma.InputJsonValue,
+    });
+
+    this.logger.log(
+      `Bot ${hostname} pending config applied: ${appliedFields.join(', ')}`,
+    );
+
+    return { success: true, appliedFields };
+  }
+
+  /**
+   * 清除待生效配置
+   * 放弃所有未生效的修改
+   */
+  async clearPendingConfig(hostname: string, userId: string): Promise<void> {
+    const bot = await this.getBotByHostname(hostname, userId);
+
+    await this.botService.update({ id: bot.id }, { pendingConfig: null });
+
+    // Log operation
+    await this.operateLogService.create({
+      user: { connect: { id: userId } },
+      operateType: 'UPDATE',
+      target: 'BOT',
+      targetId: bot.id,
+      targetName: bot.name,
+      detail: { hostname, action: 'clearPendingConfig' },
+    });
+
+    this.logger.log(`Bot ${hostname} pending config cleared`);
+  }
+
   async startBot(
     hostname: string,
     userId: string,
   ): Promise<{ success: boolean; status: string }> {
-    const bot = await this.getBotByHostname(hostname, userId);
+    let bot = await this.getBotByHostname(hostname, userId);
+
+    // 在启动前应用待生效配置
+    const pendingConfig = bot.pendingConfig as Record<string, unknown> | null;
+    if (pendingConfig && Object.keys(pendingConfig).length > 0) {
+      this.logger.log(`Applying pending config before starting bot ${hostname}`);
+      await this.applyPendingConfig(hostname, userId);
+      // 重新获取更新后的 bot
+      bot = await this.getBotByHostname(hostname, userId);
+    }
 
     // Update status to starting
     await this.botService.update({ id: bot.id }, { status: 'starting' });

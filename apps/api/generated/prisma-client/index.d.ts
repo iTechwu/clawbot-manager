@@ -17428,6 +17428,7 @@ export namespace Prisma {
     emoji: number
     avatarFileId: number
     soulMarkdown: number
+    pendingConfig: number
     healthStatus: number
     lastHealthCheck: number
     isDeleted: number
@@ -17505,6 +17506,7 @@ export namespace Prisma {
     emoji?: true
     avatarFileId?: true
     soulMarkdown?: true
+    pendingConfig?: true
     healthStatus?: true
     lastHealthCheck?: true
     isDeleted?: true
@@ -17615,6 +17617,7 @@ export namespace Prisma {
     emoji: string | null
     avatarFileId: string | null
     soulMarkdown: string | null
+    pendingConfig: JsonValue | null
     healthStatus: $Enums.HealthStatus
     lastHealthCheck: Date | null
     isDeleted: boolean
@@ -17657,6 +17660,7 @@ export namespace Prisma {
     emoji?: boolean
     avatarFileId?: boolean
     soulMarkdown?: boolean
+    pendingConfig?: boolean
     healthStatus?: boolean
     lastHealthCheck?: boolean
     isDeleted?: boolean
@@ -17692,6 +17696,7 @@ export namespace Prisma {
     emoji?: boolean
     avatarFileId?: boolean
     soulMarkdown?: boolean
+    pendingConfig?: boolean
     healthStatus?: boolean
     lastHealthCheck?: boolean
     isDeleted?: boolean
@@ -17718,6 +17723,7 @@ export namespace Prisma {
     emoji?: boolean
     avatarFileId?: boolean
     soulMarkdown?: boolean
+    pendingConfig?: boolean
     healthStatus?: boolean
     lastHealthCheck?: boolean
     isDeleted?: boolean
@@ -17744,6 +17750,7 @@ export namespace Prisma {
     emoji?: boolean
     avatarFileId?: boolean
     soulMarkdown?: boolean
+    pendingConfig?: boolean
     healthStatus?: boolean
     lastHealthCheck?: boolean
     isDeleted?: boolean
@@ -17752,7 +17759,7 @@ export namespace Prisma {
     deletedAt?: boolean
   }
 
-  export type BotOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "hostname" | "containerId" | "port" | "gatewayToken" | "proxyTokenHash" | "tags" | "status" | "createdById" | "personaTemplateId" | "emoji" | "avatarFileId" | "soulMarkdown" | "healthStatus" | "lastHealthCheck" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["bot"]>
+  export type BotOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "hostname" | "containerId" | "port" | "gatewayToken" | "proxyTokenHash" | "tags" | "status" | "createdById" | "personaTemplateId" | "emoji" | "avatarFileId" | "soulMarkdown" | "pendingConfig" | "healthStatus" | "lastHealthCheck" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["bot"]>
   export type BotInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     createdBy?: boolean | UserInfoDefaultArgs<ExtArgs>
     personaTemplate?: boolean | Bot$personaTemplateArgs<ExtArgs>
@@ -17808,6 +17815,7 @@ export namespace Prisma {
       emoji: string | null
       avatarFileId: string | null
       soulMarkdown: string | null
+      pendingConfig: Prisma.JsonValue | null
       healthStatus: $Enums.HealthStatus
       lastHealthCheck: Date | null
       isDeleted: boolean
@@ -18262,6 +18270,7 @@ export namespace Prisma {
     readonly emoji: FieldRef<"Bot", 'String'>
     readonly avatarFileId: FieldRef<"Bot", 'String'>
     readonly soulMarkdown: FieldRef<"Bot", 'String'>
+    readonly pendingConfig: FieldRef<"Bot", 'Json'>
     readonly healthStatus: FieldRef<"Bot", 'HealthStatus'>
     readonly lastHealthCheck: FieldRef<"Bot", 'DateTime'>
     readonly isDeleted: FieldRef<"Bot", 'Boolean'>
@@ -43367,6 +43376,7 @@ export namespace Prisma {
     emoji: 'emoji',
     avatarFileId: 'avatarFileId',
     soulMarkdown: 'soulMarkdown',
+    pendingConfig: 'pendingConfig',
     healthStatus: 'healthStatus',
     lastHealthCheck: 'lastHealthCheck',
     isDeleted: 'isDeleted',
@@ -45168,6 +45178,7 @@ export namespace Prisma {
     emoji?: StringNullableFilter<"Bot"> | string | null
     avatarFileId?: UuidNullableFilter<"Bot"> | string | null
     soulMarkdown?: StringNullableFilter<"Bot"> | string | null
+    pendingConfig?: JsonNullableFilter<"Bot">
     healthStatus?: EnumHealthStatusFilter<"Bot"> | $Enums.HealthStatus
     lastHealthCheck?: DateTimeNullableFilter<"Bot"> | Date | string | null
     isDeleted?: BoolFilter<"Bot"> | boolean
@@ -45202,6 +45213,7 @@ export namespace Prisma {
     emoji?: SortOrderInput | SortOrder
     avatarFileId?: SortOrderInput | SortOrder
     soulMarkdown?: SortOrderInput | SortOrder
+    pendingConfig?: SortOrderInput | SortOrder
     healthStatus?: SortOrder
     lastHealthCheck?: SortOrderInput | SortOrder
     isDeleted?: SortOrder
@@ -45239,6 +45251,7 @@ export namespace Prisma {
     emoji?: StringNullableFilter<"Bot"> | string | null
     avatarFileId?: UuidNullableFilter<"Bot"> | string | null
     soulMarkdown?: StringNullableFilter<"Bot"> | string | null
+    pendingConfig?: JsonNullableFilter<"Bot">
     healthStatus?: EnumHealthStatusFilter<"Bot"> | $Enums.HealthStatus
     lastHealthCheck?: DateTimeNullableFilter<"Bot"> | Date | string | null
     isDeleted?: BoolFilter<"Bot"> | boolean
@@ -45273,6 +45286,7 @@ export namespace Prisma {
     emoji?: SortOrderInput | SortOrder
     avatarFileId?: SortOrderInput | SortOrder
     soulMarkdown?: SortOrderInput | SortOrder
+    pendingConfig?: SortOrderInput | SortOrder
     healthStatus?: SortOrder
     lastHealthCheck?: SortOrderInput | SortOrder
     isDeleted?: SortOrder
@@ -45304,6 +45318,7 @@ export namespace Prisma {
     emoji?: StringNullableWithAggregatesFilter<"Bot"> | string | null
     avatarFileId?: UuidNullableWithAggregatesFilter<"Bot"> | string | null
     soulMarkdown?: StringNullableWithAggregatesFilter<"Bot"> | string | null
+    pendingConfig?: JsonNullableWithAggregatesFilter<"Bot">
     healthStatus?: EnumHealthStatusWithAggregatesFilter<"Bot"> | $Enums.HealthStatus
     lastHealthCheck?: DateTimeNullableWithAggregatesFilter<"Bot"> | Date | string | null
     isDeleted?: BoolWithAggregatesFilter<"Bot"> | boolean
@@ -48599,6 +48614,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -48633,6 +48649,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -48661,6 +48678,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -48695,6 +48713,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -48726,6 +48745,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -48746,6 +48766,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -48769,6 +48790,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -52339,6 +52361,7 @@ export namespace Prisma {
     emoji?: SortOrder
     avatarFileId?: SortOrder
     soulMarkdown?: SortOrder
+    pendingConfig?: SortOrder
     healthStatus?: SortOrder
     lastHealthCheck?: SortOrder
     isDeleted?: SortOrder
@@ -56542,6 +56565,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -56574,6 +56598,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -57057,6 +57082,7 @@ export namespace Prisma {
     emoji?: StringNullableFilter<"Bot"> | string | null
     avatarFileId?: UuidNullableFilter<"Bot"> | string | null
     soulMarkdown?: StringNullableFilter<"Bot"> | string | null
+    pendingConfig?: JsonNullableFilter<"Bot">
     healthStatus?: EnumHealthStatusFilter<"Bot"> | $Enums.HealthStatus
     lastHealthCheck?: DateTimeNullableFilter<"Bot"> | Date | string | null
     isDeleted?: BoolFilter<"Bot"> | boolean
@@ -57315,6 +57341,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -57347,6 +57374,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -58387,6 +58415,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -58419,6 +58448,7 @@ export namespace Prisma {
     personaTemplateId?: string | null
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -59818,6 +59848,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -59851,6 +59882,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -59933,6 +59965,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -59966,6 +59999,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -60038,6 +60072,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -60071,6 +60106,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -60153,6 +60189,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -60186,6 +60223,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -60258,6 +60296,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -60291,6 +60330,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -60373,6 +60413,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -60406,6 +60447,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -61226,6 +61268,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -61259,6 +61302,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -61353,6 +61397,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -61386,6 +61431,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -61514,6 +61560,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -61547,6 +61594,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -61631,6 +61679,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -61664,6 +61713,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -61738,6 +61788,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -61771,6 +61822,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -61814,6 +61866,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -61847,6 +61900,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -61874,6 +61928,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -61907,6 +61962,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -61950,6 +62006,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -61983,6 +62040,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -62010,6 +62068,7 @@ export namespace Prisma {
     status?: $Enums.BotStatus
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -62043,6 +62102,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -62086,6 +62146,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -62119,6 +62180,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -62171,6 +62233,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -62304,6 +62367,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -62336,6 +62400,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -62366,6 +62431,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -62522,6 +62588,7 @@ export namespace Prisma {
     emoji?: string | null
     avatarFileId?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -62542,6 +62609,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -62574,6 +62642,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -62604,6 +62673,7 @@ export namespace Prisma {
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     avatarFileId?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -62663,6 +62733,7 @@ export namespace Prisma {
     personaTemplateId?: string | null
     emoji?: string | null
     soulMarkdown?: string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: $Enums.HealthStatus
     lastHealthCheck?: Date | string | null
     isDeleted?: boolean
@@ -62818,6 +62889,7 @@ export namespace Prisma {
     status?: EnumBotStatusFieldUpdateOperationsInput | $Enums.BotStatus
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -62850,6 +62922,7 @@ export namespace Prisma {
     personaTemplateId?: NullableStringFieldUpdateOperationsInput | string | null
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean
@@ -62880,6 +62953,7 @@ export namespace Prisma {
     personaTemplateId?: NullableStringFieldUpdateOperationsInput | string | null
     emoji?: NullableStringFieldUpdateOperationsInput | string | null
     soulMarkdown?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingConfig?: NullableJsonNullValueInput | InputJsonValue
     healthStatus?: EnumHealthStatusFieldUpdateOperationsInput | $Enums.HealthStatus
     lastHealthCheck?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isDeleted?: BoolFieldUpdateOperationsInput | boolean

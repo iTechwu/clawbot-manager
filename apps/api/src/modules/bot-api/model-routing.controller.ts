@@ -1,7 +1,7 @@
 import { Controller, Req } from '@nestjs/common';
 import { TsRestHandler, tsRestHandler } from '@ts-rest/nest';
 import { modelRoutingContract } from '@repo/contracts';
-import { Auth, AuthenticatedRequest } from '@app/auth';
+import { AdminAuth, AuthenticatedRequest } from '@app/auth';
 import { success, created } from '@/common/ts-rest/response.helper';
 import { ModelRoutingService } from './model-routing.service';
 
@@ -10,9 +10,10 @@ const c = modelRoutingContract;
 /**
  * ModelRoutingController
  * 模型路由配置 API 控制器
+ * 注意：此 API 仅限管理员访问 (isAdmin=true)
  */
 @Controller()
-@Auth()
+@AdminAuth()
 export class ModelRoutingController {
   constructor(private readonly modelRoutingService: ModelRoutingService) {}
 

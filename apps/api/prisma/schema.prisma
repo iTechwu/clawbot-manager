@@ -391,6 +391,10 @@ model Bot {
   avatarFileId      String?   @map("avatar_file_id") @db.Uuid
   soulMarkdown      String?   @map("soul_markdown") @db.Text
 
+  // 待生效配置：存储修改后尚未重启生效的配置
+  // 包含 name, tags, soulMarkdown, emoji 等字段的待生效值
+  pendingConfig Json? @map("pending_config") @db.JsonB
+
   // 健康检查字段
   healthStatus    HealthStatus @default(UNKNOWN) @map("health_status")
   lastHealthCheck DateTime?    @map("last_health_check") @db.Timestamptz(6)
