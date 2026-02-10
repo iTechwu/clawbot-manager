@@ -77,11 +77,16 @@ export const CreateModelPricingInputSchema = z.object({
   notes: z.string().optional(),
 });
 
-export type CreateModelPricingInput = z.infer<typeof CreateModelPricingInputSchema>;
+export type CreateModelPricingInput = z.infer<
+  typeof CreateModelPricingInputSchema
+>;
 
-export const UpdateModelPricingInputSchema = CreateModelPricingInputSchema.partial();
+export const UpdateModelPricingInputSchema =
+  CreateModelPricingInputSchema.partial();
 
-export type UpdateModelPricingInput = z.infer<typeof UpdateModelPricingInputSchema>;
+export type UpdateModelPricingInput = z.infer<
+  typeof UpdateModelPricingInputSchema
+>;
 
 export const CreateCapabilityTagInputSchema = z.object({
   tagId: z.string(),
@@ -99,11 +104,16 @@ export const CreateCapabilityTagInputSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-export type CreateCapabilityTagInput = z.infer<typeof CreateCapabilityTagInputSchema>;
+export type CreateCapabilityTagInput = z.infer<
+  typeof CreateCapabilityTagInputSchema
+>;
 
-export const UpdateCapabilityTagInputSchema = CreateCapabilityTagInputSchema.partial();
+export const UpdateCapabilityTagInputSchema =
+  CreateCapabilityTagInputSchema.partial();
 
-export type UpdateCapabilityTagInput = z.infer<typeof UpdateCapabilityTagInputSchema>;
+export type UpdateCapabilityTagInput = z.infer<
+  typeof UpdateCapabilityTagInputSchema
+>;
 
 export const CreateFallbackChainInputSchema = z.object({
   chainId: z.string(),
@@ -131,11 +141,16 @@ export const CreateFallbackChainInputSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-export type CreateFallbackChainInput = z.infer<typeof CreateFallbackChainInputSchema>;
+export type CreateFallbackChainInput = z.infer<
+  typeof CreateFallbackChainInputSchema
+>;
 
-export const UpdateFallbackChainInputSchema = CreateFallbackChainInputSchema.partial();
+export const UpdateFallbackChainInputSchema =
+  CreateFallbackChainInputSchema.partial();
 
-export type UpdateFallbackChainInput = z.infer<typeof UpdateFallbackChainInputSchema>;
+export type UpdateFallbackChainInput = z.infer<
+  typeof UpdateFallbackChainInputSchema
+>;
 
 export const CreateCostStrategyInputSchema = z.object({
   strategyId: z.string(),
@@ -158,11 +173,16 @@ export const CreateCostStrategyInputSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-export type CreateCostStrategyInput = z.infer<typeof CreateCostStrategyInputSchema>;
+export type CreateCostStrategyInput = z.infer<
+  typeof CreateCostStrategyInputSchema
+>;
 
-export const UpdateCostStrategyInputSchema = CreateCostStrategyInputSchema.partial();
+export const UpdateCostStrategyInputSchema =
+  CreateCostStrategyInputSchema.partial();
 
-export type UpdateCostStrategyInput = z.infer<typeof UpdateCostStrategyInputSchema>;
+export type UpdateCostStrategyInput = z.infer<
+  typeof UpdateCostStrategyInputSchema
+>;
 
 // ============================================================================
 // Complexity Routing Config Input Schemas
@@ -180,8 +200,10 @@ export const CreateComplexityRoutingConfigInputSchema = z.object({
     hard: ComplexityModelConfigSchema,
     super_hard: ComplexityModelConfigSchema,
   }),
+  // 分类器配置（用于判断消息复杂度的模型）
   classifierModel: z.string().default('deepseek-v3-250324'),
   classifierVendor: z.string().default('deepseek'),
+  classifierBaseUrl: z.string().optional(),
   toolMinComplexity: ComplexityLevelSchema.optional(),
 });
 
@@ -202,7 +224,9 @@ export const ClassifyComplexityInputSchema = z.object({
   hasTools: z.boolean().optional(),
 });
 
-export type ClassifyComplexityInput = z.infer<typeof ClassifyComplexityInputSchema>;
+export type ClassifyComplexityInput = z.infer<
+  typeof ClassifyComplexityInputSchema
+>;
 
 // 导入/导出 Schema
 export const ExportConfigResponseSchema = z.object({

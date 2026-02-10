@@ -7,6 +7,7 @@ import {
   type ClassifyResult,
   COMPLEXITY_LEVELS,
   type ModelConfig,
+  type ClassifierConfig,
 } from '@app/clients/internal/complexity-classifier';
 
 /**
@@ -19,6 +20,15 @@ export interface ComplexityRoutingConfig {
   models: Record<ComplexityLevel, ModelConfig>;
   /** 工具调用时的最低复杂度 */
   toolMinComplexity?: ComplexityLevel;
+  /** 分类器配置 */
+  classifier?: {
+    /** 分类器使用的模型 */
+    model: string;
+    /** 分类器使用的 vendor */
+    vendor: string;
+    /** 自定义 Base URL */
+    baseUrl?: string;
+  };
 }
 
 /**
@@ -29,11 +39,15 @@ const DEFAULT_COMPLEXITY_ROUTING: ComplexityRoutingConfig = {
   models: {
     super_easy: { vendor: 'deepseek', model: 'deepseek-v3' },
     easy: { vendor: 'deepseek', model: 'deepseek-v3' },
-    medium: { vendor: 'anthropic', model: 'gpt-4o' },
+    medium: { vendor: 'openai', model: 'gpt-4o' },
     hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
     super_hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
   },
   toolMinComplexity: 'easy',
+  classifier: {
+    model: 'deepseek-v3-250324',
+    vendor: 'deepseek',
+  },
 };
 
 /**
@@ -496,9 +510,21 @@ export class RoutingEngineService {
    */
   setComplexityRoutingConfig(config: ComplexityRoutingConfig): void {
     this.complexityRoutingConfig = config;
+
+    // 同步更新分类器配置
+    if (config.classifier && this.complexityClassifier) {
+      this.complexityClassifier.setClassifierConfig({
+        model: config.classifier.model,
+        vendor: config.classifier.vendor,
+        baseUrl: config.classifier.baseUrl,
+      });
+    }
+
     this.logger.info('[RoutingEngine] Complexity routing config updated', {
       enabled: config.enabled,
       toolMinComplexity: config.toolMinComplexity,
+      classifierModel: config.classifier?.model,
+      classifierVendor: config.classifier?.vendor,
     });
   }
 

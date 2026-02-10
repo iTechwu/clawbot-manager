@@ -289,6 +289,17 @@ export const ComplexityModelConfigSchema = z.object({
 export type ComplexityModelConfig = z.infer<typeof ComplexityModelConfigSchema>;
 
 /**
+ * 分类器配置
+ */
+export const ClassifierConfigSchema = z.object({
+  model: z.string().default('deepseek-v3-250324'),
+  vendor: z.string().default('deepseek'),
+  baseUrl: z.string().nullable().optional(),
+});
+
+export type ClassifierConfig = z.infer<typeof ClassifierConfigSchema>;
+
+/**
  * 复杂度路由配置
  */
 export const ComplexityRoutingConfigSchema = z.object({
@@ -306,9 +317,12 @@ export const ComplexityRoutingConfigSchema = z.object({
     hard: ComplexityModelConfigSchema,
     super_hard: ComplexityModelConfigSchema,
   }),
-  // 分类器配置
+  // 分类器配置（用于判断消息复杂度的模型）
   classifierModel: z.string().default('deepseek-v3-250324'),
   classifierVendor: z.string().default('deepseek'),
+  classifierBaseUrl: z.string().nullable().optional(),
+  // 分类器配置（嵌套对象形式，可选）
+  classifier: ClassifierConfigSchema.optional(),
   // 工具调用时的最低复杂度
   toolMinComplexity: ComplexityLevelSchema.optional(),
   // 是否为内置配置
@@ -371,4 +385,3 @@ export const ComplexityRouteDecisionSchema = z.object({
 export type ComplexityRouteDecision = z.infer<
   typeof ComplexityRouteDecisionSchema
 >;
-

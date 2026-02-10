@@ -14,6 +14,7 @@ import {
   CapabilityTagModule,
   FallbackChainModule,
   CostStrategyModule,
+  ComplexityRoutingConfigModule,
 } from '@app/db';
 import { AuthModule } from '@app/auth';
 import { JwtModule } from '@app/jwt/jwt.module';
@@ -69,6 +70,7 @@ import { ConfigurationService } from './services/configuration.service';
     CapabilityTagModule,
     FallbackChainModule,
     CostStrategyModule,
+    ComplexityRoutingConfigModule,
     // Complexity classifier for complexity-based routing
     ComplexityClassifierModule,
   ],

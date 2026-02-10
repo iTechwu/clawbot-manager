@@ -795,6 +795,7 @@ AUTH_EOF
       try {
         const container = this.docker.getContainer(containerInfo.Id);
         const containerStats = await container.stats({ stream: false });
+        const inspectInfo = await container.inspect();
         const hostname =
           containerInfo.Labels['clawbot-manager.hostname'] || 'unknown';
 
@@ -826,9 +827,23 @@ AUTH_EOF
           networkTxBytes += (net as { tx_bytes: number }).tx_bytes || 0;
         }
 
+        // Get PID and uptime from inspect info
+        const pid = inspectInfo.State.Pid || null;
+        const startedAt = inspectInfo.State.StartedAt || null;
+        let uptimeSeconds: number | null = null;
+        if (startedAt && inspectInfo.State.Running) {
+          const startTime = new Date(startedAt).getTime();
+          const now = Date.now();
+          uptimeSeconds = Math.floor((now - startTime) / 1000);
+        }
+
         stats.push({
           hostname,
           name: containerInfo.Names[0]?.replace(/^\//, '') || hostname,
+          containerId: containerInfo.Id.substring(0, 12),
+          pid: pid === 0 ? null : pid,
+          uptimeSeconds,
+          startedAt,
           cpuPercent: Math.round(cpuPercent * 100) / 100,
           memoryUsage,
           memoryLimit,

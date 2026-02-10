@@ -1,10 +1,7 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import {
-  RoutingEngineService,
-  CapabilityTag,
-} from './routing-engine.service';
+import { RoutingEngineService, CapabilityTag } from './routing-engine.service';
 import {
   FallbackEngineService,
   FallbackChain,
@@ -20,24 +17,16 @@ import {
   CapabilityTagService,
   FallbackChainService,
   CostStrategyService,
+  ComplexityRoutingConfigService,
 } from '@app/db';
 import type {
   ModelPricing as DbModelPricing,
   CapabilityTag as DbCapabilityTag,
   FallbackChain as DbFallbackChain,
   CostStrategy as DbCostStrategy,
+  ComplexityRoutingConfig as DbComplexityRoutingConfig,
 } from '@prisma/client';
-
-/**
- * 配置加载状态
- */
-export interface ConfigLoadStatus {
-  modelPricing: { loaded: boolean; count: number; lastUpdate?: Date };
-  capabilityTags: { loaded: boolean; count: number; lastUpdate?: Date };
-  fallbackChains: { loaded: boolean; count: number; lastUpdate?: Date };
-  costStrategies: { loaded: boolean; count: number; lastUpdate?: Date };
-  complexityRoutingConfigs: { loaded: boolean; count: number; lastUpdate?: Date };
-}
+import type { ConfigLoadStatus } from '@repo/contracts';
 
 /**
  * ConfigurationService - 数据库驱动的配置管理服务
@@ -71,6 +60,7 @@ export class ConfigurationService implements OnModuleInit {
     private readonly capabilityTagDb: CapabilityTagService,
     private readonly fallbackChainDb: FallbackChainService,
     private readonly costStrategyDb: CostStrategyService,
+    private readonly complexityRoutingConfigDb: ComplexityRoutingConfigService,
   ) {}
 
   /**
@@ -147,7 +137,7 @@ export class ConfigurationService implements OnModuleInit {
       this.loadStatus.modelPricing = {
         loaded: true,
         count: pricing.length,
-        lastUpdate: new Date(),
+        lastUpdate: new Date().toISOString(),
       };
     } catch (error) {
       this.logger.error('[ConfigurationService] Failed to load model pricing', {
@@ -192,7 +182,7 @@ export class ConfigurationService implements OnModuleInit {
       this.loadStatus.capabilityTags = {
         loaded: true,
         count: tags.length,
-        lastUpdate: new Date(),
+        lastUpdate: new Date().toISOString(),
       };
     } catch (error) {
       this.logger.error(
@@ -238,7 +228,7 @@ export class ConfigurationService implements OnModuleInit {
       this.loadStatus.fallbackChains = {
         loaded: true,
         count: chains.length,
-        lastUpdate: new Date(),
+        lastUpdate: new Date().toISOString(),
       };
     } catch (error) {
       this.logger.error(
@@ -284,7 +274,7 @@ export class ConfigurationService implements OnModuleInit {
       this.loadStatus.costStrategies = {
         loaded: true,
         count: strategies.length,
-        lastUpdate: new Date(),
+        lastUpdate: new Date().toISOString(),
       };
     } catch (error) {
       this.logger.error(
@@ -301,26 +291,74 @@ export class ConfigurationService implements OnModuleInit {
    */
   async loadComplexityRoutingConfigs(): Promise<void> {
     try {
-      // 使用默认配置（数据库表尚未生成）
-      const configs = this.getDefaultComplexityRoutingConfigs();
-      this.logger.info(
-        `[ConfigurationService] Using ${configs.length} default complexity routing configs`,
+      // 从数据库加载启用的配置
+      const { list: dbConfigs } = await this.complexityRoutingConfigDb.list(
+        { isEnabled: true },
+        { orderBy: { createdAt: 'asc' }, limit: 100 },
       );
 
-      // 设置到 RoutingEngine
-      if (configs.length > 0) {
+      if (dbConfigs.length > 0) {
+        this.logger.info(
+          `[ConfigurationService] Loaded ${dbConfigs.length} complexity routing configs from database`,
+        );
+
+        // 使用第一个启用的配置
+        const activeConfig = dbConfigs[0];
+        const models = activeConfig.models as Record<
+          string,
+          { vendor: string; model: string }
+        >;
+
         this.routingEngine.setComplexityRoutingConfig({
           enabled: true,
-          models: configs[0].models,
-          toolMinComplexity: configs[0].toolMinComplexity,
+          models: {
+            super_easy: models.super_easy,
+            easy: models.easy,
+            medium: models.medium,
+            hard: models.hard,
+            super_hard: models.super_hard,
+          },
+          toolMinComplexity: activeConfig.toolMinComplexity as
+            | 'super_easy'
+            | 'easy'
+            | 'medium'
+            | 'hard'
+            | 'super_hard'
+            | undefined,
+          classifier: {
+            model: activeConfig.classifierModel,
+            vendor: activeConfig.classifierVendor,
+          },
         });
-      }
 
-      this.loadStatus.complexityRoutingConfigs = {
-        loaded: true,
-        count: configs.length,
-        lastUpdate: new Date(),
-      };
+        this.loadStatus.complexityRoutingConfigs = {
+          loaded: true,
+          count: dbConfigs.length,
+          lastUpdate: new Date().toISOString(),
+        };
+      } else {
+        // 数据库为空，使用默认配置但不启用复杂度路由
+        this.logger.info(
+          '[ConfigurationService] No complexity routing configs in database, complexity routing disabled',
+        );
+
+        // 设置为禁用状态
+        this.routingEngine.setComplexityRoutingConfig({
+          enabled: false,
+          models: this.getDefaultComplexityRoutingConfigs()[0].models,
+          toolMinComplexity: 'easy',
+          classifier: {
+            model: 'deepseek-v3-250324',
+            vendor: 'deepseek',
+          },
+        });
+
+        this.loadStatus.complexityRoutingConfigs = {
+          loaded: true,
+          count: 0,
+          lastUpdate: new Date().toISOString(),
+        };
+      }
     } catch (error) {
       this.logger.error(
         '[ConfigurationService] Failed to load complexity routing configs',
@@ -465,7 +503,8 @@ export class ConfigurationService implements OnModuleInit {
         : undefined,
       maxLatencyMs: db.maxLatencyMs || undefined,
       minCapabilityScore: db.minCapabilityScore || undefined,
-      scenarioWeights: (db.scenarioWeights as Record<string, number>) || undefined,
+      scenarioWeights:
+        (db.scenarioWeights as Record<string, number>) || undefined,
     };
   }
 
@@ -764,7 +803,17 @@ export class ConfigurationService implements OnModuleInit {
       hard: { vendor: string; model: string };
       super_hard: { vendor: string; model: string };
     };
-    toolMinComplexity?: 'super_easy' | 'easy' | 'medium' | 'hard' | 'super_hard';
+    toolMinComplexity?:
+      | 'super_easy'
+      | 'easy'
+      | 'medium'
+      | 'hard'
+      | 'super_hard';
+    classifier?: {
+      model: string;
+      vendor: string;
+      baseUrl?: string;
+    };
   }> {
     return [
       {
@@ -778,6 +827,10 @@ export class ConfigurationService implements OnModuleInit {
           super_hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
         },
         toolMinComplexity: 'easy',
+        classifier: {
+          model: 'deepseek-v3-250324',
+          vendor: 'deepseek',
+        },
       },
       {
         configId: 'cost-optimized',
@@ -787,9 +840,16 @@ export class ConfigurationService implements OnModuleInit {
           easy: { vendor: 'deepseek', model: 'deepseek-v3' },
           medium: { vendor: 'deepseek', model: 'deepseek-v3' },
           hard: { vendor: 'openai', model: 'gpt-4o' },
-          super_hard: { vendor: 'anthropic', model: 'claude-sonnet-4-20250514' },
+          super_hard: {
+            vendor: 'anthropic',
+            model: 'claude-sonnet-4-20250514',
+          },
         },
         toolMinComplexity: 'easy',
+        classifier: {
+          model: 'deepseek-v3-250324',
+          vendor: 'deepseek',
+        },
       },
       {
         configId: 'performance-first',
@@ -802,6 +862,10 @@ export class ConfigurationService implements OnModuleInit {
           super_hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
         },
         toolMinComplexity: 'medium',
+        classifier: {
+          model: 'gpt-4o-mini',
+          vendor: 'openai',
+        },
       },
     ];
   }

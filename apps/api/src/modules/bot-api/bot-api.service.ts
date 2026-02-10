@@ -1072,10 +1072,15 @@ export class BotApiService {
   // Provider Key Operations
   // ============================================================================
 
-  async listProviderKeys(userId: string): Promise<ProviderKeyDto[]> {
-    const { list } = await this.providerKeyService.list({
-      createdById: userId,
-    });
+  /**
+   * 列出所有可用的 Provider Keys
+   * 管理员创建的 API Keys 对所有用户可见和可用
+   * 注意：只有管理员可以创建和删除 API Keys
+   */
+  async listProviderKeys(_userId: string): Promise<ProviderKeyDto[]> {
+    // 列出所有 API Keys（不按用户过滤）
+    // 所有用户都可以使用管理员创建的 API Keys
+    const { list } = await this.providerKeyService.list({});
     return list.map((key) => this.toProviderKeyDto(key));
   }
 
@@ -1113,12 +1118,16 @@ export class BotApiService {
     return { id: key.id };
   }
 
+  /**
+   * 删除 Provider Key
+   * 注意：只有管理员可以删除 API Keys（通过 @AdminAuth() 装饰器控制）
+   */
   async deleteProviderKey(
     id: string,
     userId: string,
   ): Promise<{ ok: boolean }> {
     const key = await this.providerKeyService.get({ id });
-    if (!key || key.createdById !== userId) {
+    if (!key) {
       throw new NotFoundException(`Provider key with id "${id}" not found`);
     }
     await this.providerKeyService.update(
@@ -1140,14 +1149,18 @@ export class BotApiService {
     return { ok: true };
   }
 
-  async getProviderKeyHealth(userId: string): Promise<{
+  /**
+   * 获取 Provider Key 健康状态
+   * 显示所有可用的 API Keys 数量
+   */
+  async getProviderKeyHealth(_userId: string): Promise<{
     status: string;
     keyCount: number;
     botCount: number;
   }> {
     const [keyResult, botResult] = await Promise.all([
-      this.providerKeyService.list({ createdById: userId }, { limit: 1 }),
-      this.botService.list({ createdById: userId }, { limit: 1 }),
+      this.providerKeyService.list({}, { limit: 1 }),
+      this.botService.list({}, { limit: 1 }),
     ]);
     const keyCount = keyResult.total;
     const botCount = botResult.total;

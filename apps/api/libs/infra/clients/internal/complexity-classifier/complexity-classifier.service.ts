@@ -22,6 +22,7 @@ import {
   type ComplexityLevel,
   type ClassifyRequest,
   type ClassifyResult,
+  type ClassifierConfig,
   COMPLEXITY_LEVELS,
 } from './complexity-classifier.types';
 
@@ -60,16 +61,23 @@ Message: {MESSAGE}
 
 Complexity:`;
 
+/**
+ * 默认分类器配置
+ */
+const DEFAULT_CLASSIFIER_CONFIG: ClassifierConfig = {
+  model: 'deepseek-v3-250324',
+  vendor: 'deepseek',
+  timeout: 30000,
+};
+
 @Injectable()
 export class ComplexityClassifierService {
-  /** 分类器使用的模型 */
-  private readonly classifierModel = 'deepseek-v3-250324';
+  /** 分类器配置 */
+  private classifierConfig: ClassifierConfig = DEFAULT_CLASSIFIER_CONFIG;
   /** 最大消息长度（超过则截断） */
   private readonly maxMessageLength = 500;
   /** 最大上下文长度 */
   private readonly maxContextLength = 200;
-  /** 请求超时（毫秒） */
-  private readonly timeout = 30000;
 
   private openaiConfig: OpenAIConfig | undefined;
 
@@ -79,6 +87,27 @@ export class ComplexityClassifierService {
   ) {
     const keysConfig = getKeysConfig();
     this.openaiConfig = keysConfig?.openai;
+  }
+
+  /**
+   * 设置分类器配置
+   */
+  setClassifierConfig(config: Partial<ClassifierConfig>): void {
+    this.classifierConfig = {
+      ...this.classifierConfig,
+      ...config,
+    };
+    this.logger.info('[ComplexityClassifier] Classifier config updated', {
+      model: this.classifierConfig.model,
+      vendor: this.classifierConfig.vendor,
+    });
+  }
+
+  /**
+   * 获取分类器配置
+   */
+  getClassifierConfig(): ClassifierConfig {
+    return { ...this.classifierConfig };
   }
 
   /**
@@ -119,15 +148,19 @@ export class ComplexityClassifierService {
         level,
         latencyMs,
         rawResponse,
-        inheritedFromContext: this.isShortMessage(request.message) && !!request.context,
+        inheritedFromContext:
+          this.isShortMessage(request.message) && !!request.context,
       };
     } catch (error) {
       const latencyMs = Date.now() - startTime;
 
-      this.logger.warn('[ComplexityClassifier] Classification failed, defaulting to medium', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        latencyMs,
-      });
+      this.logger.warn(
+        '[ComplexityClassifier] Classification failed, defaulting to medium',
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          latencyMs,
+        },
+      );
 
       // 失败时默认返回 medium
       return {
@@ -168,8 +201,10 @@ export class ComplexityClassifierService {
    * 调用分类器 LLM
    */
   private async callClassifier(prompt: string): Promise<string> {
-    const baseUrl = this.openaiConfig?.baseUrl;
-    const apiKey = this.openaiConfig?.apiKey;
+    // 优先使用分类器配置中的 baseUrl 和 apiKey，否则使用默认的 openai 配置
+    const baseUrl = this.classifierConfig.baseUrl || this.openaiConfig?.baseUrl;
+    const apiKey = this.classifierConfig.apiKey || this.openaiConfig?.apiKey;
+    const timeout = this.classifierConfig.timeout || 30000;
 
     if (!baseUrl || !apiKey) {
       throw new Error('OpenAI config not available for complexity classifier');
@@ -180,7 +215,7 @@ export class ComplexityClassifierService {
         this.httpService.post(
           `${baseUrl}/chat/completions`,
           {
-            model: this.classifierModel,
+            model: this.classifierConfig.model,
             messages: [
               {
                 role: 'user',
@@ -195,7 +230,7 @@ export class ComplexityClassifierService {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${apiKey}`,
             },
-            timeout: this.timeout,
+            timeout,
           },
         ),
       );
