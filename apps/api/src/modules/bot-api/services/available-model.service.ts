@@ -6,6 +6,7 @@ import {
   ModelPricingService,
   BotModelService,
   ProviderKeyService,
+  ModelCapabilityTagService,
 } from '@app/db';
 
 /**
@@ -66,9 +67,9 @@ export interface BotModelInfo {
 }
 
 /**
- * 模型分类映射
+ * 模型分类映射（作为 fallback）
  */
-const MODEL_CATEGORIES: Record<string, string> = {
+const MODEL_CATEGORIES_FALLBACK: Record<string, string> = {
   // Anthropic
   'claude-opus-4-20250514': 'reasoning',
   'claude-sonnet-4-20250514': 'balanced',
@@ -92,9 +93,9 @@ const MODEL_CATEGORIES: Record<string, string> = {
 };
 
 /**
- * 模型能力标签
+ * 模型能力标签（作为 fallback）
  */
-const MODEL_CAPABILITIES: Record<string, string[]> = {
+const MODEL_CAPABILITIES_FALLBACK: Record<string, string[]> = {
   // Anthropic
   'claude-opus-4-20250514': [
     'vision',
@@ -126,9 +127,9 @@ const MODEL_CAPABILITIES: Record<string, string[]> = {
 };
 
 /**
- * 模型显示名称
+ * 模型显示名称（作为 fallback）
  */
-const MODEL_DISPLAY_NAMES: Record<string, string> = {
+const MODEL_DISPLAY_NAMES_FALLBACK: Record<string, string> = {
   // Anthropic
   'claude-opus-4-20250514': 'Claude Opus 4',
   'claude-sonnet-4-20250514': 'Claude Sonnet 4',
@@ -169,6 +170,7 @@ export class AvailableModelService {
     private readonly modelPricingService: ModelPricingService,
     private readonly botModelService: BotModelService,
     private readonly providerKeyService: ProviderKeyService,
+    private readonly modelCapabilityTagService: ModelCapabilityTagService,
   ) {}
 
   /**
@@ -216,7 +218,49 @@ export class AvailableModelService {
       }
     }
 
-    // 6. 如果需要 Provider 信息，构建 Provider 映射
+    // 6. 获取所有能力标签关联（用于动态获取模型能力）
+    const { list: allCapabilityTags } =
+      await this.modelCapabilityTagService.list(
+        {},
+        { limit: 10000 },
+        {
+          select: {
+            modelAvailabilityId: true,
+            capabilityTag: { select: { tagId: true } },
+          },
+        },
+      );
+
+    // 构建 modelAvailabilityId -> tagIds 映射
+    const capabilityTagsByAvailabilityId = new Map<string, string[]>();
+    for (const ct of allCapabilityTags) {
+      const tags =
+        capabilityTagsByAvailabilityId.get(ct.modelAvailabilityId) || [];
+      const tagId = (ct as { capabilityTag?: { tagId: string } }).capabilityTag
+        ?.tagId;
+      if (tagId && !tags.includes(tagId)) {
+        tags.push(tagId);
+      }
+      capabilityTagsByAvailabilityId.set(ct.modelAvailabilityId, tags);
+    }
+
+    // 构建 vendor:model -> tagIds 映射（聚合所有 ModelAvailability 的标签）
+    const capabilityTagsByModel = new Map<string, string[]>();
+    for (const a of availableList) {
+      const pk = providerKeyMap.get(a.providerKeyId);
+      if (!pk) continue;
+      const key = `${pk.vendor}:${a.model}`;
+      const existingTags = capabilityTagsByModel.get(key) || [];
+      const newTags = capabilityTagsByAvailabilityId.get(a.id) || [];
+      for (const tag of newTags) {
+        if (!existingTags.includes(tag)) {
+          existingTags.push(tag);
+        }
+      }
+      capabilityTagsByModel.set(key, existingTags);
+    }
+
+    // 7. 如果需要 Provider 信息，构建 Provider 映射
     const providerInfoMap = new Map<string, ProviderInfo[]>();
     const providerKeysByVendor = new Map<string, ProviderInfo[]>();
     if (includeProviderInfo) {
@@ -264,23 +308,42 @@ export class AvailableModelService {
       }
     }
 
-    // 7. 聚合模型信息
+    // 8. 聚合模型信息
     const models: AvailableModel[] = [];
 
     for (const pricing of pricingList) {
       const key = `${pricing.vendor}:${pricing.model}`;
       const isAvailable = availableModelsSet.has(key);
 
+      // 获取动态能力标签，如果没有则使用 fallback
+      const dynamicCapabilities = capabilityTagsByModel.get(key);
+      const capabilities =
+        dynamicCapabilities && dynamicCapabilities.length > 0
+          ? dynamicCapabilities
+          : MODEL_CAPABILITIES_FALLBACK[pricing.model] || [
+              'tools',
+              'streaming',
+            ];
+
+      // 从能力标签推导分类，如果没有则使用 fallback
+      const category = this.deriveCategoryFromCapabilities(
+        capabilities,
+        pricing.model,
+      );
+
+      // 使用 ModelPricing.displayName，如果没有则使用 fallback
+      const displayName =
+        pricing.displayName ||
+        MODEL_DISPLAY_NAMES_FALLBACK[pricing.model] ||
+        pricing.model;
+
       const model: AvailableModel = {
         id: pricing.model,
         model: pricing.model,
-        displayName: MODEL_DISPLAY_NAMES[pricing.model] || pricing.model,
+        displayName,
         vendor: pricing.vendor,
-        category: MODEL_CATEGORIES[pricing.model] || 'general',
-        capabilities: MODEL_CAPABILITIES[pricing.model] || [
-          'tools',
-          'streaming',
-        ],
+        category,
+        capabilities,
         isAvailable,
         lastVerifiedAt: lastVerifiedMap.get(key) || null,
         reasoningScore: pricing.reasoningScore || undefined,
@@ -305,7 +368,7 @@ export class AvailableModelService {
       models.push(model);
     }
 
-    // 7. 按可用性和分类排序
+    // 9. 按可用性和分类排序
     models.sort((a, b) => {
       // 可用的排在前面
       if (a.isAvailable !== b.isAvailable) {
@@ -319,6 +382,35 @@ export class AvailableModelService {
     });
 
     return models;
+  }
+
+  /**
+   * 从能力标签推导模型分类
+   */
+  private deriveCategoryFromCapabilities(
+    capabilities: string[],
+    modelName: string,
+  ): string {
+    // 优先使用 fallback 映射
+    if (MODEL_CATEGORIES_FALLBACK[modelName]) {
+      return MODEL_CATEGORIES_FALLBACK[modelName];
+    }
+
+    // 根据能力标签推导分类
+    if (
+      capabilities.includes('extended-thinking') ||
+      capabilities.includes('reasoning')
+    ) {
+      return 'reasoning';
+    }
+    if (capabilities.includes('fast') || capabilities.includes('speed')) {
+      return 'fast';
+    }
+    if (capabilities.includes('vision') && capabilities.includes('tools')) {
+      return 'balanced';
+    }
+
+    return 'general';
   }
 
   /**
@@ -345,7 +437,11 @@ export class AvailableModelService {
 
       models.push({
         modelId: bm.modelId,
-        displayName: MODEL_DISPLAY_NAMES[bm.modelId] || bm.modelId,
+        // 优先使用动态获取的 displayName，否则使用 fallback
+        displayName:
+          available?.displayName ||
+          MODEL_DISPLAY_NAMES_FALLBACK[bm.modelId] ||
+          bm.modelId,
         isEnabled: bm.isEnabled,
         isPrimary: bm.isPrimary,
         isAvailable: available?.isAvailable || false,

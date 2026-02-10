@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo, useState, useCallback } from 'react';
-import { useAvailableModels } from '@/hooks/useModels';
+import { useAvailableModels, useModelAvailability } from '@/hooks/useModels';
+import { useProviderKeys } from '@/hooks/useProviderKeys';
 import { useIsAdmin } from '@/lib/permissions';
-import type { AvailableModel } from '@repo/contracts';
+import type { AvailableModel, ModelAvailabilityItem } from '@repo/contracts';
 import {
   Card,
   CardContent,
@@ -13,7 +14,6 @@ import {
   Input,
   ScrollArea,
   Tabs,
-  TabsContent,
   TabsList,
   TabsTrigger,
   Button,
@@ -32,8 +32,11 @@ import {
   CheckCircle,
   XCircle,
   RefreshCw,
-  MoreVertical,
   PlayCircle,
+  Key,
+  Database,
+  Clock,
+  AlertCircle,
 } from 'lucide-react';
 import { ModelCard } from './components/model-card';
 import { toast } from 'sonner';
@@ -48,27 +51,45 @@ const MODEL_CATEGORIES = [
   { id: 'fast', label: '快速', icon: Zap },
 ] as const;
 
+// View mode type
+type ViewMode = 'cards' | 'availability';
+
 export default function ModelsPage() {
   const {
     models,
     loading,
     error,
-    verifyModels,
-    verifying,
     refresh,
     refreshModels,
     refreshing,
+    refreshAllModels,
+    refreshingAll,
     verifySingleModel,
     verifyingModel,
-    batchVerifyModels,
+    batchVerifyUnverified,
+    batchVerifying,
+    batchVerifyAllUnavailable,
+    batchVerifyingAll,
   } = useAvailableModels();
   const isAdmin = useIsAdmin();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [batchProgress, setBatchProgress] = useState<{
     current: number;
     total: number;
   } | null>(null);
+
+  // Get ModelAvailability data for admin view
+  const {
+    availability,
+    loading: availabilityLoading,
+    refresh: refreshAvailability,
+  } = useModelAvailability();
+
+  // Get provider keys list (for admin to know if any API keys are configured)
+  const { keys: providerKeys, loading: providerKeysLoading } =
+    useProviderKeys();
 
   // Filter models by search and category
   const filteredModels = useMemo(() => {
@@ -116,23 +137,6 @@ export default function ModelsPage() {
     return { total, available };
   }, [models]);
 
-  // Get unique provider keys from models
-  const providerKeys = useMemo(() => {
-    const keyMap = new Map<string, { id: string; label: string; vendor: string }>();
-    models.forEach((model) => {
-      model.providers?.forEach((provider) => {
-        if (!keyMap.has(provider.providerKeyId)) {
-          keyMap.set(provider.providerKeyId, {
-            id: provider.providerKeyId,
-            label: provider.label || provider.vendor,
-            vendor: provider.vendor,
-          });
-        }
-      });
-    });
-    return Array.from(keyMap.values());
-  }, [models]);
-
   // Handle refresh models for a specific provider key
   const handleRefreshModels = useCallback(
     async (providerKeyId: string) => {
@@ -154,46 +158,61 @@ export default function ModelsPage() {
         if (result.isAvailable) {
           toast.success(`模型 ${model} 验证成功`);
         } else {
-          toast.error(`模型 ${model} 不可用: ${result.errorMessage || '未知错误'}`);
+          toast.error(
+            `模型 ${model} 不可用: ${result.errorMessage || '未知错误'}`,
+          );
         }
       }
     },
     [verifySingleModel],
   );
 
-  // Handle batch verify all models for a provider key
+  // Handle batch verify unverified models for a provider key
   const handleBatchVerify = useCallback(
     async (providerKeyId: string) => {
-      // Get all models for this provider key
-      const modelsToVerify = models
-        .filter((m) => m.providers?.some((p) => p.providerKeyId === providerKeyId))
-        .map((m) => m.model);
+      setBatchProgress({ current: 0, total: 1 });
 
-      if (modelsToVerify.length === 0) {
-        toast.error('没有找到需要验证的模型');
-        return;
-      }
-
-      setBatchProgress({ current: 0, total: modelsToVerify.length });
-
-      const results = await batchVerifyModels(
-        providerKeyId,
-        modelsToVerify,
-        (current, total, result) => {
-          setBatchProgress({ current, total });
-        },
-        1500, // 1.5 second delay between requests
-      );
+      const result = await batchVerifyUnverified(providerKeyId);
 
       setBatchProgress(null);
 
-      const successCount = results.filter((r) => r.isAvailable).length;
-      toast.success(
-        `批量验证完成：${successCount}/${results.length} 个模型可用`,
-      );
+      if (result) {
+        toast.success(
+          `批量验证完成：${result.available}/${result.total} 个模型可用，${result.failed} 个失败`,
+        );
+        // Refresh availability data
+        refreshAvailability();
+      }
     },
-    [models, batchVerifyModels],
+    [batchVerifyUnverified, refreshAvailability],
   );
+
+  // Handle refresh all models
+  const handleRefreshAllModels = useCallback(async () => {
+    const result = await refreshAllModels();
+    if (result) {
+      toast.success(
+        `刷新完成：${result.successCount}/${result.totalProviderKeys} 个密钥成功，共 ${result.totalModels} 个模型，新增 ${result.totalAdded}，移除 ${result.totalRemoved}`,
+      );
+      refreshAvailability();
+    }
+  }, [refreshAllModels, refreshAvailability]);
+
+  // Handle batch verify all unavailable models
+  const handleBatchVerifyAll = useCallback(async () => {
+    setBatchProgress({ current: 0, total: 1 });
+
+    const result = await batchVerifyAllUnavailable();
+
+    setBatchProgress(null);
+
+    if (result) {
+      toast.success(
+        `批量验证完成：${result.totalAvailable}/${result.totalVerified} 个模型可用，${result.totalFailed} 个失败`,
+      );
+      refreshAvailability();
+    }
+  }, [batchVerifyAllUnavailable, refreshAvailability]);
 
   if (loading) {
     return (
@@ -234,21 +253,152 @@ export default function ModelsPage() {
               {stats.available} / {stats.total} 可用
             </span>
           </div>
+          {/* View Mode Toggle (Admin only) */}
           {isAdmin && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={verifyModels}
-              disabled={verifying}
-            >
-              <RefreshCw
-                className={`mr-1.5 size-4 ${verifying ? 'animate-spin' : ''}`}
-              />
-              {verifying ? '验证中...' : '验证模型'}
-            </Button>
+            <div className="flex items-center gap-1 rounded-md border p-1">
+              <Button
+                variant={viewMode === 'cards' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-7 px-2"
+                onClick={() => setViewMode('cards')}
+              >
+                <Cpu className="mr-1 size-3.5" />
+                卡片
+              </Button>
+              <Button
+                variant={viewMode === 'availability' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-7 px-2"
+                onClick={() => setViewMode('availability')}
+              >
+                <Database className="mr-1 size-3.5" />
+                可用性
+              </Button>
+            </div>
+          )}
+          {isAdmin && providerKeys.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={
+                    refreshing || refreshingAll || batchProgress !== null
+                  }
+                >
+                  <RefreshCw
+                    className={`mr-1.5 size-4 ${refreshing || refreshingAll ? 'animate-spin' : ''}`}
+                  />
+                  {refreshing || refreshingAll ? '刷新中...' : '刷新模型列表'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={handleRefreshAllModels}
+                  className="font-medium"
+                >
+                  <RefreshCw className="mr-2 size-4" />
+                  刷新所有密钥
+                </DropdownMenuItem>
+                <div className="my-1 h-px bg-border" />
+                {providerKeys.map((pk) => (
+                  <DropdownMenuItem
+                    key={pk.id}
+                    onClick={() => handleRefreshModels(pk.id)}
+                  >
+                    <RefreshCw className="mr-2 size-4" />
+                    {pk.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {isAdmin && providerKeys.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={
+                    batchProgress !== null ||
+                    batchVerifying ||
+                    batchVerifyingAll
+                  }
+                >
+                  <PlayCircle
+                    className={`mr-1.5 size-4 ${batchVerifying || batchVerifyingAll ? 'animate-spin' : ''}`}
+                  />
+                  {batchVerifying || batchVerifyingAll
+                    ? '验证中...'
+                    : '批量验证'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={handleBatchVerifyAll}
+                  className="font-medium"
+                >
+                  <PlayCircle className="mr-2 size-4" />
+                  验证所有不可用模型
+                </DropdownMenuItem>
+                <div className="my-1 h-px bg-border" />
+                {providerKeys.map((pk) => (
+                  <DropdownMenuItem
+                    key={pk.id}
+                    onClick={() => handleBatchVerify(pk.id)}
+                  >
+                    <PlayCircle className="mr-2 size-4" />
+                    {pk.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>
+
+      {/* Admin Notice: No Provider Keys */}
+      {isAdmin && providerKeys.length === 0 && (
+        <Card className="mb-4 border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950">
+          <CardContent className="flex items-center gap-3 py-3">
+            <Key className="size-5 text-amber-600 dark:text-amber-400" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                尚未配置 API 密钥
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                请先在「密钥管理」页面添加 API 密钥，然后才能刷新和验证模型
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900"
+              asChild
+            >
+              <a href="/secrets">
+                <Key className="mr-1.5 size-4" />
+                添加密钥
+              </a>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Batch Progress */}
+      {batchProgress && (
+        <div className="mb-4 shrink-0">
+          <div className="flex items-center justify-between text-sm mb-1">
+            <span>批量验证进度</span>
+            <span>
+              {batchProgress.current} / {batchProgress.total}
+            </span>
+          </div>
+          <Progress
+            value={(batchProgress.current / batchProgress.total) * 100}
+          />
+        </div>
+      )}
 
       {/* Search and Filter */}
       <div className="mb-4 flex shrink-0 items-center gap-4">
@@ -275,7 +425,112 @@ export default function ModelsPage() {
 
       {/* Models List */}
       <ScrollArea className="min-h-0 flex-1">
-        {filteredModels.length === 0 ? (
+        {/* Availability Table View (Admin only) */}
+        {isAdmin && viewMode === 'availability' ? (
+          <div className="pb-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="flex items-center gap-2 text-sm font-medium">
+                <Database className="size-4" />
+                模型可用性记录 ({availability.length})
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refreshAvailability()}
+                disabled={availabilityLoading}
+              >
+                <RefreshCw
+                  className={`mr-1.5 size-4 ${availabilityLoading ? 'animate-spin' : ''}`}
+                />
+                刷新
+              </Button>
+            </div>
+            {availability.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Database className="text-muted-foreground mb-4 size-16 opacity-50" />
+                <h3 className="text-muted-foreground text-lg font-medium">
+                  暂无可用性记录
+                </h3>
+                <p className="text-muted-foreground mt-2 text-sm">
+                  请先刷新模型列表以获取可用性数据
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {availability.map((item) => (
+                  <Card key={item.id} className="p-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm truncate">
+                            {item.model}
+                          </span>
+                          {item.isAvailable ? (
+                            <Badge
+                              variant="default"
+                              className="bg-green-500 shrink-0"
+                            >
+                              <CheckCircle className="mr-1 size-3" />
+                              可用
+                            </Badge>
+                          ) : item.errorMessage === 'Not verified yet' ? (
+                            <Badge variant="secondary" className="shrink-0">
+                              <Clock className="mr-1 size-3" />
+                              未验证
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive" className="shrink-0">
+                              <XCircle className="mr-1 size-3" />
+                              不可用
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                          <span>
+                            验证时间:{' '}
+                            {item.lastVerifiedAt
+                              ? new Date(item.lastVerifiedAt).toLocaleString(
+                                  'zh-CN',
+                                )
+                              : '-'}
+                          </span>
+                          {item.errorMessage &&
+                            item.errorMessage !== 'Not verified yet' && (
+                              <span className="text-destructive flex items-center gap-1 truncate">
+                                <AlertCircle className="size-3 shrink-0" />
+                                <span
+                                  className="truncate"
+                                  title={item.errorMessage}
+                                >
+                                  {item.errorMessage}
+                                </span>
+                              </span>
+                            )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          handleVerifySingleModel(
+                            item.providerKeyId,
+                            item.model,
+                          );
+                        }}
+                        disabled={verifyingModel === item.model}
+                        title="验证模型"
+                      >
+                        <RefreshCw
+                          className={`size-4 ${verifyingModel === item.model ? 'animate-spin' : ''}`}
+                        />
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : filteredModels.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
             <Cpu className="text-muted-foreground mb-4 size-16 opacity-50" />
             <h3 className="text-muted-foreground text-lg font-medium">
@@ -293,7 +548,13 @@ export default function ModelsPage() {
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {availableModels.map((model) => (
-                    <ModelCard key={model.id} model={model} />
+                    <ModelCard
+                      key={model.id}
+                      model={model}
+                      isAdmin={isAdmin}
+                      onVerify={handleVerifySingleModel}
+                      verifying={verifyingModel === model.model}
+                    />
                   ))}
                 </div>
               </div>
@@ -308,7 +569,13 @@ export default function ModelsPage() {
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 opacity-60">
                   {unavailableModels.map((model) => (
-                    <ModelCard key={model.id} model={model} />
+                    <ModelCard
+                      key={model.id}
+                      model={model}
+                      isAdmin={isAdmin}
+                      onVerify={handleVerifySingleModel}
+                      verifying={verifyingModel === model.model}
+                    />
                   ))}
                 </div>
               </div>

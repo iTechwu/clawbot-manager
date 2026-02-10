@@ -515,30 +515,77 @@ model BotModel {
   @@map("b_bot_model")
 }
 
+/// 模型类型枚举
+/// 用于分类模型的能力类型（与 provider.schema.ts 中的 ModelTypeSchema 保持一致）
+enum ModelType {
+  llm            @map("llm") // 大语言模型
+  text_embedding @map("text-embedding") // 文本嵌入
+  speech2text    @map("speech2text") // 语音转文字
+  tts            @map("tts") // 文字转语音
+  moderation     @map("moderation") // 内容审核
+  rerank         @map("rerank") // 重排序
+  image          @map("image") // 图像生成
+  video          @map("video") // 视频生成
+
+  @@map("model_type")
+}
+
 /// ModelAvailability - 模型可用性缓存表
 /// 缓存 API Key 验证结果，避免频繁调用外部 API
 /// vendor 信息从关联的 ProviderKey 中获取，避免数据冗余
 model ModelAvailability {
-  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   /// 模型标识符，如 "gpt-4o", "claude-sonnet-4-20250514"
-  model          String   @db.VarChar(100)
+  model          String    @db.VarChar(100)
   /// 关联的 Provider Key（vendor 信息从这里获取）
-  providerKeyId  String   @map("provider_key_id") @db.Uuid
+  providerKeyId  String    @map("provider_key_id") @db.Uuid
+  /// 模型类型（llm, image, video, tts, embedding 等）
+  modelType      ModelType @default(llm) @map("model_type")
+  /// 关联的 ModelPricing ID（可选，用于快速查询定价）
+  modelPricingId String?   @map("model_pricing_id") @db.Uuid
   /// 模型是否可用（API Key 验证通过）
-  isAvailable    Boolean  @default(false) @map("is_available")
+  isAvailable    Boolean   @default(false) @map("is_available")
   /// 最后验证时间
-  lastVerifiedAt DateTime @map("last_verified_at") @db.Timestamptz(6)
+  lastVerifiedAt DateTime  @map("last_verified_at") @db.Timestamptz(6)
   /// 验证失败时的错误信息
-  errorMessage   String?  @map("error_message") @db.Text
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  errorMessage   String?   @map("error_message") @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  providerKey ProviderKey @relation(fields: [providerKeyId], references: [id], onDelete: Cascade)
+  providerKey    ProviderKey          @relation(fields: [providerKeyId], references: [id], onDelete: Cascade)
+  modelPricing   ModelPricing?        @relation(fields: [modelPricingId], references: [id], onDelete: SetNull)
+  capabilityTags ModelCapabilityTag[]
 
   @@unique([providerKeyId, model])
   @@index([model])
+  @@index([modelType])
+  @@index([modelPricingId])
   @@index([isAvailable])
   @@map("b_model_availability")
+}
+
+/// ModelCapabilityTag - 模型与能力标签的关联表
+/// 存储模型与能力标签的多对多关系，支持匹配来源追踪
+model ModelCapabilityTag {
+  id                  String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  /// 关联的 ModelAvailability ID
+  modelAvailabilityId String   @map("model_availability_id") @db.Uuid
+  /// 关联的 CapabilityTag ID
+  capabilityTagId     String   @map("capability_tag_id") @db.Uuid
+  /// 匹配来源：pattern (模式匹配), feature (特性匹配), scenario (场景匹配), manual (手动)
+  matchSource         String   @default("pattern") @map("match_source") @db.VarChar(20)
+  /// 匹配置信度 (0-100)
+  confidence          Int      @default(100)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  modelAvailability ModelAvailability @relation(fields: [modelAvailabilityId], references: [id], onDelete: Cascade)
+  capabilityTag     CapabilityTag     @relation(fields: [capabilityTagId], references: [id], onDelete: Cascade)
+
+  @@unique([modelAvailabilityId, capabilityTagId])
+  @@index([modelAvailabilityId])
+  @@index([capabilityTagId])
+  @@index([matchSource])
+  @@map("b_model_capability_tag")
 }
 
 /// BotUsageLog - Bot API 使用日志
@@ -1089,6 +1136,8 @@ model ModelPricing {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
+  modelAvailabilities ModelAvailability[]
+
   @@index([vendor])
   @@index([isEnabled])
   @@index([isDeprecated])
@@ -1227,6 +1276,8 @@ model CapabilityTag {
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  modelCapabilityTags ModelCapabilityTag[]
 
   @@index([category])
   @@index([isActive])

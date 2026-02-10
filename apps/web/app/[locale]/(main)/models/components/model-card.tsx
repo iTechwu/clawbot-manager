@@ -1,7 +1,14 @@
 'use client';
 
 import type { AvailableModel } from '@repo/contracts';
-import { Card, CardContent, CardHeader, CardTitle, Badge, Button } from '@repo/ui';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Badge,
+  Button,
+} from '@repo/ui';
 import {
   CheckCircle,
   XCircle,
@@ -12,6 +19,14 @@ import {
   Sparkles,
   Key,
   RefreshCw,
+  Zap,
+  MessageSquare,
+  Code,
+  FileText,
+  Globe,
+  Shield,
+  Cpu,
+  Database,
 } from 'lucide-react';
 
 interface ModelCardProps {
@@ -23,13 +38,29 @@ interface ModelCardProps {
 
 /**
  * 能力图标映射
+ * 支持动态能力标签
  */
 const CAPABILITY_ICONS: Record<string, React.ElementType> = {
+  // 基础能力
   vision: Eye,
   tools: Wrench,
   streaming: Radio,
   reasoning: Brain,
   'extended-thinking': Sparkles,
+  // 扩展能力
+  fast: Zap,
+  speed: Zap,
+  chat: MessageSquare,
+  code: Code,
+  coding: Code,
+  document: FileText,
+  multilingual: Globe,
+  safety: Shield,
+  moderation: Shield,
+  embedding: Database,
+  'function-calling': Wrench,
+  // 默认
+  default: Cpu,
 };
 
 /**
@@ -53,7 +84,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   general: '通用',
 };
 
-export function ModelCard({ model, isAdmin, onVerify, verifying }: ModelCardProps) {
+export function ModelCard({
+  model,
+  isAdmin,
+  onVerify,
+  verifying,
+}: ModelCardProps) {
   const categoryColor =
     CATEGORY_COLORS[model.category] || CATEGORY_COLORS.general;
   const categoryLabel = CATEGORY_LABELS[model.category] || model.category;
@@ -111,7 +147,7 @@ export function ModelCard({ model, isAdmin, onVerify, verifying }: ModelCardProp
         {/* Capabilities */}
         <div className="flex flex-wrap gap-1.5">
           {model.capabilities.map((cap) => {
-            const Icon = CAPABILITY_ICONS[cap];
+            const Icon = CAPABILITY_ICONS[cap] || CAPABILITY_ICONS.default;
             return (
               <Badge key={cap} variant="outline" className="gap-1 text-xs">
                 {Icon && <Icon className="size-3" />}

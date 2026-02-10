@@ -15,6 +15,8 @@ import {
   BotModelRoutingModule,
   BotModelModule,
   ModelAvailabilityModule,
+  CapabilityTagModule,
+  ModelCapabilityTagModule,
 } from '@app/db';
 import { PrismaModule } from '@app/prisma';
 import { AuthModule } from '@app/auth';
@@ -37,6 +39,7 @@ import { ModelRoutingModule } from './model-routing.module';
 import { ModelRoutingController } from './model-routing.controller';
 import { AvailableModelService } from './services/available-model.service';
 import { ModelVerificationService } from './services/model-verification.service';
+import { CapabilityTagMatchingService } from './services/capability-tag-matching.service';
 
 @Module({
   imports: [
@@ -60,6 +63,8 @@ import { ModelVerificationService } from './services/model-verification.service'
     BotModelRoutingModule,
     BotModelModule,
     ModelAvailabilityModule,
+    CapabilityTagModule,
+    ModelCapabilityTagModule,
     ModelRoutingModule,
     PrismaModule,
   ],
@@ -77,6 +82,7 @@ import { ModelVerificationService } from './services/model-verification.service'
     BotConfigResolverService,
     AvailableModelService,
     ModelVerificationService,
+    CapabilityTagMatchingService,
   ],
   exports: [
     BotApiService,
@@ -90,6 +96,7 @@ import { ModelVerificationService } from './services/model-verification.service'
     BotConfigResolverService,
     AvailableModelService,
     ModelVerificationService,
+    CapabilityTagMatchingService,
     ModelRoutingModule,
   ],
 })

@@ -130,6 +130,7 @@ export const ModelTypeSchema = z.enum([
   'moderation', // 内容审核
   'rerank', // 重排序
   'image', // 图像生成
+  'video', // 视频生成
 ]);
 
 export type ModelType = z.infer<typeof ModelTypeSchema>;
@@ -202,7 +203,14 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
     apiHost: 'https://api.openai.com/v1',
     logo: 'openai.svg',
     description: 'OpenAI 提供 GPT-4、GPT-3.5 等先进的大语言模型',
-    supportedModelTypes: ['llm', 'text-embedding', 'speech2text', 'tts', 'image', 'moderation'],
+    supportedModelTypes: [
+      'llm',
+      'text-embedding',
+      'speech2text',
+      'tts',
+      'image',
+      'moderation',
+    ],
     credentialFormSchemas: [
       {
         variable: 'api_key',
@@ -338,8 +346,7 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
       official: 'https://mistral.ai',
       apiKey: 'https://console.mistral.ai/api-keys/',
       docs: 'https://docs.mistral.ai',
-      models:
-        'https://docs.mistral.ai/getting-started/models/models_overview',
+      models: 'https://docs.mistral.ai/getting-started/models/models_overview',
     },
   },
   groq: {
@@ -619,7 +626,8 @@ export const PROVIDER_CONFIGS: Record<ProviderVendor, ProviderConfig> = {
       official: 'https://console.volcengine.com/ark/',
       apiKey: 'https://www.volcengine.com/experience/ark',
       docs: 'https://www.volcengine.com/docs/82379/1182403',
-      models: 'https://console.volcengine.com/ark/region:ark+cn-beijing/endpoint',
+      models:
+        'https://console.volcengine.com/ark/region:ark+cn-beijing/endpoint',
     },
   },
   minimax: {

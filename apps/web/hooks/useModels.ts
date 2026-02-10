@@ -2,18 +2,17 @@
 
 import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  modelApi,
-  botModelApi,
-  botModelClient,
-  modelClient,
-} from '@/lib/api/contracts/client';
+import { modelApi, botModelApi, modelClient } from '@/lib/api/contracts/client';
 import type {
   AvailableModel,
   BotModelInfo,
   UpdateBotModelsInput,
   RefreshModelsResponse,
   VerifySingleModelResponse,
+  BatchVerifyResponse,
+  ModelAvailabilityItem,
+  RefreshAllModelsResponse,
+  BatchVerifyAllResponse,
 } from '@repo/contracts';
 
 /**
@@ -22,6 +21,8 @@ import type {
 export const modelKeys = {
   all: ['models'] as const,
   list: () => [...modelKeys.all, 'list'] as const,
+  availability: (providerKeyId?: string) =>
+    [...modelKeys.all, 'availability', providerKeyId] as const,
   botModels: (hostname: string) => [...modelKeys.all, 'bot', hostname] as const,
 };
 
@@ -32,9 +33,11 @@ export const modelKeys = {
 export function useAvailableModels() {
   const queryClient = useQueryClient();
   const modelsQuery = modelApi.list.useQuery(modelKeys.list(), {});
-  const [verifying, setVerifying] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshingAll, setRefreshingAll] = useState(false);
   const [verifyingModel, setVerifyingModel] = useState<string | null>(null);
+  const [batchVerifying, setBatchVerifying] = useState(false);
+  const [batchVerifyingAll, setBatchVerifyingAll] = useState(false);
 
   const responseBody = modelsQuery.data?.body;
   const models: AvailableModel[] =
@@ -42,35 +45,20 @@ export function useAvailableModels() {
       ? ((responseBody.data as { list: AvailableModel[] }).list ?? [])
       : [];
 
-  // Verify all models (admin only) - legacy function
-  const verifyModels = async () => {
-    setVerifying(true);
-    try {
-      const result = await modelApi.verify.mutation({
-        body: {},
-      });
-      // Refresh models list after a short delay to allow verification to complete
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: modelKeys.list() });
-      }, 3000);
-      return result;
-    } finally {
-      setVerifying(false);
-    }
-  };
-
   // Refresh model list from provider endpoint (admin only)
   const refreshModels = useCallback(
     async (providerKeyId: string): Promise<RefreshModelsResponse | null> => {
       setRefreshing(true);
       try {
-        const result = await modelClient.refreshModels({
+        const result = await modelClient.refresh({
           body: { providerKeyId },
         });
         // Refresh models list
         queryClient.invalidateQueries({ queryKey: modelKeys.list() });
-        if (result.body && 'data' in result.body && result.body.data) {
-          return result.body.data as RefreshModelsResponse;
+        queryClient.invalidateQueries({ queryKey: modelKeys.availability() });
+        const body = result.body;
+        if (body && typeof body === 'object' && 'data' in body && body.data) {
+          return body.data as RefreshModelsResponse;
         }
         return null;
       } finally {
@@ -88,13 +76,15 @@ export function useAvailableModels() {
     ): Promise<VerifySingleModelResponse | null> => {
       setVerifyingModel(model);
       try {
-        const result = await modelClient.verifySingle({
+        const result = await modelClient.verify({
           body: { providerKeyId, model },
         });
         // Refresh models list
         queryClient.invalidateQueries({ queryKey: modelKeys.list() });
-        if (result.body && 'data' in result.body && result.body.data) {
-          return result.body.data as VerifySingleModelResponse;
+        queryClient.invalidateQueries({ queryKey: modelKeys.availability() });
+        const body = result.body;
+        if (body && typeof body === 'object' && 'data' in body && body.data) {
+          return body.data as VerifySingleModelResponse;
         }
         return null;
       } finally {
@@ -104,31 +94,70 @@ export function useAvailableModels() {
     [queryClient],
   );
 
-  // Batch verify models with polling (admin only)
-  const batchVerifyModels = useCallback(
-    async (
-      providerKeyId: string,
-      modelList: string[],
-      onProgress?: (current: number, total: number, result: VerifySingleModelResponse) => void,
-      delayMs: number = 1000,
-    ): Promise<VerifySingleModelResponse[]> => {
-      const results: VerifySingleModelResponse[] = [];
-      for (let i = 0; i < modelList.length; i++) {
-        const model = modelList[i];
-        const result = await verifySingleModel(providerKeyId, model);
-        if (result) {
-          results.push(result);
-          onProgress?.(i + 1, modelList.length, result);
+  // Batch verify unverified models (admin only)
+  const batchVerifyUnverified = useCallback(
+    async (providerKeyId: string): Promise<BatchVerifyResponse | null> => {
+      setBatchVerifying(true);
+      try {
+        const result = await modelClient.batchVerify({
+          body: { providerKeyId },
+        });
+        // Refresh models list
+        queryClient.invalidateQueries({ queryKey: modelKeys.list() });
+        queryClient.invalidateQueries({ queryKey: modelKeys.availability() });
+        const body = result.body;
+        if (body && typeof body === 'object' && 'data' in body && body.data) {
+          return body.data as BatchVerifyResponse;
         }
-        // Add delay between requests to avoid rate limiting
-        if (i < modelList.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, delayMs));
-        }
+        return null;
+      } finally {
+        setBatchVerifying(false);
       }
-      return results;
     },
-    [verifySingleModel],
+    [queryClient],
   );
+
+  // Refresh all provider keys' models (admin only)
+  const refreshAllModels =
+    useCallback(async (): Promise<RefreshAllModelsResponse | null> => {
+      setRefreshingAll(true);
+      try {
+        const result = await modelClient.refreshAll({
+          body: {},
+        });
+        // Refresh models list
+        queryClient.invalidateQueries({ queryKey: modelKeys.list() });
+        queryClient.invalidateQueries({ queryKey: modelKeys.availability() });
+        const body = result.body;
+        if (body && typeof body === 'object' && 'data' in body && body.data) {
+          return body.data as RefreshAllModelsResponse;
+        }
+        return null;
+      } finally {
+        setRefreshingAll(false);
+      }
+    }, [queryClient]);
+
+  // Batch verify all unavailable models (admin only)
+  const batchVerifyAllUnavailable =
+    useCallback(async (): Promise<BatchVerifyAllResponse | null> => {
+      setBatchVerifyingAll(true);
+      try {
+        const result = await modelClient.batchVerifyAll({
+          body: {},
+        });
+        // Refresh models list
+        queryClient.invalidateQueries({ queryKey: modelKeys.list() });
+        queryClient.invalidateQueries({ queryKey: modelKeys.availability() });
+        const body = result.body;
+        if (body && typeof body === 'object' && 'data' in body && body.data) {
+          return body.data as BatchVerifyAllResponse;
+        }
+        return null;
+      } finally {
+        setBatchVerifyingAll(false);
+      }
+    }, [queryClient]);
 
   return {
     models,
@@ -136,15 +165,49 @@ export function useAvailableModels() {
     error:
       modelsQuery.error instanceof Error ? modelsQuery.error.message : null,
     refresh: () => modelsQuery.refetch(),
-    // Legacy verify all
-    verifyModels,
-    verifying,
-    // New functions
+    // Admin functions
     refreshModels,
     refreshing,
+    refreshAllModels,
+    refreshingAll,
     verifySingleModel,
     verifyingModel,
-    batchVerifyModels,
+    batchVerifyUnverified,
+    batchVerifying,
+    batchVerifyAllUnavailable,
+    batchVerifyingAll,
+  };
+}
+
+/**
+ * Hook for fetching ModelAvailability list (admin only)
+ */
+export function useModelAvailability(providerKeyId?: string) {
+  const queryClient = useQueryClient();
+  const availabilityQuery = modelApi.getAvailability.useQuery(
+    modelKeys.availability(providerKeyId),
+    {
+      query: providerKeyId ? { providerKeyId } : undefined,
+    },
+  );
+
+  const responseBody = availabilityQuery.data?.body;
+  const availability: ModelAvailabilityItem[] =
+    responseBody && 'data' in responseBody && responseBody.data
+      ? ((responseBody.data as { list: ModelAvailabilityItem[] }).list ?? [])
+      : [];
+
+  return {
+    availability,
+    loading: availabilityQuery.isLoading,
+    error:
+      availabilityQuery.error instanceof Error
+        ? availabilityQuery.error.message
+        : null,
+    refresh: () => {
+      availabilityQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: modelKeys.list() });
+    },
   };
 }
 

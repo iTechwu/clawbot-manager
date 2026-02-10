@@ -348,11 +348,22 @@ exports.Prisma.ModelAvailabilityScalarFieldEnum = {
   id: 'id',
   model: 'model',
   providerKeyId: 'providerKeyId',
+  modelType: 'modelType',
+  modelPricingId: 'modelPricingId',
   isAvailable: 'isAvailable',
   lastVerifiedAt: 'lastVerifiedAt',
   errorMessage: 'errorMessage',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ModelCapabilityTagScalarFieldEnum = {
+  id: 'id',
+  modelAvailabilityId: 'modelAvailabilityId',
+  capabilityTagId: 'capabilityTagId',
+  matchSource: 'matchSource',
+  confidence: 'confidence',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.BotUsageLogScalarFieldEnum = {
@@ -792,6 +803,17 @@ exports.HealthStatus = exports.$Enums.HealthStatus = {
   UNKNOWN: 'UNKNOWN'
 };
 
+exports.ModelType = exports.$Enums.ModelType = {
+  llm: 'llm',
+  text_embedding: 'text_embedding',
+  speech2text: 'speech2text',
+  tts: 'tts',
+  moderation: 'moderation',
+  rerank: 'rerank',
+  image: 'image',
+  video: 'video'
+};
+
 exports.OperateType = exports.$Enums.OperateType = {
   CREATE: 'CREATE',
   UPDATE: 'UPDATE',
@@ -852,6 +874,7 @@ exports.Prisma.ModelName = {
   BotProviderKey: 'BotProviderKey',
   BotModel: 'BotModel',
   ModelAvailability: 'ModelAvailability',
+  ModelCapabilityTag: 'ModelCapabilityTag',
   BotUsageLog: 'BotUsageLog',
   ProxyToken: 'ProxyToken',
   Message: 'Message',

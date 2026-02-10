@@ -20,6 +20,7 @@ import { DockerService } from './services/docker.service';
 import { WorkspaceService } from './services/workspace.service';
 import { BotConfigResolverService } from './services/bot-config-resolver.service';
 import { AvailableModelService } from './services/available-model.service';
+import { ModelVerificationService } from './services/model-verification.service';
 import type { Bot, ProviderKey, BotStatus, Prisma } from '@prisma/client';
 import type {
   CreateBotInput,
@@ -56,6 +57,7 @@ export class BotApiService {
     private readonly keyringProxyService: KeyringProxyService,
     private readonly botConfigResolver: BotConfigResolverService,
     private readonly availableModelService: AvailableModelService,
+    private readonly modelVerificationService: ModelVerificationService,
   ) {
     this.logger.log(`BotApiService initialized`);
   }
@@ -1142,6 +1144,14 @@ export class BotApiService {
     });
 
     this.logger.log(`Provider key added: ${key.id} (${input.vendor})`);
+
+    // 自动获取 models 并写入 ModelAvailability（不验证可用性）
+    // 这是异步操作，不阻塞主流程
+    this.modelVerificationService.refreshModels(key.id).catch((error) => {
+      this.logger.warn(
+        `Failed to auto-refresh models for provider key ${key.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    });
 
     // Log operation
     await this.operateLogService.create({

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ModelTypeSchema } from './provider.schema';
 
 // ============================================================================
 // Available Model Schema (面向用户展示的模型信息)
@@ -27,7 +28,9 @@ export const AvailableModelCapabilitySchema = z.enum([
   'extended-thinking',
 ]);
 
-export type AvailableModelCapability = z.infer<typeof AvailableModelCapabilitySchema>;
+export type AvailableModelCapability = z.infer<
+  typeof AvailableModelCapabilitySchema
+>;
 
 /**
  * Provider 信息 Schema（仅管理员可见）
@@ -111,7 +114,9 @@ export const AvailableModelsResponseSchema = z.object({
   list: z.array(AvailableModelSchema),
 });
 
-export type AvailableModelsResponse = z.infer<typeof AvailableModelsResponseSchema>;
+export type AvailableModelsResponse = z.infer<
+  typeof AvailableModelsResponseSchema
+>;
 
 /**
  * 获取 Bot 模型列表响应
@@ -172,7 +177,9 @@ export const VerifySingleModelInputSchema = z.object({
   model: z.string(),
 });
 
-export type VerifySingleModelInput = z.infer<typeof VerifySingleModelInputSchema>;
+export type VerifySingleModelInput = z.infer<
+  typeof VerifySingleModelInputSchema
+>;
 
 /**
  * 验证单个模型响应
@@ -188,4 +195,305 @@ export const VerifySingleModelResponseSchema = z.object({
   errorMessage: z.string().optional(),
 });
 
-export type VerifySingleModelResponse = z.infer<typeof VerifySingleModelResponseSchema>;
+export type VerifySingleModelResponse = z.infer<
+  typeof VerifySingleModelResponseSchema
+>;
+
+/**
+ * 批量验证请求（增量验证未验证的模型）
+ */
+export const BatchVerifyInputSchema = z.object({
+  /** Provider Key ID */
+  providerKeyId: z.string().uuid(),
+});
+
+export type BatchVerifyInput = z.infer<typeof BatchVerifyInputSchema>;
+
+/**
+ * 批量验证响应
+ */
+export const BatchVerifyResponseSchema = z.object({
+  /** 总模型数 */
+  total: z.number(),
+  /** 已验证数 */
+  verified: z.number(),
+  /** 可用数 */
+  available: z.number(),
+  /** 失败数 */
+  failed: z.number(),
+  /** 验证结果列表 */
+  results: z.array(VerifySingleModelResponseSchema),
+});
+
+export type BatchVerifyResponse = z.infer<typeof BatchVerifyResponseSchema>;
+
+/**
+ * ModelAvailability 记录 Schema（管理员视图）
+ */
+export const ModelAvailabilityItemSchema = z.object({
+  /** 记录 ID */
+  id: z.string(),
+  /** 模型名称 */
+  model: z.string(),
+  /** Provider Key ID */
+  providerKeyId: z.string(),
+  /** 模型类型 */
+  modelType: ModelTypeSchema,
+  /** 是否可用 */
+  isAvailable: z.boolean(),
+  /** 最后验证时间 */
+  lastVerifiedAt: z.coerce.date(),
+  /** 错误信息 */
+  errorMessage: z.string().nullable(),
+});
+
+export type ModelAvailabilityItem = z.infer<typeof ModelAvailabilityItemSchema>;
+
+/**
+ * ModelAvailability 列表响应
+ */
+export const ModelAvailabilityListResponseSchema = z.object({
+  list: z.array(ModelAvailabilityItemSchema),
+});
+
+export type ModelAvailabilityListResponse = z.infer<
+  typeof ModelAvailabilityListResponseSchema
+>;
+
+// ============================================================================
+// Refresh All Models Schemas
+// ============================================================================
+
+/**
+ * 刷新所有模型列表响应中的单个结果
+ */
+export const RefreshAllModelsResultItemSchema = z.object({
+  /** Provider Key ID */
+  providerKeyId: z.string(),
+  /** Provider 标签 */
+  label: z.string(),
+  /** Provider 供应商 */
+  vendor: z.string(),
+  /** 是否成功 */
+  success: z.boolean(),
+  /** 获取到的模型列表 */
+  models: z.array(z.string()).optional(),
+  /** 新增的模型数量 */
+  addedCount: z.number().optional(),
+  /** 移除的模型数量 */
+  removedCount: z.number().optional(),
+  /** 错误信息 */
+  error: z.string().optional(),
+});
+
+export type RefreshAllModelsResultItem = z.infer<
+  typeof RefreshAllModelsResultItemSchema
+>;
+
+/**
+ * 刷新所有模型列表响应
+ */
+export const RefreshAllModelsResponseSchema = z.object({
+  /** 总 Provider Key 数量 */
+  totalProviderKeys: z.number(),
+  /** 成功数量 */
+  successCount: z.number(),
+  /** 失败数量 */
+  failedCount: z.number(),
+  /** 总模型数量 */
+  totalModels: z.number(),
+  /** 总新增数量 */
+  totalAdded: z.number(),
+  /** 总移除数量 */
+  totalRemoved: z.number(),
+  /** 各 Provider Key 的结果 */
+  results: z.array(RefreshAllModelsResultItemSchema),
+});
+
+export type RefreshAllModelsResponse = z.infer<
+  typeof RefreshAllModelsResponseSchema
+>;
+
+// ============================================================================
+// Batch Verify All Schemas
+// ============================================================================
+
+/**
+ * 批量验证所有不可用模型响应中的单个结果
+ */
+export const BatchVerifyAllResultItemSchema = z.object({
+  /** Provider Key ID */
+  providerKeyId: z.string(),
+  /** Provider 标签 */
+  label: z.string(),
+  /** Provider 供应商 */
+  vendor: z.string(),
+  /** 已验证数 */
+  verified: z.number(),
+  /** 可用数 */
+  available: z.number(),
+  /** 失败数 */
+  failed: z.number(),
+});
+
+export type BatchVerifyAllResultItem = z.infer<
+  typeof BatchVerifyAllResultItemSchema
+>;
+
+/**
+ * 批量验证所有不可用模型响应
+ */
+export const BatchVerifyAllResponseSchema = z.object({
+  /** 总 Provider Key 数量 */
+  totalProviderKeys: z.number(),
+  /** 总已验证数 */
+  totalVerified: z.number(),
+  /** 总可用数 */
+  totalAvailable: z.number(),
+  /** 总失败数 */
+  totalFailed: z.number(),
+  /** 各 Provider Key 的结果 */
+  results: z.array(BatchVerifyAllResultItemSchema),
+});
+
+export type BatchVerifyAllResponse = z.infer<
+  typeof BatchVerifyAllResponseSchema
+>;
+
+// ============================================================================
+// Capability Tag Management Schemas
+// ============================================================================
+
+/**
+ * 能力标签匹配来源
+ */
+export const CapabilityTagMatchSourceSchema = z.enum([
+  'pattern',
+  'feature',
+  'scenario',
+  'manual',
+]);
+
+export type CapabilityTagMatchSource = z.infer<
+  typeof CapabilityTagMatchSourceSchema
+>;
+
+/**
+ * 模型能力标签关联 Schema
+ */
+export const ModelCapabilityTagItemSchema = z.object({
+  /** 关联 ID */
+  id: z.string(),
+  /** ModelAvailability ID */
+  modelAvailabilityId: z.string(),
+  /** CapabilityTag ID */
+  capabilityTagId: z.string(),
+  /** 标签 ID（如 vision, tools 等） */
+  tagId: z.string(),
+  /** 匹配来源 */
+  matchSource: CapabilityTagMatchSourceSchema,
+  /** 置信度 (0-100) */
+  confidence: z.number(),
+  /** 创建时间 */
+  createdAt: z.coerce.date(),
+});
+
+export type ModelCapabilityTagItem = z.infer<
+  typeof ModelCapabilityTagItemSchema
+>;
+
+/**
+ * 获取模型能力标签列表响应
+ */
+export const ModelCapabilityTagsResponseSchema = z.object({
+  list: z.array(ModelCapabilityTagItemSchema),
+});
+
+export type ModelCapabilityTagsResponse = z.infer<
+  typeof ModelCapabilityTagsResponseSchema
+>;
+
+/**
+ * 添加模型能力标签请求
+ */
+export const AddModelCapabilityTagInputSchema = z.object({
+  /** ModelAvailability ID */
+  modelAvailabilityId: z.string().uuid(),
+  /** CapabilityTag ID */
+  capabilityTagId: z.string().uuid(),
+});
+
+export type AddModelCapabilityTagInput = z.infer<
+  typeof AddModelCapabilityTagInputSchema
+>;
+
+/**
+ * 移除模型能力标签请求
+ */
+export const RemoveModelCapabilityTagInputSchema = z.object({
+  /** ModelAvailability ID */
+  modelAvailabilityId: z.string().uuid(),
+  /** CapabilityTag ID */
+  capabilityTagId: z.string().uuid(),
+});
+
+export type RemoveModelCapabilityTagInput = z.infer<
+  typeof RemoveModelCapabilityTagInputSchema
+>;
+
+/**
+ * 能力标签 Schema（用于列表展示）
+ */
+export const CapabilityTagItemSchema = z.object({
+  /** 记录 ID */
+  id: z.string(),
+  /** 标签 ID（如 vision, tools 等） */
+  tagId: z.string(),
+  /** 标签名称 */
+  name: z.string(),
+  /** 标签描述 */
+  description: z.string().nullable(),
+  /** 是否激活 */
+  isActive: z.boolean(),
+});
+
+export type CapabilityTagItem = z.infer<typeof CapabilityTagItemSchema>;
+
+/**
+ * 获取所有能力标签响应
+ */
+export const CapabilityTagsResponseSchema = z.object({
+  list: z.array(CapabilityTagItemSchema),
+});
+
+export type CapabilityTagsResponse = z.infer<
+  typeof CapabilityTagsResponseSchema
+>;
+
+// ============================================================================
+// Extended Available Model Schema (with pricing info)
+// ============================================================================
+
+/**
+ * 扩展的可用模型 Schema（包含定价信息）
+ */
+export const ExtendedAvailableModelSchema = AvailableModelSchema.extend({
+  /** 能力标签列表（动态获取） */
+  capabilityTags: z.array(z.string()).optional(),
+  /** 输入价格（每百万 token） */
+  inputPrice: z.number().optional(),
+  /** 输出价格（每百万 token） */
+  outputPrice: z.number().optional(),
+  /** 上下文长度 */
+  contextLength: z.number().optional(),
+  /** 是否支持视觉 */
+  supportsVision: z.boolean().optional(),
+  /** 是否支持扩展思考 */
+  supportsExtendedThinking: z.boolean().optional(),
+  /** 是否支持函数调用 */
+  supportsFunctionCalling: z.boolean().optional(),
+});
+
+export type ExtendedAvailableModel = z.infer<
+  typeof ExtendedAvailableModelSchema
+>;

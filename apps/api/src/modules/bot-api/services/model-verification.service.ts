@@ -1,16 +1,93 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { ProviderKeyService, ModelAvailabilityService } from '@app/db';
+import {
+  ProviderKeyService,
+  ModelAvailabilityService,
+  ModelPricingService,
+} from '@app/db';
 import { EncryptionService } from './encryption.service';
-import { PROVIDER_CONFIGS, type ProviderVendor } from '@repo/contracts';
+import { CapabilityTagMatchingService } from './capability-tag-matching.service';
+import {
+  PROVIDER_CONFIGS,
+  type ProviderVendor,
+  type ModelType as ApiModelType,
+} from '@repo/contracts';
+import type { ModelType } from '@prisma/client';
+
+/**
+ * 模型名称模式匹配规则
+ * 用于根据模型名称推断模型类型
+ */
+const MODEL_TYPE_PATTERNS: Array<{
+  patterns: RegExp[];
+  type: ModelType;
+}> = [
+  // 图像生成模型
+  {
+    patterns: [
+      /dall-e/i,
+      /gpt-image/i,
+      /midjourney/i,
+      /flux/i,
+      /ideogram/i,
+      /seedream/i,
+      /kling-image/i,
+      /grok-.*-image/i,
+      /stable-diffusion/i,
+      /sd-/i,
+      /sdxl/i,
+    ],
+    type: 'image',
+  },
+  // 视频生成模型
+  {
+    patterns: [
+      /sora/i,
+      /veo/i,
+      /kling-v/i,
+      /kling-video/i,
+      /hailuo/i,
+      /viduq/i,
+      /wan-/i,
+      /wan2/i,
+      /seedance/i,
+      /pika/i,
+      /runway/i,
+    ],
+    type: 'video',
+  },
+  // 语音合成模型 (TTS)
+  {
+    patterns: [/tts/i, /speech/i],
+    type: 'tts',
+  },
+  // 语音识别模型 (STT)
+  {
+    patterns: [/whisper/i, /stt/i, /transcribe/i, /asr/i],
+    type: 'speech2text',
+  },
+  // 向量嵌入模型
+  {
+    patterns: [/embed/i, /embedding/i, /text-embedding/i, /bge-/i],
+    type: 'text_embedding',
+  },
+  // 重排序模型
+  {
+    patterns: [/rerank/i, /re-rank/i],
+    type: 'rerank',
+  },
+  // 内容审核模型
+  {
+    patterns: [/moderation/i, /content-filter/i],
+    type: 'moderation',
+  },
+];
 
 /**
  * 模型验证结果
  */
 export interface ModelVerificationResult {
-  vendor: string;
   model: string;
   isAvailable: boolean;
   latencyMs?: number;
@@ -18,17 +95,15 @@ export interface ModelVerificationResult {
 }
 
 /**
- * API 类型到默认模型的映射（作为端点获取失败时的回退）
+ * 批量验证结果
  */
-const API_TYPE_DEFAULT_MODELS: Record<string, string[]> = {
-  openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
-  anthropic: ['claude-sonnet-4-20250514', 'claude-3-5-haiku-20241022'],
-  gemini: ['gemini-2.0-flash', 'gemini-1.5-pro'],
-  'azure-openai': ['gpt-4o', 'gpt-4o-mini'],
-  ollama: [], // Ollama 需要动态查询
-  'new-api': [], // New API 从端点获取
-  gateway: [], // Gateway 从端点获取
-};
+export interface BatchVerifyResult {
+  total: number;
+  verified: number;
+  available: number;
+  failed: number;
+  results: ModelVerificationResult[];
+}
 
 /**
  * ModelVerificationService
@@ -36,28 +111,221 @@ const API_TYPE_DEFAULT_MODELS: Record<string, string[]> = {
  * 负责验证 API Key 的有效性并缓存结果
  *
  * 功能：
- * 1. 验证单个 API Key 对特定模型的可用性
- * 2. 批量验证所有 Provider Key 的模型可用性
- * 3. 定时任务自动刷新验证状态
+ * 1. 刷新模型列表（从 /models 端点获取并写入 ModelAvailability）
+ * 2. 验证单个模型的可用性
+ * 3. 批量验证未验证的模型（增量验证）
  */
 @Injectable()
-export class ModelVerificationService implements OnModuleInit {
+export class ModelVerificationService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly providerKeyService: ProviderKeyService,
     private readonly modelAvailabilityService: ModelAvailabilityService,
+    private readonly modelPricingService: ModelPricingService,
     private readonly encryptionService: EncryptionService,
+    private readonly capabilityTagMatchingService: CapabilityTagMatchingService,
   ) {}
 
-  async onModuleInit() {
-    // 启动时执行一次验证（延迟 10 秒，等待其他服务初始化）
-    setTimeout(() => {
-      this.verifyAllProviderKeys().catch((err) => {
-        this.logger.error('[ModelVerification] Initial verification failed', {
-          error: err,
+  /**
+   * 根据模型名称推断模型类型
+   * @param modelName 模型名称
+   * @returns 模型类型，默认为 llm
+   */
+  private classifyModelType(modelName: string): ModelType {
+    for (const { patterns, type } of MODEL_TYPE_PATTERNS) {
+      for (const pattern of patterns) {
+        if (pattern.test(modelName)) {
+          return type;
+        }
+      }
+    }
+    // 默认为对话模型
+    return 'llm';
+  }
+
+  /**
+   * 判断是否需要二次验证（volces.com 的模型需要验证）
+   * @param baseUrl Provider 的 baseUrl
+   * @returns 是否需要验证
+   */
+  private requiresVerification(baseUrl?: string | null): boolean {
+    if (!baseUrl) return false;
+    return baseUrl.includes('volces.com');
+  }
+
+  /**
+   * 刷新所有 ProviderKeys 的模型列表（仅获取，不验证）
+   * 遍历所有 ProviderKeys，从各自的端点获取最新的模型列表
+   */
+  async refreshAllModels(): Promise<{
+    totalProviderKeys: number;
+    successCount: number;
+    failedCount: number;
+    totalModels: number;
+    totalAdded: number;
+    totalRemoved: number;
+    results: Array<{
+      providerKeyId: string;
+      label: string;
+      vendor: string;
+      success: boolean;
+      models?: string[];
+      addedCount?: number;
+      removedCount?: number;
+      error?: string;
+    }>;
+  }> {
+    // 获取所有未删除的 ProviderKeys
+    const { list: providerKeys } = await this.providerKeyService.list(
+      {},
+      { limit: 1000 },
+    );
+
+    this.logger.info(
+      `[ModelVerification] Refreshing models for all ${providerKeys.length} provider keys`,
+    );
+
+    const results: Array<{
+      providerKeyId: string;
+      label: string;
+      vendor: string;
+      success: boolean;
+      models?: string[];
+      addedCount?: number;
+      removedCount?: number;
+      error?: string;
+    }> = [];
+
+    let successCount = 0;
+    let failedCount = 0;
+    let totalModels = 0;
+    let totalAdded = 0;
+    let totalRemoved = 0;
+
+    for (const providerKey of providerKeys) {
+      try {
+        const result = await this.refreshModels(providerKey.id);
+        results.push({
+          providerKeyId: providerKey.id,
+          label: providerKey.label,
+          vendor: providerKey.vendor,
+          success: true,
+          models: result.models,
+          addedCount: result.addedCount,
+          removedCount: result.removedCount,
         });
-      });
-    }, 10000);
+        successCount++;
+        totalModels += result.models.length;
+        totalAdded += result.addedCount;
+        totalRemoved += result.removedCount;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        results.push({
+          providerKeyId: providerKey.id,
+          label: providerKey.label,
+          vendor: providerKey.vendor,
+          success: false,
+          error: errorMessage,
+        });
+        failedCount++;
+        this.logger.warn(
+          `[ModelVerification] Failed to refresh models for provider key ${providerKey.id}: ${errorMessage}`,
+        );
+      }
+
+      // 添加延迟以避免 API 限流
+      await this.delay(500);
+    }
+
+    this.logger.info(
+      `[ModelVerification] Refresh all completed: ${successCount}/${providerKeys.length} succeeded, ${totalModels} total models, ${totalAdded} added, ${totalRemoved} removed`,
+    );
+
+    return {
+      totalProviderKeys: providerKeys.length,
+      successCount,
+      failedCount,
+      totalModels,
+      totalAdded,
+      totalRemoved,
+      results,
+    };
+  }
+
+  /**
+   * 批量验证所有不可用的模型（增量验证）
+   * 遍历所有 ProviderKeys，验证 isAvailable=false 的模型
+   */
+  async batchVerifyAllUnavailable(): Promise<{
+    totalProviderKeys: number;
+    totalVerified: number;
+    totalAvailable: number;
+    totalFailed: number;
+    results: Array<{
+      providerKeyId: string;
+      label: string;
+      vendor: string;
+      verified: number;
+      available: number;
+      failed: number;
+    }>;
+  }> {
+    // 获取所有未删除的 ProviderKeys
+    const { list: providerKeys } = await this.providerKeyService.list(
+      {},
+      { limit: 1000 },
+    );
+
+    this.logger.info(
+      `[ModelVerification] Batch verifying unavailable models for all ${providerKeys.length} provider keys`,
+    );
+
+    const results: Array<{
+      providerKeyId: string;
+      label: string;
+      vendor: string;
+      verified: number;
+      available: number;
+      failed: number;
+    }> = [];
+
+    let totalVerified = 0;
+    let totalAvailable = 0;
+    let totalFailed = 0;
+
+    for (const providerKey of providerKeys) {
+      try {
+        const result = await this.batchVerifyUnverified(providerKey.id);
+        results.push({
+          providerKeyId: providerKey.id,
+          label: providerKey.label,
+          vendor: providerKey.vendor,
+          verified: result.verified,
+          available: result.available,
+          failed: result.failed,
+        });
+        totalVerified += result.verified;
+        totalAvailable += result.available;
+        totalFailed += result.failed;
+      } catch (error) {
+        this.logger.warn(
+          `[ModelVerification] Failed to batch verify for provider key ${providerKey.id}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
+    this.logger.info(
+      `[ModelVerification] Batch verify all completed: ${totalVerified} verified, ${totalAvailable} available, ${totalFailed} failed`,
+    );
+
+    return {
+      totalProviderKeys: providerKeys.length,
+      totalVerified,
+      totalAvailable,
+      totalFailed,
+      results,
+    };
   }
 
   /**
@@ -83,16 +351,12 @@ export class ModelVerificationService implements OnModuleInit {
     );
 
     // 从端点获取模型列表
-    let models = await this.fetchAvailableModels(
+    const models = await this.fetchAvailableModels(
       apiKey,
       baseUrl,
       effectiveApiType,
     );
-
-    // 如果端点获取失败，使用默认模型列表
-    if (models.length === 0) {
-      models = API_TYPE_DEFAULT_MODELS[effectiveApiType] || [];
-    }
+    console.log('models', models);
 
     // 获取当前数据库中的模型列表
     const { list: existingRecords } = await this.modelAvailabilityService.list(
@@ -107,15 +371,45 @@ export class ModelVerificationService implements OnModuleInit {
       (r) => !models.includes(r.model),
     );
 
-    // 添加新模型（标记为未验证）
+    // 判断是否需要二次验证（volces.com 的模型需要验证，其他默认可用）
+    const needsVerification = this.requiresVerification(baseUrl);
+
+    // 添加新模型
+    const createdModelAvailabilities: Array<{ id: string; model: string }> = [];
     for (const model of newModels) {
-      await this.modelAvailabilityService.create({
+      const modelType = this.classifyModelType(model);
+
+      // 查找对应的 ModelPricing 记录
+      const pricing = await this.modelPricingService.getByModel(model);
+
+      const created = await this.modelAvailabilityService.create({
         model,
         providerKey: { connect: { id: providerKeyId } },
-        isAvailable: false, // 未验证，默认不可用
-        lastVerifiedAt: new Date(),
-        errorMessage: 'Not verified yet',
+        modelType,
+        // volces.com 的模型需要验证，默认不可用；其他默认可用
+        isAvailable: !needsVerification,
+        lastVerifiedAt: needsVerification ? new Date(0) : new Date(),
+        errorMessage: needsVerification ? 'Not verified yet' : null,
+        // 关联 ModelPricing（如果存在）
+        ...(pricing ? { modelPricing: { connect: { id: pricing.id } } } : {}),
       });
+
+      createdModelAvailabilities.push({ id: created.id, model: created.model });
+    }
+
+    // 为新创建的 ModelAvailability 分配能力标签
+    for (const { id, model } of createdModelAvailabilities) {
+      try {
+        await this.capabilityTagMatchingService.assignTagsToModelAvailability(
+          id,
+          model,
+          vendor,
+        );
+      } catch (error) {
+        this.logger.warn(
+          `[ModelVerification] Failed to assign capability tags for model ${model}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
     }
 
     // 删除不再存在的模型
@@ -141,12 +435,7 @@ export class ModelVerificationService implements OnModuleInit {
   async verifySingleModel(
     providerKeyId: string,
     model: string,
-  ): Promise<{
-    model: string;
-    isAvailable: boolean;
-    latencyMs?: number;
-    errorMessage?: string;
-  }> {
+  ): Promise<ModelVerificationResult> {
     const providerKey = await this.providerKeyService.getById(providerKeyId);
     if (!providerKey) {
       throw new Error(`Provider key not found: ${providerKeyId}`);
@@ -161,7 +450,6 @@ export class ModelVerificationService implements OnModuleInit {
     );
 
     const result = await this.verifyModel(
-      vendor,
       effectiveApiType,
       model,
       apiKey,
@@ -176,57 +464,16 @@ export class ModelVerificationService implements OnModuleInit {
       result.errorMessage,
     );
 
-    return {
-      model: result.model,
-      isAvailable: result.isAvailable,
-      latencyMs: result.latencyMs,
-      errorMessage: result.errorMessage,
-    };
+    return result;
   }
 
   /**
-   * 定时任务：每小时验证所有 Provider Key
+   * 批量验证未验证的模型（增量验证）
+   * 只验证 errorMessage 为 'Not verified yet' 的模型
    */
-  @Cron(CronExpression.EVERY_HOUR)
-  async scheduledVerification() {
-    this.logger.info('[ModelVerification] Starting scheduled verification');
-    await this.verifyAllProviderKeys();
-  }
-
-  /**
-   * 验证所有 Provider Key 的模型可用性
-   */
-  async verifyAllProviderKeys(): Promise<void> {
-    const { list: providerKeys } = await this.providerKeyService.list(
-      { isDeleted: false },
-      { limit: 1000 },
-    );
-
-    this.logger.info(
-      `[ModelVerification] Verifying ${providerKeys.length} provider keys`,
-    );
-
-    for (const key of providerKeys) {
-      try {
-        await this.verifyProviderKey(key.id);
-      } catch (error) {
-        this.logger.error(
-          `[ModelVerification] Failed to verify provider key ${key.id}`,
-          { error },
-        );
-      }
-    }
-
-    this.logger.info('[ModelVerification] Verification completed');
-  }
-
-  /**
-   * 验证单个 Provider Key 的模型可用性
-   * 根据 apiType 从端点获取可用模型列表
-   */
-  async verifyProviderKey(
+  async batchVerifyUnverified(
     providerKeyId: string,
-  ): Promise<ModelVerificationResult[]> {
+  ): Promise<BatchVerifyResult> {
     const providerKey = await this.providerKeyService.getById(providerKeyId);
     if (!providerKey) {
       throw new Error(`Provider key not found: ${providerKeyId}`);
@@ -234,65 +481,102 @@ export class ModelVerificationService implements OnModuleInit {
 
     const { vendor, apiType, secretEncrypted, baseUrl } = providerKey;
     const apiKey = this.encryptionService.decrypt(Buffer.from(secretEncrypted));
-
-    // 确定实际使用的 API 类型
     const effectiveApiType = apiType || this.inferApiType(vendor);
 
-    this.logger.info(
-      `[ModelVerification] Verifying provider key: vendor=${vendor}, apiType=${effectiveApiType}, baseUrl=${baseUrl}`,
-    );
-
-    // 根据 apiType 从端点获取可用模型列表
-    let models = await this.fetchAvailableModels(
-      apiKey,
-      baseUrl,
-      effectiveApiType,
-    );
-
-    // 如果端点获取失败，使用 apiType 对应的默认模型列表作为回退
-    if (models.length === 0) {
-      models = API_TYPE_DEFAULT_MODELS[effectiveApiType] || [];
-      if (models.length > 0) {
-        this.logger.info(
-          `[ModelVerification] Using fallback models for apiType '${effectiveApiType}': ${models.join(', ')}`,
-        );
-      }
-    }
-
-    if (models.length === 0) {
-      this.logger.warn(
-        `[ModelVerification] No models found for apiType: ${effectiveApiType}`,
+    // 获取所有未验证的模型
+    const { list: unverifiedRecords } =
+      await this.modelAvailabilityService.list(
+        {
+          providerKeyId,
+          errorMessage: 'Not verified yet',
+        },
+        { limit: 1000 },
       );
-      return [];
-    }
 
     this.logger.info(
-      `[ModelVerification] Verifying ${models.length} models: ${models.join(', ')}`,
+      `[ModelVerification] Batch verifying ${unverifiedRecords.length} unverified models for provider key: ${providerKeyId}`,
     );
 
     const results: ModelVerificationResult[] = [];
+    let available = 0;
+    let failed = 0;
 
-    for (const model of models) {
+    for (const record of unverifiedRecords) {
       const result = await this.verifyModel(
-        vendor,
         effectiveApiType,
-        model,
+        record.model,
         apiKey,
         baseUrl,
       );
 
-      // 更新或创建 ModelAvailability 记录
+      // 更新数据库记录
       await this.updateModelAvailability(
         providerKeyId,
-        model,
+        record.model,
         result.isAvailable,
         result.errorMessage,
       );
 
       results.push(result);
+
+      if (result.isAvailable) {
+        available++;
+      } else {
+        failed++;
+      }
+
+      // 添加延迟以避免 API 限流
+      await this.delay(1000);
     }
 
-    return results;
+    this.logger.info(
+      `[ModelVerification] Batch verification completed: ${available} available, ${failed} failed`,
+    );
+
+    return {
+      total: unverifiedRecords.length,
+      verified: results.length,
+      available,
+      failed,
+      results,
+    };
+  }
+
+  /**
+   * 获取所有 ModelAvailability 记录
+   */
+  /**
+   * 获取所有 ModelAvailability 记录
+   */
+  async getAllModelAvailability(providerKeyId?: string): Promise<
+    Array<{
+      id: string;
+      model: string;
+      providerKeyId: string;
+      modelType: ApiModelType;
+      isAvailable: boolean;
+      lastVerifiedAt: Date;
+      errorMessage: string | null;
+    }>
+  > {
+    const filter = providerKeyId ? { providerKeyId } : {};
+    const { list } = await this.modelAvailabilityService.list(filter, {
+      limit: 1000,
+    });
+    // Map Prisma enum values to API schema values (text_embedding -> text-embedding)
+    return list.map((item) => ({
+      ...item,
+      modelType: (item.modelType === 'text_embedding'
+        ? 'text-embedding'
+        : item.modelType) as ApiModelType,
+    }));
+  }
+
+  /**
+   * 延迟函数
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -330,57 +614,21 @@ export class ModelVerificationService implements OnModuleInit {
     const effectiveApiType = apiType || 'openai';
 
     try {
-      const headers = this.getAuthHeaders(effectiveApiType, apiKey);
+      switch (effectiveApiType) {
+        case 'anthropic':
+          // Anthropic 没有公开的 /models 端点，使用默认列表
+          this.logger.debug(
+            '[ModelVerification] Anthropic API does not have /models endpoint',
+          );
+          return [];
 
-      // 根据 apiType 确定 models 端点路径
-      let url: string;
-      if (effectiveApiType === 'anthropic') {
-        // Anthropic 没有 /models 端点，直接返回空
-        this.logger.debug(
-          '[ModelVerification] Anthropic API does not have /models endpoint',
-        );
-        return [];
-      } else {
-        // OpenAI 兼容 API（包括 new-api, gateway 等）
-        url = `${baseUrl}/models`;
+        case 'gemini':
+          return this.fetchGeminiModels(baseUrl, apiKey);
+
+        default:
+          // OpenAI 兼容 API（openai, new-api, gateway, ollama 等）
+          return this.fetchOpenAICompatibleModels(baseUrl, apiKey);
       }
-
-      this.logger.info(`[ModelVerification] Fetching models from: ${url}`);
-
-      const response = await fetch(url, {
-        method: 'GET',
-        headers,
-        signal: AbortSignal.timeout(10000),
-      });
-
-      if (!response.ok) {
-        this.logger.warn(
-          `[ModelVerification] Failed to fetch models: ${response.status} ${response.statusText}`,
-        );
-        return [];
-      }
-
-      const data = (await response.json()) as {
-        data?: Array<{ id: string; owned_by?: string }>;
-        object?: string;
-      };
-
-      // OpenAI 格式的响应
-      if (data.data && Array.isArray(data.data)) {
-        // 过滤出聊天模型（排除 embedding、whisper 等非聊天模型）
-        const chatModels = data.data
-          .map((m) => m.id)
-          .filter((id) => this.isChatModel(id))
-          .slice(0, 20); // 最多取 20 个模型
-
-        this.logger.info(
-          `[ModelVerification] Found ${chatModels.length} chat models from endpoint`,
-        );
-
-        return chatModels;
-      }
-
-      return [];
     } catch (error) {
       this.logger.warn('[ModelVerification] Error fetching models', {
         error: error instanceof Error ? error.message : String(error),
@@ -392,57 +640,104 @@ export class ModelVerificationService implements OnModuleInit {
   }
 
   /**
-   * 判断模型是否为聊天模型
+   * 从 OpenAI 兼容 API 获取模型列表
    */
-  private isChatModel(modelId: string): boolean {
-    const lowerModelId = modelId.toLowerCase();
+  private async fetchOpenAICompatibleModels(
+    baseUrl: string,
+    apiKey: string,
+  ): Promise<string[]> {
+    const url = `${baseUrl}/models`;
+    const headers = this.getAuthHeaders('openai', apiKey);
 
-    // 排除非聊天模型
-    const excludePatterns = [
-      'embedding',
-      'whisper',
-      'tts',
-      'dall-e',
-      'moderation',
-      'text-embedding',
-      'ada',
-      'babbage',
-      'curie',
-      'davinci',
-    ];
+    try {
+      this.logger.info(`[ModelVerification] Fetching models from: ${url}`);
 
-    if (excludePatterns.some((pattern) => lowerModelId.includes(pattern))) {
-      return false;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (!response.ok) {
+        this.logger.warn(
+          `[ModelVerification] Failed to fetch models: ${response.status}`,
+        );
+        return [];
+      }
+
+      const data = (await response.json()) as {
+        data?: Array<{ id: string; owned_by?: string }>;
+        object?: string;
+      };
+
+      if (data.data && Array.isArray(data.data)) {
+        const chatModels = data.data.map((m) => m.id);
+
+        this.logger.info(
+          `[ModelVerification] Found ${chatModels.length} chat models from endpoint`,
+        );
+
+        return chatModels;
+      }
+    } catch (error) {
+      this.logger.warn('[ModelVerification] Error fetching OpenAI models', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
-    // 包含常见聊天模型关键词
-    const includePatterns = [
-      'gpt',
-      'claude',
-      'gemini',
-      'deepseek',
-      'llama',
-      'mistral',
-      'qwen',
-      'yi-',
-      'glm',
-      'chat',
-      'turbo',
-      'sonnet',
-      'opus',
-      'haiku',
-    ];
+    return [];
+  }
 
-    return includePatterns.some((pattern) => lowerModelId.includes(pattern));
+  /**
+   * 从 Gemini API 获取模型列表
+   */
+  private async fetchGeminiModels(
+    baseUrl: string,
+    apiKey: string,
+  ): Promise<string[]> {
+    const url = `${baseUrl}/v1beta/models?key=${apiKey}`;
+
+    this.logger.info(`[ModelVerification] Fetching Gemini models from: ${url}`);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) {
+      this.logger.warn(
+        `[ModelVerification] Failed to fetch Gemini models: ${response.status}`,
+      );
+      return [];
+    }
+
+    const data = (await response.json()) as {
+      models?: Array<{ name: string; supportedGenerationMethods?: string[] }>;
+    };
+
+    if (data.models && Array.isArray(data.models)) {
+      // 过滤出支持 generateContent 的模型
+      const chatModels = data.models
+        .filter((m) =>
+          m.supportedGenerationMethods?.includes('generateContent'),
+        )
+        .map((m) => m.name.replace('models/', ''))
+        .slice(0, 20);
+
+      this.logger.info(
+        `[ModelVerification] Found ${chatModels.length} Gemini chat models`,
+      );
+
+      return chatModels;
+    }
+
+    return [];
   }
 
   /**
    * 验证单个模型的可用性
-   * @param vendor 供应商（用于结果报告）
-   * @param apiType API 类型（用于确定调用方式）
    */
   private async verifyModel(
-    vendor: string,
     apiType: string,
     model: string,
     apiKey: string,
@@ -461,7 +756,6 @@ export class ModelVerificationService implements OnModuleInit {
       const latencyMs = Date.now() - startTime;
 
       return {
-        vendor,
         model,
         isAvailable,
         latencyMs,
@@ -470,7 +764,6 @@ export class ModelVerificationService implements OnModuleInit {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       return {
-        vendor,
         model,
         isAvailable: false,
         errorMessage,
@@ -480,8 +773,7 @@ export class ModelVerificationService implements OnModuleInit {
 
   /**
    * 调用模型 API 验证可用性
-   * 根据 apiType 使用不同的验证方式
-   * @param apiType API 类型（用于确定调用方式和认证头）
+   * 通过实际发送请求到模型来验证是否可用
    */
   private async callModelApi(
     apiType: string,
@@ -497,62 +789,44 @@ export class ModelVerificationService implements OnModuleInit {
       throw new Error(`No API host for apiType: ${apiType}`);
     }
 
-    // 根据 apiType 选择不同的验证方式
+    // 根据 apiType 选择不同的验证方式（都是通过实际调用模型来验证）
     switch (apiType) {
       case 'anthropic':
-        return this.verifyAnthropicApi(apiHost, apiKey, model);
+        return this.verifyChatModel(apiHost, apiKey, model, 'anthropic');
       case 'gemini':
-        return this.verifyGeminiApi(apiHost, apiKey);
+        return this.verifyGeminiModel(apiHost, apiKey, model);
       case 'azure-openai':
-        return this.verifyAzureOpenAIApi(apiHost, apiKey, model);
+        return this.verifyAzureOpenAIModel(apiHost, apiKey, model);
       default:
         // OpenAI 兼容 API（openai, new-api, gateway, ollama 等）
-        return this.verifyOpenAICompatibleApi(apiHost, apiKey);
+        return this.verifyChatModel(apiHost, apiKey, model, 'openai');
     }
   }
 
   /**
-   * 验证 OpenAI 兼容 API（使用 /v1/models 端点）
+   * 通过 chat/completions 或 messages 端点验证模型
+   * 适用于 OpenAI 兼容 API 和 Anthropic
    */
-  private async verifyOpenAICompatibleApi(
-    apiHost: string,
-    apiKey: string,
-  ): Promise<boolean> {
-    const url = `${apiHost}/v1/models`;
-    const headers = this.getAuthHeaders('openai', apiKey);
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-      signal: AbortSignal.timeout(10000),
-    });
-
-    if (response.ok) {
-      return true;
-    }
-
-    if (response.status === 401 || response.status === 403) {
-      throw new Error(`Authentication failed: ${response.status}`);
-    }
-
-    return true;
-  }
-
-  /**
-   * 验证 Anthropic API（使用 /v1/messages 端点发送最小请求）
-   */
-  private async verifyAnthropicApi(
+  private async verifyChatModel(
     apiHost: string,
     apiKey: string,
     model: string,
+    apiType: 'openai' | 'anthropic',
   ): Promise<boolean> {
-    const url = `${apiHost}/v1/messages`;
+    const isAnthropic = apiType === 'anthropic';
+
+    // 构建 URL
+    const url = isAnthropic
+      ? `${apiHost}/messages`
+      : `${apiHost}/chat/completions`;
+
+    // 构建请求头
     const headers = {
-      ...this.getAuthHeaders('anthropic', apiKey),
+      ...this.getAuthHeaders(apiType, apiKey),
       'Content-Type': 'application/json',
     };
 
-    // 发送最小的请求来验证 API Key
+    // 构建最小请求体
     const body = JSON.stringify({
       model,
       max_tokens: 1,
@@ -570,41 +844,55 @@ export class ModelVerificationService implements OnModuleInit {
       return true;
     }
 
+    // 401/403 表示认证失败
     if (response.status === 401 || response.status === 403) {
       throw new Error(`Authentication failed: ${response.status}`);
     }
 
-    // 400 可能是模型不存在
-    if (response.status === 400) {
+    // 400/404 可能是模型不存在
+    if (response.status === 400 || response.status === 404) {
       const errorData = (await response.json().catch(() => ({}))) as {
-        error?: { message?: string };
+        error?: { message?: string; code?: string };
       };
-      if (errorData.error?.message?.includes('model')) {
+      const errorMsg = errorData.error?.message || '';
+      if (
+        errorMsg.includes('model') ||
+        errorMsg.includes('not found') ||
+        errorMsg.includes('does not exist')
+      ) {
         throw new Error(`Model not available: ${model}`);
       }
     }
 
-    // 429 表示限流，但 API Key 有效
+    // 429 表示限流，但 API Key 和模型有效
     if (response.status === 429) {
       return true;
     }
 
+    // 其他错误，假设模型可用（可能是临时问题）
     return true;
   }
 
   /**
-   * 验证 Gemini API（使用 /v1beta/models 端点）
+   * 验证 Gemini 模型（使用 generateContent 端点）
    */
-  private async verifyGeminiApi(
+  private async verifyGeminiModel(
     apiHost: string,
     apiKey: string,
+    model: string,
   ): Promise<boolean> {
-    // Gemini API 使用 URL 参数传递 API Key
-    const url = `${apiHost}/v1beta/models?key=${apiKey}`;
+    const url = `${apiHost}/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+    const body = JSON.stringify({
+      contents: [{ parts: [{ text: 'Hi' }] }],
+      generationConfig: { maxOutputTokens: 1 },
+    });
 
     const response = await fetch(url, {
-      method: 'GET',
-      signal: AbortSignal.timeout(10000),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      signal: AbortSignal.timeout(15000),
     });
 
     if (response.ok) {
@@ -615,18 +903,26 @@ export class ModelVerificationService implements OnModuleInit {
       throw new Error(`Authentication failed: ${response.status}`);
     }
 
+    if (response.status === 404) {
+      throw new Error(`Model not available: ${model}`);
+    }
+
+    // 429 表示限流，但 API Key 和模型有效
+    if (response.status === 429) {
+      return true;
+    }
+
     return true;
   }
 
   /**
-   * 验证 Azure OpenAI API
+   * 验证 Azure OpenAI 模型
    */
-  private async verifyAzureOpenAIApi(
+  private async verifyAzureOpenAIModel(
     apiHost: string,
     apiKey: string,
     model: string,
   ): Promise<boolean> {
-    // Azure OpenAI 使用不同的端点格式
     const url = `${apiHost}/openai/deployments/${model}/chat/completions?api-version=2024-02-15-preview`;
     const headers = {
       ...this.getAuthHeaders('azure-openai', apiKey),
@@ -667,7 +963,6 @@ export class ModelVerificationService implements OnModuleInit {
 
   /**
    * 获取认证头
-   * @param apiType API 类型
    */
   private getAuthHeaders(
     apiType: string,
@@ -695,7 +990,6 @@ export class ModelVerificationService implements OnModuleInit {
 
   /**
    * 更新或创建 ModelAvailability 记录
-   * vendor 信息从 ProviderKey 中获取，不再单独存储
    */
   private async updateModelAvailability(
     providerKeyId: string,
@@ -728,98 +1022,5 @@ export class ModelVerificationService implements OnModuleInit {
         errorMessage: errorMessage || null,
       });
     }
-  }
-
-  /**
-   * 获取模型的可用性状态
-   * vendor 信息从 ProviderKey 中获取
-   */
-  async getModelAvailability(
-    vendor: string,
-    model: string,
-  ): Promise<{ isAvailable: boolean; lastVerifiedAt: Date | null }> {
-    // 先获取该 vendor 的所有 ProviderKey
-    const { list: providerKeys } = await this.providerKeyService.list(
-      { vendor },
-      { limit: 100 },
-    );
-
-    if (providerKeys.length === 0) {
-      return {
-        isAvailable: false,
-        lastVerifiedAt: null,
-      };
-    }
-
-    const providerKeyIds = providerKeys.map((pk) => pk.id);
-
-    // 查询这些 ProviderKey 对应的模型可用性
-    const { list: records } = await this.modelAvailabilityService.list(
-      {
-        model,
-        isAvailable: true,
-        providerKeyId: { in: providerKeyIds },
-      },
-      { limit: 1 },
-    );
-
-    if (records.length > 0) {
-      return {
-        isAvailable: true,
-        lastVerifiedAt: records[0].lastVerifiedAt,
-      };
-    }
-
-    return {
-      isAvailable: false,
-      lastVerifiedAt: null,
-    };
-  }
-
-  /**
-   * 获取所有可用的模型列表
-   * vendor 信息从 ProviderKey 中获取
-   */
-  async getAllAvailableModels(): Promise<
-    Array<{ vendor: string; model: string; lastVerifiedAt: Date }>
-  > {
-    // 获取所有可用的模型记录
-    const { list: records } = await this.modelAvailabilityService.list(
-      { isAvailable: true },
-      { limit: 1000 },
-    );
-
-    // 获取所有 ProviderKey 用于获取 vendor 信息
-    const { list: providerKeys } = await this.providerKeyService.list(
-      {},
-      { limit: 1000 },
-    );
-    const providerKeyMap = new Map(providerKeys.map((pk) => [pk.id, pk]));
-
-    // 去重（同一个模型可能有多个 provider key）
-    const uniqueModels = new Map<
-      string,
-      { vendor: string; model: string; lastVerifiedAt: Date }
-    >();
-
-    for (const record of records) {
-      const providerKey = providerKeyMap.get(record.providerKeyId);
-      if (!providerKey) continue;
-
-      const vendor = providerKey.vendor;
-      const key = `${vendor}:${record.model}`;
-      const existing = uniqueModels.get(key);
-
-      // 保留最新验证的记录
-      if (!existing || record.lastVerifiedAt > existing.lastVerifiedAt) {
-        uniqueModels.set(key, {
-          vendor,
-          model: record.model,
-          lastVerifiedAt: record.lastVerifiedAt,
-        });
-      }
-    }
-
-    return Array.from(uniqueModels.values());
   }
 }

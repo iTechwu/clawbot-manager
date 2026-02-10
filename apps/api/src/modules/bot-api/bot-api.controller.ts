@@ -20,7 +20,9 @@ import { BotUsageAnalyticsService } from './services/bot-usage-analytics.service
 import { BotSseService } from './services/bot-sse.service';
 import { AvailableModelService } from './services/available-model.service';
 import { ModelVerificationService } from './services/model-verification.service';
+import { CapabilityTagMatchingService } from './services/capability-tag-matching.service';
 import { AuthenticatedRequest, Auth, SseAuth, AdminAuth } from '@app/auth';
+import { CapabilityTagService, ModelCapabilityTagService } from '@app/db';
 import type { Observable } from 'rxjs';
 
 /**
@@ -43,6 +45,9 @@ export class BotApiController {
     private readonly sseService: BotSseService,
     private readonly availableModelService: AvailableModelService,
     private readonly modelVerificationService: ModelVerificationService,
+    private readonly capabilityTagMatchingService: CapabilityTagMatchingService,
+    private readonly capabilityTagService: CapabilityTagService,
+    private readonly modelCapabilityTagService: ModelCapabilityTagService,
   ) {}
 
   // ============================================================================
@@ -419,33 +424,29 @@ export class BotApiController {
   }
 
   /**
-   * POST /model/verify - 手动触发模型可用性验证
+   * GET /model/availability - 获取 ModelAvailability 列表
    * 仅限管理员访问
    */
-  @TsRestHandler(mc.verify)
+  @TsRestHandler(mc.getAvailability)
   @AdminAuth()
-  async verifyModels(): Promise<any> {
-    return tsRestHandler(mc.verify, async () => {
-      // 异步执行验证，不阻塞响应
-      this.modelVerificationService.verifyAllProviderKeys().catch((err) => {
-        console.error('[ModelVerification] Manual verification failed', err);
-      });
-      return success({
-        success: true,
-        message: '模型验证已开始，请稍后刷新页面查看结果',
-      });
+  async getModelAvailability(): Promise<any> {
+    return tsRestHandler(mc.getAvailability, async ({ query }) => {
+      const list = await this.modelVerificationService.getAllModelAvailability(
+        query?.providerKeyId,
+      );
+      return success({ list });
     });
   }
 
   /**
-   * POST /model/refresh-models - 刷新模型列表
-   * 从 Provider 端点获取最新的模型列表（不进行验证）
+   * POST /model/refresh - 刷新模型列表
+   * 从 Provider 端点获取最新的模型列表并写入 ModelAvailability（不进行验证）
    * 仅限管理员访问
    */
-  @TsRestHandler(mc.refreshModels)
+  @TsRestHandler(mc.refresh)
   @AdminAuth()
   async refreshModels(): Promise<any> {
-    return tsRestHandler(mc.refreshModels, async ({ body }) => {
+    return tsRestHandler(mc.refresh, async ({ body }) => {
       const result = await this.modelVerificationService.refreshModels(
         body.providerKeyId,
       );
@@ -454,19 +455,171 @@ export class BotApiController {
   }
 
   /**
-   * POST /model/verify-single - 验证单个模型可用性
+   * POST /model/verify - 验证单个模型可用性
    * 通过实际调用模型 API 验证单个模型是否可用
    * 仅限管理员访问
    */
-  @TsRestHandler(mc.verifySingle)
+  @TsRestHandler(mc.verify)
   @AdminAuth()
   async verifySingleModel(): Promise<any> {
-    return tsRestHandler(mc.verifySingle, async ({ body }) => {
+    return tsRestHandler(mc.verify, async ({ body }) => {
       const result = await this.modelVerificationService.verifySingleModel(
         body.providerKeyId,
         body.model,
       );
       return success(result);
+    });
+  }
+
+  /**
+   * POST /model/batch-verify - 批量验证未验证的模型
+   * 增量验证：只验证 errorMessage 为 'Not verified yet' 的模型
+   * 仅限管理员访问
+   */
+  @TsRestHandler(mc.batchVerify)
+  @AdminAuth()
+  async batchVerifyModels(): Promise<any> {
+    return tsRestHandler(mc.batchVerify, async ({ body }) => {
+      const result = await this.modelVerificationService.batchVerifyUnverified(
+        body.providerKeyId,
+      );
+      return success(result);
+    });
+  }
+
+  /**
+   * POST /model/refresh-all - 刷新所有 ProviderKeys 的模型列表
+   * 遍历所有 ProviderKeys，从各自的端点获取最新的模型列表（不进行验证）
+   * 仅限管理员访问
+   */
+  @TsRestHandler(mc.refreshAll)
+  @AdminAuth()
+  async refreshAllModels(): Promise<any> {
+    return tsRestHandler(mc.refreshAll, async () => {
+      const result = await this.modelVerificationService.refreshAllModels();
+      return success(result);
+    });
+  }
+
+  /**
+   * POST /model/batch-verify-all - 批量验证所有不可用的模型
+   * 遍历所有 ProviderKeys，验证 isAvailable=false 的模型
+   * 仅限管理员访问
+   */
+  @TsRestHandler(mc.batchVerifyAll)
+  @AdminAuth()
+  async batchVerifyAllModels(): Promise<any> {
+    return tsRestHandler(mc.batchVerifyAll, async () => {
+      const result =
+        await this.modelVerificationService.batchVerifyAllUnavailable();
+      return success(result);
+    });
+  }
+
+  // ============================================================================
+  // Capability Tag Management (管理员)
+  // ============================================================================
+
+  /**
+   * GET /model/capability-tags - 获取所有能力标签
+   * 返回系统中所有可用的能力标签
+   * 仅限管理员访问
+   */
+  @TsRestHandler(mc.getCapabilityTags)
+  @AdminAuth()
+  async getCapabilityTags(): Promise<any> {
+    return tsRestHandler(mc.getCapabilityTags, async () => {
+      const { list } = await this.capabilityTagService.list(
+        { isActive: true, isDeleted: false },
+        { limit: 100 },
+      );
+      return success({
+        list: list.map((tag) => ({
+          id: tag.id,
+          tagId: tag.tagId,
+          name: tag.name,
+          description: tag.description,
+          isActive: tag.isActive,
+        })),
+      });
+    });
+  }
+
+  /**
+   * GET /model/:modelAvailabilityId/tags - 获取模型的能力标签
+   * 返回指定模型的所有能力标签关联
+   * 仅限管理员访问
+   */
+  @TsRestHandler(mc.getModelTags)
+  @AdminAuth()
+  async getModelTags(): Promise<any> {
+    return tsRestHandler(mc.getModelTags, async ({ params }) => {
+      const { list } = await this.modelCapabilityTagService.list(
+        { modelAvailabilityId: params.modelAvailabilityId },
+        { limit: 100 },
+        {
+          select: {
+            id: true,
+            modelAvailabilityId: true,
+            capabilityTagId: true,
+            matchSource: true,
+            confidence: true,
+            createdAt: true,
+            capabilityTag: { select: { tagId: true } },
+          },
+        },
+      );
+      return success({
+        list: list.map((item) => ({
+          id: item.id,
+          modelAvailabilityId: item.modelAvailabilityId,
+          capabilityTagId: item.capabilityTagId,
+          tagId:
+            (item as { capabilityTag?: { tagId: string } }).capabilityTag
+              ?.tagId || '',
+          matchSource: item.matchSource as
+            | 'pattern'
+            | 'feature'
+            | 'scenario'
+            | 'manual',
+          confidence: item.confidence,
+          createdAt: item.createdAt,
+        })),
+      });
+    });
+  }
+
+  /**
+   * POST /model/tags - 为模型添加能力标签
+   * 手动为模型添加能力标签
+   * 仅限管理员访问
+   */
+  @TsRestHandler(mc.addModelTag)
+  @AdminAuth()
+  async addModelTag(): Promise<any> {
+    return tsRestHandler(mc.addModelTag, async ({ body }) => {
+      await this.capabilityTagMatchingService.addManualTag(
+        body.modelAvailabilityId,
+        body.capabilityTagId,
+      );
+      return success({ success: true });
+    });
+  }
+
+  /**
+   * DELETE /model/tags - 移除模型的能力标签
+   * 移除模型的指定能力标签
+   * 仅限管理员访问
+   */
+  @TsRestHandler(mc.removeModelTag)
+  @AdminAuth()
+  async removeModelTag(): Promise<any> {
+    return tsRestHandler(mc.removeModelTag, async ({ body }) => {
+      await this.capabilityTagMatchingService.removeTag(
+        body.modelAvailabilityId,
+        body.capabilityTagId,
+      );
+      return success({ success: true });
     });
   }
 
