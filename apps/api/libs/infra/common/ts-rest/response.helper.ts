@@ -91,7 +91,7 @@ export function paginated<T>(
   total: number,
   page: number,
   limit: number,
-): TsRestResponse<
+): TsRestSuccessResponse<
   { list: T[]; total: number; page: number; limit: number },
   200
 > {

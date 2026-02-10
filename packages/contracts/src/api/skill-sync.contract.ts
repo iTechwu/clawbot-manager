@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { initContract } from '@ts-rest/core';
-import { createApiResponse } from '../base';
-import { SkillTypeWithCountSchema } from '../schemas/skill.schema';
+import {
+  createApiResponse,
+  PaginationQuerySchema,
+  PaginatedResponseSchema,
+} from '../base';
+import { SkillTypeWithCountSchema, SkillItemSchema } from '../schemas/skill.schema';
 
 const c = initContract();
 
@@ -50,6 +54,33 @@ export type TranslateResult = z.infer<typeof TranslateResultSchema>;
 export const SkillTypeListSchema = z.object({
   skillTypes: z.array(SkillTypeWithCountSchema),
 });
+
+/**
+ * 技能列表查询参数 Schema
+ */
+export const SkillSyncListQuerySchema = PaginationQuerySchema.extend({
+  skillTypeId: z.string().uuid().optional(),
+  isSystem: z
+    .enum(['true', 'false', 'all'])
+    .optional()
+    .default('all')
+    .transform((val) => {
+      if (val === 'all') return undefined;
+      return val === 'true';
+    }),
+  search: z.string().optional(),
+});
+
+export type SkillSyncListQuery = z.input<typeof SkillSyncListQuerySchema>;
+
+/**
+ * 技能列表响应 Schema
+ */
+export const SkillSyncListResponseSchema = PaginatedResponseSchema(
+  SkillItemSchema,
+);
+
+export type SkillSyncListResponse = z.infer<typeof SkillSyncListResponseSchema>;
 
 /**
  * Skill Sync Contract
@@ -112,6 +143,21 @@ export const skillSyncContract = c.router(
       },
       summary: '获取所有技能类型',
       description: '获取所有技能类型及其技能数量',
+    },
+
+    /**
+     * 获取技能列表（分页）
+     */
+    skills: {
+      method: 'GET',
+      path: '/skills',
+      query: SkillSyncListQuerySchema,
+      responses: {
+        200: createApiResponse(SkillSyncListResponseSchema),
+      },
+      summary: '获取技能列表',
+      description:
+        '获取 OpenClaw 同步的技能列表，支持分页、按类型筛选、按系统/自定义筛选、搜索',
     },
   },
   {

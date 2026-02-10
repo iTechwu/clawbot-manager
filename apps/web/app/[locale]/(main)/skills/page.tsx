@@ -43,6 +43,9 @@ import {
   User,
   Loader2,
   ChevronRight,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
 import type { CreateSkillRequest, SkillTypeWithCount } from '@repo/contracts';
 
@@ -340,6 +343,8 @@ function CreateSkillForm({
   );
 }
 
+const PAGE_SIZE = 12;
+
 /**
  * 技能管理页面
  */
@@ -352,6 +357,7 @@ export default function SkillsPage() {
     'all',
   );
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [page, setPage] = useState(1);
 
   // 获取技能类型列表
   const { data: skillTypesResponse, isLoading: isLoadingTypes } =
@@ -366,29 +372,50 @@ export default function SkillsPage() {
 
   const skillTypes = skillTypesResponse?.body?.data?.skillTypes || [];
 
-  // 获取技能列表
-  const { data: response, isLoading } = skillApi.list.useQuery(
-    ['skills', { search, selectedTypeId, sourceFilter }],
+  // 获取技能列表（使用分页 API）
+  const isSystemParam =
+    sourceFilter === 'all'
+      ? 'all'
+      : sourceFilter === 'system'
+        ? 'true'
+        : 'false';
+
+  const { data: response, isLoading } = skillSyncApi.skills.useQuery(
+    ['skills', { search, selectedTypeId, sourceFilter, page }],
     {
       query: {
         search: search || undefined,
         skillTypeId: selectedTypeId || undefined,
-        isSystem:
-          sourceFilter === 'all'
-            ? undefined
-            : sourceFilter === 'system'
-              ? true
-              : false,
-        limit: 50,
+        isSystem: isSystemParam as 'all' | 'true' | 'false',
+        page,
+        limit: PAGE_SIZE,
       },
     },
     {
       staleTime: 60000,
-      queryKey: ['skills', { search, selectedTypeId, sourceFilter }],
+      queryKey: ['skills', { search, selectedTypeId, sourceFilter, page }],
     },
   );
 
   const skills = response?.body?.data?.list || [];
+  const total = response?.body?.data?.total || 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  // 重置页码当筛选条件变化时
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const handleTypeChange = (typeId: string | null) => {
+    setSelectedTypeId(typeId);
+    setPage(1);
+  };
+
+  const handleSourceFilterChange = (value: 'all' | 'system' | 'custom') => {
+    setSourceFilter(value);
+    setPage(1);
+  };
 
   // 获取当前选中的类型名称
   const selectedType = skillTypes.find((t) => t.id === selectedTypeId);
@@ -404,7 +431,7 @@ export default function SkillsPage() {
             <div className="space-y-1 pr-4">
               {/* 全部类型 */}
               <button
-                onClick={() => setSelectedTypeId(null)}
+                onClick={() => handleTypeChange(null)}
                 className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                   selectedTypeId === null
                     ? 'bg-primary text-primary-foreground'
@@ -433,7 +460,7 @@ export default function SkillsPage() {
                       key={type.id}
                       skillType={type}
                       isSelected={selectedTypeId === type.id}
-                      onClick={() => setSelectedTypeId(type.id)}
+                      onClick={() => handleTypeChange(type.id)}
                     />
                   ))}
             </div>
@@ -482,7 +509,7 @@ export default function SkillsPage() {
         <Tabs
           value={sourceFilter}
           onValueChange={(v) =>
-            setSourceFilter(v as 'all' | 'system' | 'custom')
+            handleSourceFilterChange(v as 'all' | 'system' | 'custom')
           }
         >
           <TabsList>
@@ -498,7 +525,7 @@ export default function SkillsPage() {
           <Input
             placeholder={t('searchPlaceholder')}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-9"
           />
         </div>
@@ -517,11 +544,63 @@ export default function SkillsPage() {
             {search && <p className="mt-1 text-sm">{t('tryOtherKeywords')}</p>}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {skills.map((skill) => (
-              <SkillCard key={skill.id} skill={skill} t={t} />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {skills.map((skill) => (
+                <SkillCard key={skill.id} skill={skill} t={t} />
+              ))}
+            </div>
+
+            {/* 分页 */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t pt-4">
+                <p className="text-muted-foreground text-sm">
+                  {t('pagination.showing', {
+                    from: (page - 1) * PAGE_SIZE + 1,
+                    to: Math.min(page * PAGE_SIZE, total),
+                    total,
+                  })}
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(1)}
+                    disabled={page === 1}
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(page - 1)}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-muted-foreground px-3 text-sm">
+                    {t('pagination.page', { page, totalPages })}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(page + 1)}
+                    disabled={page === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(totalPages)}
+                    disabled={page === totalPages}
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

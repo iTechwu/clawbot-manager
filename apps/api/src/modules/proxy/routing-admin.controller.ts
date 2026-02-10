@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
   Body,
   Param,
   HttpCode,
@@ -14,7 +13,9 @@ import { RoutingEngineService } from './services/routing-engine.service';
 import { FallbackEngineService } from './services/fallback-engine.service';
 import { CostTrackerService } from './services/cost-tracker.service';
 import { ConfigurationService } from './services/configuration.service';
-import { randomUUID } from 'crypto';
+import { ComplexityClassifierService } from '@app/clients/internal/complexity-classifier';
+import { success, error } from '@/common/ts-rest/response.helper';
+import { CommonErrorCode } from '@repo/contracts/errors';
 
 // Helper to generate consistent UUIDs from string IDs
 const generateUUID = (id: string): string => {
@@ -47,6 +48,7 @@ export class RoutingAdminController {
     private readonly fallbackEngine: FallbackEngineService,
     private readonly costTracker: CostTrackerService,
     private readonly configService: ConfigurationService,
+    private readonly complexityClassifier: ComplexityClassifierService,
   ) {}
 
   // ============================================================================
@@ -58,10 +60,7 @@ export class RoutingAdminController {
    */
   @Get('status')
   async getConfigStatus() {
-    return {
-      success: true,
-      data: this.configService.getLoadStatus(),
-    };
+    return success(this.configService.getLoadStatus());
   }
 
   /**
@@ -71,11 +70,10 @@ export class RoutingAdminController {
   @HttpCode(HttpStatus.OK)
   async refreshConfig() {
     await this.configService.refreshConfigurations();
-    return {
-      success: true,
+    return success({
       message: 'Configuration refreshed',
-      data: this.configService.getLoadStatus(),
-    };
+      ...this.configService.getLoadStatus(),
+    });
   }
 
   // ============================================================================
@@ -88,20 +86,17 @@ export class RoutingAdminController {
   @Get('capability-tags')
   async getCapabilityTags() {
     const tags = this.routingEngine.getAllCapabilityTags();
-    return {
-      success: true,
-      data: {
-        list: tags.map((tag) => ({
-          id: generateUUID(tag.tagId),
-          ...tag,
-          description: null,
-          isActive: true,
-          isBuiltin: true,
-          createdAt: now,
-          updatedAt: now,
-        })),
-      },
-    };
+    return success({
+      list: tags.map((tag) => ({
+        id: generateUUID(tag.tagId),
+        ...tag,
+        description: null,
+        isActive: true,
+        isBuiltin: true,
+        createdAt: now,
+        updatedAt: now,
+      })),
+    });
   }
 
   /**
@@ -111,15 +106,9 @@ export class RoutingAdminController {
   async getCapabilityTag(@Param('tagId') tagId: string) {
     const tag = this.routingEngine.getCapabilityTag(tagId);
     if (!tag) {
-      return {
-        success: false,
-        error: 'Capability tag not found',
-      };
+      return error(CommonErrorCode.NotFound);
     }
-    return {
-      success: true,
-      data: tag,
-    };
+    return success(tag);
   }
 
   // ============================================================================
@@ -132,20 +121,17 @@ export class RoutingAdminController {
   @Get('fallback-chains')
   async getFallbackChains() {
     const chains = this.fallbackEngine.getAllFallbackChains();
-    return {
-      success: true,
-      data: {
-        list: chains.map((chain) => ({
-          id: generateUUID(chain.chainId),
-          ...chain,
-          description: null,
-          isActive: true,
-          isBuiltin: true,
-          createdAt: now,
-          updatedAt: now,
-        })),
-      },
-    };
+    return success({
+      list: chains.map((chain) => ({
+        id: generateUUID(chain.chainId),
+        ...chain,
+        description: null,
+        isActive: true,
+        isBuiltin: true,
+        createdAt: now,
+        updatedAt: now,
+      })),
+    });
   }
 
   /**
@@ -155,15 +141,9 @@ export class RoutingAdminController {
   async getFallbackChain(@Param('chainId') chainId: string) {
     const chain = this.fallbackEngine.getFallbackChain(chainId);
     if (!chain) {
-      return {
-        success: false,
-        error: 'Fallback chain not found',
-      };
+      return error(CommonErrorCode.NotFound);
     }
-    return {
-      success: true,
-      data: chain,
-    };
+    return success(chain);
   }
 
   // ============================================================================
@@ -176,20 +156,17 @@ export class RoutingAdminController {
   @Get('cost-strategies')
   async getCostStrategies() {
     const strategies = this.costTracker.getAllCostStrategies();
-    return {
-      success: true,
-      data: {
-        list: strategies.map((strategy) => ({
-          id: generateUUID(strategy.strategyId),
-          ...strategy,
-          description: null,
-          isActive: true,
-          isBuiltin: true,
-          createdAt: now,
-          updatedAt: now,
-        })),
-      },
-    };
+    return success({
+      list: strategies.map((strategy) => ({
+        id: generateUUID(strategy.strategyId),
+        ...strategy,
+        description: null,
+        isActive: true,
+        isBuiltin: true,
+        createdAt: now,
+        updatedAt: now,
+      })),
+    });
   }
 
   /**
@@ -199,15 +176,85 @@ export class RoutingAdminController {
   async getCostStrategy(@Param('strategyId') strategyId: string) {
     const strategy = this.costTracker.getCostStrategy(strategyId);
     if (!strategy) {
-      return {
-        success: false,
-        error: 'Cost strategy not found',
-      };
+      return error(CommonErrorCode.NotFound);
     }
-    return {
-      success: true,
-      data: strategy,
-    };
+    return success(strategy);
+  }
+
+  // ============================================================================
+  // 复杂度路由配置管理
+  // ============================================================================
+
+  /**
+   * 获取所有复杂度路由配置
+   */
+  @Get('complexity-configs')
+  async getComplexityRoutingConfigs() {
+    const config = this.routingEngine.getComplexityRoutingConfig();
+    // 返回默认配置列表
+    const configs = [
+      {
+        id: generateUUID('default'),
+        configId: 'default',
+        name: '默认复杂度路由',
+        description: '根据消息复杂度自动选择模型',
+        isEnabled: config.enabled,
+        models: config.models,
+        classifierModel: 'deepseek-v3-250324',
+        classifierVendor: 'deepseek',
+        toolMinComplexity: config.toolMinComplexity,
+        isBuiltin: true,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
+    return success({ list: configs });
+  }
+
+  /**
+   * 获取指定复杂度路由配置
+   */
+  @Get('complexity-configs/:configId')
+  async getComplexityRoutingConfig(@Param('configId') configId: string) {
+    if (configId !== 'default') {
+      return error(CommonErrorCode.NotFound);
+    }
+    const config = this.routingEngine.getComplexityRoutingConfig();
+    return success({
+      id: generateUUID('default'),
+      configId: 'default',
+      name: '默认复杂度路由',
+      description: '根据消息复杂度自动选择模型',
+      isEnabled: config.enabled,
+      models: config.models,
+      classifierModel: 'deepseek-v3-250324',
+      classifierVendor: 'deepseek',
+      toolMinComplexity: config.toolMinComplexity,
+      isBuiltin: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  /**
+   * 测试复杂度分类
+   */
+  @Post('classify-complexity')
+  @HttpCode(HttpStatus.OK)
+  async classifyComplexity(
+    @Body()
+    body: {
+      message: string;
+      context?: string;
+      hasTools?: boolean;
+    },
+  ) {
+    const result = await this.complexityClassifier.classify({
+      message: body.message,
+      context: body.context,
+      hasTools: body.hasTools,
+    });
+    return success(result);
   }
 
   // ============================================================================
@@ -220,32 +267,29 @@ export class RoutingAdminController {
   @Get('model-pricing')
   async getModelPricingList() {
     const pricingList = this.costTracker.getAllModelPricing();
-    return {
-      success: true,
-      data: {
-        list: pricingList.map((pricing) => ({
-          id: generateUUID(pricing.model),
-          ...pricing,
-          displayName: null,
-          description: null,
-          contextLength: 128,
-          supportsExtendedThinking: pricing.thinkingPrice !== undefined,
-          supportsCacheControl: pricing.cacheReadPrice !== undefined,
-          supportsVision: false,
-          supportsFunctionCalling: true,
-          supportsStreaming: true,
-          recommendedScenarios: null,
-          isEnabled: true,
-          isDeprecated: false,
-          deprecationDate: null,
-          priceUpdatedAt: now,
-          notes: null,
-          metadata: null,
-          createdAt: now,
-          updatedAt: now,
-        })),
-      },
-    };
+    return success({
+      list: pricingList.map((pricing) => ({
+        id: generateUUID(pricing.model),
+        ...pricing,
+        displayName: null,
+        description: null,
+        contextLength: 128,
+        supportsExtendedThinking: pricing.thinkingPrice !== undefined,
+        supportsCacheControl: pricing.cacheReadPrice !== undefined,
+        supportsVision: false,
+        supportsFunctionCalling: true,
+        supportsStreaming: true,
+        recommendedScenarios: null,
+        isEnabled: true,
+        isDeprecated: false,
+        deprecationDate: null,
+        priceUpdatedAt: now,
+        notes: null,
+        metadata: null,
+        createdAt: now,
+        updatedAt: now,
+      })),
+    });
   }
 
   /**
@@ -255,15 +299,9 @@ export class RoutingAdminController {
   async getModelPricing(@Param('model') model: string) {
     const pricing = this.costTracker.getModelPricing(model);
     if (!pricing) {
-      return {
-        success: false,
-        error: 'Model pricing not found',
-      };
+      return error(CommonErrorCode.NotFound);
     }
-    return {
-      success: true,
-      data: pricing,
-    };
+    return success(pricing);
   }
 
   // ============================================================================
@@ -294,10 +332,7 @@ export class RoutingAdminController {
       cacheWriteTokens: body.cacheWriteTokens,
     });
 
-    return {
-      success: true,
-      data: cost,
-    };
+    return success(cost);
   }
 
   // ============================================================================
@@ -311,18 +346,12 @@ export class RoutingAdminController {
   async getBotUsage(@Param('botId') botId: string) {
     const usage = this.costTracker.getBotUsage(botId);
     if (!usage) {
-      return {
-        success: true,
-        data: {
-          dailyCost: 0,
-          monthlyCost: 0,
-        },
-      };
+      return success({
+        dailyCost: 0,
+        monthlyCost: 0,
+      });
     }
-    return {
-      success: true,
-      data: usage,
-    };
+    return success(usage);
   }
 
   /**
@@ -342,10 +371,7 @@ export class RoutingAdminController {
       alertThreshold ? parseFloat(alertThreshold) : 0.8,
     );
 
-    return {
-      success: true,
-      data: status,
-    };
+    return success(status);
   }
 
   // ============================================================================
@@ -371,13 +397,10 @@ export class RoutingAdminController {
       body.scenario,
     );
 
-    return {
-      success: true,
-      data: {
-        selectedModel: model,
-        strategy: body.strategyId,
-        scenario: body.scenario,
-      },
-    };
+    return success({
+      selectedModel: model,
+      strategy: body.strategyId,
+      scenario: body.scenario,
+    });
   }
 }

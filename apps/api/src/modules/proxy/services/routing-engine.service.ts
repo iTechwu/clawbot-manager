@@ -27,9 +27,9 @@ export interface ComplexityRoutingConfig {
 const DEFAULT_COMPLEXITY_ROUTING: ComplexityRoutingConfig = {
   enabled: true,
   models: {
-    super_easy: { vendor: 'deepseek', model: 'deepseek-chat' },
-    easy: { vendor: 'deepseek', model: 'deepseek-chat' },
-    medium: { vendor: 'anthropic', model: 'claude-sonnet-4-20250514' },
+    super_easy: { vendor: 'deepseek', model: 'deepseek-v3' },
+    easy: { vendor: 'deepseek', model: 'deepseek-v3' },
+    medium: { vendor: 'anthropic', model: 'gpt-4o' },
     hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
     super_hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
   },
@@ -126,11 +126,13 @@ export class RoutingEngineService {
   // 预定义能力标签（后续从数据库加载）
   private capabilityTags: Map<string, CapabilityTag> = new Map();
   // 复杂度路由配置
-  private complexityRoutingConfig: ComplexityRoutingConfig = DEFAULT_COMPLEXITY_ROUTING;
+  private complexityRoutingConfig: ComplexityRoutingConfig =
+    DEFAULT_COMPLEXITY_ROUTING;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    @Optional() private readonly complexityClassifier?: ComplexityClassifierService,
+    @Optional()
+    private readonly complexityClassifier?: ComplexityClassifierService,
   ) {
     this.initializeDefaultTags();
   }
@@ -195,14 +197,22 @@ export class RoutingEngineService {
         category: 'context',
         priority: 60,
         requiredProtocol: 'openai-compatible',
-        requiredModels: ['gemini-1.5-pro', 'gemini-2.0-flash', 'doubao-pro-128k'],
+        requiredModels: [
+          'gemini-1.5-pro',
+          'gemini-2.0-flash',
+          'doubao-pro-128k',
+        ],
       },
       {
         tagId: 'vision',
         name: '视觉理解',
         category: 'vision',
         priority: 75,
-        requiredModels: ['gpt-4o', 'claude-sonnet-4-20250514', 'gemini-2.0-flash'],
+        requiredModels: [
+          'gpt-4o',
+          'claude-sonnet-4-20250514',
+          'gemini-2.0-flash',
+        ],
         requiresVision: true,
       },
     ];
@@ -215,9 +225,7 @@ export class RoutingEngineService {
   /**
    * 从数据库加载能力标签配置
    */
-  async loadCapabilityTagsFromDb(
-    tags: CapabilityTag[],
-  ): Promise<void> {
+  async loadCapabilityTagsFromDb(tags: CapabilityTag[]): Promise<void> {
     this.capabilityTags.clear();
     for (const tag of tags) {
       this.capabilityTags.set(tag.tagId, tag);
@@ -317,9 +325,7 @@ export class RoutingEngineService {
   /**
    * 检查消息中是否包含视觉内容
    */
-  private hasVisionContent(
-    messages?: ProxyRequestBody['messages'],
-  ): boolean {
+  private hasVisionContent(messages?: ProxyRequestBody['messages']): boolean {
     if (!messages) return false;
 
     return messages.some((msg) => {
@@ -450,7 +456,11 @@ export class RoutingEngineService {
     const modelLower = model.toLowerCase();
 
     if (modelLower.includes('claude')) return 'anthropic';
-    if (modelLower.includes('gpt') || modelLower.includes('o1') || modelLower.includes('o3'))
+    if (
+      modelLower.includes('gpt') ||
+      modelLower.includes('o1') ||
+      modelLower.includes('o3')
+    )
       return 'openai';
     if (modelLower.includes('gemini')) return 'google';
     if (modelLower.includes('deepseek')) return 'deepseek';
@@ -601,7 +611,8 @@ export class RoutingEngineService {
         if (decision.vendor !== 'anthropic') {
           decision.vendor = 'anthropic';
           decision.model =
-            primaryRequirement.requiredModels?.[0] || 'claude-sonnet-4-20250514';
+            primaryRequirement.requiredModels?.[0] ||
+            'claude-sonnet-4-20250514';
         }
       }
 
@@ -636,9 +647,10 @@ export class RoutingEngineService {
   /**
    * 从消息数组中提取最后一条用户消息和上下文
    */
-  private extractMessageAndContext(
-    messages?: ProxyRequestBody['messages'],
-  ): { message: string; contextMessage?: string } {
+  private extractMessageAndContext(messages?: ProxyRequestBody['messages']): {
+    message: string;
+    contextMessage?: string;
+  } {
     if (!messages || messages.length === 0) {
       return { message: '' };
     }

@@ -7,7 +7,7 @@ import { Controller, Inject } from '@nestjs/common';
 import { TsRestHandler, tsRestHandler } from '@ts-rest/nest';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import { skillSyncContract } from '@repo/contracts';
+import { skillSyncContract, SkillSyncListQuery } from '@repo/contracts';
 import { success } from '@/common/ts-rest/response.helper';
 import { SkillSyncService } from './skill-sync.service';
 
@@ -66,6 +66,19 @@ export class SkillSyncController {
     return tsRestHandler(c.skillTypes, async () => {
       const skillTypes = await this.skillSyncService.getSkillTypes();
       return success({ skillTypes });
+    });
+  }
+
+  /**
+   * 获取技能列表（分页）
+   */
+  @TsRestHandler(c.skills)
+  async skills() {
+    return tsRestHandler(c.skills, async ({ query }) => {
+      const result = await this.skillSyncService.listSkills(
+        query as unknown as SkillSyncListQuery,
+      );
+      return success(result);
     });
   }
 }

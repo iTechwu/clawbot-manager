@@ -1,7 +1,10 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import { RoutingEngineService, CapabilityTag } from './routing-engine.service';
+import {
+  RoutingEngineService,
+  CapabilityTag,
+} from './routing-engine.service';
 import {
   FallbackEngineService,
   FallbackChain,
@@ -33,6 +36,7 @@ export interface ConfigLoadStatus {
   capabilityTags: { loaded: boolean; count: number; lastUpdate?: Date };
   fallbackChains: { loaded: boolean; count: number; lastUpdate?: Date };
   costStrategies: { loaded: boolean; count: number; lastUpdate?: Date };
+  complexityRoutingConfigs: { loaded: boolean; count: number; lastUpdate?: Date };
 }
 
 /**
@@ -51,6 +55,7 @@ export class ConfigurationService implements OnModuleInit {
     capabilityTags: { loaded: false, count: 0 },
     fallbackChains: { loaded: false, count: 0 },
     costStrategies: { loaded: false, count: 0 },
+    complexityRoutingConfigs: { loaded: false, count: 0 },
   };
 
   private refreshInterval: NodeJS.Timeout | null = null;
@@ -96,6 +101,7 @@ export class ConfigurationService implements OnModuleInit {
         this.loadCapabilityTags(),
         this.loadFallbackChains(),
         this.loadCostStrategies(),
+        this.loadComplexityRoutingConfigs(),
       ]);
 
       this.logger.info(
@@ -290,6 +296,41 @@ export class ConfigurationService implements OnModuleInit {
   }
 
   /**
+   * 加载复杂度路由配置
+   * 优先从数据库加载，如果数据库为空则使用默认配置
+   */
+  async loadComplexityRoutingConfigs(): Promise<void> {
+    try {
+      // 使用默认配置（数据库表尚未生成）
+      const configs = this.getDefaultComplexityRoutingConfigs();
+      this.logger.info(
+        `[ConfigurationService] Using ${configs.length} default complexity routing configs`,
+      );
+
+      // 设置到 RoutingEngine
+      if (configs.length > 0) {
+        this.routingEngine.setComplexityRoutingConfig({
+          enabled: true,
+          models: configs[0].models,
+          toolMinComplexity: configs[0].toolMinComplexity,
+        });
+      }
+
+      this.loadStatus.complexityRoutingConfigs = {
+        loaded: true,
+        count: configs.length,
+        lastUpdate: new Date(),
+      };
+    } catch (error) {
+      this.logger.error(
+        '[ConfigurationService] Failed to load complexity routing configs',
+        { error },
+      );
+      this.loadStatus.complexityRoutingConfigs.loaded = false;
+    }
+  }
+
+  /**
    * 启动定期刷新
    */
   private startPeriodicRefresh(): void {
@@ -341,7 +382,8 @@ export class ConfigurationService implements OnModuleInit {
       this.loadStatus.modelPricing.loaded &&
       this.loadStatus.capabilityTags.loaded &&
       this.loadStatus.fallbackChains.loaded &&
-      this.loadStatus.costStrategies.loaded
+      this.loadStatus.costStrategies.loaded &&
+      this.loadStatus.complexityRoutingConfigs.loaded
     );
   }
 
@@ -705,6 +747,61 @@ export class ConfigurationService implements OnModuleInit {
         costWeight: 0.33,
         performanceWeight: 0.33,
         capabilityWeight: 0.34,
+      },
+    ];
+  }
+
+  /**
+   * 获取默认复杂度路由配置
+   */
+  private getDefaultComplexityRoutingConfigs(): Array<{
+    configId: string;
+    name: string;
+    models: {
+      super_easy: { vendor: string; model: string };
+      easy: { vendor: string; model: string };
+      medium: { vendor: string; model: string };
+      hard: { vendor: string; model: string };
+      super_hard: { vendor: string; model: string };
+    };
+    toolMinComplexity?: 'super_easy' | 'easy' | 'medium' | 'hard' | 'super_hard';
+  }> {
+    return [
+      {
+        configId: 'default',
+        name: '默认复杂度路由',
+        models: {
+          super_easy: { vendor: 'deepseek', model: 'deepseek-v3' },
+          easy: { vendor: 'deepseek', model: 'deepseek-v3' },
+          medium: { vendor: 'openai', model: 'gpt-4o' },
+          hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
+          super_hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
+        },
+        toolMinComplexity: 'easy',
+      },
+      {
+        configId: 'cost-optimized',
+        name: '成本优化复杂度路由',
+        models: {
+          super_easy: { vendor: 'deepseek', model: 'deepseek-v3' },
+          easy: { vendor: 'deepseek', model: 'deepseek-v3' },
+          medium: { vendor: 'deepseek', model: 'deepseek-v3' },
+          hard: { vendor: 'openai', model: 'gpt-4o' },
+          super_hard: { vendor: 'anthropic', model: 'claude-sonnet-4-20250514' },
+        },
+        toolMinComplexity: 'easy',
+      },
+      {
+        configId: 'performance-first',
+        name: '性能优先复杂度路由',
+        models: {
+          super_easy: { vendor: 'openai', model: 'gpt-4o-mini' },
+          easy: { vendor: 'openai', model: 'gpt-4o' },
+          medium: { vendor: 'anthropic', model: 'claude-sonnet-4-20250514' },
+          hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
+          super_hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
+        },
+        toolMinComplexity: 'medium',
       },
     ];
   }

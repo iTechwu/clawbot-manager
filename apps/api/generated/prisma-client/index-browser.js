@@ -670,6 +670,24 @@ exports.Prisma.BotRoutingConfigScalarFieldEnum = {
   alertThreshold: 'alertThreshold',
   autoDowngrade: 'autoDowngrade',
   downgradeModel: 'downgradeModel',
+  complexityRoutingEnabled: 'complexityRoutingEnabled',
+  complexityRoutingConfigId: 'complexityRoutingConfigId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ComplexityRoutingConfigScalarFieldEnum = {
+  id: 'id',
+  configId: 'configId',
+  name: 'name',
+  description: 'description',
+  models: 'models',
+  classifierModel: 'classifierModel',
+  classifierVendor: 'classifierVendor',
+  toolMinComplexity: 'toolMinComplexity',
+  isEnabled: 'isEnabled',
+  isBuiltin: 'isBuiltin',
+  isDeleted: 'isDeleted',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -830,7 +848,8 @@ exports.Prisma.ModelName = {
   CapabilityTag: 'CapabilityTag',
   FallbackChain: 'FallbackChain',
   CostStrategy: 'CostStrategy',
-  BotRoutingConfig: 'BotRoutingConfig'
+  BotRoutingConfig: 'BotRoutingConfig',
+  ComplexityRoutingConfig: 'ComplexityRoutingConfig'
 };
 
 /**

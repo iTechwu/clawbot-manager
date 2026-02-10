@@ -1315,6 +1315,12 @@ model BotRoutingConfig {
   /// 降级目标模型
   downgradeModel     String?  @map("downgrade_model") @db.VarChar(100)
 
+  // ============ 复杂度路由配置 ============
+  /// 是否启用复杂度路由
+  complexityRoutingEnabled  Boolean @default(false) @map("complexity_routing_enabled")
+  /// 复杂度路由配置 ID
+  complexityRoutingConfigId String? @map("complexity_routing_config_id") @db.VarChar(50)
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -1323,5 +1329,49 @@ model BotRoutingConfig {
   @@index([botId])
   @@index([routingEnabled])
   @@index([costControlEnabled])
+  @@index([complexityRoutingEnabled])
   @@map("b_bot_routing_config")
+}
+
+/// ComplexityRoutingConfig - 复杂度路由配置
+/// 存储基于消息复杂度的模型路由配置
+model ComplexityRoutingConfig {
+  id       String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  /// 配置唯一标识符
+  configId String @unique @map("config_id") @db.VarChar(50)
+  /// 配置名称
+  name     String @db.VarChar(100)
+  /// 配置描述
+  description String? @db.Text
+
+  // ============ 模型配置 ============
+  /// 各复杂度对应的模型配置（JSON）
+  /// 格式: { super_easy: {vendor, model}, easy: {...}, medium: {...}, hard: {...}, super_hard: {...} }
+  models Json @db.JsonB
+
+  // ============ 分类器配置 ============
+  /// 分类器使用的模型
+  classifierModel  String @default("deepseek-v3-250324") @map("classifier_model") @db.VarChar(100)
+  /// 分类器使用的 vendor
+  classifierVendor String @default("deepseek") @map("classifier_vendor") @db.VarChar(50)
+
+  // ============ 行为配置 ============
+  /// 工具调用时的最低复杂度
+  toolMinComplexity String? @map("tool_min_complexity") @db.VarChar(20)
+
+  // ============ 状态 ============
+  /// 是否启用
+  isEnabled Boolean @default(true) @map("is_enabled")
+  /// 是否为内置配置
+  isBuiltin Boolean @default(false) @map("is_builtin")
+  /// 软删除标记
+  isDeleted Boolean @default(false) @map("is_deleted")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([configId])
+  @@index([isEnabled])
+  @@index([isDeleted])
+  @@map("b_complexity_routing_config")
 }

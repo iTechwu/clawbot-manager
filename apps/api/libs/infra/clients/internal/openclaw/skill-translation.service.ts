@@ -23,7 +23,7 @@ export interface SkillToTranslate {
 
 @Injectable()
 export class SkillTranslationService {
-  private readonly model = 'deepseek-v3-250324';
+  private readonly model = 'deepseek-v3';
   private readonly batchSize = 10;
 
   constructor(

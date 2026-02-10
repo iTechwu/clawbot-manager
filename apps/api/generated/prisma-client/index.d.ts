@@ -212,6 +212,12 @@ export type CostStrategy = $Result.DefaultSelection<Prisma.$CostStrategyPayload>
  * 存储 Bot 的智能路由、Fallback 和成本控制配置
  */
 export type BotRoutingConfig = $Result.DefaultSelection<Prisma.$BotRoutingConfigPayload>
+/**
+ * Model ComplexityRoutingConfig
+ * ComplexityRoutingConfig - 复杂度路由配置
+ * 存储基于消息复杂度的模型路由配置
+ */
+export type ComplexityRoutingConfig = $Result.DefaultSelection<Prisma.$ComplexityRoutingConfigPayload>
 
 /**
  * Enums
@@ -842,6 +848,16 @@ export class PrismaClient<
     * ```
     */
   get botRoutingConfig(): Prisma.BotRoutingConfigDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.complexityRoutingConfig`: Exposes CRUD operations for the **ComplexityRoutingConfig** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ComplexityRoutingConfigs
+    * const complexityRoutingConfigs = await prisma.complexityRoutingConfig.findMany()
+    * ```
+    */
+  get complexityRoutingConfig(): Prisma.ComplexityRoutingConfigDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1308,7 +1324,8 @@ export namespace Prisma {
     CapabilityTag: 'CapabilityTag',
     FallbackChain: 'FallbackChain',
     CostStrategy: 'CostStrategy',
-    BotRoutingConfig: 'BotRoutingConfig'
+    BotRoutingConfig: 'BotRoutingConfig',
+    ComplexityRoutingConfig: 'ComplexityRoutingConfig'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1324,7 +1341,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "userInfo" | "personaTemplate" | "wechatAuth" | "googleAuth" | "discordAuth" | "mobileAuth" | "emailAuth" | "riskDetectionRecord" | "systemTaskQueue" | "fileSource" | "countryCode" | "bot" | "providerKey" | "botProviderKey" | "botUsageLog" | "proxyToken" | "message" | "messageRecipient" | "operateLog" | "channelDefinition" | "channelCredentialField" | "plugin" | "botPlugin" | "skillType" | "skill" | "botSkill" | "modelPricing" | "botModelRouting" | "botChannel" | "capabilityTag" | "fallbackChain" | "costStrategy" | "botRoutingConfig"
+      modelProps: "userInfo" | "personaTemplate" | "wechatAuth" | "googleAuth" | "discordAuth" | "mobileAuth" | "emailAuth" | "riskDetectionRecord" | "systemTaskQueue" | "fileSource" | "countryCode" | "bot" | "providerKey" | "botProviderKey" | "botUsageLog" | "proxyToken" | "message" | "messageRecipient" | "operateLog" | "channelDefinition" | "channelCredentialField" | "plugin" | "botPlugin" | "skillType" | "skill" | "botSkill" | "modelPricing" | "botModelRouting" | "botChannel" | "capabilityTag" | "fallbackChain" | "costStrategy" | "botRoutingConfig" | "complexityRoutingConfig"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3770,6 +3787,80 @@ export namespace Prisma {
           }
         }
       }
+      ComplexityRoutingConfig: {
+        payload: Prisma.$ComplexityRoutingConfigPayload<ExtArgs>
+        fields: Prisma.ComplexityRoutingConfigFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ComplexityRoutingConfigFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComplexityRoutingConfigPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ComplexityRoutingConfigFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComplexityRoutingConfigPayload>
+          }
+          findFirst: {
+            args: Prisma.ComplexityRoutingConfigFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComplexityRoutingConfigPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ComplexityRoutingConfigFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComplexityRoutingConfigPayload>
+          }
+          findMany: {
+            args: Prisma.ComplexityRoutingConfigFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComplexityRoutingConfigPayload>[]
+          }
+          create: {
+            args: Prisma.ComplexityRoutingConfigCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComplexityRoutingConfigPayload>
+          }
+          createMany: {
+            args: Prisma.ComplexityRoutingConfigCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ComplexityRoutingConfigCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComplexityRoutingConfigPayload>[]
+          }
+          delete: {
+            args: Prisma.ComplexityRoutingConfigDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComplexityRoutingConfigPayload>
+          }
+          update: {
+            args: Prisma.ComplexityRoutingConfigUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComplexityRoutingConfigPayload>
+          }
+          deleteMany: {
+            args: Prisma.ComplexityRoutingConfigDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ComplexityRoutingConfigUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ComplexityRoutingConfigUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComplexityRoutingConfigPayload>[]
+          }
+          upsert: {
+            args: Prisma.ComplexityRoutingConfigUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ComplexityRoutingConfigPayload>
+          }
+          aggregate: {
+            args: Prisma.ComplexityRoutingConfigAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateComplexityRoutingConfig>
+          }
+          groupBy: {
+            args: Prisma.ComplexityRoutingConfigGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ComplexityRoutingConfigGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ComplexityRoutingConfigCountArgs<ExtArgs>
+            result: $Utils.Optional<ComplexityRoutingConfigCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -3911,6 +4002,7 @@ export namespace Prisma {
     fallbackChain?: FallbackChainOmit
     costStrategy?: CostStrategyOmit
     botRoutingConfig?: BotRoutingConfigOmit
+    complexityRoutingConfig?: ComplexityRoutingConfigOmit
   }
 
   /* Types for Logging */
@@ -43399,6 +43491,8 @@ export namespace Prisma {
     alertThreshold: Decimal | null
     autoDowngrade: boolean | null
     downgradeModel: string | null
+    complexityRoutingEnabled: boolean | null
+    complexityRoutingConfigId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -43417,6 +43511,8 @@ export namespace Prisma {
     alertThreshold: Decimal | null
     autoDowngrade: boolean | null
     downgradeModel: string | null
+    complexityRoutingEnabled: boolean | null
+    complexityRoutingConfigId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -43435,6 +43531,8 @@ export namespace Prisma {
     alertThreshold: number
     autoDowngrade: number
     downgradeModel: number
+    complexityRoutingEnabled: number
+    complexityRoutingConfigId: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -43467,6 +43565,8 @@ export namespace Prisma {
     alertThreshold?: true
     autoDowngrade?: true
     downgradeModel?: true
+    complexityRoutingEnabled?: true
+    complexityRoutingConfigId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -43485,6 +43585,8 @@ export namespace Prisma {
     alertThreshold?: true
     autoDowngrade?: true
     downgradeModel?: true
+    complexityRoutingEnabled?: true
+    complexityRoutingConfigId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -43503,6 +43605,8 @@ export namespace Prisma {
     alertThreshold?: true
     autoDowngrade?: true
     downgradeModel?: true
+    complexityRoutingEnabled?: true
+    complexityRoutingConfigId?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -43608,6 +43712,8 @@ export namespace Prisma {
     alertThreshold: Decimal | null
     autoDowngrade: boolean
     downgradeModel: string | null
+    complexityRoutingEnabled: boolean
+    complexityRoutingConfigId: string | null
     createdAt: Date
     updatedAt: Date
     _count: BotRoutingConfigCountAggregateOutputType | null
@@ -43645,6 +43751,8 @@ export namespace Prisma {
     alertThreshold?: boolean
     autoDowngrade?: boolean
     downgradeModel?: boolean
+    complexityRoutingEnabled?: boolean
+    complexityRoutingConfigId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     bot?: boolean | BotDefaultArgs<ExtArgs>
@@ -43664,6 +43772,8 @@ export namespace Prisma {
     alertThreshold?: boolean
     autoDowngrade?: boolean
     downgradeModel?: boolean
+    complexityRoutingEnabled?: boolean
+    complexityRoutingConfigId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     bot?: boolean | BotDefaultArgs<ExtArgs>
@@ -43683,6 +43793,8 @@ export namespace Prisma {
     alertThreshold?: boolean
     autoDowngrade?: boolean
     downgradeModel?: boolean
+    complexityRoutingEnabled?: boolean
+    complexityRoutingConfigId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     bot?: boolean | BotDefaultArgs<ExtArgs>
@@ -43702,11 +43814,13 @@ export namespace Prisma {
     alertThreshold?: boolean
     autoDowngrade?: boolean
     downgradeModel?: boolean
+    complexityRoutingEnabled?: boolean
+    complexityRoutingConfigId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type BotRoutingConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "botId" | "routingEnabled" | "routingMode" | "fallbackEnabled" | "fallbackChainId" | "costControlEnabled" | "costStrategyId" | "dailyBudget" | "monthlyBudget" | "alertThreshold" | "autoDowngrade" | "downgradeModel" | "createdAt" | "updatedAt", ExtArgs["result"]["botRoutingConfig"]>
+  export type BotRoutingConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "botId" | "routingEnabled" | "routingMode" | "fallbackEnabled" | "fallbackChainId" | "costControlEnabled" | "costStrategyId" | "dailyBudget" | "monthlyBudget" | "alertThreshold" | "autoDowngrade" | "downgradeModel" | "complexityRoutingEnabled" | "complexityRoutingConfigId" | "createdAt" | "updatedAt", ExtArgs["result"]["botRoutingConfig"]>
   export type BotRoutingConfigInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     bot?: boolean | BotDefaultArgs<ExtArgs>
   }
@@ -43769,6 +43883,14 @@ export namespace Prisma {
        * 降级目标模型
        */
       downgradeModel: string | null
+      /**
+       * 是否启用复杂度路由
+       */
+      complexityRoutingEnabled: boolean
+      /**
+       * 复杂度路由配置 ID
+       */
+      complexityRoutingConfigId: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["botRoutingConfig"]>
@@ -44208,6 +44330,8 @@ export namespace Prisma {
     readonly alertThreshold: FieldRef<"BotRoutingConfig", 'Decimal'>
     readonly autoDowngrade: FieldRef<"BotRoutingConfig", 'Boolean'>
     readonly downgradeModel: FieldRef<"BotRoutingConfig", 'String'>
+    readonly complexityRoutingEnabled: FieldRef<"BotRoutingConfig", 'Boolean'>
+    readonly complexityRoutingConfigId: FieldRef<"BotRoutingConfig", 'String'>
     readonly createdAt: FieldRef<"BotRoutingConfig", 'DateTime'>
     readonly updatedAt: FieldRef<"BotRoutingConfig", 'DateTime'>
   }
@@ -44621,6 +44745,1132 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: BotRoutingConfigInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ComplexityRoutingConfig
+   */
+
+  export type AggregateComplexityRoutingConfig = {
+    _count: ComplexityRoutingConfigCountAggregateOutputType | null
+    _min: ComplexityRoutingConfigMinAggregateOutputType | null
+    _max: ComplexityRoutingConfigMaxAggregateOutputType | null
+  }
+
+  export type ComplexityRoutingConfigMinAggregateOutputType = {
+    id: string | null
+    configId: string | null
+    name: string | null
+    description: string | null
+    classifierModel: string | null
+    classifierVendor: string | null
+    toolMinComplexity: string | null
+    isEnabled: boolean | null
+    isBuiltin: boolean | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ComplexityRoutingConfigMaxAggregateOutputType = {
+    id: string | null
+    configId: string | null
+    name: string | null
+    description: string | null
+    classifierModel: string | null
+    classifierVendor: string | null
+    toolMinComplexity: string | null
+    isEnabled: boolean | null
+    isBuiltin: boolean | null
+    isDeleted: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ComplexityRoutingConfigCountAggregateOutputType = {
+    id: number
+    configId: number
+    name: number
+    description: number
+    models: number
+    classifierModel: number
+    classifierVendor: number
+    toolMinComplexity: number
+    isEnabled: number
+    isBuiltin: number
+    isDeleted: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ComplexityRoutingConfigMinAggregateInputType = {
+    id?: true
+    configId?: true
+    name?: true
+    description?: true
+    classifierModel?: true
+    classifierVendor?: true
+    toolMinComplexity?: true
+    isEnabled?: true
+    isBuiltin?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ComplexityRoutingConfigMaxAggregateInputType = {
+    id?: true
+    configId?: true
+    name?: true
+    description?: true
+    classifierModel?: true
+    classifierVendor?: true
+    toolMinComplexity?: true
+    isEnabled?: true
+    isBuiltin?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ComplexityRoutingConfigCountAggregateInputType = {
+    id?: true
+    configId?: true
+    name?: true
+    description?: true
+    models?: true
+    classifierModel?: true
+    classifierVendor?: true
+    toolMinComplexity?: true
+    isEnabled?: true
+    isBuiltin?: true
+    isDeleted?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ComplexityRoutingConfigAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ComplexityRoutingConfig to aggregate.
+     */
+    where?: ComplexityRoutingConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ComplexityRoutingConfigs to fetch.
+     */
+    orderBy?: ComplexityRoutingConfigOrderByWithRelationInput | ComplexityRoutingConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ComplexityRoutingConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ComplexityRoutingConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ComplexityRoutingConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ComplexityRoutingConfigs
+    **/
+    _count?: true | ComplexityRoutingConfigCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ComplexityRoutingConfigMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ComplexityRoutingConfigMaxAggregateInputType
+  }
+
+  export type GetComplexityRoutingConfigAggregateType<T extends ComplexityRoutingConfigAggregateArgs> = {
+        [P in keyof T & keyof AggregateComplexityRoutingConfig]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateComplexityRoutingConfig[P]>
+      : GetScalarType<T[P], AggregateComplexityRoutingConfig[P]>
+  }
+
+
+
+
+  export type ComplexityRoutingConfigGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ComplexityRoutingConfigWhereInput
+    orderBy?: ComplexityRoutingConfigOrderByWithAggregationInput | ComplexityRoutingConfigOrderByWithAggregationInput[]
+    by: ComplexityRoutingConfigScalarFieldEnum[] | ComplexityRoutingConfigScalarFieldEnum
+    having?: ComplexityRoutingConfigScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ComplexityRoutingConfigCountAggregateInputType | true
+    _min?: ComplexityRoutingConfigMinAggregateInputType
+    _max?: ComplexityRoutingConfigMaxAggregateInputType
+  }
+
+  export type ComplexityRoutingConfigGroupByOutputType = {
+    id: string
+    configId: string
+    name: string
+    description: string | null
+    models: JsonValue
+    classifierModel: string
+    classifierVendor: string
+    toolMinComplexity: string | null
+    isEnabled: boolean
+    isBuiltin: boolean
+    isDeleted: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: ComplexityRoutingConfigCountAggregateOutputType | null
+    _min: ComplexityRoutingConfigMinAggregateOutputType | null
+    _max: ComplexityRoutingConfigMaxAggregateOutputType | null
+  }
+
+  type GetComplexityRoutingConfigGroupByPayload<T extends ComplexityRoutingConfigGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ComplexityRoutingConfigGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ComplexityRoutingConfigGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ComplexityRoutingConfigGroupByOutputType[P]>
+            : GetScalarType<T[P], ComplexityRoutingConfigGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ComplexityRoutingConfigSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    configId?: boolean
+    name?: boolean
+    description?: boolean
+    models?: boolean
+    classifierModel?: boolean
+    classifierVendor?: boolean
+    toolMinComplexity?: boolean
+    isEnabled?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["complexityRoutingConfig"]>
+
+  export type ComplexityRoutingConfigSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    configId?: boolean
+    name?: boolean
+    description?: boolean
+    models?: boolean
+    classifierModel?: boolean
+    classifierVendor?: boolean
+    toolMinComplexity?: boolean
+    isEnabled?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["complexityRoutingConfig"]>
+
+  export type ComplexityRoutingConfigSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    configId?: boolean
+    name?: boolean
+    description?: boolean
+    models?: boolean
+    classifierModel?: boolean
+    classifierVendor?: boolean
+    toolMinComplexity?: boolean
+    isEnabled?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["complexityRoutingConfig"]>
+
+  export type ComplexityRoutingConfigSelectScalar = {
+    id?: boolean
+    configId?: boolean
+    name?: boolean
+    description?: boolean
+    models?: boolean
+    classifierModel?: boolean
+    classifierVendor?: boolean
+    toolMinComplexity?: boolean
+    isEnabled?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ComplexityRoutingConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "configId" | "name" | "description" | "models" | "classifierModel" | "classifierVendor" | "toolMinComplexity" | "isEnabled" | "isBuiltin" | "isDeleted" | "createdAt" | "updatedAt", ExtArgs["result"]["complexityRoutingConfig"]>
+
+  export type $ComplexityRoutingConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ComplexityRoutingConfig"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      /**
+       * 配置唯一标识符
+       */
+      configId: string
+      /**
+       * 配置名称
+       */
+      name: string
+      /**
+       * 配置描述
+       */
+      description: string | null
+      /**
+       * 各复杂度对应的模型配置（JSON）
+       * 格式: { super_easy: {vendor, model}, easy: {...}, medium: {...}, hard: {...}, super_hard: {...} }
+       */
+      models: Prisma.JsonValue
+      /**
+       * 分类器使用的模型
+       */
+      classifierModel: string
+      /**
+       * 分类器使用的 vendor
+       */
+      classifierVendor: string
+      /**
+       * 工具调用时的最低复杂度
+       */
+      toolMinComplexity: string | null
+      /**
+       * 是否启用
+       */
+      isEnabled: boolean
+      /**
+       * 是否为内置配置
+       */
+      isBuiltin: boolean
+      /**
+       * 软删除标记
+       */
+      isDeleted: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["complexityRoutingConfig"]>
+    composites: {}
+  }
+
+  type ComplexityRoutingConfigGetPayload<S extends boolean | null | undefined | ComplexityRoutingConfigDefaultArgs> = $Result.GetResult<Prisma.$ComplexityRoutingConfigPayload, S>
+
+  type ComplexityRoutingConfigCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ComplexityRoutingConfigFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ComplexityRoutingConfigCountAggregateInputType | true
+    }
+
+  export interface ComplexityRoutingConfigDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ComplexityRoutingConfig'], meta: { name: 'ComplexityRoutingConfig' } }
+    /**
+     * Find zero or one ComplexityRoutingConfig that matches the filter.
+     * @param {ComplexityRoutingConfigFindUniqueArgs} args - Arguments to find a ComplexityRoutingConfig
+     * @example
+     * // Get one ComplexityRoutingConfig
+     * const complexityRoutingConfig = await prisma.complexityRoutingConfig.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ComplexityRoutingConfigFindUniqueArgs>(args: SelectSubset<T, ComplexityRoutingConfigFindUniqueArgs<ExtArgs>>): Prisma__ComplexityRoutingConfigClient<$Result.GetResult<Prisma.$ComplexityRoutingConfigPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ComplexityRoutingConfig that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ComplexityRoutingConfigFindUniqueOrThrowArgs} args - Arguments to find a ComplexityRoutingConfig
+     * @example
+     * // Get one ComplexityRoutingConfig
+     * const complexityRoutingConfig = await prisma.complexityRoutingConfig.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ComplexityRoutingConfigFindUniqueOrThrowArgs>(args: SelectSubset<T, ComplexityRoutingConfigFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ComplexityRoutingConfigClient<$Result.GetResult<Prisma.$ComplexityRoutingConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ComplexityRoutingConfig that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComplexityRoutingConfigFindFirstArgs} args - Arguments to find a ComplexityRoutingConfig
+     * @example
+     * // Get one ComplexityRoutingConfig
+     * const complexityRoutingConfig = await prisma.complexityRoutingConfig.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ComplexityRoutingConfigFindFirstArgs>(args?: SelectSubset<T, ComplexityRoutingConfigFindFirstArgs<ExtArgs>>): Prisma__ComplexityRoutingConfigClient<$Result.GetResult<Prisma.$ComplexityRoutingConfigPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ComplexityRoutingConfig that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComplexityRoutingConfigFindFirstOrThrowArgs} args - Arguments to find a ComplexityRoutingConfig
+     * @example
+     * // Get one ComplexityRoutingConfig
+     * const complexityRoutingConfig = await prisma.complexityRoutingConfig.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ComplexityRoutingConfigFindFirstOrThrowArgs>(args?: SelectSubset<T, ComplexityRoutingConfigFindFirstOrThrowArgs<ExtArgs>>): Prisma__ComplexityRoutingConfigClient<$Result.GetResult<Prisma.$ComplexityRoutingConfigPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ComplexityRoutingConfigs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComplexityRoutingConfigFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ComplexityRoutingConfigs
+     * const complexityRoutingConfigs = await prisma.complexityRoutingConfig.findMany()
+     * 
+     * // Get first 10 ComplexityRoutingConfigs
+     * const complexityRoutingConfigs = await prisma.complexityRoutingConfig.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const complexityRoutingConfigWithIdOnly = await prisma.complexityRoutingConfig.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ComplexityRoutingConfigFindManyArgs>(args?: SelectSubset<T, ComplexityRoutingConfigFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComplexityRoutingConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ComplexityRoutingConfig.
+     * @param {ComplexityRoutingConfigCreateArgs} args - Arguments to create a ComplexityRoutingConfig.
+     * @example
+     * // Create one ComplexityRoutingConfig
+     * const ComplexityRoutingConfig = await prisma.complexityRoutingConfig.create({
+     *   data: {
+     *     // ... data to create a ComplexityRoutingConfig
+     *   }
+     * })
+     * 
+     */
+    create<T extends ComplexityRoutingConfigCreateArgs>(args: SelectSubset<T, ComplexityRoutingConfigCreateArgs<ExtArgs>>): Prisma__ComplexityRoutingConfigClient<$Result.GetResult<Prisma.$ComplexityRoutingConfigPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ComplexityRoutingConfigs.
+     * @param {ComplexityRoutingConfigCreateManyArgs} args - Arguments to create many ComplexityRoutingConfigs.
+     * @example
+     * // Create many ComplexityRoutingConfigs
+     * const complexityRoutingConfig = await prisma.complexityRoutingConfig.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ComplexityRoutingConfigCreateManyArgs>(args?: SelectSubset<T, ComplexityRoutingConfigCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ComplexityRoutingConfigs and returns the data saved in the database.
+     * @param {ComplexityRoutingConfigCreateManyAndReturnArgs} args - Arguments to create many ComplexityRoutingConfigs.
+     * @example
+     * // Create many ComplexityRoutingConfigs
+     * const complexityRoutingConfig = await prisma.complexityRoutingConfig.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ComplexityRoutingConfigs and only return the `id`
+     * const complexityRoutingConfigWithIdOnly = await prisma.complexityRoutingConfig.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ComplexityRoutingConfigCreateManyAndReturnArgs>(args?: SelectSubset<T, ComplexityRoutingConfigCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComplexityRoutingConfigPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ComplexityRoutingConfig.
+     * @param {ComplexityRoutingConfigDeleteArgs} args - Arguments to delete one ComplexityRoutingConfig.
+     * @example
+     * // Delete one ComplexityRoutingConfig
+     * const ComplexityRoutingConfig = await prisma.complexityRoutingConfig.delete({
+     *   where: {
+     *     // ... filter to delete one ComplexityRoutingConfig
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ComplexityRoutingConfigDeleteArgs>(args: SelectSubset<T, ComplexityRoutingConfigDeleteArgs<ExtArgs>>): Prisma__ComplexityRoutingConfigClient<$Result.GetResult<Prisma.$ComplexityRoutingConfigPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ComplexityRoutingConfig.
+     * @param {ComplexityRoutingConfigUpdateArgs} args - Arguments to update one ComplexityRoutingConfig.
+     * @example
+     * // Update one ComplexityRoutingConfig
+     * const complexityRoutingConfig = await prisma.complexityRoutingConfig.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ComplexityRoutingConfigUpdateArgs>(args: SelectSubset<T, ComplexityRoutingConfigUpdateArgs<ExtArgs>>): Prisma__ComplexityRoutingConfigClient<$Result.GetResult<Prisma.$ComplexityRoutingConfigPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ComplexityRoutingConfigs.
+     * @param {ComplexityRoutingConfigDeleteManyArgs} args - Arguments to filter ComplexityRoutingConfigs to delete.
+     * @example
+     * // Delete a few ComplexityRoutingConfigs
+     * const { count } = await prisma.complexityRoutingConfig.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ComplexityRoutingConfigDeleteManyArgs>(args?: SelectSubset<T, ComplexityRoutingConfigDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ComplexityRoutingConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComplexityRoutingConfigUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ComplexityRoutingConfigs
+     * const complexityRoutingConfig = await prisma.complexityRoutingConfig.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ComplexityRoutingConfigUpdateManyArgs>(args: SelectSubset<T, ComplexityRoutingConfigUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ComplexityRoutingConfigs and returns the data updated in the database.
+     * @param {ComplexityRoutingConfigUpdateManyAndReturnArgs} args - Arguments to update many ComplexityRoutingConfigs.
+     * @example
+     * // Update many ComplexityRoutingConfigs
+     * const complexityRoutingConfig = await prisma.complexityRoutingConfig.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ComplexityRoutingConfigs and only return the `id`
+     * const complexityRoutingConfigWithIdOnly = await prisma.complexityRoutingConfig.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ComplexityRoutingConfigUpdateManyAndReturnArgs>(args: SelectSubset<T, ComplexityRoutingConfigUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ComplexityRoutingConfigPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ComplexityRoutingConfig.
+     * @param {ComplexityRoutingConfigUpsertArgs} args - Arguments to update or create a ComplexityRoutingConfig.
+     * @example
+     * // Update or create a ComplexityRoutingConfig
+     * const complexityRoutingConfig = await prisma.complexityRoutingConfig.upsert({
+     *   create: {
+     *     // ... data to create a ComplexityRoutingConfig
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ComplexityRoutingConfig we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ComplexityRoutingConfigUpsertArgs>(args: SelectSubset<T, ComplexityRoutingConfigUpsertArgs<ExtArgs>>): Prisma__ComplexityRoutingConfigClient<$Result.GetResult<Prisma.$ComplexityRoutingConfigPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ComplexityRoutingConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComplexityRoutingConfigCountArgs} args - Arguments to filter ComplexityRoutingConfigs to count.
+     * @example
+     * // Count the number of ComplexityRoutingConfigs
+     * const count = await prisma.complexityRoutingConfig.count({
+     *   where: {
+     *     // ... the filter for the ComplexityRoutingConfigs we want to count
+     *   }
+     * })
+    **/
+    count<T extends ComplexityRoutingConfigCountArgs>(
+      args?: Subset<T, ComplexityRoutingConfigCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ComplexityRoutingConfigCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ComplexityRoutingConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComplexityRoutingConfigAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ComplexityRoutingConfigAggregateArgs>(args: Subset<T, ComplexityRoutingConfigAggregateArgs>): Prisma.PrismaPromise<GetComplexityRoutingConfigAggregateType<T>>
+
+    /**
+     * Group by ComplexityRoutingConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ComplexityRoutingConfigGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ComplexityRoutingConfigGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ComplexityRoutingConfigGroupByArgs['orderBy'] }
+        : { orderBy?: ComplexityRoutingConfigGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ComplexityRoutingConfigGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetComplexityRoutingConfigGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ComplexityRoutingConfig model
+   */
+  readonly fields: ComplexityRoutingConfigFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ComplexityRoutingConfig.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ComplexityRoutingConfigClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ComplexityRoutingConfig model
+   */
+  interface ComplexityRoutingConfigFieldRefs {
+    readonly id: FieldRef<"ComplexityRoutingConfig", 'String'>
+    readonly configId: FieldRef<"ComplexityRoutingConfig", 'String'>
+    readonly name: FieldRef<"ComplexityRoutingConfig", 'String'>
+    readonly description: FieldRef<"ComplexityRoutingConfig", 'String'>
+    readonly models: FieldRef<"ComplexityRoutingConfig", 'Json'>
+    readonly classifierModel: FieldRef<"ComplexityRoutingConfig", 'String'>
+    readonly classifierVendor: FieldRef<"ComplexityRoutingConfig", 'String'>
+    readonly toolMinComplexity: FieldRef<"ComplexityRoutingConfig", 'String'>
+    readonly isEnabled: FieldRef<"ComplexityRoutingConfig", 'Boolean'>
+    readonly isBuiltin: FieldRef<"ComplexityRoutingConfig", 'Boolean'>
+    readonly isDeleted: FieldRef<"ComplexityRoutingConfig", 'Boolean'>
+    readonly createdAt: FieldRef<"ComplexityRoutingConfig", 'DateTime'>
+    readonly updatedAt: FieldRef<"ComplexityRoutingConfig", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ComplexityRoutingConfig findUnique
+   */
+  export type ComplexityRoutingConfigFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComplexityRoutingConfig
+     */
+    select?: ComplexityRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ComplexityRoutingConfig
+     */
+    omit?: ComplexityRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which ComplexityRoutingConfig to fetch.
+     */
+    where: ComplexityRoutingConfigWhereUniqueInput
+  }
+
+  /**
+   * ComplexityRoutingConfig findUniqueOrThrow
+   */
+  export type ComplexityRoutingConfigFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComplexityRoutingConfig
+     */
+    select?: ComplexityRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ComplexityRoutingConfig
+     */
+    omit?: ComplexityRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which ComplexityRoutingConfig to fetch.
+     */
+    where: ComplexityRoutingConfigWhereUniqueInput
+  }
+
+  /**
+   * ComplexityRoutingConfig findFirst
+   */
+  export type ComplexityRoutingConfigFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComplexityRoutingConfig
+     */
+    select?: ComplexityRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ComplexityRoutingConfig
+     */
+    omit?: ComplexityRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which ComplexityRoutingConfig to fetch.
+     */
+    where?: ComplexityRoutingConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ComplexityRoutingConfigs to fetch.
+     */
+    orderBy?: ComplexityRoutingConfigOrderByWithRelationInput | ComplexityRoutingConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ComplexityRoutingConfigs.
+     */
+    cursor?: ComplexityRoutingConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ComplexityRoutingConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ComplexityRoutingConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ComplexityRoutingConfigs.
+     */
+    distinct?: ComplexityRoutingConfigScalarFieldEnum | ComplexityRoutingConfigScalarFieldEnum[]
+  }
+
+  /**
+   * ComplexityRoutingConfig findFirstOrThrow
+   */
+  export type ComplexityRoutingConfigFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComplexityRoutingConfig
+     */
+    select?: ComplexityRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ComplexityRoutingConfig
+     */
+    omit?: ComplexityRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which ComplexityRoutingConfig to fetch.
+     */
+    where?: ComplexityRoutingConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ComplexityRoutingConfigs to fetch.
+     */
+    orderBy?: ComplexityRoutingConfigOrderByWithRelationInput | ComplexityRoutingConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ComplexityRoutingConfigs.
+     */
+    cursor?: ComplexityRoutingConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ComplexityRoutingConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ComplexityRoutingConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ComplexityRoutingConfigs.
+     */
+    distinct?: ComplexityRoutingConfigScalarFieldEnum | ComplexityRoutingConfigScalarFieldEnum[]
+  }
+
+  /**
+   * ComplexityRoutingConfig findMany
+   */
+  export type ComplexityRoutingConfigFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComplexityRoutingConfig
+     */
+    select?: ComplexityRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ComplexityRoutingConfig
+     */
+    omit?: ComplexityRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which ComplexityRoutingConfigs to fetch.
+     */
+    where?: ComplexityRoutingConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ComplexityRoutingConfigs to fetch.
+     */
+    orderBy?: ComplexityRoutingConfigOrderByWithRelationInput | ComplexityRoutingConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ComplexityRoutingConfigs.
+     */
+    cursor?: ComplexityRoutingConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ComplexityRoutingConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ComplexityRoutingConfigs.
+     */
+    skip?: number
+    distinct?: ComplexityRoutingConfigScalarFieldEnum | ComplexityRoutingConfigScalarFieldEnum[]
+  }
+
+  /**
+   * ComplexityRoutingConfig create
+   */
+  export type ComplexityRoutingConfigCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComplexityRoutingConfig
+     */
+    select?: ComplexityRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ComplexityRoutingConfig
+     */
+    omit?: ComplexityRoutingConfigOmit<ExtArgs> | null
+    /**
+     * The data needed to create a ComplexityRoutingConfig.
+     */
+    data: XOR<ComplexityRoutingConfigCreateInput, ComplexityRoutingConfigUncheckedCreateInput>
+  }
+
+  /**
+   * ComplexityRoutingConfig createMany
+   */
+  export type ComplexityRoutingConfigCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ComplexityRoutingConfigs.
+     */
+    data: ComplexityRoutingConfigCreateManyInput | ComplexityRoutingConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ComplexityRoutingConfig createManyAndReturn
+   */
+  export type ComplexityRoutingConfigCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComplexityRoutingConfig
+     */
+    select?: ComplexityRoutingConfigSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ComplexityRoutingConfig
+     */
+    omit?: ComplexityRoutingConfigOmit<ExtArgs> | null
+    /**
+     * The data used to create many ComplexityRoutingConfigs.
+     */
+    data: ComplexityRoutingConfigCreateManyInput | ComplexityRoutingConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ComplexityRoutingConfig update
+   */
+  export type ComplexityRoutingConfigUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComplexityRoutingConfig
+     */
+    select?: ComplexityRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ComplexityRoutingConfig
+     */
+    omit?: ComplexityRoutingConfigOmit<ExtArgs> | null
+    /**
+     * The data needed to update a ComplexityRoutingConfig.
+     */
+    data: XOR<ComplexityRoutingConfigUpdateInput, ComplexityRoutingConfigUncheckedUpdateInput>
+    /**
+     * Choose, which ComplexityRoutingConfig to update.
+     */
+    where: ComplexityRoutingConfigWhereUniqueInput
+  }
+
+  /**
+   * ComplexityRoutingConfig updateMany
+   */
+  export type ComplexityRoutingConfigUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ComplexityRoutingConfigs.
+     */
+    data: XOR<ComplexityRoutingConfigUpdateManyMutationInput, ComplexityRoutingConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which ComplexityRoutingConfigs to update
+     */
+    where?: ComplexityRoutingConfigWhereInput
+    /**
+     * Limit how many ComplexityRoutingConfigs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ComplexityRoutingConfig updateManyAndReturn
+   */
+  export type ComplexityRoutingConfigUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComplexityRoutingConfig
+     */
+    select?: ComplexityRoutingConfigSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ComplexityRoutingConfig
+     */
+    omit?: ComplexityRoutingConfigOmit<ExtArgs> | null
+    /**
+     * The data used to update ComplexityRoutingConfigs.
+     */
+    data: XOR<ComplexityRoutingConfigUpdateManyMutationInput, ComplexityRoutingConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which ComplexityRoutingConfigs to update
+     */
+    where?: ComplexityRoutingConfigWhereInput
+    /**
+     * Limit how many ComplexityRoutingConfigs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ComplexityRoutingConfig upsert
+   */
+  export type ComplexityRoutingConfigUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComplexityRoutingConfig
+     */
+    select?: ComplexityRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ComplexityRoutingConfig
+     */
+    omit?: ComplexityRoutingConfigOmit<ExtArgs> | null
+    /**
+     * The filter to search for the ComplexityRoutingConfig to update in case it exists.
+     */
+    where: ComplexityRoutingConfigWhereUniqueInput
+    /**
+     * In case the ComplexityRoutingConfig found by the `where` argument doesn't exist, create a new ComplexityRoutingConfig with this data.
+     */
+    create: XOR<ComplexityRoutingConfigCreateInput, ComplexityRoutingConfigUncheckedCreateInput>
+    /**
+     * In case the ComplexityRoutingConfig was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ComplexityRoutingConfigUpdateInput, ComplexityRoutingConfigUncheckedUpdateInput>
+  }
+
+  /**
+   * ComplexityRoutingConfig delete
+   */
+  export type ComplexityRoutingConfigDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComplexityRoutingConfig
+     */
+    select?: ComplexityRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ComplexityRoutingConfig
+     */
+    omit?: ComplexityRoutingConfigOmit<ExtArgs> | null
+    /**
+     * Filter which ComplexityRoutingConfig to delete.
+     */
+    where: ComplexityRoutingConfigWhereUniqueInput
+  }
+
+  /**
+   * ComplexityRoutingConfig deleteMany
+   */
+  export type ComplexityRoutingConfigDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ComplexityRoutingConfigs to delete
+     */
+    where?: ComplexityRoutingConfigWhereInput
+    /**
+     * Limit how many ComplexityRoutingConfigs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ComplexityRoutingConfig without action
+   */
+  export type ComplexityRoutingConfigDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ComplexityRoutingConfig
+     */
+    select?: ComplexityRoutingConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ComplexityRoutingConfig
+     */
+    omit?: ComplexityRoutingConfigOmit<ExtArgs> | null
   }
 
 
@@ -45284,11 +46534,32 @@ export namespace Prisma {
     alertThreshold: 'alertThreshold',
     autoDowngrade: 'autoDowngrade',
     downgradeModel: 'downgradeModel',
+    complexityRoutingEnabled: 'complexityRoutingEnabled',
+    complexityRoutingConfigId: 'complexityRoutingConfigId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
 
   export type BotRoutingConfigScalarFieldEnum = (typeof BotRoutingConfigScalarFieldEnum)[keyof typeof BotRoutingConfigScalarFieldEnum]
+
+
+  export const ComplexityRoutingConfigScalarFieldEnum: {
+    id: 'id',
+    configId: 'configId',
+    name: 'name',
+    description: 'description',
+    models: 'models',
+    classifierModel: 'classifierModel',
+    classifierVendor: 'classifierVendor',
+    toolMinComplexity: 'toolMinComplexity',
+    isEnabled: 'isEnabled',
+    isBuiltin: 'isBuiltin',
+    isDeleted: 'isDeleted',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ComplexityRoutingConfigScalarFieldEnum = (typeof ComplexityRoutingConfigScalarFieldEnum)[keyof typeof ComplexityRoutingConfigScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -48924,6 +50195,8 @@ export namespace Prisma {
     alertThreshold?: DecimalNullableFilter<"BotRoutingConfig"> | Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: BoolFilter<"BotRoutingConfig"> | boolean
     downgradeModel?: StringNullableFilter<"BotRoutingConfig"> | string | null
+    complexityRoutingEnabled?: BoolFilter<"BotRoutingConfig"> | boolean
+    complexityRoutingConfigId?: StringNullableFilter<"BotRoutingConfig"> | string | null
     createdAt?: DateTimeFilter<"BotRoutingConfig"> | Date | string
     updatedAt?: DateTimeFilter<"BotRoutingConfig"> | Date | string
     bot?: XOR<BotScalarRelationFilter, BotWhereInput>
@@ -48943,6 +50216,8 @@ export namespace Prisma {
     alertThreshold?: SortOrderInput | SortOrder
     autoDowngrade?: SortOrder
     downgradeModel?: SortOrderInput | SortOrder
+    complexityRoutingEnabled?: SortOrder
+    complexityRoutingConfigId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     bot?: BotOrderByWithRelationInput
@@ -48965,6 +50240,8 @@ export namespace Prisma {
     alertThreshold?: DecimalNullableFilter<"BotRoutingConfig"> | Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: BoolFilter<"BotRoutingConfig"> | boolean
     downgradeModel?: StringNullableFilter<"BotRoutingConfig"> | string | null
+    complexityRoutingEnabled?: BoolFilter<"BotRoutingConfig"> | boolean
+    complexityRoutingConfigId?: StringNullableFilter<"BotRoutingConfig"> | string | null
     createdAt?: DateTimeFilter<"BotRoutingConfig"> | Date | string
     updatedAt?: DateTimeFilter<"BotRoutingConfig"> | Date | string
     bot?: XOR<BotScalarRelationFilter, BotWhereInput>
@@ -48984,6 +50261,8 @@ export namespace Prisma {
     alertThreshold?: SortOrderInput | SortOrder
     autoDowngrade?: SortOrder
     downgradeModel?: SortOrderInput | SortOrder
+    complexityRoutingEnabled?: SortOrder
+    complexityRoutingConfigId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: BotRoutingConfigCountOrderByAggregateInput
@@ -49010,8 +50289,102 @@ export namespace Prisma {
     alertThreshold?: DecimalNullableWithAggregatesFilter<"BotRoutingConfig"> | Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: BoolWithAggregatesFilter<"BotRoutingConfig"> | boolean
     downgradeModel?: StringNullableWithAggregatesFilter<"BotRoutingConfig"> | string | null
+    complexityRoutingEnabled?: BoolWithAggregatesFilter<"BotRoutingConfig"> | boolean
+    complexityRoutingConfigId?: StringNullableWithAggregatesFilter<"BotRoutingConfig"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"BotRoutingConfig"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"BotRoutingConfig"> | Date | string
+  }
+
+  export type ComplexityRoutingConfigWhereInput = {
+    AND?: ComplexityRoutingConfigWhereInput | ComplexityRoutingConfigWhereInput[]
+    OR?: ComplexityRoutingConfigWhereInput[]
+    NOT?: ComplexityRoutingConfigWhereInput | ComplexityRoutingConfigWhereInput[]
+    id?: UuidFilter<"ComplexityRoutingConfig"> | string
+    configId?: StringFilter<"ComplexityRoutingConfig"> | string
+    name?: StringFilter<"ComplexityRoutingConfig"> | string
+    description?: StringNullableFilter<"ComplexityRoutingConfig"> | string | null
+    models?: JsonFilter<"ComplexityRoutingConfig">
+    classifierModel?: StringFilter<"ComplexityRoutingConfig"> | string
+    classifierVendor?: StringFilter<"ComplexityRoutingConfig"> | string
+    toolMinComplexity?: StringNullableFilter<"ComplexityRoutingConfig"> | string | null
+    isEnabled?: BoolFilter<"ComplexityRoutingConfig"> | boolean
+    isBuiltin?: BoolFilter<"ComplexityRoutingConfig"> | boolean
+    isDeleted?: BoolFilter<"ComplexityRoutingConfig"> | boolean
+    createdAt?: DateTimeFilter<"ComplexityRoutingConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"ComplexityRoutingConfig"> | Date | string
+  }
+
+  export type ComplexityRoutingConfigOrderByWithRelationInput = {
+    id?: SortOrder
+    configId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    models?: SortOrder
+    classifierModel?: SortOrder
+    classifierVendor?: SortOrder
+    toolMinComplexity?: SortOrderInput | SortOrder
+    isEnabled?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ComplexityRoutingConfigWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    configId?: string
+    AND?: ComplexityRoutingConfigWhereInput | ComplexityRoutingConfigWhereInput[]
+    OR?: ComplexityRoutingConfigWhereInput[]
+    NOT?: ComplexityRoutingConfigWhereInput | ComplexityRoutingConfigWhereInput[]
+    name?: StringFilter<"ComplexityRoutingConfig"> | string
+    description?: StringNullableFilter<"ComplexityRoutingConfig"> | string | null
+    models?: JsonFilter<"ComplexityRoutingConfig">
+    classifierModel?: StringFilter<"ComplexityRoutingConfig"> | string
+    classifierVendor?: StringFilter<"ComplexityRoutingConfig"> | string
+    toolMinComplexity?: StringNullableFilter<"ComplexityRoutingConfig"> | string | null
+    isEnabled?: BoolFilter<"ComplexityRoutingConfig"> | boolean
+    isBuiltin?: BoolFilter<"ComplexityRoutingConfig"> | boolean
+    isDeleted?: BoolFilter<"ComplexityRoutingConfig"> | boolean
+    createdAt?: DateTimeFilter<"ComplexityRoutingConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"ComplexityRoutingConfig"> | Date | string
+  }, "id" | "configId">
+
+  export type ComplexityRoutingConfigOrderByWithAggregationInput = {
+    id?: SortOrder
+    configId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    models?: SortOrder
+    classifierModel?: SortOrder
+    classifierVendor?: SortOrder
+    toolMinComplexity?: SortOrderInput | SortOrder
+    isEnabled?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ComplexityRoutingConfigCountOrderByAggregateInput
+    _max?: ComplexityRoutingConfigMaxOrderByAggregateInput
+    _min?: ComplexityRoutingConfigMinOrderByAggregateInput
+  }
+
+  export type ComplexityRoutingConfigScalarWhereWithAggregatesInput = {
+    AND?: ComplexityRoutingConfigScalarWhereWithAggregatesInput | ComplexityRoutingConfigScalarWhereWithAggregatesInput[]
+    OR?: ComplexityRoutingConfigScalarWhereWithAggregatesInput[]
+    NOT?: ComplexityRoutingConfigScalarWhereWithAggregatesInput | ComplexityRoutingConfigScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"ComplexityRoutingConfig"> | string
+    configId?: StringWithAggregatesFilter<"ComplexityRoutingConfig"> | string
+    name?: StringWithAggregatesFilter<"ComplexityRoutingConfig"> | string
+    description?: StringNullableWithAggregatesFilter<"ComplexityRoutingConfig"> | string | null
+    models?: JsonWithAggregatesFilter<"ComplexityRoutingConfig">
+    classifierModel?: StringWithAggregatesFilter<"ComplexityRoutingConfig"> | string
+    classifierVendor?: StringWithAggregatesFilter<"ComplexityRoutingConfig"> | string
+    toolMinComplexity?: StringNullableWithAggregatesFilter<"ComplexityRoutingConfig"> | string | null
+    isEnabled?: BoolWithAggregatesFilter<"ComplexityRoutingConfig"> | boolean
+    isBuiltin?: BoolWithAggregatesFilter<"ComplexityRoutingConfig"> | boolean
+    isDeleted?: BoolWithAggregatesFilter<"ComplexityRoutingConfig"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"ComplexityRoutingConfig"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ComplexityRoutingConfig"> | Date | string
   }
 
   export type UserInfoCreateInput = {
@@ -52873,6 +54246,8 @@ export namespace Prisma {
     alertThreshold?: Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: boolean
     downgradeModel?: string | null
+    complexityRoutingEnabled?: boolean
+    complexityRoutingConfigId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     bot: BotCreateNestedOneWithoutRoutingConfigInput
@@ -52892,6 +54267,8 @@ export namespace Prisma {
     alertThreshold?: Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: boolean
     downgradeModel?: string | null
+    complexityRoutingEnabled?: boolean
+    complexityRoutingConfigId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -52909,6 +54286,8 @@ export namespace Prisma {
     alertThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: BoolFieldUpdateOperationsInput | boolean
     downgradeModel?: NullableStringFieldUpdateOperationsInput | string | null
+    complexityRoutingEnabled?: BoolFieldUpdateOperationsInput | boolean
+    complexityRoutingConfigId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     bot?: BotUpdateOneRequiredWithoutRoutingConfigNestedInput
@@ -52928,6 +54307,8 @@ export namespace Prisma {
     alertThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: BoolFieldUpdateOperationsInput | boolean
     downgradeModel?: NullableStringFieldUpdateOperationsInput | string | null
+    complexityRoutingEnabled?: BoolFieldUpdateOperationsInput | boolean
+    complexityRoutingConfigId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -52946,6 +54327,8 @@ export namespace Prisma {
     alertThreshold?: Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: boolean
     downgradeModel?: string | null
+    complexityRoutingEnabled?: boolean
+    complexityRoutingConfigId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -52963,6 +54346,8 @@ export namespace Prisma {
     alertThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: BoolFieldUpdateOperationsInput | boolean
     downgradeModel?: NullableStringFieldUpdateOperationsInput | string | null
+    complexityRoutingEnabled?: BoolFieldUpdateOperationsInput | boolean
+    complexityRoutingConfigId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -52981,6 +54366,120 @@ export namespace Prisma {
     alertThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: BoolFieldUpdateOperationsInput | boolean
     downgradeModel?: NullableStringFieldUpdateOperationsInput | string | null
+    complexityRoutingEnabled?: BoolFieldUpdateOperationsInput | boolean
+    complexityRoutingConfigId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ComplexityRoutingConfigCreateInput = {
+    id?: string
+    configId: string
+    name: string
+    description?: string | null
+    models: JsonNullValueInput | InputJsonValue
+    classifierModel?: string
+    classifierVendor?: string
+    toolMinComplexity?: string | null
+    isEnabled?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ComplexityRoutingConfigUncheckedCreateInput = {
+    id?: string
+    configId: string
+    name: string
+    description?: string | null
+    models: JsonNullValueInput | InputJsonValue
+    classifierModel?: string
+    classifierVendor?: string
+    toolMinComplexity?: string | null
+    isEnabled?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ComplexityRoutingConfigUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    configId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    models?: JsonNullValueInput | InputJsonValue
+    classifierModel?: StringFieldUpdateOperationsInput | string
+    classifierVendor?: StringFieldUpdateOperationsInput | string
+    toolMinComplexity?: NullableStringFieldUpdateOperationsInput | string | null
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ComplexityRoutingConfigUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    configId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    models?: JsonNullValueInput | InputJsonValue
+    classifierModel?: StringFieldUpdateOperationsInput | string
+    classifierVendor?: StringFieldUpdateOperationsInput | string
+    toolMinComplexity?: NullableStringFieldUpdateOperationsInput | string | null
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ComplexityRoutingConfigCreateManyInput = {
+    id?: string
+    configId: string
+    name: string
+    description?: string | null
+    models: JsonNullValueInput | InputJsonValue
+    classifierModel?: string
+    classifierVendor?: string
+    toolMinComplexity?: string | null
+    isEnabled?: boolean
+    isBuiltin?: boolean
+    isDeleted?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ComplexityRoutingConfigUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    configId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    models?: JsonNullValueInput | InputJsonValue
+    classifierModel?: StringFieldUpdateOperationsInput | string
+    classifierVendor?: StringFieldUpdateOperationsInput | string
+    toolMinComplexity?: NullableStringFieldUpdateOperationsInput | string | null
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ComplexityRoutingConfigUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    configId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    models?: JsonNullValueInput | InputJsonValue
+    classifierModel?: StringFieldUpdateOperationsInput | string
+    classifierVendor?: StringFieldUpdateOperationsInput | string
+    toolMinComplexity?: NullableStringFieldUpdateOperationsInput | string | null
+    isEnabled?: BoolFieldUpdateOperationsInput | boolean
+    isBuiltin?: BoolFieldUpdateOperationsInput | boolean
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -55712,6 +57211,8 @@ export namespace Prisma {
     alertThreshold?: SortOrder
     autoDowngrade?: SortOrder
     downgradeModel?: SortOrder
+    complexityRoutingEnabled?: SortOrder
+    complexityRoutingConfigId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -55736,6 +57237,8 @@ export namespace Prisma {
     alertThreshold?: SortOrder
     autoDowngrade?: SortOrder
     downgradeModel?: SortOrder
+    complexityRoutingEnabled?: SortOrder
+    complexityRoutingConfigId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -55754,6 +57257,8 @@ export namespace Prisma {
     alertThreshold?: SortOrder
     autoDowngrade?: SortOrder
     downgradeModel?: SortOrder
+    complexityRoutingEnabled?: SortOrder
+    complexityRoutingConfigId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -55762,6 +57267,52 @@ export namespace Prisma {
     dailyBudget?: SortOrder
     monthlyBudget?: SortOrder
     alertThreshold?: SortOrder
+  }
+
+  export type ComplexityRoutingConfigCountOrderByAggregateInput = {
+    id?: SortOrder
+    configId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    models?: SortOrder
+    classifierModel?: SortOrder
+    classifierVendor?: SortOrder
+    toolMinComplexity?: SortOrder
+    isEnabled?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ComplexityRoutingConfigMaxOrderByAggregateInput = {
+    id?: SortOrder
+    configId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    classifierModel?: SortOrder
+    classifierVendor?: SortOrder
+    toolMinComplexity?: SortOrder
+    isEnabled?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ComplexityRoutingConfigMinOrderByAggregateInput = {
+    id?: SortOrder
+    configId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    classifierModel?: SortOrder
+    classifierVendor?: SortOrder
+    toolMinComplexity?: SortOrder
+    isEnabled?: SortOrder
+    isBuiltin?: SortOrder
+    isDeleted?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type FileSourceCreateNestedOneWithoutUserAvatarsInput = {
@@ -60918,6 +62469,8 @@ export namespace Prisma {
     alertThreshold?: Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: boolean
     downgradeModel?: string | null
+    complexityRoutingEnabled?: boolean
+    complexityRoutingConfigId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -60935,6 +62488,8 @@ export namespace Prisma {
     alertThreshold?: Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: boolean
     downgradeModel?: string | null
+    complexityRoutingEnabled?: boolean
+    complexityRoutingConfigId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -61402,6 +62957,8 @@ export namespace Prisma {
     alertThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: BoolFieldUpdateOperationsInput | boolean
     downgradeModel?: NullableStringFieldUpdateOperationsInput | string | null
+    complexityRoutingEnabled?: BoolFieldUpdateOperationsInput | boolean
+    complexityRoutingConfigId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -61419,6 +62976,8 @@ export namespace Prisma {
     alertThreshold?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     autoDowngrade?: BoolFieldUpdateOperationsInput | boolean
     downgradeModel?: NullableStringFieldUpdateOperationsInput | string | null
+    complexityRoutingEnabled?: BoolFieldUpdateOperationsInput | boolean
+    complexityRoutingConfigId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

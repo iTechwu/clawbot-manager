@@ -20,7 +20,13 @@ import {
   SyncResult,
   SkillTranslationService,
 } from '@app/clients/internal/openclaw';
-import type { SkillType } from '@prisma/client';
+import type { SkillType, Prisma } from '@prisma/client';
+import type {
+  PaginatedResponse,
+  SkillSyncListQuery,
+  SkillItem,
+  SkillSyncListResponse,
+} from '@repo/contracts';
 
 const OPENCLAW_SOURCE = 'openclaw';
 
@@ -416,6 +422,113 @@ export class SkillSyncService {
     Array<SkillType & { _count: { skills: number } }>
   > {
     return this.skillTypeService.listWithSkillCount();
+  }
+
+  /**
+   * 获取技能列表（分页）
+   */
+  async listSkills(
+    query: SkillSyncListQuery,
+  ): Promise<PaginatedResponse<SkillItem>> {
+    const { page = 1, limit = 20, skillTypeId, isSystem, search } = query;
+
+    const where: Prisma.SkillWhereInput = {
+      source: OPENCLAW_SOURCE,
+      isEnabled: true,
+    };
+
+    // 按技能类型筛选
+    if (skillTypeId) {
+      where.skillTypeId = skillTypeId;
+    }
+
+    // 按系统/自定义筛选
+    if (isSystem !== undefined) {
+      where.isSystem = isSystem === 'true';
+    }
+
+    // 搜索
+    if (search) {
+      where.AND = [
+        {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { nameZh: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } },
+            { descriptionZh: { contains: search, mode: 'insensitive' } },
+          ],
+        },
+      ];
+    }
+
+    const result = await this.skillService.list(
+      where,
+      { page: Number(page), limit: Number(limit) },
+      {
+        select: {
+          id: true,
+          name: true,
+          nameZh: true,
+          slug: true,
+          description: true,
+          descriptionZh: true,
+          version: true,
+          skillTypeId: true,
+          skillType: true,
+          definition: true,
+          examples: true,
+          isSystem: true,
+          isEnabled: true,
+          createdById: true,
+          source: true,
+          sourceUrl: true,
+          author: true,
+          lastSyncedAt: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    );
+
+    return {
+      list: result.list.map((skill) => this.mapSkillToItem(skill)),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
+  }
+
+  /**
+   * 映射技能到 SkillItem
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private mapSkillToItem(skill: any): SkillItem {
+    return {
+      id: skill.id,
+      name: skill.name,
+      nameZh: skill.nameZh,
+      slug: skill.slug,
+      description: skill.description,
+      descriptionZh: skill.descriptionZh,
+      version: skill.version,
+      skillTypeId: skill.skillTypeId,
+      skillType: skill.skillType || null,
+      definition: skill.definition as Record<string, unknown>,
+      examples: skill.examples as Array<{
+        input: string;
+        output: string;
+        description?: string;
+      }> | null,
+      isSystem: skill.isSystem,
+      isEnabled: skill.isEnabled,
+      createdById: skill.createdById,
+      source: skill.source,
+      sourceUrl: skill.sourceUrl,
+      author: skill.author,
+      lastSyncedAt: skill.lastSyncedAt,
+      createdAt: skill.createdAt,
+      updatedAt: skill.updatedAt,
+    };
   }
 
   /**
