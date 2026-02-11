@@ -1,7 +1,0 @@
-{
-  "openai": {
-    "apiKey": "f5727d241b0448c345cc3d54e02f7274efaf310448f5bfc331083b4e4bd00a44",
-    "baseUrl": "http://192.168.4.134:3200/api/v1/openai-compatible",
-    "baseURL": "http://192.168.4.134:3200/api/v1/openai-compatible"
-  }
-}
