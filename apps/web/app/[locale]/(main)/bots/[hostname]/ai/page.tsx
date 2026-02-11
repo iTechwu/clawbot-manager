@@ -1,75 +1,26 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useBot } from '@/hooks/useBots';
-import { useProviderKeys, useProviderKeyModels } from '@/hooks/useProviderKeys';
-import { ProviderCard } from '../components/provider-card';
+import { useModelAvailability } from '@/hooks/useModels';
+import { ModelAvailabilityTable } from '../components/model-availability-table';
 import { ModelRoutingConfig } from '../components/model-routing-config';
 import {
   Button,
   Card,
   CardContent,
   Skeleton,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Checkbox,
-  Label,
-  ScrollArea,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from '@repo/ui';
-import { Plus, Bot, Loader2, AlertCircle } from 'lucide-react';
+import { Bot, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { botClient } from '@/lib/api/contracts';
-import type { BotProviderDetail, ProviderModel } from '@repo/contracts';
-
-// 转换 API 响应为组件所需格式
-interface BotProvider {
-  id: string;
-  providerKeyId: string;
-  vendor: string;
-  apiType: string | null;
-  label: string;
-  baseUrl: string | null;
-  apiKeyMasked: string;
-  isPrimary: boolean;
-  models: {
-    id: string;
-    name: string;
-    isPrimary: boolean;
-  }[];
-}
-
-function mapProviderDetail(detail: BotProviderDetail): BotProvider {
-  return {
-    id: detail.id,
-    providerKeyId: detail.providerKeyId,
-    vendor: detail.vendor,
-    apiType: detail.apiType,
-    label: detail.label,
-    baseUrl: detail.baseUrl,
-    apiKeyMasked: detail.apiKeyMasked,
-    isPrimary: detail.isPrimary,
-    models: detail.allowedModels.map((modelId) => ({
-      id: modelId,
-      name: modelId,
-      isPrimary: modelId === detail.primaryModel,
-    })),
-  };
-}
+import { botModelClient } from '@/lib/api/contracts';
+import type { ModelAvailabilityItem, BotModelInfo } from '@repo/contracts';
 
 export default function BotAIConfigPage() {
   const params = useParams<{ hostname: string }>();
@@ -77,189 +28,119 @@ export default function BotAIConfigPage() {
   const t = useTranslations('bots.detail.ai');
 
   const { loading: botLoading } = useBot(hostname);
-  const { keys: providerKeys, loading: keysLoading } = useProviderKeys();
-  const { getModels, loading: modelsLoading } = useProviderKeyModels();
+  const {
+    availability: allModels,
+    loading: modelsLoading,
+    refresh: refreshModels,
+  } = useModelAvailability();
 
-  const [providers, setProviders] = useState<BotProvider[]>([]);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [botModels, setBotModels] = useState<BotModelInfo[]>([]);
   const [loading, setLoading] = useState(false);
-  const [providersLoading, setProvidersLoading] = useState(true);
+  const [botModelsLoading, setBotModelsLoading] = useState(true);
 
-  // 添加 Provider 表单状态
-  const [selectedKeyId, setSelectedKeyId] = useState<string>('');
-  const [availableModels, setAvailableModels] = useState<ProviderModel[]>([]);
-  const [selectedModels, setSelectedModels] = useState<string[]>([]); // Store model IDs
-  const [primaryModel, setPrimaryModel] = useState<string>(''); // Store model ID
-  const [isPrimary, setIsPrimary] = useState(false);
-  const [addLoading, setAddLoading] = useState(false);
-
-  // 获取 Bot 的 Provider 列表
-  const fetchProviders = useCallback(async () => {
+  // 获取 Bot 的模型列表
+  const fetchBotModels = useCallback(async () => {
     if (!hostname) return;
-    setProvidersLoading(true);
+    setBotModelsLoading(true);
     try {
-      const response = await botClient.getProviders({
+      const response = await botModelClient.list({
         params: { hostname },
       });
       if (response.status === 200 && response.body.data) {
-        setProviders(response.body.data.providers.map(mapProviderDetail));
+        setBotModels(response.body.data.list);
       }
-    } catch (error) {
-      toast.error(t('fetchProvidersFailed'));
+    } catch {
+      toast.error(t('fetchModelsFailed'));
     } finally {
-      setProvidersLoading(false);
+      setBotModelsLoading(false);
     }
-  }, [hostname]);
+  }, [hostname, t]);
 
   useEffect(() => {
-    fetchProviders();
-  }, [fetchProviders]);
+    fetchBotModels();
+  }, [fetchBotModels]);
 
-  // 当选择 Provider Key 时，获取可用模型
-  useEffect(() => {
-    if (!selectedKeyId) {
-      setAvailableModels([]);
-      setSelectedModels([]);
-      setPrimaryModel('');
-      return;
-    }
+  // 计算已添加到 Bot 的模型 ID 集合
+  // 使用 modelId (model name) 匹配 ModelAvailability
+  const addedModelIds = useMemo(() => {
+    const ids = new Set<string>();
+    botModels.forEach((botModel) => {
+      // 在 allModels 中查找匹配的 ModelAvailability
+      const matchingModels = allModels.filter(
+        (m) => m.model === botModel.modelId,
+      );
+      matchingModels.forEach((m) => ids.add(m.id));
+    });
+    return ids;
+  }, [botModels, allModels]);
 
-    const fetchModels = async () => {
-      const result = await getModels(selectedKeyId);
-      const models = result?.models;
-      if (models && models.length > 0) {
-        setAvailableModels(models);
-        // 默认选择所有模型 (store IDs)
-        const modelIds = models.map((m) => m.id);
-        setSelectedModels(modelIds);
-        // 默认选择第一个模型作为主模型
-        const firstModel = models[0];
-        if (firstModel) {
-          setPrimaryModel(firstModel.id);
-        }
-      }
-    };
-
-    fetchModels();
-  }, [selectedKeyId, getModels]);
-
-  // 过滤掉已添加的 Provider Keys
-  const availableKeys = providerKeys.filter(
-    (key) => !providers.some((p) => p.providerKeyId === key.id),
-  );
-
-  const handleSetPrimaryModel = async (
-    provider: BotProvider,
-    modelId: string,
-  ) => {
-    setLoading(true);
-    try {
-      const response = await botClient.setPrimaryModel({
-        params: { hostname, keyId: provider.providerKeyId },
-        body: { modelId },
-      });
-      if (response.status === 200) {
-        toast.success(t('setPrimarySuccess'));
-        await fetchProviders();
-      } else {
-        toast.error(t('setFailed'));
-      }
-    } catch (error) {
-      toast.error(t('setFailed'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteProvider = async (provider: BotProvider) => {
-    if (!confirm(t('deleteConfirm'))) return;
+  // 添加模型到 Bot
+  const handleAddModels = async (models: ModelAvailabilityItem[]) => {
+    if (models.length === 0) return;
 
     setLoading(true);
     try {
-      const response = await botClient.removeProvider({
-        params: { hostname, keyId: provider.providerKeyId },
-        body: {},
-      });
-      if (response.status === 200) {
-        setProviders((prev) => prev.filter((p) => p.id !== provider.id));
-        toast.success(t('deleteSuccess'));
-      } else {
-        toast.error(t('deleteFailed'));
-      }
-    } catch (error) {
-      toast.error(t('deleteFailed'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddProvider = async () => {
-    if (!selectedKeyId || selectedModels.length === 0) {
-      toast.error(t('selectProviderAndModel'));
-      return;
-    }
-
-    setAddLoading(true);
-    try {
-      const response = await botClient.addProvider({
+      const modelAvailabilityIds = models.map((m) => m.id);
+      const response = await botModelClient.addModels({
         params: { hostname },
         body: {
-          keyId: selectedKeyId,
-          models: selectedModels,
-          primaryModel: primaryModel || selectedModels[0],
-          isPrimary: isPrimary || providers.length === 0, // 如果是第一个，自动设为主 Provider
+          modelAvailabilityIds,
+          primaryModelAvailabilityId:
+            botModels.length === 0 ? modelAvailabilityIds[0] : undefined,
         },
       });
-      if (response.status === 201) {
-        toast.success(t('addSuccess'));
-        setIsAddDialogOpen(false);
-        resetAddForm();
-        await fetchProviders();
+
+      if (response.status === 201 && response.body.data) {
+        toast.success(t('addModelsSuccess', { count: response.body.data.added }));
+        await fetchBotModels();
       } else {
-        const errorBody = response.body as { error?: string };
-        toast.error(errorBody?.error || t('addFailed'));
+        toast.error(t('addModelsFailed'));
       }
-    } catch (error) {
-      toast.error(t('addFailed'));
+    } catch {
+      toast.error(t('addModelsFailed'));
     } finally {
-      setAddLoading(false);
+      setLoading(false);
     }
   };
 
-  const resetAddForm = () => {
-    setSelectedKeyId('');
-    setAvailableModels([]);
-    setSelectedModels([]);
-    setPrimaryModel('');
-    setIsPrimary(false);
-  };
+  // 从 Bot 移除模型
+  const handleRemoveModel = async (model: ModelAvailabilityItem) => {
+    if (!confirm(t('removeModelConfirm'))) return;
 
-  const handleDialogClose = (open: boolean) => {
-    if (!open) {
-      resetAddForm();
-    }
-    setIsAddDialogOpen(open);
-  };
+    setLoading(true);
+    try {
+      const response = await botModelClient.removeModel({
+        params: { hostname, modelAvailabilityId: model.id },
+        body: {},
+      });
 
-  const toggleModelSelection = (modelId: string) => {
-    setSelectedModels((prev) => {
-      if (prev.includes(modelId)) {
-        const newModels = prev.filter((m) => m !== modelId);
-        // 如果取消选择的是主模型，重新选择第一个
-        if (modelId === primaryModel && newModels.length > 0) {
-          const firstModel = newModels[0];
-          if (firstModel) {
-            setPrimaryModel(firstModel);
-          }
-        }
-        return newModels;
+      if (response.status === 200) {
+        toast.success(t('removeModelSuccess'));
+        await fetchBotModels();
       } else {
-        return [...prev, modelId];
+        toast.error(t('removeModelFailed'));
       }
-    });
+    } catch {
+      toast.error(t('removeModelFailed'));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (botLoading || providersLoading) {
+  // 刷新模型列表
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      await Promise.all([fetchBotModels(), refreshModels()]);
+      toast.success(t('refreshSuccess'));
+    } catch {
+      toast.error(t('refreshFailed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (botLoading || botModelsLoading) {
     return (
       <div className="space-y-6">
         <div>
@@ -277,58 +158,54 @@ export default function BotAIConfigPage() {
   return (
     <div className="space-y-6">
       {/* 页面标题 */}
-      <div>
-        <h1 className="text-2xl font-bold">{t('title')}</h1>
-        <p className="text-muted-foreground text-sm">{t('description')}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">{t('title')}</h1>
+          <p className="text-muted-foreground text-sm">{t('description')}</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={loading}
+        >
+          {loading ? (
+            <Loader2 className="size-4 mr-2 animate-spin" />
+          ) : (
+            <RefreshCw className="size-4 mr-2" />
+          )}
+          {t('refresh')}
+        </Button>
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="providers" className="w-full">
+      <Tabs defaultValue="models" className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="providers">{t('tabs.providers')}</TabsTrigger>
+          <TabsTrigger value="models">{t('tabs.models')}</TabsTrigger>
           <TabsTrigger value="routing">{t('tabs.routing')}</TabsTrigger>
         </TabsList>
 
-        {/* AI Providers Tab */}
-        <TabsContent value="providers" className="mt-6 space-y-4">
-          <div className="flex justify-end">
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="size-4 mr-2" />
-              {t('addProvider')}
-            </Button>
-          </div>
-
-          {providers.length === 0 ? (
+        {/* AI Models Tab */}
+        <TabsContent value="models" className="mt-6 space-y-4">
+          {allModels.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <Bot className="size-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground mb-4">{t('noProviders')}</p>
-                <Button onClick={() => setIsAddDialogOpen(true)}>
-                  <Plus className="size-4 mr-2" />
-                  {t('addFirst')}
-                </Button>
+                <p className="text-muted-foreground mb-4">{t('noModels')}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('noModelsHint')}
+                </p>
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
-              {providers.map((provider) => (
-                <ProviderCard
-                  key={provider.id}
-                  vendor={provider.vendor}
-                  apiType={provider.apiType}
-                  label={provider.label}
-                  baseUrl={provider.baseUrl}
-                  apiKeyMasked={provider.apiKeyMasked}
-                  models={provider.models}
-                  isPrimary={provider.isPrimary}
-                  onSetPrimaryModel={(modelId) =>
-                    handleSetPrimaryModel(provider, modelId)
-                  }
-                  onDelete={() => handleDeleteProvider(provider)}
-                  loading={loading}
-                />
-              ))}
-            </div>
+            <ModelAvailabilityTable
+              models={allModels}
+              addedModelIds={addedModelIds}
+              loading={modelsLoading || loading}
+              onAddModels={handleAddModels}
+              onRemoveModel={handleRemoveModel}
+              showAddButton={true}
+            />
           )}
         </TabsContent>
 
@@ -337,147 +214,6 @@ export default function BotAIConfigPage() {
           <ModelRoutingConfig hostname={hostname} />
         </TabsContent>
       </Tabs>
-
-      {/* 添加 Provider 对话框 */}
-      <Dialog open={isAddDialogOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('addProvider')}</DialogTitle>
-            <DialogDescription>
-              {t('dialogDescription')}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* Provider Key 选择 */}
-            <div className="space-y-2">
-              <Label>{t('selectApiKey')}</Label>
-              {keysLoading ? (
-                <Skeleton className="h-10 w-full" />
-              ) : availableKeys.length === 0 ? (
-                <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-950 rounded-lg text-sm text-amber-600 dark:text-amber-400">
-                  <AlertCircle className="size-4" />
-                  <span>{t('noApiKeys')}</span>
-                </div>
-              ) : (
-                <Select value={selectedKeyId} onValueChange={setSelectedKeyId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('selectApiKeyPlaceholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableKeys.map((key) => (
-                      <SelectItem key={key.id} value={key.id}>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{key.vendor}</span>
-                          <span className="text-muted-foreground text-xs">
-                            {key.label}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            {/* 模型选择 */}
-            {selectedKeyId && (
-              <div className="space-y-2">
-                <Label>{t('selectModels')}</Label>
-                {modelsLoading ? (
-                  <div className="flex items-center gap-2 p-4">
-                    <Loader2 className="size-4 animate-spin" />
-                    <span className="text-sm text-muted-foreground">
-                      {t('loadingModels')}
-                    </span>
-                  </div>
-                ) : availableModels.length === 0 ? (
-                  <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground">
-                    {t('noModels')}
-                  </div>
-                ) : (
-                  <ScrollArea className="h-48 border rounded-lg p-2">
-                    <div className="space-y-2">
-                      {availableModels.map((model) => (
-                        <div
-                          key={model.id}
-                          className="flex items-center justify-between p-2 hover:bg-muted rounded"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              id={model.id}
-                              checked={selectedModels.includes(model.id)}
-                              onCheckedChange={() =>
-                                toggleModelSelection(model.id)
-                              }
-                            />
-                            <Label
-                              htmlFor={model.id}
-                              className="text-sm cursor-pointer"
-                            >
-                              {model.name || model.id}
-                            </Label>
-                          </div>
-                          {selectedModels.includes(model.id) && (
-                            <Button
-                              variant={
-                                primaryModel === model.id ? 'default' : 'ghost'
-                              }
-                              size="sm"
-                              className="h-6 text-xs"
-                              onClick={() => setPrimaryModel(model.id)}
-                            >
-                              {primaryModel === model.id
-                                ? t('primaryModel')
-                                : t('setAsPrimary')}
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
-              </div>
-            )}
-
-            {/* 设为主 Provider */}
-            {providers.length > 0 && selectedKeyId && (
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="isPrimary"
-                  checked={isPrimary}
-                  onCheckedChange={(checked) => setIsPrimary(checked === true)}
-                />
-                <Label htmlFor="isPrimary" className="text-sm cursor-pointer">
-                  {t('setAsPrimaryProvider')}
-                </Label>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => handleDialogClose(false)}
-              disabled={addLoading}
-            >
-              {t('cancel')}
-            </Button>
-            <Button
-              onClick={handleAddProvider}
-              disabled={
-                addLoading ||
-                !selectedKeyId ||
-                selectedModels.length === 0 ||
-                availableKeys.length === 0
-              }
-            >
-              {addLoading && <Loader2 className="size-4 mr-2 animate-spin" />}
-              {t('add')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

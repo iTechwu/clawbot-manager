@@ -19,7 +19,7 @@ import {
   BotChannelService,
   BotService,
   ChannelDefinitionService,
-  BotProviderKeyService,
+  BotModelService,
 } from '@app/db';
 import { CryptClient } from '@app/clients/internal/crypt';
 import { FeishuClientService } from '@app/clients/internal/feishu';
@@ -42,7 +42,7 @@ export class BotChannelApiService {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly botChannelDb: BotChannelService,
     private readonly botDb: BotService,
-    private readonly botProviderKeyDb: BotProviderKeyService,
+    private readonly botModelDb: BotModelService,
     private readonly channelDefinitionDb: ChannelDefinitionService,
     private readonly cryptClient: CryptClient,
     private readonly feishuClientService: FeishuClientService,
@@ -958,26 +958,26 @@ export class BotChannelApiService {
       const { total: channelCount } = await this.botChannelDb.list({ botId });
       const hasChannel = channelCount > 0;
 
-      // 检查是否有 AI Provider 配置
-      const { total: providerCount } = await this.botProviderKeyDb.list({
+      // 检查是否有模型配置
+      const { total: modelCount } = await this.botModelDb.list({
         botId,
       });
-      const hasProvider = providerCount > 0;
+      const hasModel = modelCount > 0;
 
       this.logger.debug('Checking bot configuration status', {
         botId,
         hasChannel,
-        hasProvider,
+        hasModel,
         channelCount,
-        providerCount,
+        modelCount,
       });
 
-      // 如果同时配置了渠道和 AI Provider，更新状态为 created
-      if (hasChannel && hasProvider) {
+      // 如果同时配置了渠道和模型，更新状态为 created
+      if (hasChannel && hasModel) {
         await this.botDb.update({ id: botId }, { status: 'created' });
         this.logger.info('Bot status updated from draft to created', {
           botId,
-          reason: 'Both channel and AI provider are configured',
+          reason: 'Both channel and model are configured',
         });
       }
     } catch (error) {

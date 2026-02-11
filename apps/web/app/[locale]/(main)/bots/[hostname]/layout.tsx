@@ -35,12 +35,12 @@ export default function BotDetailLayout({
 
       setConfigLoading(true);
       try {
-        // 检查 Provider
-        const providerRes = await botClient.getProviders({
+        // 检查 Model (替代原来的 Provider 检查)
+        const modelRes = await botClient.getModels({
           params: { hostname },
         });
-        if (providerRes.status === 200 && providerRes.body.data) {
-          setHasProvider(providerRes.body.data.providers.length > 0);
+        if (modelRes.status === 200 && modelRes.body.data) {
+          setHasProvider(modelRes.body.data.models.length > 0);
         }
 
         // 检查 Channel

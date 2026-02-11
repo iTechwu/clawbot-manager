@@ -13,6 +13,10 @@ import type {
   ModelAvailabilityItem,
   RefreshAllModelsResponse,
   BatchVerifyAllResponse,
+  ModelSyncStatus,
+  SyncPricingResponse,
+  SyncTagsResponse,
+  RefreshWithSyncResponse,
 } from '@repo/contracts';
 
 /**
@@ -256,5 +260,118 @@ export function useBotModels(hostname: string) {
 
     // Loading states
     updateLoading: updateMutation.isPending,
+  };
+}
+
+/**
+ * Hook for model sync operations (admin only)
+ */
+export function useModelSync() {
+  const queryClient = useQueryClient();
+  const [syncingPricing, setSyncingPricing] = useState(false);
+  const [syncingTags, setSyncingTags] = useState(false);
+  const [refreshingWithSync, setRefreshingWithSync] = useState(false);
+
+  // Sync pricing for all models or a specific model
+  const syncPricing = useCallback(
+    async (
+      modelAvailabilityId?: string,
+    ): Promise<SyncPricingResponse | null> => {
+      setSyncingPricing(true);
+      try {
+        const result = await modelClient.syncPricing({
+          body: modelAvailabilityId ? { modelAvailabilityId } : undefined,
+        });
+        queryClient.invalidateQueries({ queryKey: modelKeys.list() });
+        queryClient.invalidateQueries({ queryKey: modelKeys.availability() });
+        const body = result.body;
+        if (body && typeof body === 'object' && 'data' in body && body.data) {
+          return body.data as SyncPricingResponse;
+        }
+        return null;
+      } finally {
+        setSyncingPricing(false);
+      }
+    },
+    [queryClient],
+  );
+
+  // Sync tags for all models or a specific model
+  const syncTags = useCallback(
+    async (modelAvailabilityId?: string): Promise<SyncTagsResponse | null> => {
+      setSyncingTags(true);
+      try {
+        const result = await modelClient.syncTags({
+          body: modelAvailabilityId ? { modelAvailabilityId } : undefined,
+        });
+        queryClient.invalidateQueries({ queryKey: modelKeys.list() });
+        queryClient.invalidateQueries({ queryKey: modelKeys.availability() });
+        const body = result.body;
+        if (body && typeof body === 'object' && 'data' in body && body.data) {
+          return body.data as SyncTagsResponse;
+        }
+        return null;
+      } finally {
+        setSyncingTags(false);
+      }
+    },
+    [queryClient],
+  );
+
+  // Refresh models and sync pricing and tags
+  const refreshWithSync = useCallback(
+    async (providerKeyId: string): Promise<RefreshWithSyncResponse | null> => {
+      setRefreshingWithSync(true);
+      try {
+        const result = await modelClient.refreshWithSync({
+          body: { providerKeyId },
+        });
+        queryClient.invalidateQueries({ queryKey: modelKeys.list() });
+        queryClient.invalidateQueries({ queryKey: modelKeys.availability() });
+        const body = result.body;
+        if (body && typeof body === 'object' && 'data' in body && body.data) {
+          return body.data as RefreshWithSyncResponse;
+        }
+        return null;
+      } finally {
+        setRefreshingWithSync(false);
+      }
+    },
+    [queryClient],
+  );
+
+  return {
+    syncPricing,
+    syncingPricing,
+    syncTags,
+    syncingTags,
+    refreshWithSync,
+    refreshingWithSync,
+  };
+}
+
+/**
+ * Hook for fetching model sync status (admin only)
+ */
+export function useModelSyncStatus() {
+  const syncStatusQuery = modelApi.getSyncStatus.useQuery(
+    [...modelKeys.all, 'sync-status'],
+    {},
+  );
+
+  const responseBody = syncStatusQuery.data?.body;
+  const syncStatus: ModelSyncStatus | null =
+    responseBody && 'data' in responseBody && responseBody.data
+      ? (responseBody.data as ModelSyncStatus)
+      : null;
+
+  return {
+    syncStatus,
+    loading: syncStatusQuery.isLoading,
+    error:
+      syncStatusQuery.error instanceof Error
+        ? syncStatusQuery.error.message
+        : null,
+    refresh: () => syncStatusQuery.refetch(),
   };
 }

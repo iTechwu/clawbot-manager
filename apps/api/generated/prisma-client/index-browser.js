@@ -325,16 +325,6 @@ exports.Prisma.ProviderKeyScalarFieldEnum = {
   deletedAt: 'deletedAt'
 };
 
-exports.Prisma.BotProviderKeyScalarFieldEnum = {
-  id: 'id',
-  botId: 'botId',
-  providerKeyId: 'providerKeyId',
-  isPrimary: 'isPrimary',
-  allowedModels: 'allowedModels',
-  primaryModel: 'primaryModel',
-  createdAt: 'createdAt'
-};
-
 exports.Prisma.BotModelScalarFieldEnum = {
   id: 'id',
   botId: 'botId',
@@ -353,6 +343,10 @@ exports.Prisma.ModelAvailabilityScalarFieldEnum = {
   isAvailable: 'isAvailable',
   lastVerifiedAt: 'lastVerifiedAt',
   errorMessage: 'errorMessage',
+  pricingSynced: 'pricingSynced',
+  pricingSyncedAt: 'pricingSyncedAt',
+  tagsSynced: 'tagsSynced',
+  tagsSyncedAt: 'tagsSyncedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -582,6 +576,8 @@ exports.Prisma.ModelPricingScalarFieldEnum = {
   supportsFunctionCalling: 'supportsFunctionCalling',
   supportsStreaming: 'supportsStreaming',
   recommendedScenarios: 'recommendedScenarios',
+  dataSource: 'dataSource',
+  sourceUrl: 'sourceUrl',
   isEnabled: 'isEnabled',
   isDeprecated: 'isDeprecated',
   deprecationDate: 'deprecationDate',
@@ -871,7 +867,6 @@ exports.Prisma.ModelName = {
   CountryCode: 'CountryCode',
   Bot: 'Bot',
   ProviderKey: 'ProviderKey',
-  BotProviderKey: 'BotProviderKey',
   BotModel: 'BotModel',
   ModelAvailability: 'ModelAvailability',
   ModelCapabilityTag: 'ModelCapabilityTag',

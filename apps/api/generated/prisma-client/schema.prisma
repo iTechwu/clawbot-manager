@@ -374,7 +374,7 @@ enum HealthStatus {
 
 /// Bot - 机器人实体
 /// 管理 AI 机器人的生命周期和配置
-/// 注意：aiProvider、model、channelType 字段已移除，这些值从 BotProviderKey 和 BotChannel 动态派生
+/// 注意：aiProvider、model、channelType 字段已移除，这些值从 BotModel 和 BotChannel 动态派生
 model Bot {
   id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name              String    @db.VarChar(255)
@@ -408,7 +408,6 @@ model Bot {
   createdBy       UserInfo          @relation(fields: [createdById], references: [id])
   personaTemplate PersonaTemplate?  @relation(fields: [personaTemplateId], references: [id], onDelete: SetNull)
   avatarFile      FileSource?       @relation(fields: [avatarFileId], references: [id], onDelete: SetNull)
-  providerKeys    BotProviderKey[]
   usageLogs       BotUsageLog[]
   proxyToken      ProxyToken?
   plugins         BotPlugin[]
@@ -459,7 +458,6 @@ model ProviderKey {
 
   // Relations
   createdBy         UserInfo            @relation(fields: [createdById], references: [id])
-  botProviderKeys   BotProviderKey[]
   usageLogs         BotUsageLog[]
   proxyTokens       ProxyToken[]
   modelAvailability ModelAvailability[]
@@ -473,28 +471,8 @@ model ProviderKey {
   @@map("b_provider_key")
 }
 
-/// BotProviderKey - Bot 与 ProviderKey 的关联表
-/// 存储 Bot 与 ProviderKey 的关联关系，以及该关联允许使用的模型列表
-model BotProviderKey {
-  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  botId         String   @map("bot_id") @db.Uuid
-  providerKeyId String   @map("provider_key_id") @db.Uuid
-  isPrimary     Boolean  @default(false) @map("is_primary")
-  /// 允许使用的模型列表
-  allowedModels String[] @default([]) @map("allowed_models")
-  /// 主要模型（默认使用的模型）
-  primaryModel  String?  @map("primary_model") @db.VarChar(100)
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  bot         Bot         @relation(fields: [botId], references: [id], onDelete: Cascade)
-  providerKey ProviderKey @relation(fields: [providerKeyId], references: [id], onDelete: Cascade)
-
-  @@unique([botId, providerKeyId])
-  @@map("b_bot_provider_key")
-}
-
 /// BotModel - Bot 与模型的关联表
-/// 存储 Bot 可以使用的模型列表，替代 BotProviderKey 中的模型关联
+/// 存储 Bot 可以使用的模型列表
 /// 普通用户只需要关心模型，不需要了解 Provider 概念
 model BotModel {
   id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
@@ -549,8 +527,19 @@ model ModelAvailability {
   lastVerifiedAt DateTime  @map("last_verified_at") @db.Timestamptz(6)
   /// 验证失败时的错误信息
   errorMessage   String?   @map("error_message") @db.Text
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // ============ 同步状态追踪 ============
+  /// 是否已同步定价信息
+  pricingSynced   Boolean   @default(false) @map("pricing_synced")
+  /// 定价同步时间
+  pricingSyncedAt DateTime? @map("pricing_synced_at") @db.Timestamptz(6)
+  /// 是否已同步能力标签
+  tagsSynced      Boolean   @default(false) @map("tags_synced")
+  /// 标签同步时间
+  tagsSyncedAt    DateTime? @map("tags_synced_at") @db.Timestamptz(6)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   providerKey    ProviderKey          @relation(fields: [providerKeyId], references: [id], onDelete: Cascade)
   modelPricing   ModelPricing?        @relation(fields: [modelPricingId], references: [id], onDelete: SetNull)
@@ -561,6 +550,8 @@ model ModelAvailability {
   @@index([modelType])
   @@index([modelPricingId])
   @@index([isAvailable])
+  @@index([pricingSynced])
+  @@index([tagsSynced])
   @@map("b_model_availability")
 }
 
@@ -1116,6 +1107,12 @@ model ModelPricing {
   /// 推荐使用场景（JSON 数组）
   /// 如 ["deep-reasoning", "coding", "general-purpose"]
   recommendedScenarios Json? @map("recommended_scenarios") @db.JsonB
+
+  // ============ 数据来源追踪 ============
+  /// 数据来源：manual (手动), api (API同步), import (导入)
+  dataSource String  @default("manual") @map("data_source") @db.VarChar(20)
+  /// 来源 URL（如果从外部 API 同步）
+  sourceUrl  String? @map("source_url") @db.VarChar(500)
 
   // ============ 状态 ============
   /// 是否启用

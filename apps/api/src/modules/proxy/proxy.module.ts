@@ -6,7 +6,6 @@ import {
   BotUsageLogModule,
   MessageDbModule,
   ProxyTokenModule,
-  BotProviderKeyModule,
   BotModelRoutingModule,
   UserInfoModule,
   // Routing configuration DB modules
@@ -67,7 +66,6 @@ import { BotComplexityRoutingService } from './services/bot-complexity-routing.s
     BotUsageLogModule,
     MessageDbModule,
     ProxyTokenModule,
-    BotProviderKeyModule,
     BotModelRoutingModule,
     // Routing configuration DB modules
     ModelPricingModule,

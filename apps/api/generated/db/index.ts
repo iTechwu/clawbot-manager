@@ -16,7 +16,6 @@ export * from './modules/risk-detection-record';
 // Bot 管理模块
 export * from './modules/bot';
 export * from './modules/provider-key';
-export * from './modules/bot-provider-key';
 export * from './modules/bot-usage-log';
 export * from './modules/persona-template';
 export * from './modules/operate-log';

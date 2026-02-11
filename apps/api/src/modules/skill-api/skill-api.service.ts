@@ -7,6 +7,7 @@ import {
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { SkillService, BotSkillService, BotService } from '@app/db';
+import { OpenClawSkillSyncClient } from '@app/clients/internal/openclaw';
 import type { Prisma } from '@prisma/client';
 import type {
   SkillListQuery,
@@ -18,6 +19,8 @@ import type {
   UpdateBotSkillRequest,
 } from '@repo/contracts';
 
+const OPENCLAW_SOURCE = 'openclaw';
+
 @Injectable()
 export class SkillApiService {
   constructor(
@@ -25,6 +28,7 @@ export class SkillApiService {
     private readonly skillService: SkillService,
     private readonly botSkillService: BotSkillService,
     private readonly botService: BotService,
+    private readonly openClawSyncClient: OpenClawSkillSyncClient,
   ) {}
 
   /**
@@ -291,6 +295,7 @@ export class SkillApiService {
 
   /**
    * 安装技能到 Bot
+   * 如果是 OpenClaw 技能且 definition 为空，会自动从 GitHub 同步 SKILL.md 内容
    */
   async installSkill(
     userId: string,
@@ -310,6 +315,59 @@ export class SkillApiService {
     // 检查技能访问权限
     if (!skill.isSystem && skill.createdById !== userId) {
       throw new ForbiddenException('无权安装此技能');
+    }
+
+    // 如果是 OpenClaw 技能且 definition 内容为空，从 GitHub 同步 SKILL.md
+    if (skill.source === OPENCLAW_SOURCE && skill.sourceUrl) {
+      const definition = skill.definition as Record<string, unknown> | null;
+      const hasContent = definition && definition.content;
+
+      if (!hasContent) {
+        this.logger.info('SkillApiService: 同步 SKILL.md 内容', {
+          skillId: skill.id,
+          sourceUrl: skill.sourceUrl,
+        });
+
+        try {
+          const skillDefinition =
+            await this.openClawSyncClient.fetchSkillDefinition(skill.sourceUrl);
+
+          // 更新 skill 的 definition 字段
+          await this.skillService.update(
+            { id: skill.id },
+            {
+              definition: {
+                name: skillDefinition.name,
+                nameZh: (definition?.nameZh as string) || null,
+                description: skillDefinition.description,
+                descriptionZh: (definition?.descriptionZh as string) || null,
+                version: skillDefinition.version,
+                homepage: skillDefinition.homepage,
+                repository: skillDefinition.repository,
+                userInvocable: skillDefinition.userInvocable,
+                tags: skillDefinition.tags,
+                metadata: skillDefinition.metadata,
+                content: skillDefinition.content,
+                frontmatter: skillDefinition.frontmatter,
+                sourceUrl: skill.sourceUrl,
+              } as Prisma.InputJsonValue,
+              // 同时更新 version 字段
+              version: skillDefinition.version || skill.version,
+            },
+          );
+
+          this.logger.info('SkillApiService: SKILL.md 同步成功', {
+            skillId: skill.id,
+            version: skillDefinition.version,
+          });
+        } catch (error) {
+          // 同步失败不阻止安装，只记录警告
+          this.logger.warn('SkillApiService: SKILL.md 同步失败，继续安装', {
+            skillId: skill.id,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
+      }
     }
 
     const botSkill = await this.botSkillService.create({

@@ -5,7 +5,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import {
   BotModule,
   ProviderKeyModule,
-  BotProviderKeyModule,
   UserInfoModule,
   OperateLogModule,
   PersonaTemplateModule,
@@ -17,6 +16,7 @@ import {
   ModelAvailabilityModule,
   CapabilityTagModule,
   ModelCapabilityTagModule,
+  FallbackChainModule,
 } from '@app/db';
 import { PrismaModule } from '@app/prisma';
 import { AuthModule } from '@app/auth';
@@ -40,6 +40,8 @@ import { ModelRoutingController } from './model-routing.controller';
 import { AvailableModelService } from './services/available-model.service';
 import { ModelVerificationService } from './services/model-verification.service';
 import { CapabilityTagMatchingService } from './services/capability-tag-matching.service';
+import { ModelSyncService } from './services/model-sync.service';
+import { RoutingConfigService } from './services/routing-config.service';
 
 @Module({
   imports: [
@@ -48,7 +50,6 @@ import { CapabilityTagMatchingService } from './services/capability-tag-matching
     ScheduleModule.forRoot(),
     BotModule,
     ProviderKeyModule,
-    BotProviderKeyModule,
     BotChannelModule,
     UserInfoModule,
     OperateLogModule,
@@ -65,6 +66,7 @@ import { CapabilityTagMatchingService } from './services/capability-tag-matching
     ModelAvailabilityModule,
     CapabilityTagModule,
     ModelCapabilityTagModule,
+    FallbackChainModule,
     ModelRoutingModule,
     PrismaModule,
   ],
@@ -83,6 +85,8 @@ import { CapabilityTagMatchingService } from './services/capability-tag-matching
     AvailableModelService,
     ModelVerificationService,
     CapabilityTagMatchingService,
+    ModelSyncService,
+    RoutingConfigService,
   ],
   exports: [
     BotApiService,
@@ -97,6 +101,8 @@ import { CapabilityTagMatchingService } from './services/capability-tag-matching
     AvailableModelService,
     ModelVerificationService,
     CapabilityTagMatchingService,
+    ModelSyncService,
+    RoutingConfigService,
     ModelRoutingModule,
   ],
 })

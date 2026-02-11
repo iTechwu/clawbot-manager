@@ -3,8 +3,9 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import {
   BotModelRoutingService,
-  BotProviderKeyService,
+  BotModelService,
   ProviderKeyService,
+  ModelAvailabilityService,
 } from '@app/db';
 import type { BotModelRouting, ModelRoutingType } from '@prisma/client';
 import type {
@@ -72,8 +73,9 @@ export class ModelRouterService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly botModelRoutingService: BotModelRoutingService,
-    private readonly botProviderKeyService: BotProviderKeyService,
+    private readonly botModelService: BotModelService,
     private readonly providerKeyService: ProviderKeyService,
+    private readonly modelAvailabilityService: ModelAvailabilityService,
   ) {}
 
   /**
@@ -315,49 +317,44 @@ export class ModelRouterService {
   }
 
   /**
-   * 获取默认路由（主 Provider）
+   * 获取默认路由（主 Model）
    */
   private async getDefaultRoute(botId: string): Promise<ModelRouteResult> {
-    // 获取主要 Provider
-    const primaryBotProviderKey = await this.botProviderKeyService.get({
+    // 获取主要 Model
+    let primaryBotModel = await this.botModelService.get({
       botId,
       isPrimary: true,
     });
 
-    if (!primaryBotProviderKey) {
-      // 尝试获取任意一个 Provider
-      const { list: allProviderKeys } = await this.botProviderKeyService.list(
+    if (!primaryBotModel) {
+      // 尝试获取任意一个 Model
+      const { list: allModels } = await this.botModelService.list(
         { botId },
         { limit: 1 },
       );
 
-      if (allProviderKeys.length === 0) {
-        throw new Error(`No provider configured for bot ${botId}`);
+      if (allModels.length === 0) {
+        throw new Error(`No model configured for bot ${botId}`);
       }
 
-      const providerKey = await this.providerKeyService.getById(
-        allProviderKeys[0].providerKeyId,
-      );
-
-      if (!providerKey) {
-        throw new Error(`Provider key not found for bot ${botId}`);
-      }
-
-      return {
-        providerKeyId: allProviderKeys[0].providerKeyId,
-        vendor: providerKey.vendor,
-        model:
-          allProviderKeys[0].primaryModel ||
-          allProviderKeys[0].allowedModels[0] ||
-          '',
-        apiType: providerKey.apiType,
-        baseUrl: providerKey.baseUrl,
-        reason: 'Default route (first available provider)',
-      };
+      primaryBotModel = allModels[0];
     }
 
+    // 从 ModelAvailability 获取 provider key 信息
+    const { list: availabilities } = await this.modelAvailabilityService.list(
+      { model: primaryBotModel.modelId },
+      { limit: 1 },
+    );
+
+    if (availabilities.length === 0 || !availabilities[0].providerKeyId) {
+      throw new Error(
+        `No provider key found for model ${primaryBotModel.modelId}`,
+      );
+    }
+
+    const availability = availabilities[0];
     const providerKey = await this.providerKeyService.getById(
-      primaryBotProviderKey.providerKeyId,
+      availability.providerKeyId,
     );
 
     if (!providerKey) {
@@ -365,15 +362,14 @@ export class ModelRouterService {
     }
 
     return {
-      providerKeyId: primaryBotProviderKey.providerKeyId,
+      providerKeyId: availability.providerKeyId,
       vendor: providerKey.vendor,
-      model:
-        primaryBotProviderKey.primaryModel ||
-        primaryBotProviderKey.allowedModels[0] ||
-        '',
+      model: primaryBotModel.modelId,
       apiType: providerKey.apiType,
       baseUrl: providerKey.baseUrl,
-      reason: 'Default route (primary provider)',
+      reason: primaryBotModel.isPrimary
+        ? 'Default route (primary model)'
+        : 'Default route (first available model)',
     };
   }
 

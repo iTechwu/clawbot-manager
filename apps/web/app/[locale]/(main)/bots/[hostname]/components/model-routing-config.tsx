@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { modelRoutingClient, botClient } from '@/lib/api/contracts';
+import { modelRoutingClient, modelClient } from '@/lib/api/contracts';
 import {
   Button,
   Card,
@@ -60,10 +60,22 @@ import type {
   FunctionRouteRule,
   LoadBalanceTarget,
   RoutingTarget,
-  BotProviderDetail,
   RoutingSuggestionResult,
   SuggestedRoutingRule,
 } from '@repo/contracts';
+import { EnhancedModelSelector } from './enhanced-model-selector';
+import { FallbackChainSelector } from './fallback-chain-selector';
+import { CostStrategySelector } from './cost-strategy-selector';
+
+/**
+ * Provider info needed for model selection
+ */
+interface ProviderInfo {
+  providerKeyId: string;
+  vendor: string;
+  label?: string;
+  allowedModels: string[];
+}
 
 interface ModelRoutingConfigProps {
   hostname: string;
@@ -315,7 +327,7 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
   const t = useTranslations('bots.detail.modelRouting');
 
   const [routings, setRoutings] = useState<BotModelRouting[]>([]);
-  const [botProviders, setBotProviders] = useState<BotProviderDetail[]>([]);
+  const [botProviders, setBotProviders] = useState<ProviderInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRouting, setEditingRouting] = useState<BotModelRouting | null>(
@@ -356,21 +368,43 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
   const [retryMaxAttempts, setRetryMaxAttempts] = useState(3);
   const [retryDelayMs, setRetryDelayMs] = useState(1000);
 
-  // Fetch routings and bot providers
+  // Fetch routings and model availability
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [routingsResponse, providersResponse] = await Promise.all([
+      const [routingsResponse, availabilityResponse] = await Promise.all([
         modelRoutingClient.list({ params: { hostname } }),
-        botClient.getProviders({ params: { hostname } }),
+        modelClient.getAvailability({ query: {} }),
       ]);
 
       if (routingsResponse.status === 200 && routingsResponse.body.data) {
         setRoutings(routingsResponse.body.data.routings);
       }
 
-      if (providersResponse.status === 200 && providersResponse.body.data) {
-        setBotProviders(providersResponse.body.data.providers);
+      if (availabilityResponse.status === 200 && availabilityResponse.body.data) {
+        // Transform ModelAvailabilityItem[] to ProviderInfo[]
+        // Group models by providerKeyId
+        const providerMap = new Map<string, ProviderInfo>();
+        const availabilityList = availabilityResponse.body.data.list ?? [];
+
+        for (const item of availabilityList) {
+          if (!item.isAvailable) continue; // Only include available models
+
+          const existing = providerMap.get(item.providerKeyId);
+          if (existing) {
+            if (!existing.allowedModels.includes(item.model)) {
+              existing.allowedModels.push(item.model);
+            }
+          } else {
+            providerMap.set(item.providerKeyId, {
+              providerKeyId: item.providerKeyId,
+              vendor: item.providerKeys?.[0]?.vendor ?? '',
+              allowedModels: [item.model],
+            });
+          }
+        }
+
+        setBotProviders(Array.from(providerMap.values()));
       }
     } catch {
       toast.error('Failed to load routing configurations');
@@ -400,7 +434,7 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
 
   // Get all providers that have a specific model
   const getProvidersForModel = useCallback(
-    (modelId: string): BotProviderDetail[] => {
+    (modelId: string): ProviderInfo[] => {
       return botProviders.filter((p) => p.allowedModels.includes(modelId));
     },
     [botProviders],
@@ -408,7 +442,7 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
 
   // Apply a recommended model to the last rule
   const applyRecommendedModel = useCallback(
-    (model: string, providers: BotProviderDetail[]) => {
+    (model: string, providers: ProviderInfo[]) => {
       if (providers.length === 0) {
         toast.error(
           t('functionRoute.recommendedModels.notAvailable', { model }),
@@ -726,7 +760,7 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
     }
   };
 
-  // Target selector component
+  // Target selector component - now uses EnhancedModelSelector for direct model selection
   const TargetSelector = ({
     target,
     onChange,
@@ -736,52 +770,14 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
     onChange: (target: RoutingTarget) => void;
     label: string;
   }) => {
-    const models = target.providerKeyId
-      ? getModelsForProvider(target.providerKeyId)
-      : [];
-
     return (
-      <div className="space-y-2">
-        <Label>{label}</Label>
-        <div className="grid grid-cols-2 gap-2">
-          <Select
-            value={target.providerKeyId}
-            onValueChange={(value) =>
-              onChange({ ...target, providerKeyId: value, model: '' })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t('form.selectProviderKey')} />
-            </SelectTrigger>
-            <SelectContent>
-              {botProviders.map((provider) => (
-                <SelectItem
-                  key={provider.providerKeyId}
-                  value={provider.providerKeyId}
-                >
-                  {provider.label} ({provider.apiType || provider.vendor})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={target.model}
-            onValueChange={(value) => onChange({ ...target, model: value })}
-            disabled={!target.providerKeyId}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t('form.selectModel')} />
-            </SelectTrigger>
-            <SelectContent>
-              {models.map((model) => (
-                <SelectItem key={model.id} value={model.id}>
-                  {model.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <EnhancedModelSelector
+        providers={botProviders}
+        value={target.providerKeyId && target.model ? target : null}
+        onChange={onChange}
+        label={label}
+        showAvailability={true}
+      />
     );
   };
 
@@ -1358,6 +1354,29 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
               <div className="space-y-4">
                 <h4 className="font-medium">{t('loadBalance.title')}</h4>
 
+                {/* Cost Strategy Selector */}
+                <div className="p-4 bg-muted/30 rounded-lg space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Scale className="size-4" />
+                    {t('loadBalance.costOptimization')}
+                  </div>
+                  <CostStrategySelector
+                    value={null}
+                    onChange={(strategyId) => {
+                      if (strategyId) {
+                        toast.info(
+                          t('loadBalance.strategySelected', { strategyId }),
+                        );
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t('loadBalance.costOptimizationHint')}
+                  </p>
+                </div>
+
+                <Separator />
+
                 {/* Strategy */}
                 <div className="space-y-2">
                   <Label>{t('loadBalance.strategy')}</Label>
@@ -1511,6 +1530,32 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
             {formType === 'FAILOVER' && (
               <div className="space-y-4">
                 <h4 className="font-medium">{t('failover.title')}</h4>
+
+                {/* Option to use existing FallbackChain */}
+                <div className="p-4 bg-muted/30 rounded-lg space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Shield className="size-4" />
+                    {t('failover.useExistingChain')}
+                  </div>
+                  <FallbackChainSelector
+                    value={null}
+                    onChange={(chainId) => {
+                      if (chainId) {
+                        toast.info(t('failover.chainSelected', { chainId }));
+                      }
+                    }}
+                    providers={botProviders}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t('failover.useExistingChainHint')}
+                  </p>
+                </div>
+
+                <Separator />
+
+                <p className="text-sm text-muted-foreground">
+                  {t('failover.orConfigureManually')}
+                </p>
 
                 {/* Primary */}
                 <TargetSelector

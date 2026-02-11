@@ -34,6 +34,34 @@ export interface ParsedSkill {
 }
 
 /**
+ * SKILL.md 解析后的内容
+ */
+export interface SkillDefinition {
+  /** 技能名称 */
+  name: string;
+  /** 版本号 */
+  version: string;
+  /** 描述 */
+  description: string;
+  /** 主页 URL */
+  homepage?: string;
+  /** 仓库 URL */
+  repository?: string;
+  /** 是否用户可调用 */
+  userInvocable?: boolean;
+  /** 标签列表 */
+  tags?: string[];
+  /** 元数据 */
+  metadata?: Record<string, unknown>;
+  /** 完整的 Markdown 内容 */
+  content: string;
+  /** 原始 YAML frontmatter */
+  frontmatter: Record<string, unknown>;
+  /** GitHub 源 URL */
+  sourceUrl: string;
+}
+
+/**
  * 同步结果
  */
 export interface SyncResult {
@@ -390,5 +418,210 @@ export class OpenClawSkillSyncClient {
       icon: CATEGORY_ICON_MAP[slug] || '📦',
       sortOrder: index + 1,
     }));
+  }
+
+  /**
+   * 获取单个技能的 SKILL.md 内容
+   * 将 GitHub tree URL 转换为 raw URL 并获取内容
+   * @param sourceUrl GitHub tree URL (如 https://github.com/openclaw/skills/tree/main/skills/author/slug/SKILL.md)
+   */
+  async fetchSkillDefinition(sourceUrl: string): Promise<SkillDefinition> {
+    this.logger.info('OpenClawSkillSyncClient: 获取 SKILL.md 内容', {
+      sourceUrl,
+    });
+
+    // 将 tree URL 转换为 raw URL
+    // https://github.com/openclaw/skills/tree/main/skills/author/slug/SKILL.md
+    // -> https://raw.githubusercontent.com/openclaw/skills/main/skills/author/slug/SKILL.md
+    const rawUrl = this.convertToRawUrl(sourceUrl);
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<string>(rawUrl).pipe(
+          timeout(this.requestTimeout),
+          catchError((error) => {
+            this.logger.error('OpenClawSkillSyncClient: 获取 SKILL.md 失败', {
+              rawUrl,
+              error: error instanceof Error ? error.message : 'Unknown error',
+            });
+            throw error;
+          }),
+        ),
+      );
+
+      const content = response.data;
+      this.logger.info('OpenClawSkillSyncClient: SKILL.md 获取成功', {
+        contentLength: content.length,
+      });
+
+      // 解析 YAML frontmatter 和 Markdown 内容
+      return this.parseSkillMd(content, sourceUrl);
+    } catch (error) {
+      this.logger.error('OpenClawSkillSyncClient: 获取 SKILL.md 失败', {
+        sourceUrl,
+        rawUrl,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * 将 GitHub tree URL 转换为 raw URL
+   */
+  private convertToRawUrl(treeUrl: string): string {
+    // https://github.com/openclaw/skills/tree/main/skills/author/slug/SKILL.md
+    // -> https://raw.githubusercontent.com/openclaw/skills/main/skills/author/slug/SKILL.md
+    return treeUrl
+      .replace('github.com', 'raw.githubusercontent.com')
+      .replace('/tree/', '/');
+  }
+
+  /**
+   * 解析 SKILL.md 内容
+   * 提取 YAML frontmatter 和 Markdown 内容
+   */
+  private parseSkillMd(content: string, sourceUrl: string): SkillDefinition {
+    // 匹配 YAML frontmatter (--- ... ---)
+    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+
+    if (!frontmatterMatch) {
+      // 没有 frontmatter，整个内容作为 Markdown
+      return {
+        name: '',
+        version: '1.0.0',
+        description: '',
+        content: content,
+        frontmatter: {},
+        sourceUrl,
+      };
+    }
+
+    const [, yamlContent, markdownContent] = frontmatterMatch;
+
+    // 简单解析 YAML（不引入额外依赖）
+    const frontmatter = this.parseSimpleYaml(yamlContent);
+
+    return {
+      name: (frontmatter.name as string) || '',
+      version: (frontmatter.version as string) || '1.0.0',
+      description: (frontmatter.description as string) || '',
+      homepage: frontmatter.homepage as string | undefined,
+      repository: frontmatter.repository as string | undefined,
+      userInvocable: frontmatter['user-invocable'] as boolean | undefined,
+      tags: frontmatter.tags as string[] | undefined,
+      metadata: frontmatter.metadata as Record<string, unknown> | undefined,
+      content: markdownContent.trim(),
+      frontmatter,
+      sourceUrl,
+    };
+  }
+
+  /**
+   * 简单的 YAML 解析器
+   * 只处理基本的 key: value 格式和数组
+   */
+  private parseSimpleYaml(yaml: string): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+    const lines = yaml.split('\n');
+    let currentKey = '';
+    let currentArray: string[] | null = null;
+    let currentObject: Record<string, unknown> | null = null;
+    let objectKey = '';
+
+    for (const line of lines) {
+      // 跳过空行
+      if (!line.trim()) continue;
+
+      // 检测数组项 (- value)
+      const arrayMatch = line.match(/^\s+-\s+(.+)$/);
+      if (arrayMatch && currentArray !== null) {
+        currentArray.push(arrayMatch[1].trim());
+        continue;
+      }
+
+      // 检测嵌套对象的键值对
+      const nestedMatch = line.match(/^\s{2,}(\w+):\s*(.*)$/);
+      if (nestedMatch && currentObject !== null) {
+        const [, key, value] = nestedMatch;
+        if (value) {
+          currentObject[key] = this.parseYamlValue(value);
+        }
+        continue;
+      }
+
+      // 保存之前的数组或对象
+      if (currentArray !== null && currentKey) {
+        result[currentKey] = currentArray;
+        currentArray = null;
+      }
+      if (currentObject !== null && objectKey) {
+        result[objectKey] = currentObject;
+        currentObject = null;
+      }
+
+      // 检测顶级键值对 (key: value)
+      const keyValueMatch = line.match(/^(\S+):\s*(.*)$/);
+      if (keyValueMatch) {
+        const [, key, value] = keyValueMatch;
+        currentKey = key;
+
+        if (value) {
+          // 有值，直接赋值
+          result[key] = this.parseYamlValue(value);
+        } else {
+          // 没有值，可能是数组或对象的开始
+          // 检查下一行来判断
+          const nextLineIndex = lines.indexOf(line) + 1;
+          if (nextLineIndex < lines.length) {
+            const nextLine = lines[nextLineIndex];
+            if (nextLine.match(/^\s+-\s/)) {
+              // 下一行是数组项
+              currentArray = [];
+            } else if (nextLine.match(/^\s{2,}\w+:/)) {
+              // 下一行是嵌套对象
+              currentObject = {};
+              objectKey = key;
+            }
+          }
+        }
+      }
+    }
+
+    // 保存最后的数组或对象
+    if (currentArray !== null && currentKey) {
+      result[currentKey] = currentArray;
+    }
+    if (currentObject !== null && objectKey) {
+      result[objectKey] = currentObject;
+    }
+
+    return result;
+  }
+
+  /**
+   * 解析 YAML 值
+   */
+  private parseYamlValue(value: string): unknown {
+    const trimmed = value.trim();
+
+    // 布尔值
+    if (trimmed === 'true') return true;
+    if (trimmed === 'false') return false;
+
+    // 数字
+    if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+      return parseFloat(trimmed);
+    }
+
+    // 去除引号的字符串
+    if (
+      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    ) {
+      return trimmed.slice(1, -1);
+    }
+
+    return trimmed;
   }
 }

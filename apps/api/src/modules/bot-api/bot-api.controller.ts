@@ -21,6 +21,7 @@ import { BotSseService } from './services/bot-sse.service';
 import { AvailableModelService } from './services/available-model.service';
 import { ModelVerificationService } from './services/model-verification.service';
 import { CapabilityTagMatchingService } from './services/capability-tag-matching.service';
+import { ModelSyncService } from './services/model-sync.service';
 import { AuthenticatedRequest, Auth, SseAuth, AdminAuth } from '@app/auth';
 import { CapabilityTagService, ModelCapabilityTagService } from '@app/db';
 import type { Observable } from 'rxjs';
@@ -46,6 +47,7 @@ export class BotApiController {
     private readonly availableModelService: AvailableModelService,
     private readonly modelVerificationService: ModelVerificationService,
     private readonly capabilityTagMatchingService: CapabilityTagMatchingService,
+    private readonly modelSyncService: ModelSyncService,
     private readonly capabilityTagService: CapabilityTagService,
     private readonly modelCapabilityTagService: ModelCapabilityTagService,
   ) {}
@@ -189,62 +191,6 @@ export class BotApiController {
       const userId = req.userId;
       const cleanupReport = await this.botApiService.cleanupOrphans(userId);
       return success(cleanupReport);
-    });
-  }
-
-  // ============================================================================
-  // Bot Provider Management
-  // ============================================================================
-
-  @TsRestHandler(bc.getProviders)
-  async getBotProviders(@Req() req: AuthenticatedRequest): Promise<any> {
-    return tsRestHandler(bc.getProviders, async ({ params }) => {
-      const userId = req.userId;
-      const providers = await this.botApiService.getBotProviders(
-        params.hostname,
-        userId,
-      );
-      return success({ providers });
-    });
-  }
-
-  @TsRestHandler(bc.addProvider)
-  async addBotProvider(@Req() req: AuthenticatedRequest): Promise<any> {
-    return tsRestHandler(bc.addProvider, async ({ params, body }) => {
-      const userId = req.userId;
-      const provider = await this.botApiService.addBotProvider(
-        params.hostname,
-        userId,
-        body,
-      );
-      return created(provider);
-    });
-  }
-
-  @TsRestHandler(bc.removeProvider)
-  async removeBotProvider(@Req() req: AuthenticatedRequest): Promise<any> {
-    return tsRestHandler(bc.removeProvider, async ({ params }) => {
-      const userId = req.userId;
-      const result = await this.botApiService.removeBotProvider(
-        params.hostname,
-        userId,
-        params.keyId,
-      );
-      return success(result);
-    });
-  }
-
-  @TsRestHandler(bc.setPrimaryModel)
-  async setBotPrimaryModel(@Req() req: AuthenticatedRequest): Promise<any> {
-    return tsRestHandler(bc.setPrimaryModel, async ({ params, body }) => {
-      const userId = req.userId;
-      const result = await this.botApiService.setBotPrimaryModel(
-        params.hostname,
-        userId,
-        params.keyId,
-        body.modelId,
-      );
-      return success(result);
     });
   }
 
@@ -623,6 +569,117 @@ export class BotApiController {
     });
   }
 
+  // ============================================================================
+  // Model Sync Management (管理员)
+  // ============================================================================
+
+  /**
+   * GET /model/sync-status - 获取模型同步状态
+   * 返回模型定价和标签的同步状态概览
+   * 仅限管理员访问
+   */
+  @TsRestHandler(mc.getSyncStatus)
+  @AdminAuth()
+  async getSyncStatus(): Promise<any> {
+    return tsRestHandler(mc.getSyncStatus, async () => {
+      const status = await this.modelSyncService.getSyncStatus();
+      return success(status);
+    });
+  }
+
+  /**
+   * POST /model/sync-pricing - 同步模型定价信息
+   * 从 ModelPricing 表查找匹配的定价并关联到 ModelAvailability
+   * 仅限管理员访问
+   */
+  @TsRestHandler(mc.syncPricing)
+  @AdminAuth()
+  async syncPricing(): Promise<any> {
+    return tsRestHandler(mc.syncPricing, async ({ body }) => {
+      if (body?.modelAvailabilityId) {
+        await this.modelSyncService.syncModelPricing(body.modelAvailabilityId);
+        return success({ synced: 1, skipped: 0, errors: [] });
+      }
+      const result = await this.modelSyncService.syncAllPricing();
+      return success(result);
+    });
+  }
+
+  /**
+   * POST /model/sync-tags - 重新分配能力标签
+   * 根据匹配规则重新分配所有模型的能力标签
+   * 仅限管理员访问
+   */
+  @TsRestHandler(mc.syncTags)
+  @AdminAuth()
+  async syncTags(): Promise<any> {
+    return tsRestHandler(mc.syncTags, async ({ body }) => {
+      if (body?.modelAvailabilityId) {
+        await this.modelSyncService.reassignModelCapabilityTags(
+          body.modelAvailabilityId,
+        );
+        return success({ processed: 1, tagsAssigned: 1, errors: [] });
+      }
+      const result = await this.modelSyncService.reassignAllCapabilityTags();
+      return success(result);
+    });
+  }
+
+  /**
+   * POST /model/refresh-with-sync - 刷新模型并同步定价和标签
+   * 刷新模型列表后自动同步定价和能力标签
+   * 仅限管理员访问
+   */
+  @TsRestHandler(mc.refreshWithSync)
+  @AdminAuth()
+  async refreshWithSync(): Promise<any> {
+    return tsRestHandler(mc.refreshWithSync, async ({ body }) => {
+      // 1. 刷新模型列表
+      const refreshResult = await this.modelVerificationService.refreshModels(
+        body.providerKeyId,
+      );
+
+      // 2. 同步定价
+      const pricingResult = await this.modelSyncService.syncAllPricing();
+
+      // 3. 同步能力标签
+      const tagsResult =
+        await this.modelSyncService.reassignAllCapabilityTags();
+
+      return success({
+        refresh: refreshResult,
+        pricingSync: pricingResult,
+        tagsSync: tagsResult,
+      });
+    });
+  }
+
+  /**
+   * GET /model/:id/details - 获取模型详情
+   * 返回模型的完整信息，包括定价、能力标签、关联的路由配置等
+   * 仅限管理员访问
+   */
+  @TsRestHandler(mc.getModelDetails)
+  @AdminAuth()
+  async getModelDetails(): Promise<any> {
+    return tsRestHandler(mc.getModelDetails, async ({ params }) => {
+      const details = await this.availableModelService.getModelDetails(
+        params.id,
+      );
+      if (!details) {
+        return {
+          status: 404,
+          body: {
+            code: 404,
+            msg: 'Model not found',
+            data: { error: 'Model not found' },
+          },
+        };
+      }
+      return success(details as any);
+    });
+  }
+
   /**
    * GET /bot/:hostname/models - 获取 Bot 的模型列表
    */
@@ -654,6 +711,45 @@ export class BotApiController {
         bot.id,
         body.models,
         body.primaryModel,
+      );
+      return success({ success: true });
+    });
+  }
+
+  /**
+   * POST /bot/:hostname/models/add - 批量添加模型到 Bot
+   */
+  @TsRestHandler(bmc.addModels)
+  async addBotModels(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bmc.addModels, async ({ params, body }) => {
+      const userId = req.userId;
+      const bot = await this.botApiService.getBotByHostname(
+        params.hostname,
+        userId,
+      );
+      const result = await this.availableModelService.addModelsByAvailabilityIds(
+        bot.id,
+        body.modelAvailabilityIds,
+        body.primaryModelAvailabilityId,
+      );
+      return created(result);
+    });
+  }
+
+  /**
+   * DELETE /bot/:hostname/models/:modelAvailabilityId - 从 Bot 移除模型
+   */
+  @TsRestHandler(bmc.removeModel)
+  async removeBotModel(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(bmc.removeModel, async ({ params }) => {
+      const userId = req.userId;
+      const bot = await this.botApiService.getBotByHostname(
+        params.hostname,
+        userId,
+      );
+      await this.availableModelService.removeModelByAvailabilityId(
+        bot.id,
+        params.modelAvailabilityId,
       );
       return success({ success: true });
     });

@@ -228,6 +228,22 @@ export const BatchVerifyResponseSchema = z.object({
 export type BatchVerifyResponse = z.infer<typeof BatchVerifyResponseSchema>;
 
 /**
+ * ProviderKey 摘要 Schema（过滤敏感信息）
+ */
+export const ProviderKeySummarySchema = z.object({
+  /** Provider Key ID */
+  id: z.string(),
+  /** 供应商 */
+  vendor: z.string(),
+  /** API 类型 */
+  apiType: z.string(),
+  /** 标签 */
+  label: z.string().nullable(),
+});
+
+export type ProviderKeySummary = z.infer<typeof ProviderKeySummarySchema>;
+
+/**
  * ModelAvailability 记录 Schema（管理员视图）
  */
 export const ModelAvailabilityItemSchema = z.object({
@@ -245,6 +261,19 @@ export const ModelAvailabilityItemSchema = z.object({
   lastVerifiedAt: z.coerce.date(),
   /** 错误信息 */
   errorMessage: z.string().nullable(),
+  /** 关联的定价 ID */
+  modelPricingId: z.string().nullable().optional(),
+  /** 能力标签列表 */
+  capabilityTags: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+      }),
+    )
+    .optional(),
+  /** Provider Key 信息（过滤敏感信息） */
+  providerKeys: z.array(ProviderKeySummarySchema).optional(),
 });
 
 export type ModelAvailabilityItem = z.infer<typeof ModelAvailabilityItemSchema>;
@@ -496,4 +525,248 @@ export const ExtendedAvailableModelSchema = AvailableModelSchema.extend({
 
 export type ExtendedAvailableModel = z.infer<
   typeof ExtendedAvailableModelSchema
+>;
+
+// ============================================================================
+// Model Sync Schemas
+// ============================================================================
+
+/**
+ * 同步状态 Schema
+ */
+export const ModelSyncStatusSchema = z.object({
+  /** 总模型数 */
+  totalModels: z.number(),
+  /** 定价已同步数 */
+  pricingSynced: z.number(),
+  /** 定价未同步数 */
+  pricingNotSynced: z.number(),
+  /** 标签已同步数 */
+  tagsSynced: z.number(),
+  /** 标签未同步数 */
+  tagsNotSynced: z.number(),
+  /** 最后同步时间 */
+  lastSyncAt: z.coerce.date().nullable(),
+});
+
+export type ModelSyncStatus = z.infer<typeof ModelSyncStatusSchema>;
+
+/**
+ * 同步定价请求 Schema
+ */
+export const SyncPricingInputSchema = z
+  .object({
+    /** 可选，指定单个模型 */
+    modelAvailabilityId: z.string().uuid().optional(),
+  })
+  .optional();
+
+export type SyncPricingInput = z.infer<typeof SyncPricingInputSchema>;
+
+/**
+ * 同步定价响应 Schema
+ */
+export const SyncPricingResponseSchema = z.object({
+  /** 已同步数 */
+  synced: z.number(),
+  /** 跳过数 */
+  skipped: z.number(),
+  /** 错误列表 */
+  errors: z.array(
+    z.object({
+      modelId: z.string(),
+      error: z.string(),
+    }),
+  ),
+});
+
+export type SyncPricingResponse = z.infer<typeof SyncPricingResponseSchema>;
+
+/**
+ * 同步标签请求 Schema
+ */
+export const SyncTagsInputSchema = z
+  .object({
+    /** 可选，指定单个模型 */
+    modelAvailabilityId: z.string().uuid().optional(),
+  })
+  .optional();
+
+export type SyncTagsInput = z.infer<typeof SyncTagsInputSchema>;
+
+/**
+ * 同步标签响应 Schema
+ */
+export const SyncTagsResponseSchema = z.object({
+  /** 已处理数 */
+  processed: z.number(),
+  /** 已分配标签数 */
+  tagsAssigned: z.number(),
+  /** 错误列表 */
+  errors: z.array(
+    z.object({
+      modelId: z.string(),
+      error: z.string(),
+    }),
+  ),
+});
+
+export type SyncTagsResponse = z.infer<typeof SyncTagsResponseSchema>;
+
+/**
+ * 刷新并同步响应 Schema
+ */
+export const RefreshWithSyncResponseSchema = z.object({
+  /** 刷新结果 */
+  refresh: RefreshModelsResponseSchema,
+  /** 定价同步结果 */
+  pricingSync: SyncPricingResponseSchema,
+  /** 标签同步结果 */
+  tagsSync: SyncTagsResponseSchema,
+});
+
+export type RefreshWithSyncResponse = z.infer<
+  typeof RefreshWithSyncResponseSchema
+>;
+
+/**
+ * 模型详情 Schema（包含所有关联数据）
+ */
+export const ModelDetailsSchema = z.object({
+  /** 模型可用性信息 */
+  availability: ModelAvailabilityItemSchema,
+  /** 定价信息 */
+  pricing: z
+    .object({
+      id: z.string(),
+      model: z.string(),
+      vendor: z.string(),
+      displayName: z.string().nullable(),
+      inputPrice: z.number(),
+      outputPrice: z.number(),
+      reasoningScore: z.number(),
+      codingScore: z.number(),
+      creativityScore: z.number(),
+      speedScore: z.number(),
+      contextLength: z.number(),
+      supportsVision: z.boolean(),
+      supportsExtendedThinking: z.boolean(),
+      supportsFunctionCalling: z.boolean(),
+    })
+    .nullable(),
+  /** 能力标签列表 */
+  capabilityTags: z.array(ModelCapabilityTagItemSchema),
+  /** 关联的 FallbackChain 列表 */
+  fallbackChains: z.array(
+    z.object({
+      chainId: z.string(),
+      name: z.string(),
+      position: z.number(),
+    }),
+  ),
+  /** 关联的路由配置列表 */
+  routingConfigs: z.array(
+    z.object({
+      botId: z.string(),
+      botName: z.string(),
+      routingType: z.string(),
+    }),
+  ),
+});
+
+export type ModelDetails = z.infer<typeof ModelDetailsSchema>;
+
+// ============================================================================
+// FallbackChain Validation Schemas
+// ============================================================================
+
+/**
+ * FallbackChain 中不可用的模型
+ */
+export const UnavailableModelInChainSchema = z.object({
+  /** 模型名称 */
+  model: z.string(),
+  /** 供应商 */
+  vendor: z.string(),
+  /** 不可用原因 */
+  reason: z.string(),
+});
+
+export type UnavailableModelInChain = z.infer<
+  typeof UnavailableModelInChainSchema
+>;
+
+/**
+ * FallbackChain 验证结果 Schema
+ */
+export const FallbackChainValidationResultSchema = z.object({
+  /** 链 ID */
+  chainId: z.string(),
+  /** 链名称 */
+  name: z.string(),
+  /** 总模型数 */
+  totalModels: z.number(),
+  /** 可用模型数 */
+  availableModels: z.number(),
+  /** 不可用模型列表 */
+  unavailableModels: z.array(UnavailableModelInChainSchema),
+  /** 是否有效 */
+  isValid: z.boolean(),
+});
+
+export type FallbackChainValidationResult = z.infer<
+  typeof FallbackChainValidationResultSchema
+>;
+
+/**
+ * 更新 FallbackChain 请求 Schema
+ */
+export const UpdateFallbackChainsInputSchema = z.object({
+  /** 是否移除不可用模型 */
+  removeUnavailable: z.boolean().default(false),
+  /** 是否添加新可用模型 */
+  addNewAvailable: z.boolean().default(false),
+});
+
+export type UpdateFallbackChainsInput = z.infer<
+  typeof UpdateFallbackChainsInputSchema
+>;
+
+/**
+ * 更新 FallbackChain 响应 Schema
+ */
+export const UpdateFallbackChainsResponseSchema = z.object({
+  /** 更新的链数 */
+  chainsUpdated: z.number(),
+  /** 移除的模型数 */
+  modelsRemoved: z.number(),
+  /** 添加的模型数 */
+  modelsAdded: z.number(),
+  /** 错误列表 */
+  errors: z.array(
+    z.object({
+      chainId: z.string(),
+      error: z.string(),
+    }),
+  ),
+});
+
+export type UpdateFallbackChainsResponse = z.infer<
+  typeof UpdateFallbackChainsResponseSchema
+>;
+
+/**
+ * 生成 FallbackChain 请求 Schema
+ */
+export const GenerateFallbackChainInputSchema = z.object({
+  /** 能力标签 ID */
+  capabilityTagId: z.string().uuid(),
+  /** 链名称 */
+  name: z.string(),
+  /** 最大模型数 */
+  maxModels: z.number().default(5),
+});
+
+export type GenerateFallbackChainInput = z.infer<
+  typeof GenerateFallbackChainInputSchema
 >;

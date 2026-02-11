@@ -543,10 +543,7 @@ export class ModelVerificationService {
   }
 
   /**
-   * 获取所有 ModelAvailability 记录
-   */
-  /**
-   * 获取所有 ModelAvailability 记录
+   * 获取所有 ModelAvailability 记录（包含关联数据）
    */
   async getAllModelAvailability(providerKeyId?: string): Promise<
     Array<{
@@ -557,18 +554,55 @@ export class ModelVerificationService {
       isAvailable: boolean;
       lastVerifiedAt: Date;
       errorMessage: string | null;
+      modelPricingId: string | null;
+      capabilityTags: Array<{ id: string; name: string }>;
+      providerKeys: Array<{ id: string; vendor: string; apiType: string; label: string | null }>;
     }>
   > {
     const filter = providerKeyId ? { providerKeyId } : {};
-    const { list } = await this.modelAvailabilityService.list(filter, {
-      limit: 1000,
-    });
+    const { list } = await this.modelAvailabilityService.list(
+      filter,
+      { limit: 1000 },
+      {
+        include: {
+          providerKey: true,
+          modelPricing: true,
+          modelCapabilityTags: {
+            include: {
+              capabilityTag: true,
+            },
+          },
+        },
+      } as any,
+    );
+
     // Map Prisma enum values to API schema values (text_embedding -> text-embedding)
-    return list.map((item) => ({
-      ...item,
+    return list.map((item: any) => ({
+      id: item.id,
+      model: item.model,
+      providerKeyId: item.providerKeyId,
       modelType: (item.modelType === 'text_embedding'
         ? 'text-embedding'
         : item.modelType) as ApiModelType,
+      isAvailable: item.isAvailable,
+      lastVerifiedAt: item.lastVerifiedAt,
+      errorMessage: item.errorMessage,
+      modelPricingId: item.modelPricingId,
+      capabilityTags:
+        item.modelCapabilityTags?.map((mct: any) => ({
+          id: mct.capabilityTag?.id ?? mct.capabilityTagId,
+          name: mct.capabilityTag?.name ?? 'Unknown',
+        })) ?? [],
+      providerKeys: item.providerKey
+        ? [
+            {
+              id: item.providerKey.id,
+              vendor: item.providerKey.vendor,
+              apiType: item.providerKey.apiType ?? 'openai',
+              label: item.providerKey.label ?? null,
+            },
+          ]
+        : [],
     }));
   }
 

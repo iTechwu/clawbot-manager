@@ -434,38 +434,20 @@
       "title": "AI Model Configuration",
       "description": "Configure AI providers and models",
       "tabs": {
-        "providers": "AI Providers",
+        "models": "Model Management",
         "routing": "Model Routing"
       },
-      "addProvider": "Add Provider",
-      "deleteProvider": "Delete Provider",
-      "setPrimary": "Set as Primary",
-      "models": "Models",
-      "configured": "Configured",
-      "notConfigured": "Not Configured",
-      "noProviders": "No AI Providers configured yet",
-      "addFirst": "Add First Provider",
-      "fetchProvidersFailed": "Failed to fetch provider list",
-      "setPrimarySuccess": "Primary model set successfully",
-      "setFailed": "Failed to set",
-      "deleteConfirm": "Are you sure you want to delete this Provider?",
-      "deleteSuccess": "Provider deleted",
-      "deleteFailed": "Failed to delete",
-      "selectProviderAndModel": "Please select a Provider and at least one model",
-      "addSuccess": "Provider added successfully",
-      "addFailed": "Failed to add",
-      "dialogDescription": "Select a Provider from your configured API Keys to add to this Bot",
-      "selectApiKey": "Select API Key",
-      "noApiKeys": "No API Keys available, please add one in settings first",
-      "selectApiKeyPlaceholder": "Select an API Key",
-      "selectModels": "Select Models",
-      "loadingModels": "Loading model list...",
+      "refresh": "Refresh",
+      "refreshSuccess": "Refresh successful",
+      "refreshFailed": "Refresh failed",
       "noModels": "No models available",
-      "primaryModel": "Primary",
-      "setAsPrimary": "Set as primary",
-      "setAsPrimaryProvider": "Set as primary Provider (Bot will use this Provider by default)",
-      "cancel": "Cancel",
-      "add": "Add"
+      "noModelsHint": "Please configure API Keys in system settings and refresh the model list",
+      "fetchModelsFailed": "Failed to fetch model list",
+      "addModelsSuccess": "Successfully added {count} models",
+      "addModelsFailed": "Failed to add models",
+      "removeModelConfirm": "Are you sure you want to remove this model?",
+      "removeModelSuccess": "Model removed",
+      "removeModelFailed": "Failed to remove model"
     },
     "modelRouting": {
       "title": "Model Routing",
@@ -498,7 +480,12 @@
         "providerKey": "Provider Key",
         "selectProviderKey": "Select Provider Key",
         "model": "Model",
-        "selectModel": "Select Model"
+        "selectModel": "Select Model",
+        "searchModels": "Search models...",
+        "noModelsFound": "No matching models found",
+        "modelAvailable": "Model available",
+        "modelUnavailable": "Model unavailable",
+        "lastVerified": "Last verified"
       },
       "functionRoute": {
         "title": "Function Route Rules",
@@ -626,6 +613,9 @@
         "weight": "Weight",
         "weightHint": "0-100, higher weight means higher selection probability",
         "quickAdd": "Quick Add",
+        "costOptimization": "Cost Optimization Strategy",
+        "costOptimizationHint": "Select a preset cost optimization strategy to balance cost and performance",
+        "strategySelected": "Strategy selected: {strategyId}",
         "templates": {
           "title": "Preset Templates",
           "dualEqual": {
@@ -651,6 +641,10 @@
         "maxAttempts": "Max Attempts",
         "delayMs": "Delay (ms)",
         "quickAdd": "Quick Add",
+        "useExistingChain": "Use Preset Fallback Chain",
+        "useExistingChainHint": "Select a pre-configured fallback chain, or configure manually below",
+        "chainSelected": "Fallback chain selected: {chainId}",
+        "orConfigureManually": "Or configure failover manually",
         "templates": {
           "title": "Preset Templates",
           "singleFallback": {
@@ -702,7 +696,64 @@
         "modelCapabilities": "Model Capabilities Analysis",
         "suggestedRoutingName": "AI Smart Routing",
         "suggestedFailoverName": "AI Failover"
-      }
+      },
+      "fallbackChain": {
+        "label": "Fallback Chain",
+        "placeholder": "Select fallback chain",
+        "none": "Don't use preset chain",
+        "loading": "Loading fallback chains...",
+        "models": "models",
+        "inactive": "Inactive",
+        "create": "Create new chain",
+        "createTitle": "Create Fallback Chain",
+        "createDescription": "Configure a set of backup models in priority order",
+        "createSuccess": "Fallback chain created successfully",
+        "createError": "Failed to create fallback chain",
+        "validation": {
+          "required": "Please fill in chain ID and name",
+          "noModels": "Please add at least one model"
+        },
+        "form": {
+          "chainId": "Chain ID",
+          "name": "Name",
+          "namePlaceholder": "Enter chain name",
+          "description": "Description",
+          "descriptionPlaceholder": "Describe the purpose of this fallback chain",
+          "models": "Model List",
+          "noModelsAdded": "No models added yet",
+          "addModel": "Add model to chain",
+          "create": "Create"
+        }
+      },
+      "costStrategy": {
+        "label": "Cost Strategy",
+        "placeholder": "Select cost strategy",
+        "none": "Don't use cost strategy",
+        "loading": "Loading cost strategies...",
+        "inactive": "Inactive",
+        "create": "Create new strategy",
+        "createTitle": "Create Cost Strategy",
+        "createDescription": "Configure weight balance for cost, performance, and capability",
+        "createSuccess": "Cost strategy created successfully",
+        "createError": "Failed to create cost strategy",
+        "cost": "Cost",
+        "performance": "Performance",
+        "capability": "Capability",
+        "validation": {
+          "required": "Please fill in strategy ID and name"
+        },
+        "form": {
+          "strategyId": "Strategy ID",
+          "name": "Name",
+          "namePlaceholder": "Enter strategy name",
+          "description": "Description",
+          "descriptionPlaceholder": "Describe the optimization goal of this strategy",
+          "weights": "Weight Configuration",
+          "weightsHint": "Weights will be automatically normalized to 100%",
+          "create": "Create"
+        }
+      },
+      "cancel": "Cancel"
     },
     "channels": {
       "title": "Message Channels",

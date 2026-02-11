@@ -7,7 +7,17 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import type { BotProviderDetail, RoutingTarget } from '@repo/contracts';
+import type { RoutingTarget } from '@repo/contracts';
+
+/**
+ * Provider info needed for routing suggestion
+ */
+interface ProviderInfo {
+  providerKeyId: string;
+  vendor: string;
+  label?: string;
+  allowedModels: string[];
+}
 
 /**
  * Model capability analysis result
@@ -445,7 +455,7 @@ export class RoutingSuggestionService {
    * Generate routing suggestions based on bot's allowed models
    */
   async generateSuggestions(
-    providers: BotProviderDetail[],
+    providers: ProviderInfo[],
   ): Promise<RoutingSuggestionResult> {
     this.logger.info('Generating routing suggestions', {
       providerCount: providers.length,
@@ -487,7 +497,7 @@ export class RoutingSuggestionService {
    * Analyze capabilities of all available models
    */
   private analyzeModelCapabilities(
-    providers: BotProviderDetail[],
+    providers: ProviderInfo[],
   ): ModelCapability[] {
     const capabilities: ModelCapability[] = [];
 

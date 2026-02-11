@@ -437,38 +437,20 @@
       "title": "AI 模型配置",
       "description": "配置 AI 提供商和模型",
       "tabs": {
-        "providers": "AI 提供商",
+        "models": "模型管理",
         "routing": "模型路由"
       },
-      "addProvider": "添加 Provider",
-      "deleteProvider": "删除 Provider",
-      "setPrimary": "设为主模型",
-      "models": "模型",
-      "configured": "已配置",
-      "notConfigured": "未配置",
-      "noProviders": "尚未配置任何 AI Provider",
-      "addFirst": "添加第一个 Provider",
-      "fetchProvidersFailed": "获取 Provider 列表失败",
-      "setPrimarySuccess": "主模型设置成功",
-      "setFailed": "设置失败",
-      "deleteConfirm": "确定要删除此 Provider 吗？",
-      "deleteSuccess": "Provider 已删除",
-      "deleteFailed": "删除失败",
-      "selectProviderAndModel": "请选择 Provider 和至少一个模型",
-      "addSuccess": "Provider 添加成功",
-      "addFailed": "添加失败",
-      "dialogDescription": "从已配置的 API Keys 中选择一个 Provider 添加到此 Bot",
-      "selectApiKey": "选择 API Key",
-      "noApiKeys": "没有可用的 API Key，请先在设置中添加",
-      "selectApiKeyPlaceholder": "选择一个 API Key",
-      "selectModels": "选择模型",
-      "loadingModels": "加载模型列表...",
-      "noModels": "无可用模型",
-      "primaryModel": "主模型",
-      "setAsPrimary": "设为主模型",
-      "setAsPrimaryProvider": "设为主 Provider（Bot 默认使用此 Provider）",
-      "cancel": "取消",
-      "add": "添加"
+      "refresh": "刷新",
+      "refreshSuccess": "刷新成功",
+      "refreshFailed": "刷新失败",
+      "noModels": "暂无可用模型",
+      "noModelsHint": "请先在系统设置中配置 API Key 并刷新模型列表",
+      "fetchModelsFailed": "获取模型列表失败",
+      "addModelsSuccess": "成功添加 {count} 个模型",
+      "addModelsFailed": "添加模型失败",
+      "removeModelConfirm": "确定要移除此模型吗？",
+      "removeModelSuccess": "模型已移除",
+      "removeModelFailed": "移除模型失败"
     },
     "modelRouting": {
       "title": "模型路由配置",
@@ -501,7 +483,12 @@
         "providerKey": "Provider Key",
         "selectProviderKey": "选择 Provider Key",
         "model": "模型",
-        "selectModel": "选择模型"
+        "selectModel": "选择模型",
+        "searchModels": "搜索模型...",
+        "noModelsFound": "未找到匹配的模型",
+        "modelAvailable": "模型可用",
+        "modelUnavailable": "模型不可用",
+        "lastVerified": "最后验证时间"
       },
       "functionRoute": {
         "title": "功能路由规则",
@@ -629,6 +616,9 @@
         "weight": "权重",
         "weightHint": "0-100，权重越高被选中概率越大",
         "quickAdd": "快速添加",
+        "costOptimization": "成本优化策略",
+        "costOptimizationHint": "选择预设的成本优化策略，自动平衡成本和性能",
+        "strategySelected": "已选择策略: {strategyId}",
         "templates": {
           "title": "预设模板",
           "dualEqual": {
@@ -654,6 +644,10 @@
         "maxAttempts": "最大重试次数",
         "delayMs": "重试延迟 (ms)",
         "quickAdd": "快速添加",
+        "useExistingChain": "使用预设故障转移链",
+        "useExistingChainHint": "选择已配置的故障转移链，或在下方手动配置",
+        "chainSelected": "已选择故障转移链: {chainId}",
+        "orConfigureManually": "或手动配置故障转移",
         "templates": {
           "title": "预设模板",
           "singleFallback": {
@@ -705,7 +699,64 @@
         "modelCapabilities": "模型能力分析",
         "suggestedRoutingName": "AI 智能路由",
         "suggestedFailoverName": "AI 故障转移"
-      }
+      },
+      "fallbackChain": {
+        "label": "故障转移链",
+        "placeholder": "选择故障转移链",
+        "none": "不使用预设链",
+        "loading": "加载故障转移链...",
+        "models": "个模型",
+        "inactive": "未激活",
+        "create": "创建新链",
+        "createTitle": "创建故障转移链",
+        "createDescription": "配置一组按优先级排列的备用模型",
+        "createSuccess": "故障转移链创建成功",
+        "createError": "创建故障转移链失败",
+        "validation": {
+          "required": "请填写链ID和名称",
+          "noModels": "请至少添加一个模型"
+        },
+        "form": {
+          "chainId": "链ID",
+          "name": "名称",
+          "namePlaceholder": "输入链名称",
+          "description": "描述",
+          "descriptionPlaceholder": "描述此故障转移链的用途",
+          "models": "模型列表",
+          "noModelsAdded": "尚未添加模型",
+          "addModel": "添加模型到链",
+          "create": "创建"
+        }
+      },
+      "costStrategy": {
+        "label": "成本策略",
+        "placeholder": "选择成本策略",
+        "none": "不使用成本策略",
+        "loading": "加载成本策略...",
+        "inactive": "未激活",
+        "create": "创建新策略",
+        "createTitle": "创建成本策略",
+        "createDescription": "配置成本、性能和能力的权重平衡",
+        "createSuccess": "成本策略创建成功",
+        "createError": "创建成本策略失败",
+        "cost": "成本",
+        "performance": "性能",
+        "capability": "能力",
+        "validation": {
+          "required": "请填写策略ID和名称"
+        },
+        "form": {
+          "strategyId": "策略ID",
+          "name": "名称",
+          "namePlaceholder": "输入策略名称",
+          "description": "描述",
+          "descriptionPlaceholder": "描述此策略的优化目标",
+          "weights": "权重配置",
+          "weightsHint": "权重将自动归一化为100%",
+          "create": "创建"
+        }
+      },
+      "cancel": "取消"
     },
     "channels": {
       "title": "消息渠道",

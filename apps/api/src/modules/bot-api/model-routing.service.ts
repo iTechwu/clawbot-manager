@@ -5,8 +5,9 @@ import {
   BotService,
   BotModelRoutingService as BotModelRoutingDbService,
   ProviderKeyService,
-  BotProviderKeyService,
+  BotModelService,
   BotUsageLogService,
+  ModelAvailabilityService,
 } from '@app/db';
 import { ModelRouterService } from './services/model-router.service';
 import { RoutingSuggestionService } from './services/routing-suggestion.service';
@@ -25,7 +26,6 @@ import type {
   RoutingStatistics,
   RoutingConfig,
   RoutingSuggestionResult,
-  BotProviderDetail,
 } from '@repo/contracts';
 
 /**
@@ -59,7 +59,8 @@ export class ModelRoutingService {
     private readonly botService: BotService,
     private readonly botModelRoutingDbService: BotModelRoutingDbService,
     private readonly providerKeyService: ProviderKeyService,
-    private readonly botProviderKeyService: BotProviderKeyService,
+    private readonly botModelService: BotModelService,
+    private readonly modelAvailabilityService: ModelAvailabilityService,
     private readonly botUsageLogService: BotUsageLogService,
     private readonly modelRouterService: ModelRouterService,
     private readonly routingSuggestionService: RoutingSuggestionService,
@@ -300,7 +301,7 @@ export class ModelRoutingService {
 
   /**
    * 获取 AI 推荐的路由配置
-   * 根据 Bot 的 allowed_models 分析并生成推荐的路由规则
+   * 根据 Bot 的 models 分析并生成推荐的路由规则
    */
   async suggestRouting(
     hostname: string,
@@ -308,33 +309,34 @@ export class ModelRoutingService {
   ): Promise<RoutingSuggestionResult> {
     const bot = await this.getBotByHostname(hostname, userId);
 
-    // Get all bot provider keys
-    const { list: botProviderKeys } = await this.botProviderKeyService.list({
+    // Get all bot models
+    const { list: botModels } = await this.botModelService.list({
       botId: bot.id,
     });
 
-    // Build provider details for suggestion service
-    const providers: BotProviderDetail[] = await Promise.all(
-      botProviderKeys.map(async (bpk) => {
-        const providerKey = await this.providerKeyService.get({
-          id: bpk.providerKeyId,
-          createdById: userId,
-        });
+    // Build model info for suggestion service
+    const modelInfos = await Promise.all(
+      botModels.map(async (bm) => {
+        // Get model availability to find provider key
+        const { list: availabilities } =
+          await this.modelAvailabilityService.list(
+            { model: bm.modelId },
+            { limit: 1 },
+          );
+        const availability = availabilities[0];
+
+        let providerKey = null;
+        if (availability?.providerKeyId) {
+          providerKey = await this.providerKeyService.get({
+            id: availability.providerKeyId,
+          });
+        }
 
         return {
-          id: bpk.id,
-          providerKeyId: bpk.providerKeyId,
-          vendor: (providerKey?.vendor ||
-            'openai') as BotProviderDetail['vendor'],
-          apiType: (providerKey?.apiType ||
-            null) as BotProviderDetail['apiType'],
-          label: providerKey?.label || '',
-          apiKeyMasked: '****',
-          baseUrl: providerKey?.baseUrl || null,
-          isPrimary: bpk.isPrimary,
-          allowedModels: bpk.allowedModels,
-          primaryModel: bpk.primaryModel,
-          createdAt: bpk.createdAt,
+          modelId: bm.modelId,
+          isPrimary: bm.isPrimary,
+          vendor: providerKey?.vendor || 'openai',
+          providerKeyId: availability?.providerKeyId || null,
         };
       }),
     );
@@ -342,10 +344,32 @@ export class ModelRoutingService {
     this.logger.info('Generating routing suggestions', {
       botId: bot.id,
       hostname,
-      providerCount: providers.length,
+      modelCount: modelInfos.length,
     });
 
-    return this.routingSuggestionService.generateSuggestions(providers);
+    // Transform model infos to ProviderInfo[] format for suggestion service
+    // Group models by providerKeyId
+    const providerMap = new Map<
+      string,
+      { providerKeyId: string; vendor: string; allowedModels: string[] }
+    >();
+    for (const info of modelInfos) {
+      if (!info.providerKeyId) continue;
+      const existing = providerMap.get(info.providerKeyId);
+      if (existing) {
+        existing.allowedModels.push(info.modelId);
+      } else {
+        providerMap.set(info.providerKeyId, {
+          providerKeyId: info.providerKeyId,
+          vendor: info.vendor,
+          allowedModels: [info.modelId],
+        });
+      }
+    }
+
+    return this.routingSuggestionService.generateSuggestions(
+      Array.from(providerMap.values()),
+    );
   }
 
   /**

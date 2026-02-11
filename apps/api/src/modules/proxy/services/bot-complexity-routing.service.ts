@@ -2,7 +2,6 @@ import { Inject, Injectable, Optional } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import {
-  BotProviderKeyService,
   ProviderKeyService,
   ComplexityRoutingConfigService,
   BotModelService,
@@ -122,7 +121,6 @@ const COMPLEXITY_MIN_SCORES: Record<ComplexityLevel, number> = {
 export class BotComplexityRoutingService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly botProviderKeyService: BotProviderKeyService,
     private readonly providerKeyService: ProviderKeyService,
     private readonly complexityRoutingConfigDb: ComplexityRoutingConfigService,
     private readonly botModelService: BotModelService,
@@ -225,27 +223,19 @@ export class BotComplexityRoutingService {
 
   /**
    * 获取 bot 的所有可用模型
-   *
-   * 优先使用新的 BotModel 表，如果没有数据则回退到 BotProviderKey 表
    */
   async getBotAvailableModels(botId: string): Promise<BotAvailableModel[]> {
-    // 首先尝试从新的 BotModel 表获取
     const { list: botModels } = await this.botModelService.list(
       { botId, isEnabled: true },
       { limit: 100 },
     );
 
-    if (botModels.length > 0) {
-      return this.getBotAvailableModelsFromBotModel(botModels);
-    }
-
-    // 回退到旧的 BotProviderKey 表
-    return this.getBotAvailableModelsFromBotProviderKey(botId);
+    return this.getBotAvailableModelsFromBotModel(botModels);
   }
 
   /**
-   * 从新的 BotModel 表获取可用模型
-   * vendor 信息从 ProviderKey 获取，不再从 ModelAvailability 获取
+   * 从 BotModel 表获取可用模型
+   * vendor 信息从 ProviderKey 获取
    */
   private async getBotAvailableModelsFromBotModel(
     botModels: Array<{ modelId: string; isPrimary: boolean }>,
@@ -275,55 +265,6 @@ export class BotComplexityRoutingService {
         model: bm.modelId,
         isPrimary: bm.isPrimary,
       });
-    }
-
-    return availableModels;
-  }
-
-  /**
-   * 从旧的 BotProviderKey 表获取可用模型（向后兼容）
-   */
-  private async getBotAvailableModelsFromBotProviderKey(
-    botId: string,
-  ): Promise<BotAvailableModel[]> {
-    const { list: botProviderKeys } = await this.botProviderKeyService.list(
-      { botId },
-      { limit: 100 },
-    );
-
-    const availableModels: BotAvailableModel[] = [];
-
-    for (const bpk of botProviderKeys) {
-      const providerKey = await this.providerKeyService.getById(
-        bpk.providerKeyId,
-      );
-      if (!providerKey) continue;
-
-      // 添加主要模型
-      if (bpk.primaryModel) {
-        availableModels.push({
-          providerKeyId: bpk.providerKeyId,
-          vendor: providerKey.vendor,
-          apiType: providerKey.apiType,
-          baseUrl: providerKey.baseUrl,
-          model: bpk.primaryModel,
-          isPrimary: bpk.isPrimary,
-        });
-      }
-
-      // 添加允许的模型
-      for (const model of bpk.allowedModels) {
-        if (model !== bpk.primaryModel) {
-          availableModels.push({
-            providerKeyId: bpk.providerKeyId,
-            vendor: providerKey.vendor,
-            apiType: providerKey.apiType,
-            baseUrl: providerKey.baseUrl,
-            model,
-            isPrimary: false,
-          });
-        }
-      }
     }
 
     return availableModels;

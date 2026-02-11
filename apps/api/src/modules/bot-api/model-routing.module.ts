@@ -3,8 +3,9 @@ import {
   BotModule,
   BotModelRoutingModule,
   ProviderKeyModule,
-  BotProviderKeyModule,
+  BotModelModule,
   BotUsageLogModule,
+  ModelAvailabilityModule,
 } from '@app/db';
 import { PrismaModule } from '@app/prisma';
 import { ModelRouterService } from './services/model-router.service';
@@ -22,7 +23,8 @@ import { ModelRoutingService } from './model-routing.service';
     BotModule,
     BotModelRoutingModule,
     ProviderKeyModule,
-    BotProviderKeyModule,
+    BotModelModule,
+    ModelAvailabilityModule,
     BotUsageLogModule,
   ],
   providers: [

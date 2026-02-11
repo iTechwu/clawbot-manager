@@ -23,7 +23,15 @@ import {
   ModelCapabilityTagsResponseSchema,
   AddModelCapabilityTagInputSchema,
   RemoveModelCapabilityTagInputSchema,
+  ModelSyncStatusSchema,
+  SyncPricingInputSchema,
+  SyncPricingResponseSchema,
+  SyncTagsInputSchema,
+  SyncTagsResponseSchema,
+  RefreshWithSyncResponseSchema,
+  ModelDetailsSchema,
 } from '../schemas/model.schema';
+import { AddBotModelsInputSchema } from '../schemas/bot.schema';
 
 const c = initContract();
 
@@ -222,6 +230,86 @@ export const modelContract = c.router(
       },
       summary: '移除模型的能力标签',
     },
+
+    // ============================================================================
+    // 模型同步管理 (管理员)
+    // ============================================================================
+
+    /**
+     * GET /model/sync-status - 获取模型同步状态
+     * 返回模型定价和标签的同步状态概览
+     * 仅限管理员访问
+     */
+    getSyncStatus: {
+      method: 'GET',
+      path: '/sync-status',
+      responses: {
+        200: ApiResponseSchema(ModelSyncStatusSchema),
+      },
+      summary: '获取模型同步状态',
+    },
+
+    /**
+     * POST /model/sync-pricing - 同步模型定价信息
+     * 从 ModelPricing 表查找匹配的定价并关联到 ModelAvailability
+     * 仅限管理员访问
+     */
+    syncPricing: {
+      method: 'POST',
+      path: '/sync-pricing',
+      body: SyncPricingInputSchema,
+      responses: {
+        200: ApiResponseSchema(SyncPricingResponseSchema),
+      },
+      summary: '同步模型定价信息',
+    },
+
+    /**
+     * POST /model/sync-tags - 重新分配能力标签
+     * 根据匹配规则重新分配所有模型的能力标签
+     * 仅限管理员访问
+     */
+    syncTags: {
+      method: 'POST',
+      path: '/sync-tags',
+      body: SyncTagsInputSchema,
+      responses: {
+        200: ApiResponseSchema(SyncTagsResponseSchema),
+      },
+      summary: '重新分配能力标签',
+    },
+
+    /**
+     * POST /model/refresh-with-sync - 刷新模型并同步定价和标签
+     * 刷新模型列表后自动同步定价和能力标签
+     * 仅限管理员访问
+     */
+    refreshWithSync: {
+      method: 'POST',
+      path: '/refresh-with-sync',
+      body: RefreshModelsInputSchema,
+      responses: {
+        200: ApiResponseSchema(RefreshWithSyncResponseSchema),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '刷新模型并同步定价和标签',
+    },
+
+    /**
+     * GET /model/:id/details - 获取模型详情
+     * 返回模型的完整信息，包括定价、能力标签、关联的路由配置等
+     * 仅限管理员访问
+     */
+    getModelDetails: {
+      method: 'GET',
+      path: '/:id/details',
+      pathParams: z.object({ id: z.string().uuid() }),
+      responses: {
+        200: ApiResponseSchema(ModelDetailsSchema),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '获取模型详情',
+    },
   },
   {
     pathPrefix: '/model',
@@ -266,6 +354,45 @@ export const botModelContract = c.router(
         404: ApiResponseSchema(z.object({ error: z.string() })),
       },
       summary: '更新 Bot 的模型配置',
+    },
+
+    /**
+     * POST /bot/:hostname/models/add - 批量添加模型到 Bot
+     */
+    addModels: {
+      method: 'POST',
+      path: '/:hostname/models/add',
+      pathParams: z.object({ hostname: z.string() }),
+      body: AddBotModelsInputSchema,
+      responses: {
+        201: ApiResponseSchema(
+          z.object({
+            added: z.number(),
+            modelIds: z.array(z.string()),
+          }),
+        ),
+        400: ApiResponseSchema(z.object({ error: z.string() })),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '批量添加模型到 Bot',
+    },
+
+    /**
+     * DELETE /bot/:hostname/models/:modelAvailabilityId - 从 Bot 移除模型
+     */
+    removeModel: {
+      method: 'DELETE',
+      path: '/:hostname/models/:modelAvailabilityId',
+      pathParams: z.object({
+        hostname: z.string(),
+        modelAvailabilityId: z.string().uuid(),
+      }),
+      body: z.object({}).optional(),
+      responses: {
+        200: ApiResponseSchema(SuccessResponseSchema),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '从 Bot 移除模型',
     },
   },
   {

@@ -1,16 +1,13 @@
 'use client';
 
 import { useMemo, useState, useCallback } from 'react';
-import { useAvailableModels, useModelAvailability } from '@/hooks/useModels';
+import { useAvailableModels, useModelSync } from '@/hooks/useModels';
 import { useProviderKeys } from '@/hooks/useProviderKeys';
 import { useIsAdmin } from '@/lib/permissions';
-import type { AvailableModel, ModelAvailabilityItem } from '@repo/contracts';
+import type { AvailableModel } from '@repo/contracts';
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  Badge,
   Input,
   ScrollArea,
   Tabs,
@@ -34,12 +31,13 @@ import {
   RefreshCw,
   PlayCircle,
   Key,
-  Database,
-  Clock,
-  AlertCircle,
+  Settings,
+  DollarSign,
+  Tag,
 } from 'lucide-react';
 import { ModelCard } from './components/model-card';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 /**
  * 模型分类配置
@@ -50,9 +48,6 @@ const MODEL_CATEGORIES = [
   { id: 'balanced', label: '均衡', icon: Sparkles },
   { id: 'fast', label: '快速', icon: Zap },
 ] as const;
-
-// View mode type
-type ViewMode = 'cards' | 'availability';
 
 export default function ModelsPage() {
   const {
@@ -71,25 +66,24 @@ export default function ModelsPage() {
     batchVerifyAllUnavailable,
     batchVerifyingAll,
   } = useAvailableModels();
+  const {
+    syncPricing,
+    syncingPricing,
+    syncTags,
+    syncingTags,
+    refreshWithSync,
+    refreshingWithSync,
+  } = useModelSync();
   const isAdmin = useIsAdmin();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [batchProgress, setBatchProgress] = useState<{
     current: number;
     total: number;
   } | null>(null);
 
-  // Get ModelAvailability data for admin view
-  const {
-    availability,
-    loading: availabilityLoading,
-    refresh: refreshAvailability,
-  } = useModelAvailability();
-
   // Get provider keys list (for admin to know if any API keys are configured)
-  const { keys: providerKeys, loading: providerKeysLoading } =
-    useProviderKeys();
+  const { keys: providerKeys } = useProviderKeys();
 
   // Filter models by search and category
   const filteredModels = useMemo(() => {
@@ -145,9 +139,10 @@ export default function ModelsPage() {
         toast.success(
           `刷新完成：${result.models.length} 个模型，新增 ${result.addedCount}，移除 ${result.removedCount}`,
         );
+        refresh();
       }
     },
-    [refreshModels],
+    [refreshModels, refresh],
   );
 
   // Handle verify single model
@@ -162,9 +157,10 @@ export default function ModelsPage() {
             `模型 ${model} 不可用: ${result.errorMessage || '未知错误'}`,
           );
         }
+        refresh();
       }
     },
-    [verifySingleModel],
+    [verifySingleModel, refresh],
   );
 
   // Handle batch verify unverified models for a provider key
@@ -180,11 +176,10 @@ export default function ModelsPage() {
         toast.success(
           `批量验证完成：${result.available}/${result.total} 个模型可用，${result.failed} 个失败`,
         );
-        // Refresh availability data
-        refreshAvailability();
+        refresh();
       }
     },
-    [batchVerifyUnverified, refreshAvailability],
+    [batchVerifyUnverified, refresh],
   );
 
   // Handle refresh all models
@@ -194,9 +189,9 @@ export default function ModelsPage() {
       toast.success(
         `刷新完成：${result.successCount}/${result.totalProviderKeys} 个密钥成功，共 ${result.totalModels} 个模型，新增 ${result.totalAdded}，移除 ${result.totalRemoved}`,
       );
-      refreshAvailability();
+      refresh();
     }
-  }, [refreshAllModels, refreshAvailability]);
+  }, [refreshAllModels, refresh]);
 
   // Handle batch verify all unavailable models
   const handleBatchVerifyAll = useCallback(async () => {
@@ -210,9 +205,45 @@ export default function ModelsPage() {
       toast.success(
         `批量验证完成：${result.totalAvailable}/${result.totalVerified} 个模型可用，${result.totalFailed} 个失败`,
       );
-      refreshAvailability();
+      refresh();
     }
-  }, [batchVerifyAllUnavailable, refreshAvailability]);
+  }, [batchVerifyAllUnavailable, refresh]);
+
+  // Handle sync pricing
+  const handleSyncPricing = useCallback(async () => {
+    const result = await syncPricing();
+    if (result) {
+      toast.success(
+        `定价同步完成：${result.synced} 个已同步，${result.skipped} 个跳过`,
+      );
+      refresh();
+    }
+  }, [syncPricing, refresh]);
+
+  // Handle sync tags
+  const handleSyncTags = useCallback(async () => {
+    const result = await syncTags();
+    if (result) {
+      toast.success(
+        `标签同步完成：${result.processed} 个已处理，${result.tagsAssigned} 个标签已分配`,
+      );
+      refresh();
+    }
+  }, [syncTags, refresh]);
+
+  // Handle refresh with sync
+  const handleRefreshWithSync = useCallback(
+    async (providerKeyId: string) => {
+      const result = await refreshWithSync(providerKeyId);
+      if (result) {
+        toast.success(
+          `刷新并同步完成：${result.refresh.models.length} 个模型，定价同步 ${result.pricingSync.synced} 个，标签同步 ${result.tagsSync.processed} 个`,
+        );
+        refresh();
+      }
+    },
+    [refreshWithSync, refresh],
+  );
 
   if (loading) {
     return (
@@ -253,29 +284,6 @@ export default function ModelsPage() {
               {stats.available} / {stats.total} 可用
             </span>
           </div>
-          {/* View Mode Toggle (Admin only) */}
-          {isAdmin && (
-            <div className="flex items-center gap-1 rounded-md border p-1">
-              <Button
-                variant={viewMode === 'cards' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="h-7 px-2"
-                onClick={() => setViewMode('cards')}
-              >
-                <Cpu className="mr-1 size-3.5" />
-                卡片
-              </Button>
-              <Button
-                variant={viewMode === 'availability' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="h-7 px-2"
-                onClick={() => setViewMode('availability')}
-              >
-                <Database className="mr-1 size-3.5" />
-                可用性
-              </Button>
-            </div>
-          )}
           {isAdmin && providerKeys.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -354,6 +362,47 @@ export default function ModelsPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+          {isAdmin && providerKeys.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={syncingPricing || syncingTags || refreshingWithSync}
+                >
+                  <Settings
+                    className={`mr-1.5 size-4 ${syncingPricing || syncingTags || refreshingWithSync ? 'animate-spin' : ''}`}
+                  />
+                  {syncingPricing || syncingTags || refreshingWithSync
+                    ? '同步中...'
+                    : '同步操作'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleSyncPricing}>
+                  <DollarSign className="mr-2 size-4" />
+                  同步定价信息
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSyncTags}>
+                  <Tag className="mr-2 size-4" />
+                  同步能力标签
+                </DropdownMenuItem>
+                <div className="my-1 h-px bg-border" />
+                <DropdownMenuItem
+                  onClick={() => {
+                    const firstKey = providerKeys[0];
+                    if (firstKey) {
+                      handleRefreshWithSync(firstKey.id);
+                    }
+                  }}
+                  className="font-medium"
+                >
+                  <RefreshCw className="mr-2 size-4" />
+                  刷新并同步全部
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
@@ -376,10 +425,10 @@ export default function ModelsPage() {
               className="border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-900"
               asChild
             >
-              <a href="/secrets">
+              <Link href="/secrets">
                 <Key className="mr-1.5 size-4" />
                 添加密钥
-              </a>
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -425,112 +474,7 @@ export default function ModelsPage() {
 
       {/* Models List */}
       <ScrollArea className="min-h-0 flex-1">
-        {/* Availability Table View (Admin only) */}
-        {isAdmin && viewMode === 'availability' ? (
-          <div className="pb-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-sm font-medium">
-                <Database className="size-4" />
-                模型可用性记录 ({availability.length})
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => refreshAvailability()}
-                disabled={availabilityLoading}
-              >
-                <RefreshCw
-                  className={`mr-1.5 size-4 ${availabilityLoading ? 'animate-spin' : ''}`}
-                />
-                刷新
-              </Button>
-            </div>
-            {availability.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <Database className="text-muted-foreground mb-4 size-16 opacity-50" />
-                <h3 className="text-muted-foreground text-lg font-medium">
-                  暂无可用性记录
-                </h3>
-                <p className="text-muted-foreground mt-2 text-sm">
-                  请先刷新模型列表以获取可用性数据
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {availability.map((item) => (
-                  <Card key={item.id} className="p-3">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm truncate">
-                            {item.model}
-                          </span>
-                          {item.isAvailable ? (
-                            <Badge
-                              variant="default"
-                              className="bg-green-500 shrink-0"
-                            >
-                              <CheckCircle className="mr-1 size-3" />
-                              可用
-                            </Badge>
-                          ) : item.errorMessage === 'Not verified yet' ? (
-                            <Badge variant="secondary" className="shrink-0">
-                              <Clock className="mr-1 size-3" />
-                              未验证
-                            </Badge>
-                          ) : (
-                            <Badge variant="destructive" className="shrink-0">
-                              <XCircle className="mr-1 size-3" />
-                              不可用
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                          <span>
-                            验证时间:{' '}
-                            {item.lastVerifiedAt
-                              ? new Date(item.lastVerifiedAt).toLocaleString(
-                                  'zh-CN',
-                                )
-                              : '-'}
-                          </span>
-                          {item.errorMessage &&
-                            item.errorMessage !== 'Not verified yet' && (
-                              <span className="text-destructive flex items-center gap-1 truncate">
-                                <AlertCircle className="size-3 shrink-0" />
-                                <span
-                                  className="truncate"
-                                  title={item.errorMessage}
-                                >
-                                  {item.errorMessage}
-                                </span>
-                              </span>
-                            )}
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          handleVerifySingleModel(
-                            item.providerKeyId,
-                            item.model,
-                          );
-                        }}
-                        disabled={verifyingModel === item.model}
-                        title="验证模型"
-                      >
-                        <RefreshCw
-                          className={`size-4 ${verifyingModel === item.model ? 'animate-spin' : ''}`}
-                        />
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : filteredModels.length === 0 ? (
+        {filteredModels.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
             <Cpu className="text-muted-foreground mb-4 size-16 opacity-50" />
             <h3 className="text-muted-foreground text-lg font-medium">
