@@ -147,15 +147,15 @@ export function CostStrategySelector({
       <Label>{t('costStrategy.label')}</Label>
       <div className="flex gap-2">
         <Select
-          value={value || ''}
-          onValueChange={(v) => onChange(v || null)}
+          value={value || '__none__'}
+          onValueChange={(v) => onChange(v === '__none__' ? null : v)}
           disabled={disabled}
         >
           <SelectTrigger className="flex-1">
             <SelectValue placeholder={t('costStrategy.placeholder')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">
+            <SelectItem value="__none__">
               <span className="text-muted-foreground">
                 {t('costStrategy.none')}
               </span>

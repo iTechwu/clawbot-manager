@@ -1166,6 +1166,9 @@ export class BotApiService {
       { isDeleted: true, deletedAt: new Date() },
     );
 
+    // 清理关联的 ModelAvailability 记录（硬删除，因为 ProviderKey 已不可用）
+    await this.availableModelService.cleanupByProviderKeyId(id);
+
     // Log operation
     await this.operateLogService.create({
       user: { connect: { id: userId } },

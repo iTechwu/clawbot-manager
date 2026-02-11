@@ -82,16 +82,27 @@ export class BotConfigResolverService {
     let providerKeyId: string | null = null;
 
     if (primaryBotModel) {
-      // 通过 modelId 查找 ModelAvailability
+      // 通过 modelId 查找所有 ModelAvailability，优先选择可用的且 ProviderKey 有效的
       const { list: availabilities } = await this.modelAvailabilityService.list(
         { model: primaryBotModel.modelId },
-        { limit: 1 },
+        { limit: 100 },
       );
-      const modelAvailability = availabilities[0];
-
-      if (modelAvailability?.providerKeyId) {
-        providerKeyId = modelAvailability.providerKeyId;
-        providerKey = await this.providerKeyService.getById(providerKeyId);
+      // 按 isAvailable 排序：可用的优先
+      const sorted = [
+        ...availabilities.filter((a) => a.isAvailable),
+        ...availabilities.filter((a) => !a.isAvailable),
+      ];
+      // 遍历找到第一个 ProviderKey 仍然有效（未被软删除）的记录
+      for (const availability of sorted) {
+        if (!availability.providerKeyId) continue;
+        const pk = await this.providerKeyService.getById(
+          availability.providerKeyId,
+        );
+        if (pk) {
+          providerKeyId = availability.providerKeyId;
+          providerKey = pk;
+          break;
+        }
       }
     }
 

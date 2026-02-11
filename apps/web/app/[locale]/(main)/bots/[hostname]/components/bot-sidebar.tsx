@@ -79,7 +79,7 @@ export function BotSidebar({
     if (configLoading) return null;
 
     // 只在未配置时显示警告标记
-    if (itemId === 'ai' && hasProvider === false) {
+    if (itemId === 'models' && hasProvider === false) {
       return <Circle className="size-3 text-amber-500 ml-auto flex-shrink-0" />;
     }
     if (itemId === 'channels' && hasChannel === false) {

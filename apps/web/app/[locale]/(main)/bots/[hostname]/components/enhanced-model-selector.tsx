@@ -3,11 +3,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Badge,
   Input,
   ScrollArea,
@@ -20,11 +15,8 @@ import {
 import {
   Search,
   Check,
-  AlertCircle,
-  CheckCircle2,
   Clock,
   DollarSign,
-  Tag,
   ChevronDown,
 } from 'lucide-react';
 import type { RoutingTarget } from '@repo/contracts';
@@ -204,9 +196,24 @@ export function EnhancedModelSelector({
                   />
                 )}
                 <span className="truncate">{selectedModel.model}</span>
-                <Badge variant="outline" className="text-xs shrink-0">
-                  {selectedModel.vendor}
-                </Badge>
+                {showCapabilities && selectedModel.capabilityTags.length > 0 ? (
+                  <>
+                    {selectedModel.capabilityTags.slice(0, 2).map((tag) => (
+                      <Badge key={tag.id} variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
+                        {tag.name}
+                      </Badge>
+                    ))}
+                    {selectedModel.capabilityTags.length > 2 && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                        +{selectedModel.capabilityTags.length - 2}
+                      </Badge>
+                    )}
+                  </>
+                ) : (
+                  <Badge variant="outline" className="text-xs shrink-0">
+                    {selectedModel.vendor}
+                  </Badge>
+                )}
               </div>
             ) : (
               <span className="text-muted-foreground">
@@ -338,90 +345,6 @@ export function EnhancedModelSelector({
           </ScrollArea>
         </PopoverContent>
       </Popover>
-    </div>
-  );
-}
-
-/**
- * Simple model selector that shows all models in a flat list
- * Used when you just need basic model selection
- */
-export function SimpleModelSelector({
-  providers,
-  value,
-  onChange,
-  label,
-  placeholder,
-  disabled = false,
-}: Omit<
-  EnhancedModelSelectorProps,
-  'enhancedModels' | 'showAvailability' | 'showPricing' | 'showCapabilities'
->) {
-  const t = useTranslations('bots.detail.modelRouting');
-
-  // Build flat list of all available models
-  const modelOptions = useMemo(() => {
-    const options: Array<{
-      model: string;
-      providerKeyId: string;
-      vendor: string;
-      label: string;
-    }> = [];
-
-    providers.forEach((provider) => {
-      provider.allowedModels.forEach((modelId) => {
-        options.push({
-          model: modelId,
-          providerKeyId: provider.providerKeyId,
-          vendor: provider.vendor,
-          label: provider.label || provider.vendor,
-        });
-      });
-    });
-
-    return options.sort((a, b) => a.model.localeCompare(b.model));
-  }, [providers]);
-
-  // Create a unique value string for the select
-  const selectValue = value?.model && value?.providerKeyId
-    ? `${value.providerKeyId}:${value.model}`
-    : '';
-
-  const handleChange = (selectValue: string) => {
-    const [providerKeyId, ...modelParts] = selectValue.split(':');
-    const model = modelParts.join(':'); // Handle models with colons in name
-    if (providerKeyId && model) {
-      onChange({ providerKeyId, model });
-    }
-  };
-
-  return (
-    <div className="space-y-2">
-      {label && <Label>{label}</Label>}
-      <Select
-        value={selectValue}
-        onValueChange={handleChange}
-        disabled={disabled}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder={placeholder || t('form.selectModel')} />
-        </SelectTrigger>
-        <SelectContent>
-          {modelOptions.map((option) => (
-            <SelectItem
-              key={`${option.providerKeyId}:${option.model}`}
-              value={`${option.providerKeyId}:${option.model}`}
-            >
-              <div className="flex items-center gap-2">
-                <span>{option.model}</span>
-                <Badge variant="outline" className="text-xs">
-                  {option.vendor}
-                </Badge>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
     </div>
   );
 }

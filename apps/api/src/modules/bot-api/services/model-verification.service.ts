@@ -356,7 +356,6 @@ export class ModelVerificationService {
       baseUrl,
       effectiveApiType,
     );
-    console.log('models', models);
 
     // 获取当前数据库中的模型列表
     const { list: existingRecords } = await this.modelAvailabilityService.list(
@@ -556,7 +555,12 @@ export class ModelVerificationService {
       errorMessage: string | null;
       modelPricingId: string | null;
       capabilityTags: Array<{ id: string; name: string }>;
-      providerKeys: Array<{ id: string; vendor: string; apiType: string; label: string | null }>;
+      providerKeys: Array<{
+        id: string;
+        vendor: string;
+        apiType: string;
+        label: string | null;
+      }>;
     }>
   > {
     const filter = providerKeyId ? { providerKeyId } : {};
@@ -567,7 +571,7 @@ export class ModelVerificationService {
         include: {
           providerKey: true,
           modelPricing: true,
-          modelCapabilityTags: {
+          capabilityTags: {
             include: {
               capabilityTag: true,
             },
@@ -589,7 +593,7 @@ export class ModelVerificationService {
       errorMessage: item.errorMessage,
       modelPricingId: item.modelPricingId,
       capabilityTags:
-        item.modelCapabilityTags?.map((mct: any) => ({
+        item.capabilityTags?.map((mct: any) => ({
           id: mct.capabilityTag?.id ?? mct.capabilityTagId,
           name: mct.capabilityTag?.name ?? 'Unknown',
         })) ?? [],

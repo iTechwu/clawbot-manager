@@ -191,9 +191,7 @@ export function ModelAvailabilityTable({
           <div className="flex items-center gap-4 px-4 py-3 bg-muted/50 sticky top-0 z-10">
             {showAddButton && selectableModels.length > 0 && (
               <Checkbox
-                checked={allSelected}
-                // @ts-expect-error - indeterminate is valid
-                indeterminate={someSelected}
+                checked={someSelected ? 'indeterminate' : allSelected}
                 onCheckedChange={toggleSelectAll}
               />
             )}

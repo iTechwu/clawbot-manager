@@ -174,10 +174,29 @@ export class AvailableModelService {
   ) {}
 
   /**
-   * 根据 modelId 获取第一条 ModelAvailability 记录
+   * 根据 modelId 获取 ModelAvailability 记录
+   * 优先返回 isAvailable=true 且 ProviderKey 有效的记录
    */
   async getModelAvailabilityByModelId(modelId: string) {
-    return this.modelAvailabilityService.get({ model: modelId });
+    const { list } = await this.modelAvailabilityService.list(
+      { model: modelId },
+      { limit: 100 },
+    );
+    if (list.length === 0) return null;
+
+    // 过滤出 ProviderKey 仍然有效的记录
+    const { list: providerKeys } = await this.providerKeyService.list(
+      {},
+      { limit: 1000 },
+    );
+    const validProviderKeyIds = new Set(providerKeys.map((pk) => pk.id));
+    const validRecords = list.filter((m) =>
+      validProviderKeyIds.has(m.providerKeyId),
+    );
+
+    if (validRecords.length === 0) return null;
+    // 优先返回可用的记录
+    return validRecords.find((m) => m.isAvailable) ?? validRecords[0];
   }
 
   /**
@@ -409,7 +428,7 @@ export class AvailableModelService {
     // 1. 获取 Bot 的模型配置
     const { list: botModels } = await this.botModelService.list(
       { botId },
-      { limit: 100 },
+      { limit: 1000 },
     );
 
     // 2. 获取所有可用模型
@@ -451,7 +470,7 @@ export class AvailableModelService {
     // 1. 获取当前 Bot 的模型配置
     const { list: currentModels } = await this.botModelService.list(
       { botId },
-      { limit: 100 },
+      { limit: 1000 },
     );
 
     const currentModelIds = new Set(currentModels.map((m) => m.modelId));
@@ -712,7 +731,7 @@ export class AvailableModelService {
     // 1. 获取 ModelAvailability 记录
     const availabilityRecords = await Promise.all(
       modelAvailabilityIds.map((id) =>
-        this.modelAvailabilityService.get({ id }),
+        this.modelAvailabilityService.getById(id),
       ),
     );
 
@@ -790,5 +809,29 @@ export class AvailableModelService {
     });
 
     return { success: true };
+  }
+
+  /**
+   * 清理指定 ProviderKey 关联的 ModelAvailability 记录
+   * 当 ProviderKey 被删除时调用，硬删除所有关联的 ModelAvailability
+   */
+  async cleanupByProviderKeyId(
+    providerKeyId: string,
+  ): Promise<{ deleted: number }> {
+    const { list: records } = await this.modelAvailabilityService.list(
+      { providerKeyId },
+      { limit: 1000 },
+    );
+
+    for (const record of records) {
+      await this.modelAvailabilityService.delete({ id: record.id });
+    }
+
+    this.logger.info(
+      '[AvailableModel] Cleaned up ModelAvailability records for deleted ProviderKey',
+      { providerKeyId, deleted: records.length },
+    );
+
+    return { deleted: records.length };
   }
 }

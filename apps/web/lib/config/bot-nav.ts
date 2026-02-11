@@ -1,6 +1,5 @@
 import {
   LayoutDashboard,
-  Bot,
   MessageSquare,
   Stethoscope,
   ScrollText,
@@ -25,14 +24,13 @@ export interface BotNavItem {
  */
 export const botNavItems: BotNavItem[] = [
   { id: 'overview', labelKey: 'overview', icon: LayoutDashboard, href: '' },
-  { id: 'ai', labelKey: 'ai', icon: Bot, href: '/ai' },
-  { id: 'models', labelKey: 'models', icon: Cpu, href: '/models' },
   {
     id: 'channels',
     labelKey: 'channels',
     icon: MessageSquare,
     href: '/channels',
   },
+  { id: 'models', labelKey: 'models', icon: Cpu, href: '/models' },
   { id: 'plugins', labelKey: 'plugins', icon: Puzzle, href: '/plugins' },
   { id: 'skills', labelKey: 'skills', icon: Sparkles, href: '/skills' },
   { id: 'usage', labelKey: 'usage', icon: BarChart3, href: '/usage' },

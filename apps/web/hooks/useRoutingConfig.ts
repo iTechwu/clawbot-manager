@@ -1,17 +1,14 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   routingAdminApi,
   routingAdminClient,
-  modelApi,
 } from '@/lib/api/contracts/client';
 import type {
   FallbackChain,
   CostStrategy,
-  ComplexityRoutingConfig,
-  ModelAvailabilityItem,
 } from '@repo/contracts';
 
 /**
@@ -21,8 +18,6 @@ export const routingConfigKeys = {
   all: ['routing-config'] as const,
   fallbackChains: () => [...routingConfigKeys.all, 'fallback-chains'] as const,
   costStrategies: () => [...routingConfigKeys.all, 'cost-strategies'] as const,
-  complexityConfigs: () =>
-    [...routingConfigKeys.all, 'complexity-configs'] as const,
   capabilityTags: () => [...routingConfigKeys.all, 'capability-tags'] as const,
   modelPricing: () => [...routingConfigKeys.all, 'model-pricing'] as const,
 };
@@ -90,38 +85,6 @@ export function useCostStrategies() {
 }
 
 /**
- * Hook for fetching ComplexityRoutingConfig list
- */
-export function useComplexityRoutingConfigs() {
-  const queryClient = useQueryClient();
-  const configsQuery = routingAdminApi.getComplexityRoutingConfigs.useQuery(
-    routingConfigKeys.complexityConfigs(),
-    {},
-  );
-
-  const responseBody = configsQuery.data?.body;
-  const configs: ComplexityRoutingConfig[] =
-    responseBody && 'data' in responseBody && responseBody.data
-      ? ((responseBody.data as { list: ComplexityRoutingConfig[] }).list ?? [])
-      : [];
-
-  return {
-    configs,
-    loading: configsQuery.isLoading,
-    error:
-      configsQuery.error instanceof Error
-        ? configsQuery.error.message
-        : null,
-    refresh: () => {
-      configsQuery.refetch();
-      queryClient.invalidateQueries({
-        queryKey: routingConfigKeys.complexityConfigs(),
-      });
-    },
-  };
-}
-
-/**
  * Enhanced model info with availability, pricing, and capability tags
  */
 export interface EnhancedModelInfo {
@@ -145,61 +108,6 @@ export interface EnhancedModelInfo {
     creativity: number;
     speed: number;
   } | null;
-}
-
-/**
- * Hook for fetching enhanced model information
- * Combines ModelAvailability with pricing and capability tags
- */
-export function useEnhancedModels(providerKeyIds?: string[]) {
-  const availabilityQuery = modelApi.getAvailability.useQuery(
-    ['models', 'availability', 'enhanced', providerKeyIds?.join(',')],
-    {
-      query: providerKeyIds?.length
-        ? { providerKeyId: providerKeyIds[0] }
-        : undefined,
-    },
-  );
-
-  const responseBody = availabilityQuery.data?.body;
-  const availability: ModelAvailabilityItem[] =
-    responseBody && 'data' in responseBody && responseBody.data
-      ? ((responseBody.data as { list: ModelAvailabilityItem[] }).list ?? [])
-      : [];
-
-  // Transform ModelAvailabilityItem to EnhancedModelInfo
-  const enhancedModels: EnhancedModelInfo[] = useMemo(() => {
-    return availability
-      .filter((item) => {
-        // Filter by providerKeyIds if provided
-        if (providerKeyIds && providerKeyIds.length > 0) {
-          return providerKeyIds.includes(item.providerKeyId);
-        }
-        return true;
-      })
-      .map((item) => ({
-        providerKeyId: item.providerKeyId,
-        model: item.model,
-        vendor: item.providerKeys?.[0]?.vendor ?? '',
-        isAvailable: item.isAvailable,
-        lastVerifiedAt: item.lastVerifiedAt
-          ? new Date(item.lastVerifiedAt)
-          : null,
-        pricing: null, // Will be populated from ModelPricing if available
-        capabilityTags: item.capabilityTags ?? [],
-        scores: null, // Will be populated from ModelPricing if available
-      }));
-  }, [availability, providerKeyIds]);
-
-  return {
-    models: enhancedModels,
-    loading: availabilityQuery.isLoading,
-    error:
-      availabilityQuery.error instanceof Error
-        ? availabilityQuery.error.message
-        : null,
-    refresh: () => availabilityQuery.refetch(),
-  };
 }
 
 /**

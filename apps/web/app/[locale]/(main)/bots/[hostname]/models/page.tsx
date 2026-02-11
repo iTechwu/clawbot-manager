@@ -1,188 +1,238 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useBotModels, useAvailableModels } from '@/hooks/useModels';
+import { useBot } from '@/hooks/useBots';
+import { useModelAvailability } from '@/hooks/useModels';
+import { ModelRoutingConfig } from '../components/model-routing-config';
 import {
+  Badge,
   Button,
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  Skeleton,
-  Switch,
-  Badge,
+  Checkbox,
   Input,
+  Skeleton,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@repo/ui';
 import { cn } from '@repo/ui/lib/utils';
 import {
+  CheckCircle2,
+  Cpu,
+  Loader2,
+  Plus,
+  RefreshCw,
   Search,
   Star,
   StarOff,
-  Cpu,
-  Loader2,
-  CheckCircle2,
+  Trash2,
   XCircle,
-  RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { botModelClient } from '@/lib/api/contracts';
+import type { ModelAvailabilityItem, BotModelInfo } from '@repo/contracts';
+
+type FilterMode = 'all' | 'available' | 'added';
 
 export default function BotModelsPage() {
   const params = useParams<{ hostname: string }>();
   const hostname = params.hostname;
   const t = useTranslations('bots.detail.models');
 
+  const { loading: botLoading } = useBot(hostname);
   const {
-    models: botModels,
-    loading: botModelsLoading,
-    updateModels,
-    updateLoading,
-    refresh: refreshBotModels,
-  } = useBotModels(hostname);
+    availability: allModels,
+    loading: modelsLoading,
+    refresh: refreshModels,
+  } = useModelAvailability();
 
-  const { models: availableModels, loading: availableModelsLoading } =
-    useAvailableModels();
-
+  const [botModels, setBotModels] = useState<BotModelInfo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [botModelsLoading, setBotModelsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [pendingChanges, setPendingChanges] = useState<Map<string, boolean>>(
-    new Map(),
+  const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [selectedModels, setSelectedModels] = useState<Set<string>>(new Set());
+
+  // 获取 Bot 的模型列表
+  const fetchBotModels = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!hostname) return;
+      if (!options?.silent) setBotModelsLoading(true);
+      try {
+        const response = await botModelClient.list({
+          params: { hostname },
+        });
+        if (response.status === 200 && response.body.data) {
+          setBotModels(response.body.data.list);
+        }
+      } catch {
+        toast.error(t('fetchFailed'));
+      } finally {
+        if (!options?.silent) setBotModelsLoading(false);
+      }
+    },
+    [hostname, t],
   );
-  const [pendingPrimary, setPendingPrimary] = useState<string | null>(null);
 
-  // Merge bot models with available models info
-  const mergedModels = useMemo(() => {
-    return botModels.map((bm) => {
-      const availableModel = availableModels.find(
-        (am) => am.model === bm.modelId,
-      );
-      return {
-        ...bm,
-        vendor: availableModel?.vendor ?? '',
-        category: availableModel?.category ?? '',
-        capabilities: availableModel?.capabilities ?? [],
-      };
+  useEffect(() => {
+    fetchBotModels();
+  }, [fetchBotModels]);
+
+  // 计算已添加到 Bot 的模型 ID 集合 (ModelAvailability ID -> BotModel)
+  const addedModelMap = useMemo(() => {
+    const map = new Map<string, BotModelInfo>();
+    botModels.forEach((bm) => {
+      const matching = allModels.filter((m) => m.model === bm.modelId);
+      matching.forEach((m) => map.set(m.id, bm));
     });
-  }, [botModels, availableModels]);
+    return map;
+  }, [botModels, allModels]);
 
-  // Filter models by search query
+  // 过滤模型
   const filteredModels = useMemo(() => {
-    if (!searchQuery.trim()) return mergedModels;
-    const query = searchQuery.toLowerCase();
-    return mergedModels.filter(
-      (m) =>
-        m.modelId.toLowerCase().includes(query) ||
-        m.displayName.toLowerCase().includes(query) ||
-        m.vendor.toLowerCase().includes(query),
-    );
-  }, [mergedModels, searchQuery]);
-
-  // Group models by category
-  const groupedModels = useMemo(() => {
-    const groups: Record<string, typeof filteredModels> = {};
-    filteredModels.forEach((model) => {
-      const category = model.category || 'other';
-      if (!groups[category]) {
-        groups[category] = [];
+    return allModels.filter((model) => {
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        if (!model.model.toLowerCase().includes(query)) return false;
       }
-      groups[category].push(model);
+      if (filterMode === 'available' && !model.isAvailable) return false;
+      if (filterMode === 'added' && !addedModelMap.has(model.id)) return false;
+      return true;
     });
-    return groups;
-  }, [filteredModels]);
+  }, [allModels, searchQuery, filterMode, addedModelMap]);
 
-  // Check if there are pending changes
-  const hasPendingChanges = pendingChanges.size > 0 || pendingPrimary !== null;
+  // 统计
+  const stats = useMemo(() => ({
+    total: filteredModels.length,
+    available: filteredModels.filter((m) => m.isAvailable).length,
+    added: filteredModels.filter((m) => addedModelMap.has(m.id)).length,
+  }), [filteredModels, addedModelMap]);
 
-  // Get effective enabled state (considering pending changes)
-  const getEffectiveEnabled = (modelId: string, currentEnabled: boolean) => {
-    return pendingChanges.has(modelId)
-      ? pendingChanges.get(modelId)!
-      : currentEnabled;
-  };
-
-  // Get effective primary state
-  const getEffectivePrimary = (modelId: string, currentPrimary: boolean) => {
-    if (pendingPrimary !== null) {
-      return modelId === pendingPrimary;
-    }
-    return currentPrimary;
-  };
-
-  const handleToggleModel = (modelId: string, currentEnabled: boolean) => {
-    setPendingChanges((prev) => {
-      const next = new Map(prev);
-      const newValue = !currentEnabled;
-      // If toggling back to original state, remove from pending
-      const originalModel = botModels.find((m) => m.modelId === modelId);
-      if (originalModel && originalModel.isEnabled === newValue) {
-        next.delete(modelId);
+  // 添加模型到 Bot
+  const handleAddModels = async (models: ModelAvailabilityItem[]) => {
+    if (models.length === 0) return;
+    setLoading(true);
+    try {
+      const modelAvailabilityIds = models.map((m) => m.id);
+      const response = await botModelClient.addModels({
+        params: { hostname },
+        body: {
+          modelAvailabilityIds,
+          primaryModelAvailabilityId:
+            botModels.length === 0 ? modelAvailabilityIds[0] : undefined,
+        },
+      });
+      if (response.status === 201 && response.body.data) {
+        toast.success(t('addSuccess', { count: response.body.data.added }));
+        await fetchBotModels({ silent: true });
       } else {
-        next.set(modelId, newValue);
+        toast.error(t('addFailed'));
       }
+    } catch {
+      toast.error(t('addFailed'));
+    } finally {
+      setLoading(false);
+      setSelectedModels(new Set());
+    }
+  };
+
+  // 从 Bot 移除模型
+  const handleRemoveModel = async (model: ModelAvailabilityItem) => {
+    if (!confirm(t('removeConfirm'))) return;
+    setLoading(true);
+    try {
+      const response = await botModelClient.removeModel({
+        params: { hostname, modelAvailabilityId: model.id },
+        body: {},
+      });
+      if (response.status === 200) {
+        toast.success(t('removeSuccess'));
+        await fetchBotModels({ silent: true });
+      } else {
+        toast.error(t('removeFailed'));
+      }
+    } catch {
+      toast.error(t('removeFailed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 设为主模型
+  const handleSetPrimary = async (modelId: string) => {
+    setLoading(true);
+    try {
+      const enabledModels = botModels
+        .filter((m) => m.isEnabled)
+        .map((m) => m.modelId);
+      await botModelClient.update({
+        params: { hostname },
+        body: { models: enabledModels, primaryModel: modelId },
+      });
+      toast.success(t('setPrimarySuccess'));
+      await fetchBotModels({ silent: true });
+    } catch {
+      toast.error(t('setPrimaryFailed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 刷新
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      await Promise.all([fetchBotModels({ silent: true }), refreshModels()]);
+      toast.success(t('refreshSuccess'));
+    } catch {
+      toast.error(t('refreshFailed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 选择逻辑
+  const toggleModelSelection = (modelId: string) => {
+    setSelectedModels((prev) => {
+      const next = new Set(prev);
+      if (next.has(modelId)) next.delete(modelId);
+      else next.add(modelId);
       return next;
     });
   };
 
-  const handleSetPrimary = (modelId: string) => {
-    const originalPrimary = botModels.find((m) => m.isPrimary)?.modelId;
-    if (modelId === originalPrimary) {
-      setPendingPrimary(null);
-    } else {
-      setPendingPrimary(modelId);
-    }
-  };
+  const selectableModels = filteredModels.filter(
+    (m) => !addedModelMap.has(m.id),
+  );
+  const allSelected =
+    selectableModels.length > 0 &&
+    selectableModels.every((m) => selectedModels.has(m.id));
+  const someSelected =
+    selectableModels.some((m) => selectedModels.has(m.id)) && !allSelected;
 
-  const handleSaveChanges = async () => {
-    // Calculate final enabled models
-    const enabledModels = botModels
-      .filter((m) => {
-        const effectiveEnabled = getEffectiveEnabled(m.modelId, m.isEnabled);
-        return effectiveEnabled;
-      })
-      .map((m) => m.modelId);
-
-    if (enabledModels.length === 0) {
-      toast.error(t('atLeastOneModel'));
-      return;
-    }
-
-    // Determine primary model
-    let primaryModel: string | undefined;
-    if (pendingPrimary !== null) {
-      primaryModel = pendingPrimary;
-    } else {
-      const currentPrimary = botModels.find((m) => m.isPrimary);
-      if (currentPrimary && enabledModels.includes(currentPrimary.modelId)) {
-        primaryModel = currentPrimary.modelId;
-      }
-    }
-
-    // If primary model is not in enabled list, use first enabled
-    if (primaryModel && !enabledModels.includes(primaryModel)) {
-      primaryModel = enabledModels[0];
-    }
-
-    try {
-      await updateModels({
-        models: enabledModels,
-        primaryModel,
+  const toggleSelectAll = () => {
+    setSelectedModels((prev) => {
+      const next = new Set(prev);
+      selectableModels.forEach((m) => {
+        if (allSelected) next.delete(m.id);
+        else next.add(m.id);
       });
-      toast.success(t('saveSuccess'));
-      setPendingChanges(new Map());
-      setPendingPrimary(null);
-    } catch {
-      toast.error(t('saveFailed'));
-    }
+      return next;
+    });
   };
 
-  const handleDiscardChanges = () => {
-    setPendingChanges(new Map());
-    setPendingPrimary(null);
+  const handleAddSelected = () => {
+    const modelsToAdd = allModels.filter((m) => selectedModels.has(m.id));
+    if (modelsToAdd.length > 0) handleAddModels(modelsToAdd);
   };
 
-  const loading = botModelsLoading || availableModelsLoading;
+  const isLoading = botLoading || botModelsLoading || modelsLoading;
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <div>
@@ -191,9 +241,8 @@ export default function BotModelsPage() {
         </div>
         <Skeleton className="h-10 w-full max-w-md" />
         <div className="space-y-4">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
         </div>
       </div>
     );
@@ -201,198 +250,235 @@ export default function BotModelsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-start justify-between">
+      {/* 页面标题 */}
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground text-sm">{t('description')}</p>
         </div>
         <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => refreshBotModels()}
-          disabled={updateLoading}
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={loading}
         >
-          <RefreshCw
-            className={cn('size-4', updateLoading && 'animate-spin')}
-          />
+          {loading ? (
+            <Loader2 className="size-4 mr-2 animate-spin" />
+          ) : (
+            <RefreshCw className="size-4 mr-2" />
+          )}
+          {t('refresh')}
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-        <Input
-          placeholder={t('searchPlaceholder')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
-      </div>
+      {/* Tabs */}
+      <Tabs defaultValue="models" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="models">{t('tabs.models')}</TabsTrigger>
+          <TabsTrigger value="routing">{t('tabs.routing')}</TabsTrigger>
+        </TabsList>
 
-      {/* Pending Changes Bar */}
-      {hasPendingChanges && (
-        <div className="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
-          <span className="text-sm text-amber-700 dark:text-amber-300">
-            {t('unsavedChanges')}
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDiscardChanges}
-              disabled={updateLoading}
-            >
-              {t('discard')}
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSaveChanges}
-              disabled={updateLoading}
-            >
-              {updateLoading && (
-                <Loader2 className="size-4 mr-2 animate-spin" />
-              )}
-              {t('saveChanges')}
-            </Button>
+        {/* 模型管理 Tab */}
+        <TabsContent value="models" className="mt-6 space-y-4">
+          {/* 搜索和过滤 */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                placeholder={t('searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            <div className="flex items-center gap-1 rounded-lg border p-1">
+              {(['all', 'available', 'added'] as FilterMode[]).map((mode) => (
+                <Button
+                  key={mode}
+                  variant={filterMode === mode ? 'default' : 'ghost'}
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setFilterMode(mode)}
+                >
+                  {t(`filter.${mode}`)}
+                </Button>
+              ))}
+            </div>
+
+            {selectedModels.size > 0 && (
+              <Button onClick={handleAddSelected} size="sm" disabled={loading}>
+                <Plus className="size-4 mr-1" />
+                {t('addSelected', { count: selectedModels.size })}
+              </Button>
+            )}
           </div>
-        </div>
-      )}
 
-      {/* Models List */}
-      {filteredModels.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Cpu className="size-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">
-              {searchQuery ? t('noMatchingModels') : t('noModels')}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-6">
-          {Object.entries(groupedModels).map(([category, models]) => (
-            <div key={category}>
-              <h3 className="text-sm font-medium text-muted-foreground mb-3 capitalize">
-                {t(`categories.${category}`, { defaultValue: category })}
-              </h3>
-              <div className="grid gap-3">
-                {models.map((model) => {
-                  const effectiveEnabled = getEffectiveEnabled(
-                    model.modelId,
-                    model.isEnabled,
-                  );
-                  const effectivePrimary = getEffectivePrimary(
-                    model.modelId,
-                    model.isPrimary,
-                  );
-                  const hasChange =
-                    pendingChanges.has(model.modelId) ||
-                    (pendingPrimary !== null &&
-                      (model.isPrimary || model.modelId === pendingPrimary));
+          {/* 统计信息 */}
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span>{t('statsTotal', { count: stats.total })}</span>
+            <span>·</span>
+            <span className="text-green-600">
+              {t('statsAvailable', { count: stats.available })}
+            </span>
+            <span>·</span>
+            <span className="text-blue-600">
+              {t('statsAdded', { count: stats.added })}
+            </span>
+          </div>
 
-                  return (
-                    <Card
-                      key={model.modelId}
-                      className={cn(
-                        'transition-all',
-                        hasChange && 'ring-2 ring-amber-400',
-                        !effectiveEnabled && 'opacity-60',
-                      )}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            {/* Enable/Disable Switch */}
-                            <Switch
-                              checked={effectiveEnabled}
+          {/* 模型列表 - 卡片式 */}
+          {filteredModels.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Cpu className="size-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <p className="text-muted-foreground">
+                  {searchQuery ? t('noMatchingModels') : t('noModels')}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-3">
+              {filteredModels.map((model) => {
+                const botModel = addedModelMap.get(model.id);
+                const isAdded = !!botModel;
+                const isSelected = selectedModels.has(model.id);
+
+                return (
+                  <Card
+                    key={model.id}
+                    className={cn(
+                      'transition-all',
+                      isAdded && 'ring-1 ring-blue-200 dark:ring-blue-800',
+                      isSelected && !isAdded && 'ring-2 ring-primary',
+                    )}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          {/* 选择框（未添加的模型） */}
+                          {!isAdded && (
+                            <Checkbox
+                              checked={isSelected}
                               onCheckedChange={() =>
-                                handleToggleModel(
-                                  model.modelId,
-                                  effectiveEnabled,
-                                )
+                                toggleModelSelection(model.id)
                               }
                             />
+                          )}
 
-                            {/* Model Info */}
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">
-                                  {model.displayName}
-                                </span>
-                                {effectivePrimary && (
-                                  <Badge variant="default" className="text-xs">
-                                    {t('primary')}
-                                  </Badge>
-                                )}
-                                {model.isAvailable ? (
-                                  <CheckCircle2 className="size-4 text-green-500" />
-                                ) : (
-                                  <XCircle className="size-4 text-red-500" />
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-muted-foreground">
-                                  {model.modelId}
-                                </span>
-                                {model.vendor && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {model.vendor}
-                                  </Badge>
-                                )}
-                              </div>
+                          {/* 模型信息 */}
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {model.model}
+                              </span>
+                              {model.isAvailable ? (
+                                <CheckCircle2 className="size-4 text-green-500" />
+                              ) : (
+                                <XCircle className="size-4 text-red-500" />
+                              )}
+                              {isAdded && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {t('badgeAdded')}
+                                </Badge>
+                              )}
+                              {botModel?.isPrimary && (
+                                <Badge variant="default" className="text-xs">
+                                  {t('primary')}
+                                </Badge>
+                              )}
                             </div>
-                          </div>
-
-                          {/* Set as Primary Button */}
-                          <Button
-                            variant={effectivePrimary ? 'default' : 'ghost'}
-                            size="sm"
-                            onClick={() => handleSetPrimary(model.modelId)}
-                            disabled={!effectiveEnabled}
-                            className="gap-1"
-                          >
-                            {effectivePrimary ? (
-                              <Star className="size-4 fill-current" />
-                            ) : (
-                              <StarOff className="size-4" />
-                            )}
-                            <span className="hidden sm:inline">
-                              {effectivePrimary
-                                ? t('primaryModel')
-                                : t('setAsPrimary')}
+                            <span className="text-xs text-muted-foreground">
+                              {model.isAvailable
+                                ? t('available')
+                                : model.errorMessage || t('unavailable')}
                             </span>
-                          </Button>
+                          </div>
                         </div>
 
-                        {/* Capabilities */}
-                        {model.capabilities.length > 0 && (
+                        {/* 操作按钮 */}
+                        <div className="flex items-center gap-1">
+                          {isAdded ? (
+                            <>
+                              <Button
+                                variant={
+                                  botModel?.isPrimary ? 'default' : 'ghost'
+                                }
+                                size="sm"
+                                onClick={() =>
+                                  handleSetPrimary(botModel!.modelId)
+                                }
+                                disabled={loading || botModel?.isPrimary}
+                                className="gap-1"
+                              >
+                                {botModel?.isPrimary ? (
+                                  <Star className="size-4 fill-current" />
+                                ) : (
+                                  <StarOff className="size-4" />
+                                )}
+                                <span className="hidden sm:inline">
+                                  {botModel?.isPrimary
+                                    ? t('primaryModel')
+                                    : t('setAsPrimary')}
+                                </span>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                onClick={() => handleRemoveModel(model)}
+                                disabled={loading}
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleAddModels([model])}
+                              disabled={loading}
+                            >
+                              <Plus className="size-4 mr-1" />
+                              {t('addBtn')}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 能力标签 */}
+                      {model.capabilityTags &&
+                        model.capabilityTags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t">
-                            {model.capabilities.slice(0, 5).map((cap) => (
+                            {model.capabilityTags.slice(0, 5).map((tag) => (
                               <Badge
-                                key={cap}
-                                variant="secondary"
+                                key={tag.id}
+                                variant="outline"
                                 className="text-xs"
                               >
-                                {cap}
+                                {tag.name}
                               </Badge>
                             ))}
-                            {model.capabilities.length > 5 && (
+                            {model.capabilityTags.length > 5 && (
                               <Badge variant="secondary" className="text-xs">
-                                +{model.capabilities.length - 5}
+                                +{model.capabilityTags.length - 5}
                               </Badge>
                             )}
                           </div>
                         )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      )}
+          )}
+        </TabsContent>
+
+        {/* 模型路由 Tab */}
+        <TabsContent value="routing" className="mt-6">
+          <ModelRoutingConfig hostname={hostname} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

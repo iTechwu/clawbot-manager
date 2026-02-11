@@ -417,21 +417,6 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
     fetchData();
   }, [fetchData]);
 
-  // Get allowed models for a provider key
-  const getModelsForProvider = useCallback(
-    (providerKeyId: string): { id: string; name: string }[] => {
-      const provider = botProviders.find(
-        (p) => p.providerKeyId === providerKeyId,
-      );
-      if (!provider) return [];
-      return provider.allowedModels.map((modelId) => ({
-        id: modelId,
-        name: modelId,
-      }));
-    },
-    [botProviders],
-  );
-
   // Get all providers that have a specific model
   const getProvidersForModel = useCallback(
     (modelId: string): ProviderInfo[] => {
@@ -777,6 +762,7 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
         onChange={onChange}
         label={label}
         showAvailability={true}
+        showCapabilities={true}
       />
     );
   };
