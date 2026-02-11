@@ -3,6 +3,7 @@ import {
   Inject,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
@@ -79,7 +80,9 @@ export class SkillApiService {
         {
           OR: [
             { name: { contains: search, mode: 'insensitive' } },
+            { nameZh: { contains: search, mode: 'insensitive' } },
             { description: { contains: search, mode: 'insensitive' } },
+            { descriptionZh: { contains: search, mode: 'insensitive' } },
           ],
         },
       ];
@@ -285,7 +288,11 @@ export class SkillApiService {
           isEnabled: true,
           createdAt: true,
           updatedAt: true,
-          skill: true,
+          skill: {
+            include: {
+              skillType: true,
+            },
+          },
         },
       },
     );
@@ -315,6 +322,15 @@ export class SkillApiService {
     // 检查技能访问权限
     if (!skill.isSystem && skill.createdById !== userId) {
       throw new ForbiddenException('无权安装此技能');
+    }
+
+    // 检查是否已安装（防止重复安装触发唯一约束错误）
+    const existing = await this.botSkillService.get({
+      botId: bot.id,
+      skillId: data.skillId,
+    });
+    if (existing) {
+      throw new ConflictException('该技能已安装');
     }
 
     // 如果是 OpenClaw 技能且 definition 内容为空，从 GitHub 同步 SKILL.md
@@ -392,7 +408,11 @@ export class SkillApiService {
         isEnabled: true,
         createdAt: true,
         updatedAt: true,
-        skill: true,
+        skill: {
+          include: {
+            skillType: true,
+          },
+        },
       },
     });
 
@@ -446,7 +466,11 @@ export class SkillApiService {
         isEnabled: true,
         createdAt: true,
         updatedAt: true,
-        skill: true,
+        skill: {
+          include: {
+            skillType: true,
+          },
+        },
       },
     });
 

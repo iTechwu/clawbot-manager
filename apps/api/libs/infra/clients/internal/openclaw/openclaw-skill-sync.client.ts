@@ -14,6 +14,7 @@ import { Logger } from 'winston';
 import { firstValueFrom, timeout, catchError } from 'rxjs';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as yaml from 'js-yaml';
 
 /**
  * 解析后的技能信息
@@ -499,12 +500,23 @@ export class OpenClawSkillSyncClient {
 
     const [, yamlContent, markdownContent] = frontmatterMatch;
 
-    // 简单解析 YAML（不引入额外依赖）
-    const frontmatter = this.parseSimpleYaml(yamlContent);
+    // 使用 js-yaml 解析 YAML frontmatter
+    let frontmatter: Record<string, unknown> = {};
+    try {
+      const parsed = yaml.load(yamlContent);
+      frontmatter =
+        parsed && typeof parsed === 'object'
+          ? (parsed as Record<string, unknown>)
+          : {};
+    } catch (error) {
+      this.logger.warn('OpenClawSkillSyncClient: YAML 解析失败，使用空对象', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
 
     return {
       name: (frontmatter.name as string) || '',
-      version: (frontmatter.version as string) || '1.0.0',
+      version: String(frontmatter.version || '1.0.0'),
       description: (frontmatter.description as string) || '',
       homepage: frontmatter.homepage as string | undefined,
       repository: frontmatter.repository as string | undefined,
@@ -515,113 +527,5 @@ export class OpenClawSkillSyncClient {
       frontmatter,
       sourceUrl,
     };
-  }
-
-  /**
-   * 简单的 YAML 解析器
-   * 只处理基本的 key: value 格式和数组
-   */
-  private parseSimpleYaml(yaml: string): Record<string, unknown> {
-    const result: Record<string, unknown> = {};
-    const lines = yaml.split('\n');
-    let currentKey = '';
-    let currentArray: string[] | null = null;
-    let currentObject: Record<string, unknown> | null = null;
-    let objectKey = '';
-
-    for (const line of lines) {
-      // 跳过空行
-      if (!line.trim()) continue;
-
-      // 检测数组项 (- value)
-      const arrayMatch = line.match(/^\s+-\s+(.+)$/);
-      if (arrayMatch && currentArray !== null) {
-        currentArray.push(arrayMatch[1].trim());
-        continue;
-      }
-
-      // 检测嵌套对象的键值对
-      const nestedMatch = line.match(/^\s{2,}(\w+):\s*(.*)$/);
-      if (nestedMatch && currentObject !== null) {
-        const [, key, value] = nestedMatch;
-        if (value) {
-          currentObject[key] = this.parseYamlValue(value);
-        }
-        continue;
-      }
-
-      // 保存之前的数组或对象
-      if (currentArray !== null && currentKey) {
-        result[currentKey] = currentArray;
-        currentArray = null;
-      }
-      if (currentObject !== null && objectKey) {
-        result[objectKey] = currentObject;
-        currentObject = null;
-      }
-
-      // 检测顶级键值对 (key: value)
-      const keyValueMatch = line.match(/^(\S+):\s*(.*)$/);
-      if (keyValueMatch) {
-        const [, key, value] = keyValueMatch;
-        currentKey = key;
-
-        if (value) {
-          // 有值，直接赋值
-          result[key] = this.parseYamlValue(value);
-        } else {
-          // 没有值，可能是数组或对象的开始
-          // 检查下一行来判断
-          const nextLineIndex = lines.indexOf(line) + 1;
-          if (nextLineIndex < lines.length) {
-            const nextLine = lines[nextLineIndex];
-            if (nextLine.match(/^\s+-\s/)) {
-              // 下一行是数组项
-              currentArray = [];
-            } else if (nextLine.match(/^\s{2,}\w+:/)) {
-              // 下一行是嵌套对象
-              currentObject = {};
-              objectKey = key;
-            }
-          }
-        }
-      }
-    }
-
-    // 保存最后的数组或对象
-    if (currentArray !== null && currentKey) {
-      result[currentKey] = currentArray;
-    }
-    if (currentObject !== null && objectKey) {
-      result[objectKey] = currentObject;
-    }
-
-    return result;
-  }
-
-  /**
-   * 解析 YAML 值
-   */
-  private parseYamlValue(value: string): unknown {
-    const trimmed = value.trim();
-
-    // 布尔值
-    if (trimmed === 'true') return true;
-    if (trimmed === 'false') return false;
-
-    // 数字
-    if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
-      return parseFloat(trimmed);
-    }
-
-    // 去除引号的字符串
-    if (
-      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-      (trimmed.startsWith("'") && trimmed.endsWith("'"))
-    ) {
-      return trimmed.slice(1, -1);
-    }
-
-    return trimmed;
   }
 }
