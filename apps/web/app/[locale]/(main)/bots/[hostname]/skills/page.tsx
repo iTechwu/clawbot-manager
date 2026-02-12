@@ -312,6 +312,32 @@ function SkillDetailPreview({
           )}
         </div>
       )}
+      {/* 标签展示 */}
+      {skill.definition?.tags &&
+        Array.isArray(skill.definition.tags) &&
+        skill.definition.tags.length > 0 && (
+          <div>
+            <span className="text-muted-foreground text-sm">{t('tags')}:</span>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {(skill.definition.tags as string[]).map((tag) => (
+                <Badge key={tag} variant="outline" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      {/* GitHub 源链接 */}
+      {skill.sourceUrl && (
+        <a
+          href={skill.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm underline-offset-4 hover:underline"
+        >
+          GitHub ↗
+        </a>
+      )}
       <Button
         className="w-full"
         onClick={() => onInstall(skill.id)}
@@ -341,6 +367,7 @@ export default function BotSkillsPage() {
   const hostname = params.hostname;
   const queryClient = useQueryClient();
   const t = useTranslations('botSkills');
+  const { getName } = useLocalizedFields();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [installingSkillId, setInstallingSkillId] = useState<string | null>(
@@ -412,15 +439,14 @@ export default function BotSkillsPage() {
         queryClient.invalidateQueries({ queryKey: ['bot-skills', hostname] });
         setIsAddDialogOpen(false);
         setPreviewSkill(null);
-      }
-    } catch (error: unknown) {
-      const err = error as { status?: number };
-      if (err?.status === 409) {
+      } else if (response.status === 409) {
         toast.warning(t('alreadyInstalled'));
         queryClient.invalidateQueries({ queryKey: ['bot-skills', hostname] });
       } else {
         toast.error(t('installFailed'));
       }
+    } catch {
+      toast.error(t('installFailed'));
     } finally {
       setInstallingSkillId(null);
     }
@@ -495,88 +521,99 @@ export default function BotSkillsPage() {
               {t('addSkill')}
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-h-[80vh] max-w-3xl overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{t('addSkill')}</DialogTitle>
-              <DialogDescription>{t('addSkillDescription')}</DialogDescription>
-            </DialogHeader>
-            {previewSkill ? (
-              <SkillDetailPreview
-                skill={previewSkill}
-                onBack={() => setPreviewSkill(null)}
-                onInstall={handleInstall}
-                isInstalling={installingSkillId === previewSkill.id}
-                t={t}
-              />
-            ) : (
-              <>
-                {/* 搜索框 */}
-                <div className="relative">
-                  <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-                  <Input
-                    placeholder={t('searchPlaceholder')}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                {/* 分类筛选 */}
-                {skillTypes.length > 0 && (
-                  <Tabs
-                    value={selectedTypeId}
-                    onValueChange={setSelectedTypeId}
-                  >
-                    <TabsList className="w-full justify-start">
-                      <TabsTrigger value="all">{t('allTypes')}</TabsTrigger>
-                      {skillTypes.map((type) => (
-                        <TabsTrigger key={type.id} value={type.id}>
-                          {type.icon && (
-                            <span className="mr-1">{type.icon}</span>
-                          )}
-                          {getName(type)}
-                          <Badge
-                            variant="secondary"
-                            className="ml-1 h-5 px-1 text-xs"
-                          >
-                            {type._count.skills}
-                          </Badge>
+          <DialogContent className="flex max-h-[80vh] max-w-3xl flex-col gap-0 p-0">
+            <div className="border-b px-6 pt-6 pb-4">
+              <DialogHeader>
+                <DialogTitle>{t('addSkill')}</DialogTitle>
+                <DialogDescription>
+                  {t('addSkillDescription')}
+                </DialogDescription>
+              </DialogHeader>
+              {!previewSkill && (
+                <div className="mt-4 space-y-3">
+                  {/* 搜索框 */}
+                  <div className="relative">
+                    <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+                    <Input
+                      placeholder={t('searchPlaceholder')}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  {/* 分类筛选 */}
+                  {skillTypes.length > 0 && (
+                    <Tabs
+                      value={selectedTypeId}
+                      onValueChange={setSelectedTypeId}
+                    >
+                      <TabsList className="flex w-full justify-start overflow-x-auto">
+                        <TabsTrigger value="all" className="shrink-0">
+                          {t('allTypes')}
                         </TabsTrigger>
-                      ))}
-                    </TabsList>
-                  </Tabs>
-                )}
-                {/* 技能列表 */}
-                {availableLoading ? (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {[1, 2, 3, 4].map((i) => (
-                      <SkillCardSkeleton key={i} />
-                    ))}
-                  </div>
-                ) : availableSkills.length === 0 ? (
-                  <div className="text-muted-foreground py-8 text-center">
-                    <Wrench className="mx-auto mb-4 h-12 w-12 opacity-50" />
-                    <p>
-                      {searchQuery || selectedTypeId !== 'all'
-                        ? t('noSearchResults')
-                        : t('noAvailableSkills')}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {availableSkills.map((skill) => (
-                      <AvailableSkillCard
-                        key={skill.id}
-                        skill={skill}
-                        onInstall={handleInstall}
-                        onPreview={setPreviewSkill}
-                        isInstalling={installingSkillId === skill.id}
-                        t={t}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
+                        {skillTypes.map((type) => (
+                          <TabsTrigger
+                            key={type.id}
+                            value={type.id}
+                            className="shrink-0"
+                          >
+                            {type.icon && (
+                              <span className="mr-1">{type.icon}</span>
+                            )}
+                            {getName(type)}
+                            <Badge
+                              variant="secondary"
+                              className="ml-1 h-5 px-1 text-xs"
+                            >
+                              {type._count.skills}
+                            </Badge>
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </Tabs>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {previewSkill ? (
+                <SkillDetailPreview
+                  skill={previewSkill}
+                  onBack={() => setPreviewSkill(null)}
+                  onInstall={handleInstall}
+                  isInstalling={installingSkillId === previewSkill.id}
+                  t={t}
+                />
+              ) : availableLoading ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <SkillCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : availableSkills.length === 0 ? (
+                <div className="text-muted-foreground py-8 text-center">
+                  <Wrench className="mx-auto mb-4 h-12 w-12 opacity-50" />
+                  <p>
+                    {searchQuery || selectedTypeId !== 'all'
+                      ? t('noSearchResults')
+                      : t('noAvailableSkills')}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {availableSkills.map((skill) => (
+                    <AvailableSkillCard
+                      key={skill.id}
+                      skill={skill}
+                      onInstall={handleInstall}
+                      onPreview={setPreviewSkill}
+                      isInstalling={installingSkillId === skill.id}
+                      t={t}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>
@@ -620,7 +657,9 @@ export default function BotSkillsPage() {
       {/* 卸载确认对话框 */}
       <Dialog
         open={!!uninstallTarget}
-        onOpenChange={(open) => !open && !isUninstalling && setUninstallTarget(null)}
+        onOpenChange={(open) =>
+          !open && !isUninstalling && setUninstallTarget(null)
+        }
       >
         <DialogContent>
           <DialogHeader>

@@ -123,6 +123,7 @@ export const botSkillContract = c.router(
       body: InstallSkillRequestSchema,
       responses: {
         200: createApiResponse(BotSkillItemSchema),
+        409: createApiResponse(z.null()),
       },
       summary: '安装技能',
       description: '为指定 Bot 安装技能',
