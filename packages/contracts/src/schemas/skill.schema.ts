@@ -108,6 +108,7 @@ export const SkillItemSchema = z.object({
   description: z.string().nullable(),
   descriptionZh: z.string().nullable().optional(),
   version: z.string(),
+  latestVersion: z.string().nullable().optional(),
   skillTypeId: z.string().uuid().nullable().optional(),
   skillType: SkillTypeItemSchema.nullable().optional(),
   definition: z.record(z.string(), z.unknown()),
@@ -176,6 +177,8 @@ export const BotSkillItemSchema = z.object({
   skillId: z.string().uuid(),
   config: z.record(z.string(), z.unknown()).nullable(),
   isEnabled: z.boolean(),
+  installedVersion: z.string().nullable().optional(),
+  updateAvailable: z.boolean().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
   skill: SkillItemSchema,
@@ -249,4 +252,17 @@ export const ContainerSkillsResponseSchema = z.object({
 
 export type ContainerSkillsResponse = z.infer<
   typeof ContainerSkillsResponseSchema
+>;
+
+/**
+ * 更新技能版本响应 Schema
+ */
+export const UpdateBotSkillVersionResponseSchema = z.object({
+  botSkill: BotSkillItemSchema,
+  previousVersion: z.string().nullable(),
+  newVersion: z.string(),
+});
+
+export type UpdateBotSkillVersionResponse = z.infer<
+  typeof UpdateBotSkillVersionResponseSchema
 >;

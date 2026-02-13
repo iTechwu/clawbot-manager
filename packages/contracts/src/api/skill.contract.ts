@@ -13,6 +13,7 @@ import {
   BatchInstallSkillRequestSchema,
   BatchInstallResultSchema,
   ContainerSkillsResponseSchema,
+  UpdateBotSkillVersionResponseSchema,
 } from '../schemas/skill.schema';
 
 const c = initContract();
@@ -177,6 +178,24 @@ export const botSkillContract = c.router(
       },
       summary: '更新技能配置',
       description: '更新 Bot 已安装技能的配置',
+    },
+
+    /**
+     * 更新已安装技能到最新版本
+     */
+    updateVersion: {
+      method: 'POST',
+      path: '/:hostname/skills/:skillId/update',
+      pathParams: z.object({
+        hostname: z.string(),
+        skillId: z.string().uuid(),
+      }),
+      body: z.object({}),
+      responses: {
+        200: createApiResponse(UpdateBotSkillVersionResponseSchema),
+      },
+      summary: '更新技能版本',
+      description: '从 GitHub 重新拉取技能内容并更新到最新版本',
     },
 
     /**

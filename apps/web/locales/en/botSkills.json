@@ -58,6 +58,11 @@
   "noContainerSkills": "No built-in skills detected",
   "tabInstalled": "Installed Skills",
   "tabContainer": "Container Built-in",
+  "updateAvailable": "Update available",
+  "update": "Update",
+  "updating": "Updating…",
+  "updateSuccess": "Skill updated from v{previousVersion} to v{newVersion}",
+  "updateFailed": "Update failed",
   "types": {
     "tool": "Tool",
     "prompt": "Prompt",

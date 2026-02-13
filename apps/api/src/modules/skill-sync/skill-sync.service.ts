@@ -239,7 +239,8 @@ export class SkillSyncService {
         nameZh: translation?.nameZh || null,
         description: skill.description,
         descriptionZh: translation?.descriptionZh || null,
-        version: '1.0.0',
+        // 保留已有版本，不覆盖为默认值（版本在安装/更新时从 _meta.json 获取）
+        version: existing?.version || '1.0.0',
         skillType: skillTypeId ? { connect: { id: skillTypeId } } : undefined,
         definition: {
           name: skill.name,

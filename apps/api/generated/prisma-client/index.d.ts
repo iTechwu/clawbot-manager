@@ -36514,6 +36514,7 @@ export namespace Prisma {
     description: string | null
     descriptionZh: string | null
     version: string | null
+    latestVersion: string | null
     skillTypeId: string | null
     isSystem: boolean | null
     isEnabled: boolean | null
@@ -36536,6 +36537,7 @@ export namespace Prisma {
     description: string | null
     descriptionZh: string | null
     version: string | null
+    latestVersion: string | null
     skillTypeId: string | null
     isSystem: boolean | null
     isEnabled: boolean | null
@@ -36558,6 +36560,7 @@ export namespace Prisma {
     description: number
     descriptionZh: number
     version: number
+    latestVersion: number
     skillTypeId: number
     definition: number
     examples: number
@@ -36584,6 +36587,7 @@ export namespace Prisma {
     description?: true
     descriptionZh?: true
     version?: true
+    latestVersion?: true
     skillTypeId?: true
     isSystem?: true
     isEnabled?: true
@@ -36606,6 +36610,7 @@ export namespace Prisma {
     description?: true
     descriptionZh?: true
     version?: true
+    latestVersion?: true
     skillTypeId?: true
     isSystem?: true
     isEnabled?: true
@@ -36628,6 +36633,7 @@ export namespace Prisma {
     description?: true
     descriptionZh?: true
     version?: true
+    latestVersion?: true
     skillTypeId?: true
     definition?: true
     examples?: true
@@ -36725,6 +36731,7 @@ export namespace Prisma {
     description: string | null
     descriptionZh: string | null
     version: string
+    latestVersion: string | null
     skillTypeId: string | null
     definition: JsonValue
     examples: JsonValue | null
@@ -36766,6 +36773,7 @@ export namespace Prisma {
     description?: boolean
     descriptionZh?: boolean
     version?: boolean
+    latestVersion?: boolean
     skillTypeId?: boolean
     definition?: boolean
     examples?: boolean
@@ -36793,6 +36801,7 @@ export namespace Prisma {
     description?: boolean
     descriptionZh?: boolean
     version?: boolean
+    latestVersion?: boolean
     skillTypeId?: boolean
     definition?: boolean
     examples?: boolean
@@ -36818,6 +36827,7 @@ export namespace Prisma {
     description?: boolean
     descriptionZh?: boolean
     version?: boolean
+    latestVersion?: boolean
     skillTypeId?: boolean
     definition?: boolean
     examples?: boolean
@@ -36843,6 +36853,7 @@ export namespace Prisma {
     description?: boolean
     descriptionZh?: boolean
     version?: boolean
+    latestVersion?: boolean
     skillTypeId?: boolean
     definition?: boolean
     examples?: boolean
@@ -36859,7 +36870,7 @@ export namespace Prisma {
     deletedAt?: boolean
   }
 
-  export type SkillOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "nameZh" | "slug" | "description" | "descriptionZh" | "version" | "skillTypeId" | "definition" | "examples" | "isSystem" | "isEnabled" | "createdById" | "source" | "sourceUrl" | "author" | "lastSyncedAt" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["skill"]>
+  export type SkillOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "nameZh" | "slug" | "description" | "descriptionZh" | "version" | "latestVersion" | "skillTypeId" | "definition" | "examples" | "isSystem" | "isEnabled" | "createdById" | "source" | "sourceUrl" | "author" | "lastSyncedAt" | "isDeleted" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["skill"]>
   export type SkillInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     skillType?: boolean | Skill$skillTypeArgs<ExtArgs>
     installations?: boolean | Skill$installationsArgs<ExtArgs>
@@ -36895,6 +36906,10 @@ export namespace Prisma {
        */
       descriptionZh: string | null
       version: string
+      /**
+       * 最新可用版本（来自 _meta.json）
+       */
+      latestVersion: string | null
       skillTypeId: string | null
       definition: Prisma.JsonValue
       examples: Prisma.JsonValue | null
@@ -37353,6 +37368,7 @@ export namespace Prisma {
     readonly description: FieldRef<"Skill", 'String'>
     readonly descriptionZh: FieldRef<"Skill", 'String'>
     readonly version: FieldRef<"Skill", 'String'>
+    readonly latestVersion: FieldRef<"Skill", 'String'>
     readonly skillTypeId: FieldRef<"Skill", 'String'>
     readonly definition: FieldRef<"Skill", 'Json'>
     readonly examples: FieldRef<"Skill", 'Json'>
@@ -37838,6 +37854,7 @@ export namespace Prisma {
     id: string | null
     botId: string | null
     skillId: string | null
+    installedVersion: string | null
     isEnabled: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -37847,6 +37864,7 @@ export namespace Prisma {
     id: string | null
     botId: string | null
     skillId: string | null
+    installedVersion: string | null
     isEnabled: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -37857,6 +37875,7 @@ export namespace Prisma {
     botId: number
     skillId: number
     config: number
+    installedVersion: number
     isEnabled: number
     createdAt: number
     updatedAt: number
@@ -37868,6 +37887,7 @@ export namespace Prisma {
     id?: true
     botId?: true
     skillId?: true
+    installedVersion?: true
     isEnabled?: true
     createdAt?: true
     updatedAt?: true
@@ -37877,6 +37897,7 @@ export namespace Prisma {
     id?: true
     botId?: true
     skillId?: true
+    installedVersion?: true
     isEnabled?: true
     createdAt?: true
     updatedAt?: true
@@ -37887,6 +37908,7 @@ export namespace Prisma {
     botId?: true
     skillId?: true
     config?: true
+    installedVersion?: true
     isEnabled?: true
     createdAt?: true
     updatedAt?: true
@@ -37970,6 +37992,7 @@ export namespace Prisma {
     botId: string
     skillId: string
     config: JsonValue | null
+    installedVersion: string | null
     isEnabled: boolean
     createdAt: Date
     updatedAt: Date
@@ -37997,6 +38020,7 @@ export namespace Prisma {
     botId?: boolean
     skillId?: boolean
     config?: boolean
+    installedVersion?: boolean
     isEnabled?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -38009,6 +38033,7 @@ export namespace Prisma {
     botId?: boolean
     skillId?: boolean
     config?: boolean
+    installedVersion?: boolean
     isEnabled?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -38021,6 +38046,7 @@ export namespace Prisma {
     botId?: boolean
     skillId?: boolean
     config?: boolean
+    installedVersion?: boolean
     isEnabled?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -38033,12 +38059,13 @@ export namespace Prisma {
     botId?: boolean
     skillId?: boolean
     config?: boolean
+    installedVersion?: boolean
     isEnabled?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type BotSkillOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "botId" | "skillId" | "config" | "isEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["botSkill"]>
+  export type BotSkillOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "botId" | "skillId" | "config" | "installedVersion" | "isEnabled" | "createdAt" | "updatedAt", ExtArgs["result"]["botSkill"]>
   export type BotSkillInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     bot?: boolean | BotDefaultArgs<ExtArgs>
     skill?: boolean | SkillDefaultArgs<ExtArgs>
@@ -38063,6 +38090,10 @@ export namespace Prisma {
       botId: string
       skillId: string
       config: Prisma.JsonValue | null
+      /**
+       * 安装时的技能版本
+       */
+      installedVersion: string | null
       isEnabled: boolean
       createdAt: Date
       updatedAt: Date
@@ -38495,6 +38526,7 @@ export namespace Prisma {
     readonly botId: FieldRef<"BotSkill", 'String'>
     readonly skillId: FieldRef<"BotSkill", 'String'>
     readonly config: FieldRef<"BotSkill", 'Json'>
+    readonly installedVersion: FieldRef<"BotSkill", 'String'>
     readonly isEnabled: FieldRef<"BotSkill", 'Boolean'>
     readonly createdAt: FieldRef<"BotSkill", 'DateTime'>
     readonly updatedAt: FieldRef<"BotSkill", 'DateTime'>
@@ -51961,6 +51993,7 @@ export namespace Prisma {
     description: 'description',
     descriptionZh: 'descriptionZh',
     version: 'version',
+    latestVersion: 'latestVersion',
     skillTypeId: 'skillTypeId',
     definition: 'definition',
     examples: 'examples',
@@ -51985,6 +52018,7 @@ export namespace Prisma {
     botId: 'botId',
     skillId: 'skillId',
     config: 'config',
+    installedVersion: 'installedVersion',
     isEnabled: 'isEnabled',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -55086,6 +55120,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Skill"> | string | null
     descriptionZh?: StringNullableFilter<"Skill"> | string | null
     version?: StringFilter<"Skill"> | string
+    latestVersion?: StringNullableFilter<"Skill"> | string | null
     skillTypeId?: UuidNullableFilter<"Skill"> | string | null
     definition?: JsonFilter<"Skill">
     examples?: JsonNullableFilter<"Skill">
@@ -55112,6 +55147,7 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     descriptionZh?: SortOrderInput | SortOrder
     version?: SortOrder
+    latestVersion?: SortOrderInput | SortOrder
     skillTypeId?: SortOrderInput | SortOrder
     definition?: SortOrder
     examples?: SortOrderInput | SortOrder
@@ -55143,6 +55179,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Skill"> | string | null
     descriptionZh?: StringNullableFilter<"Skill"> | string | null
     version?: StringFilter<"Skill"> | string
+    latestVersion?: StringNullableFilter<"Skill"> | string | null
     skillTypeId?: UuidNullableFilter<"Skill"> | string | null
     definition?: JsonFilter<"Skill">
     examples?: JsonNullableFilter<"Skill">
@@ -55169,6 +55206,7 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     descriptionZh?: SortOrderInput | SortOrder
     version?: SortOrder
+    latestVersion?: SortOrderInput | SortOrder
     skillTypeId?: SortOrderInput | SortOrder
     definition?: SortOrder
     examples?: SortOrderInput | SortOrder
@@ -55199,6 +55237,7 @@ export namespace Prisma {
     description?: StringNullableWithAggregatesFilter<"Skill"> | string | null
     descriptionZh?: StringNullableWithAggregatesFilter<"Skill"> | string | null
     version?: StringWithAggregatesFilter<"Skill"> | string
+    latestVersion?: StringNullableWithAggregatesFilter<"Skill"> | string | null
     skillTypeId?: UuidNullableWithAggregatesFilter<"Skill"> | string | null
     definition?: JsonWithAggregatesFilter<"Skill">
     examples?: JsonNullableWithAggregatesFilter<"Skill">
@@ -55223,6 +55262,7 @@ export namespace Prisma {
     botId?: UuidFilter<"BotSkill"> | string
     skillId?: UuidFilter<"BotSkill"> | string
     config?: JsonNullableFilter<"BotSkill">
+    installedVersion?: StringNullableFilter<"BotSkill"> | string | null
     isEnabled?: BoolFilter<"BotSkill"> | boolean
     createdAt?: DateTimeFilter<"BotSkill"> | Date | string
     updatedAt?: DateTimeFilter<"BotSkill"> | Date | string
@@ -55235,6 +55275,7 @@ export namespace Prisma {
     botId?: SortOrder
     skillId?: SortOrder
     config?: SortOrderInput | SortOrder
+    installedVersion?: SortOrderInput | SortOrder
     isEnabled?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -55251,6 +55292,7 @@ export namespace Prisma {
     botId?: UuidFilter<"BotSkill"> | string
     skillId?: UuidFilter<"BotSkill"> | string
     config?: JsonNullableFilter<"BotSkill">
+    installedVersion?: StringNullableFilter<"BotSkill"> | string | null
     isEnabled?: BoolFilter<"BotSkill"> | boolean
     createdAt?: DateTimeFilter<"BotSkill"> | Date | string
     updatedAt?: DateTimeFilter<"BotSkill"> | Date | string
@@ -55263,6 +55305,7 @@ export namespace Prisma {
     botId?: SortOrder
     skillId?: SortOrder
     config?: SortOrderInput | SortOrder
+    installedVersion?: SortOrderInput | SortOrder
     isEnabled?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -55279,6 +55322,7 @@ export namespace Prisma {
     botId?: UuidWithAggregatesFilter<"BotSkill"> | string
     skillId?: UuidWithAggregatesFilter<"BotSkill"> | string
     config?: JsonNullableWithAggregatesFilter<"BotSkill">
+    installedVersion?: StringNullableWithAggregatesFilter<"BotSkill"> | string | null
     isEnabled?: BoolWithAggregatesFilter<"BotSkill"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"BotSkill"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"BotSkill"> | Date | string
@@ -59288,6 +59332,7 @@ export namespace Prisma {
     description?: string | null
     descriptionZh?: string | null
     version?: string
+    latestVersion?: string | null
     definition: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: boolean
@@ -59313,6 +59358,7 @@ export namespace Prisma {
     description?: string | null
     descriptionZh?: string | null
     version?: string
+    latestVersion?: string | null
     skillTypeId?: string | null
     definition: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
@@ -59338,6 +59384,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
+    latestVersion?: NullableStringFieldUpdateOperationsInput | string | null
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: BoolFieldUpdateOperationsInput | boolean
@@ -59363,6 +59410,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
+    latestVersion?: NullableStringFieldUpdateOperationsInput | string | null
     skillTypeId?: NullableStringFieldUpdateOperationsInput | string | null
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
@@ -59388,6 +59436,7 @@ export namespace Prisma {
     description?: string | null
     descriptionZh?: string | null
     version?: string
+    latestVersion?: string | null
     skillTypeId?: string | null
     definition: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
@@ -59412,6 +59461,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
+    latestVersion?: NullableStringFieldUpdateOperationsInput | string | null
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: BoolFieldUpdateOperationsInput | boolean
@@ -59435,6 +59485,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
+    latestVersion?: NullableStringFieldUpdateOperationsInput | string | null
     skillTypeId?: NullableStringFieldUpdateOperationsInput | string | null
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
@@ -59454,6 +59505,7 @@ export namespace Prisma {
   export type BotSkillCreateInput = {
     id?: string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: string | null
     isEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -59466,6 +59518,7 @@ export namespace Prisma {
     botId: string
     skillId: string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: string | null
     isEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -59474,6 +59527,7 @@ export namespace Prisma {
   export type BotSkillUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: NullableStringFieldUpdateOperationsInput | string | null
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -59486,6 +59540,7 @@ export namespace Prisma {
     botId?: StringFieldUpdateOperationsInput | string
     skillId?: StringFieldUpdateOperationsInput | string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: NullableStringFieldUpdateOperationsInput | string | null
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -59496,6 +59551,7 @@ export namespace Prisma {
     botId: string
     skillId: string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: string | null
     isEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -59504,6 +59560,7 @@ export namespace Prisma {
   export type BotSkillUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: NullableStringFieldUpdateOperationsInput | string | null
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -59514,6 +59571,7 @@ export namespace Prisma {
     botId?: StringFieldUpdateOperationsInput | string
     skillId?: StringFieldUpdateOperationsInput | string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: NullableStringFieldUpdateOperationsInput | string | null
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -63096,6 +63154,7 @@ export namespace Prisma {
     description?: SortOrder
     descriptionZh?: SortOrder
     version?: SortOrder
+    latestVersion?: SortOrder
     skillTypeId?: SortOrder
     definition?: SortOrder
     examples?: SortOrder
@@ -63120,6 +63179,7 @@ export namespace Prisma {
     description?: SortOrder
     descriptionZh?: SortOrder
     version?: SortOrder
+    latestVersion?: SortOrder
     skillTypeId?: SortOrder
     isSystem?: SortOrder
     isEnabled?: SortOrder
@@ -63142,6 +63202,7 @@ export namespace Prisma {
     description?: SortOrder
     descriptionZh?: SortOrder
     version?: SortOrder
+    latestVersion?: SortOrder
     skillTypeId?: SortOrder
     isSystem?: SortOrder
     isEnabled?: SortOrder
@@ -63171,6 +63232,7 @@ export namespace Prisma {
     botId?: SortOrder
     skillId?: SortOrder
     config?: SortOrder
+    installedVersion?: SortOrder
     isEnabled?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -63180,6 +63242,7 @@ export namespace Prisma {
     id?: SortOrder
     botId?: SortOrder
     skillId?: SortOrder
+    installedVersion?: SortOrder
     isEnabled?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -63189,6 +63252,7 @@ export namespace Prisma {
     id?: SortOrder
     botId?: SortOrder
     skillId?: SortOrder
+    installedVersion?: SortOrder
     isEnabled?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -69328,6 +69392,7 @@ export namespace Prisma {
   export type BotSkillCreateWithoutBotInput = {
     id?: string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: string | null
     isEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -69338,6 +69403,7 @@ export namespace Prisma {
     id?: string
     skillId: string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: string | null
     isEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -69831,6 +69897,7 @@ export namespace Prisma {
     botId?: UuidFilter<"BotSkill"> | string
     skillId?: UuidFilter<"BotSkill"> | string
     config?: JsonNullableFilter<"BotSkill">
+    installedVersion?: StringNullableFilter<"BotSkill"> | string | null
     isEnabled?: BoolFilter<"BotSkill"> | boolean
     createdAt?: DateTimeFilter<"BotSkill"> | Date | string
     updatedAt?: DateTimeFilter<"BotSkill"> | Date | string
@@ -72557,6 +72624,7 @@ export namespace Prisma {
     description?: string | null
     descriptionZh?: string | null
     version?: string
+    latestVersion?: string | null
     definition: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: boolean
@@ -72581,6 +72649,7 @@ export namespace Prisma {
     description?: string | null
     descriptionZh?: string | null
     version?: string
+    latestVersion?: string | null
     definition: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: boolean
@@ -72634,6 +72703,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Skill"> | string | null
     descriptionZh?: StringNullableFilter<"Skill"> | string | null
     version?: StringFilter<"Skill"> | string
+    latestVersion?: StringNullableFilter<"Skill"> | string | null
     skillTypeId?: UuidNullableFilter<"Skill"> | string | null
     definition?: JsonFilter<"Skill">
     examples?: JsonNullableFilter<"Skill">
@@ -72688,6 +72758,7 @@ export namespace Prisma {
   export type BotSkillCreateWithoutSkillInput = {
     id?: string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: string | null
     isEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -72698,6 +72769,7 @@ export namespace Prisma {
     id?: string
     botId: string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: string | null
     isEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -72845,6 +72917,7 @@ export namespace Prisma {
     description?: string | null
     descriptionZh?: string | null
     version?: string
+    latestVersion?: string | null
     definition: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: boolean
@@ -72869,6 +72942,7 @@ export namespace Prisma {
     description?: string | null
     descriptionZh?: string | null
     version?: string
+    latestVersion?: string | null
     skillTypeId?: string | null
     definition: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
@@ -72982,6 +73056,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
+    latestVersion?: NullableStringFieldUpdateOperationsInput | string | null
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: BoolFieldUpdateOperationsInput | boolean
@@ -73006,6 +73081,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
+    latestVersion?: NullableStringFieldUpdateOperationsInput | string | null
     skillTypeId?: NullableStringFieldUpdateOperationsInput | string | null
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
@@ -74799,6 +74875,7 @@ export namespace Prisma {
     id?: string
     skillId: string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: string | null
     isEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -74949,6 +75026,7 @@ export namespace Prisma {
   export type BotSkillUpdateWithoutBotInput = {
     id?: StringFieldUpdateOperationsInput | string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: NullableStringFieldUpdateOperationsInput | string | null
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -74959,6 +75037,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     skillId?: StringFieldUpdateOperationsInput | string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: NullableStringFieldUpdateOperationsInput | string | null
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -74968,6 +75047,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     skillId?: StringFieldUpdateOperationsInput | string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: NullableStringFieldUpdateOperationsInput | string | null
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -75558,6 +75638,7 @@ export namespace Prisma {
     description?: string | null
     descriptionZh?: string | null
     version?: string
+    latestVersion?: string | null
     definition: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: boolean
@@ -75581,6 +75662,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
+    latestVersion?: NullableStringFieldUpdateOperationsInput | string | null
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: BoolFieldUpdateOperationsInput | boolean
@@ -75605,6 +75687,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
+    latestVersion?: NullableStringFieldUpdateOperationsInput | string | null
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: BoolFieldUpdateOperationsInput | boolean
@@ -75629,6 +75712,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     descriptionZh?: NullableStringFieldUpdateOperationsInput | string | null
     version?: StringFieldUpdateOperationsInput | string
+    latestVersion?: NullableStringFieldUpdateOperationsInput | string | null
     definition?: JsonNullValueInput | InputJsonValue
     examples?: NullableJsonNullValueInput | InputJsonValue
     isSystem?: BoolFieldUpdateOperationsInput | boolean
@@ -75648,6 +75732,7 @@ export namespace Prisma {
     id?: string
     botId: string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: string | null
     isEnabled?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -75656,6 +75741,7 @@ export namespace Prisma {
   export type BotSkillUpdateWithoutSkillInput = {
     id?: StringFieldUpdateOperationsInput | string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: NullableStringFieldUpdateOperationsInput | string | null
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -75666,6 +75752,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     botId?: StringFieldUpdateOperationsInput | string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: NullableStringFieldUpdateOperationsInput | string | null
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -75675,6 +75762,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     botId?: StringFieldUpdateOperationsInput | string
     config?: NullableJsonNullValueInput | InputJsonValue
+    installedVersion?: NullableStringFieldUpdateOperationsInput | string | null
     isEnabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

@@ -58,6 +58,11 @@
   "noContainerSkills": "未检测到内置技能",
   "tabInstalled": "已安装技能",
   "tabContainer": "容器内置",
+  "updateAvailable": "有更新",
+  "update": "更新",
+  "updating": "更新中…",
+  "updateSuccess": "技能已从 v{previousVersion} 更新到 v{newVersion}",
+  "updateFailed": "更新失败",
   "types": {
     "tool": "工具",
     "prompt": "提示词",

@@ -528,6 +528,7 @@ exports.Prisma.SkillScalarFieldEnum = {
   description: 'description',
   descriptionZh: 'descriptionZh',
   version: 'version',
+  latestVersion: 'latestVersion',
   skillTypeId: 'skillTypeId',
   definition: 'definition',
   examples: 'examples',
@@ -549,6 +550,7 @@ exports.Prisma.BotSkillScalarFieldEnum = {
   botId: 'botId',
   skillId: 'skillId',
   config: 'config',
+  installedVersion: 'installedVersion',
   isEnabled: 'isEnabled',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

@@ -50,6 +50,7 @@ import {
   ChevronLeft,
   Loader2,
   ArrowUpDown,
+  ArrowUpCircle,
   CheckSquare,
   X,
   Box,
@@ -83,6 +84,8 @@ function InstalledSkillCard({
   onToggle,
   onRequestUninstall,
   onConfigure,
+  onUpdate,
+  isUpdating,
   isContainerBuiltin,
   t,
 }: {
@@ -90,6 +93,8 @@ function InstalledSkillCard({
   onToggle: (skillId: string, enabled: boolean) => void;
   onRequestUninstall: (skillId: string, name: string) => void;
   onConfigure: (botSkill: BotSkillItem) => void;
+  onUpdate: (skillId: string) => void;
+  isUpdating: boolean;
   isContainerBuiltin: boolean;
   t: (key: string) => string;
 }) {
@@ -108,11 +113,17 @@ function InstalledSkillCard({
             <div>
               <CardTitle className="text-base">{getName(skill)}</CardTitle>
               <CardDescription className="text-xs">
-                v{skill.version}
+                v{botSkill.installedVersion || skill.version}
               </CardDescription>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {botSkill.updateAvailable && (
+              <Badge variant="default" className="text-xs">
+                <ArrowUpCircle className="mr-1 h-3 w-3" />
+                {t('updateAvailable')}
+              </Badge>
+            )}
             <Switch
               checked={botSkill.isEnabled}
               onCheckedChange={(checked) => onToggle(skill.id, checked)}
@@ -149,6 +160,21 @@ function InstalledSkillCard({
           {getDescription(skill) || t('noDescription')}
         </p>
         <div className="flex justify-end gap-2">
+          {botSkill.updateAvailable && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => onUpdate(skill.id)}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              ) : (
+                <ArrowUpCircle className="mr-1 h-3 w-3" />
+              )}
+              {isUpdating ? t('updating') : t('update')}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -368,8 +394,7 @@ function SkillDetailPreview({
           )}
         </div>
       )}
-      {skill.definition?.tags &&
-        Array.isArray(skill.definition.tags) &&
+      {Array.isArray(skill.definition?.tags) &&
         skill.definition.tags.length > 0 && (
           <div>
             <span className="text-muted-foreground text-sm">{t('tags')}:</span>
@@ -603,6 +628,7 @@ export default function BotSkillsPage() {
   } | null>(null);
   const [isUninstalling, setIsUninstalling] = useState(false);
   const [installedSearch, setInstalledSearch] = useState('');
+  const [updatingSkillId, setUpdatingSkillId] = useState<string | null>(null);
 
   // 排序状态
   const [sortBy, setSortBy] = useState<'createdAt' | 'name'>('createdAt');
@@ -811,6 +837,33 @@ export default function BotSkillsPage() {
     } finally {
       setIsUninstalling(false);
       setUninstallTarget(null);
+    }
+  };
+
+  // 更新技能版本
+  const handleUpdate = async (skillId: string) => {
+    setUpdatingSkillId(skillId);
+    try {
+      const response = await botSkillApi.updateVersion.mutation({
+        params: { hostname, skillId },
+        body: {},
+      });
+      if (response.status === 200) {
+        const result = response.body.data;
+        toast.success(
+          t('updateSuccess', {
+            previousVersion: result.previousVersion || '?',
+            newVersion: result.newVersion,
+          }),
+        );
+        queryClient.invalidateQueries({ queryKey: ['bot-skills', hostname] });
+      } else {
+        toast.error(t('updateFailed'));
+      }
+    } catch {
+      toast.error(t('updateFailed'));
+    } finally {
+      setUpdatingSkillId(null);
     }
   };
 
@@ -1177,6 +1230,8 @@ export default function BotSkillsPage() {
                         setUninstallTarget({ skillId, name })
                       }
                       onConfigure={setConfigTarget}
+                      onUpdate={handleUpdate}
+                      isUpdating={updatingSkillId === botSkill.skillId}
                       isContainerBuiltin={containerSkillNames.has(
                         (
                           botSkill.skill.slug || botSkill.skill.name

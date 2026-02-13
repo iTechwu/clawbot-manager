@@ -18,6 +18,20 @@ import * as path from 'path';
 import * as yaml from 'js-yaml';
 
 /**
+ * _meta.json 版本信息
+ */
+export interface SkillMetaInfo {
+  latest: {
+    version: string;
+    publishedAt?: number;
+  };
+  history?: Array<{
+    version: string;
+    publishedAt?: number;
+  }>;
+}
+
+/**
  * 解析后的技能信息
  */
 export interface ParsedSkill {
@@ -620,5 +634,59 @@ export class OpenClawSkillSyncClient {
       frontmatter,
       sourceUrl,
     };
+  }
+
+  /**
+   * 获取 Skill 的 _meta.json 版本信息
+   * @param sourceUrl GitHub tree URL for SKILL.md
+   * @returns SkillMetaInfo or null if not found
+   */
+  async fetchSkillMeta(sourceUrl: string): Promise<SkillMetaInfo | null> {
+    const metaUrl = sourceUrl.replace(/SKILL\.md$/, '_meta.json');
+
+    // 尝试 raw URL
+    const rawUrl = this.convertToRawUrl(metaUrl);
+    const { url, headers } = this.getGitHubRequestConfig(rawUrl);
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService
+          .get<string>(url, { headers })
+          .pipe(timeout(15000), catchError((e) => { throw e; })),
+      );
+      const data = typeof response.data === 'string'
+        ? JSON.parse(response.data)
+        : response.data;
+      return data as SkillMetaInfo;
+    } catch {
+      // Fallback: GitHub API
+    }
+
+    const apiUrl = this.convertToApiUrl(metaUrl);
+    if (!apiUrl) return null;
+
+    const apiHeaders: Record<string, string> = {
+      Accept: 'application/vnd.github.v3+json',
+    };
+    if (this.githubToken) {
+      apiHeaders['Authorization'] = `token ${this.githubToken}`;
+    }
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService
+          .get<{ content: string; encoding: string }>(apiUrl, {
+            headers: apiHeaders,
+          })
+          .pipe(timeout(15000), catchError((e) => { throw e; })),
+      );
+      const content = Buffer.from(
+        response.data.content,
+        'base64',
+      ).toString('utf-8');
+      return JSON.parse(content) as SkillMetaInfo;
+    } catch {
+      return null;
+    }
   }
 }

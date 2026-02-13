@@ -968,6 +968,8 @@ model Skill {
   /// 中文描述（翻译自 description）
   descriptionZh String? @map("description_zh") @db.Text
   version       String  @default("1.0.0") @db.VarChar(20)
+  /// 最新可用版本（来自 _meta.json）
+  latestVersion String? @map("latest_version") @db.VarChar(20)
 
   // 技能类型关联
   skillTypeId String?    @map("skill_type_id") @db.Uuid
@@ -1025,6 +1027,8 @@ model BotSkill {
   botId     String   @map("bot_id") @db.Uuid
   skillId   String   @map("skill_id") @db.Uuid
   config    Json? // Skill instance configuration overrides
+  /// 安装时的技能版本
+  installedVersion String? @map("installed_version") @db.VarChar(20)
   isEnabled Boolean  @default(true) @map("is_enabled")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)

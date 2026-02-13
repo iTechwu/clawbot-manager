@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import * as semver from 'semver';
 import { SkillService, BotSkillService, BotService } from '@app/db';
 import {
   OpenClawSkillSyncClient,
@@ -25,6 +26,7 @@ import type {
   UpdateBotSkillRequest,
   BatchInstallResult,
   ContainerSkillsResponse,
+  UpdateBotSkillVersionResponse,
 } from '@repo/contracts';
 
 const OPENCLAW_SOURCE = 'openclaw';
@@ -120,6 +122,7 @@ export class SkillApiService {
           description: true,
           descriptionZh: true,
           version: true,
+          latestVersion: true,
           skillTypeId: true,
           skillType: true,
           definition: true,
@@ -158,6 +161,7 @@ export class SkillApiService {
         description: true,
         descriptionZh: true,
         version: true,
+        latestVersion: true,
         skillTypeId: true,
         skillType: true,
         definition: true,
@@ -305,6 +309,7 @@ export class SkillApiService {
           botId: true,
           skillId: true,
           config: true,
+          installedVersion: true,
           isEnabled: true,
           createdAt: true,
           updatedAt: true,
@@ -317,7 +322,7 @@ export class SkillApiService {
       },
     );
 
-    const items = botSkills.list.map((bs) => this.mapBotSkillToItem(bs));
+    const items = botSkills.list.map((bs: any) => this.mapBotSkillToItem(bs));
 
     // 非阻塞：补写缺失的 SKILL.md（已安装但尚未写入文件系统的技能）
     this.syncInstalledSkillsMd(userId, hostname, botSkills.list).catch(
@@ -418,11 +423,14 @@ export class SkillApiService {
       }
     }
 
+    // 重新获取 skill 以拿到可能更新后的 version
+    const latestSkill = await this.skillService.getById(data.skillId);
     const botSkill = await this.botSkillService.create({
       bot: { connect: { id: bot.id } },
       skill: { connect: { id: data.skillId } },
       config: (data.config as Prisma.InputJsonValue) || {},
       isEnabled: true,
+      installedVersion: latestSkill?.version || skill.version,
     });
 
     this.logger.info('Skill installed', {
@@ -434,7 +442,10 @@ export class SkillApiService {
     // 将 SKILL.md 写入 OpenClaw skills 目录，使容器能发现该技能
     const updatedSkill = await this.skillService.getById(data.skillId);
     if (updatedSkill) {
-      const definition = updatedSkill.definition as Record<string, unknown> | null;
+      const definition = updatedSkill.definition as Record<
+        string,
+        unknown
+      > | null;
       const mdContent = (definition?.content as string) || null;
       const skillDirName = updatedSkill.slug || updatedSkill.name;
 
@@ -645,6 +656,135 @@ export class SkillApiService {
   }
 
   /**
+   * 更新已安装技能到最新版本
+   * 1. 从 GitHub 重新拉取 SKILL.md
+   * 2. 获取 _meta.json 最新版本
+   * 3. 更新 Skill 表的 definition.content、version、latestVersion
+   * 4. 更新 BotSkill 的 installedVersion
+   * 5. 重写文件系统中的 SKILL.md
+   */
+  async updateSkillVersion(
+    userId: string,
+    hostname: string,
+    skillId: string,
+  ): Promise<UpdateBotSkillVersionResponse> {
+    const bot = await this.botService.get({ hostname, createdById: userId });
+    if (!bot) {
+      throw new NotFoundException('Bot 不存在');
+    }
+
+    const botSkill = await this.botSkillService.get({
+      botId: bot.id,
+      skillId,
+    });
+    if (!botSkill) {
+      throw new NotFoundException('技能未安装');
+    }
+
+    const skill = await this.skillService.getById(skillId);
+    if (!skill) {
+      throw new NotFoundException('技能不存在');
+    }
+
+    if (skill.source !== OPENCLAW_SOURCE || !skill.sourceUrl) {
+      throw new NotFoundException('仅支持 OpenClaw 技能更新');
+    }
+
+    const previousVersion = (botSkill as any).installedVersion || skill.version;
+
+    // 1. 从 GitHub 重新拉取 SKILL.md
+    const skillDefinition = await this.openClawSyncClient.fetchSkillDefinition(
+      skill.sourceUrl,
+    );
+
+    // 2. 获取 _meta.json 最新版本
+    const meta = await this.openClawSyncClient.fetchSkillMeta(skill.sourceUrl);
+    const newVersion =
+      meta?.latest?.version || skillDefinition.version || skill.version;
+
+    // 3. 更新 Skill 表
+    const existingDef = (skill.definition as Record<string, unknown>) || {};
+    await this.skillService.update(
+      { id: skillId },
+      {
+        definition: {
+          ...existingDef,
+          name: skillDefinition.name,
+          description: skillDefinition.description,
+          version: skillDefinition.version,
+          homepage: skillDefinition.homepage,
+          repository: skillDefinition.repository,
+          userInvocable: skillDefinition.userInvocable,
+          tags: skillDefinition.tags,
+          metadata: skillDefinition.metadata,
+          content: skillDefinition.content,
+          frontmatter: skillDefinition.frontmatter,
+          sourceUrl: skill.sourceUrl,
+        } as Prisma.InputJsonValue,
+        version: newVersion,
+        latestVersion: newVersion,
+      },
+    );
+
+    // 4. 更新 BotSkill 的 installedVersion
+    await this.botSkillService.update(
+      { id: botSkill.id },
+      { installedVersion: newVersion },
+    );
+
+    // 5. 重写文件系统中的 SKILL.md
+    const skillDirName = skill.slug || skill.name;
+    const content =
+      skillDefinition.content ||
+      this.generateSkillMd(skill.name, skill.description);
+    try {
+      await this.workspaceService.writeInstalledSkillMd(
+        userId,
+        hostname,
+        skillDirName,
+        content,
+      );
+    } catch (error) {
+      this.logger.warn('Failed to write updated SKILL.md', {
+        skillId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+
+    this.logger.info('Skill version updated', {
+      skillId,
+      hostname,
+      previousVersion,
+      newVersion,
+    });
+
+    // 返回更新后的 BotSkill
+    const fullBotSkill = await this.botSkillService.getById(botSkill.id, {
+      select: {
+        id: true,
+        botId: true,
+        skillId: true,
+        config: true,
+        installedVersion: true,
+        isEnabled: true,
+        createdAt: true,
+        updatedAt: true,
+        skill: {
+          include: {
+            skillType: true,
+          },
+        },
+      },
+    });
+
+    return {
+      botSkill: this.mapBotSkillToItem(fullBotSkill!),
+      previousVersion,
+      newVersion,
+    };
+  }
+
+  /**
    * 获取容器内置技能列表
    * 策略：Docker 运行中 → exec 获取 → 持久化；否则读缓存
    */
@@ -716,6 +856,7 @@ export class SkillApiService {
       description: skill.description,
       descriptionZh: skill.descriptionZh,
       version: skill.version,
+      latestVersion: skill.latestVersion || null,
       skillTypeId: skill.skillTypeId,
       skillType: skill.skillType || null,
       definition: skill.definition as Record<string, unknown>,
@@ -740,10 +881,7 @@ export class SkillApiService {
   /**
    * 从技能元数据生成基础 SKILL.md 内容
    */
-  private generateSkillMd(
-    name: string,
-    description: string | null,
-  ): string {
+  private generateSkillMd(name: string, description: string | null): string {
     const lines = [`# ${name}`];
     if (description) {
       lines.push('', description);
@@ -778,16 +916,10 @@ export class SkillApiService {
       let mdContent = (definition?.content as string) || null;
 
       // 如果 content 为空且是 OpenClaw 技能，尝试从 GitHub 拉取
-      if (
-        !mdContent &&
-        skill.source === OPENCLAW_SOURCE &&
-        skill.sourceUrl
-      ) {
+      if (!mdContent && skill.source === OPENCLAW_SOURCE && skill.sourceUrl) {
         try {
           const skillDefinition =
-            await this.openClawSyncClient.fetchSkillDefinition(
-              skill.sourceUrl,
-            );
+            await this.openClawSyncClient.fetchSkillDefinition(skill.sourceUrl);
           mdContent = skillDefinition.content || null;
 
           // 更新 DB 中的 definition，后续不再重复拉取
@@ -852,15 +984,30 @@ export class SkillApiService {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapBotSkillToItem(botSkill: any): BotSkillItem {
+    const skillItem = this.mapSkillToItem(botSkill.skill);
+    const installed = botSkill.installedVersion || null;
+    const latest = skillItem.latestVersion || skillItem.version || null;
+
+    let updateAvailable = false;
+    if (installed && latest) {
+      try {
+        updateAvailable = semver.lt(installed, latest);
+      } catch {
+        // invalid semver, skip
+      }
+    }
+
     return {
       id: botSkill.id,
       botId: botSkill.botId,
       skillId: botSkill.skillId,
       config: botSkill.config as Record<string, unknown> | null,
       isEnabled: botSkill.isEnabled,
+      installedVersion: installed,
+      updateAvailable,
       createdAt: botSkill.createdAt,
       updatedAt: botSkill.updatedAt,
-      skill: this.mapSkillToItem(botSkill.skill),
+      skill: skillItem,
     };
   }
 }
