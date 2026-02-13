@@ -13,6 +13,7 @@ import { Logger } from 'winston';
 import { firstValueFrom, timeout, catchError } from 'rxjs';
 import WebSocket from 'ws';
 import { randomUUID } from 'crypto';
+import type { ContainerSkillItem } from '@repo/contracts';
 
 export interface OpenClawMessage {
   role: 'user' | 'assistant' | 'system';
@@ -547,5 +548,247 @@ export class OpenClawClient {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * 通过 Docker exec 获取容器内安装的技能列表
+   * 优先使用 `openclaw skills list --json`，失败则 fallback 到读取配置文件
+   * @param containerId Docker 容器 ID
+   * @returns 技能列表或 null（exec 失败时）
+   */
+  async listContainerSkills(
+    containerId: string,
+  ): Promise<ContainerSkillItem[] | null> {
+    this.logger.info('OpenClawClient: 获取容器内置技能', { containerId });
+
+    // 尝试 CLI 命令
+    const cliOutput = await this.execInContainer(containerId, [
+      'node',
+      '/app/openclaw.mjs',
+      'skills',
+      'list',
+      '--json',
+    ]);
+
+    if (cliOutput) {
+      try {
+        const parsed = JSON.parse(cliOutput);
+        return this.normalizeSkillsList(parsed);
+      } catch {
+        this.logger.warn('OpenClawClient: CLI 输出解析失败，尝试读取配置文件', {
+          containerId,
+          outputPreview: cliOutput.substring(0, 200),
+        });
+      }
+    }
+
+    // Fallback: 读取容器内的 openclaw.json 配置
+    const configOutput = await this.execInContainer(containerId, [
+      'cat',
+      '/home/node/.openclaw/openclaw.json',
+    ]);
+
+    if (configOutput) {
+      try {
+        const config = JSON.parse(configOutput);
+        return this.parseSkillsFromConfig(config);
+      } catch {
+        this.logger.warn('OpenClawClient: 配置文件解析失败', { containerId });
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * 在容器内执行命令并返回 stdout 输出
+   */
+  private async execInContainer(
+    containerId: string,
+    cmd: string[],
+  ): Promise<string | null> {
+    try {
+      const execCreateUrl = `http://localhost/containers/${containerId}/exec`;
+      const execCreateResponse = await firstValueFrom(
+        this.httpService
+          .post(
+            execCreateUrl,
+            {
+              AttachStdout: true,
+              AttachStderr: true,
+              Cmd: cmd,
+            },
+            {
+              socketPath: '/var/run/docker.sock',
+              timeout: 10000,
+            },
+          )
+          .pipe(
+            timeout(10000),
+            catchError((error) => {
+              this.logger.error('OpenClawClient: 创建 exec 失败', {
+                error: error instanceof Error ? error.message : 'Unknown error',
+                cmd: cmd.join(' '),
+              });
+              throw error;
+            }),
+          ),
+      );
+
+      const execId = execCreateResponse.data?.Id;
+      if (!execId) {
+        return null;
+      }
+
+      const execStartUrl = `http://localhost/exec/${execId}/start`;
+      const execStartResponse = await firstValueFrom(
+        this.httpService
+          .post(
+            execStartUrl,
+            { Detach: false, Tty: false },
+            {
+              socketPath: '/var/run/docker.sock',
+              timeout: 15000,
+              responseType: 'arraybuffer',
+            },
+          )
+          .pipe(
+            timeout(15000),
+            catchError((error) => {
+              this.logger.error('OpenClawClient: 启动 exec 失败', {
+                error: error instanceof Error ? error.message : 'Unknown error',
+              });
+              throw error;
+            }),
+          ),
+      );
+
+      return this.parseDockerExecOutput(execStartResponse.data);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * 解析 Docker exec 多路复用流输出
+   * Docker exec 输出格式：每帧 8 字节头 + payload
+   * 头部：[stream_type(1), 0, 0, 0, size(4 bytes big-endian)]
+   */
+  private parseDockerExecOutput(data: ArrayBuffer | Buffer): string {
+    const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+    let output = '';
+    let offset = 0;
+
+    while (offset + 8 <= buffer.length) {
+      const streamType = buffer[offset];
+      const size = buffer.readUInt32BE(offset + 4);
+      offset += 8;
+
+      if (offset + size > buffer.length) break;
+
+      // streamType 1 = stdout, 2 = stderr; 只取 stdout
+      if (streamType === 1) {
+        output += buffer.subarray(offset, offset + size).toString('utf-8');
+      }
+      offset += size;
+    }
+
+    // 如果解析失败（非多路复用格式），直接返回原始字符串
+    if (!output && buffer.length > 0) {
+      output = buffer.toString('utf-8');
+    }
+
+    return output.trim();
+  }
+
+  /**
+   * 标准化技能列表输出
+   * 处理不同格式：数组、{ skills: [] }、{ builtin: {} } 等
+   */
+  private normalizeSkillsList(parsed: unknown): ContainerSkillItem[] {
+    if (Array.isArray(parsed)) {
+      return parsed.map((item) => ({
+        name: String(item.name || item.slug || 'unknown'),
+        enabled: item.enabled !== false,
+        description: item.description || null,
+        version: item.version || null,
+      }));
+    }
+
+    if (parsed && typeof parsed === 'object') {
+      const obj = parsed as Record<string, unknown>;
+
+      // { skills: [...] }
+      if (Array.isArray(obj.skills)) {
+        return this.normalizeSkillsList(obj.skills);
+      }
+
+      // { builtin: { skill_name: true/false, ... } }
+      if (obj.builtin && typeof obj.builtin === 'object') {
+        return Object.entries(obj.builtin as Record<string, boolean>).map(
+          ([name, enabled]) => ({
+            name,
+            enabled: enabled !== false,
+            description: null,
+            version: null,
+          }),
+        );
+      }
+    }
+
+    return [];
+  }
+
+  /**
+   * 从 openclaw.json 配置中解析技能信息
+   */
+  private parseSkillsFromConfig(config: unknown): ContainerSkillItem[] {
+    if (!config || typeof config !== 'object') return [];
+    const cfg = config as Record<string, unknown>;
+
+    // 尝试 skills.builtin 路径
+    const skills = cfg.skills as Record<string, unknown> | undefined;
+    if (skills?.builtin && typeof skills.builtin === 'object') {
+      return Object.entries(skills.builtin as Record<string, boolean>).map(
+        ([name, enabled]) => ({
+          name,
+          enabled: enabled !== false,
+          description: null,
+          version: null,
+        }),
+      );
+    }
+
+    // 尝试 commands.nativeSkills 路径
+    const commands = cfg.commands as Record<string, unknown> | undefined;
+    if (commands?.nativeSkills && commands.nativeSkills !== 'auto') {
+      if (
+        typeof commands.nativeSkills === 'object' &&
+        !Array.isArray(commands.nativeSkills)
+      ) {
+        return Object.entries(
+          commands.nativeSkills as Record<string, boolean>,
+        ).map(([name, enabled]) => ({
+          name,
+          enabled: enabled !== false,
+          description: null,
+          version: null,
+        }));
+      }
+    }
+
+    // nativeSkills: "auto" 表示全部启用，但无法获取具体列表
+    if (commands?.nativeSkills === 'auto') {
+      return [
+        {
+          name: 'native-skills',
+          enabled: true,
+          description: 'All native skills enabled (auto mode)',
+          version: null,
+        },
+      ];
+    }
+
+    return [];
   }
 }

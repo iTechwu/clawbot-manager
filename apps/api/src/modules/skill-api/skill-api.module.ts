@@ -10,6 +10,7 @@ import { AuthModule } from '@app/auth';
 import { JwtModule } from '@app/jwt';
 import { RedisModule } from '@app/redis';
 import { OpenClawModule } from '@app/clients/internal/openclaw';
+import { BotApiModule } from '../bot-api/bot-api.module';
 import { SkillApiController } from './skill-api.controller';
 import { SkillApiService } from './skill-api.service';
 
@@ -24,6 +25,7 @@ import { SkillApiService } from './skill-api.service';
     AuthModule,
     JwtModule,
     OpenClawModule,
+    BotApiModule,
   ],
   controllers: [SkillApiController],
   providers: [SkillApiService],

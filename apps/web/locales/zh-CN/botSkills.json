@@ -51,6 +51,11 @@
   "saveConfig": "保存配置",
   "configSaved": "配置已保存",
   "configSaveFailed": "配置保存失败",
+  "containerSkillsTitle": "容器内置技能",
+  "containerBuiltin": "内置",
+  "liveFromContainer": "实时",
+  "cachedData": "缓存",
+  "noContainerSkills": "未检测到内置技能",
   "types": {
     "tool": "工具",
     "prompt": "提示词",

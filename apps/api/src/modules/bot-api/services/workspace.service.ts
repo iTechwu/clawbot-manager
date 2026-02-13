@@ -4,6 +4,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import type { ContainerSkillItem } from '@repo/contracts';
 
 export interface BotWorkspaceConfig {
   hostname: string;
@@ -497,6 +498,44 @@ export class WorkspaceService {
         error,
       );
       throw error;
+    }
+  }
+
+  /**
+   * 持久化容器内置技能到文件系统
+   */
+  async writeContainerSkills(
+    userId: string,
+    hostname: string,
+    skills: ContainerSkillItem[],
+  ): Promise<void> {
+    const openclawPath = this.getOpenclawPath(userId, hostname);
+    const skillsDir = path.join(openclawPath, 'skills');
+    await fs.mkdir(skillsDir, { recursive: true });
+    const filePath = path.join(skillsDir, 'container-skills.json');
+    await fs.writeFile(
+      filePath,
+      JSON.stringify({ skills, fetchedAt: new Date().toISOString() }, null, 2),
+    );
+    this.logger.info(
+      `Container skills persisted for: ${this.getIsolationKey(userId, hostname)}`,
+    );
+  }
+
+  /**
+   * 从文件系统读取缓存的容器内置技能
+   */
+  async readContainerSkills(
+    userId: string,
+    hostname: string,
+  ): Promise<{ skills: ContainerSkillItem[]; fetchedAt: string } | null> {
+    const openclawPath = this.getOpenclawPath(userId, hostname);
+    const filePath = path.join(openclawPath, 'skills', 'container-skills.json');
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      return JSON.parse(content);
+    } catch {
+      return null;
     }
   }
 }

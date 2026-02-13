@@ -51,6 +51,11 @@
   "saveConfig": "Save",
   "configSaved": "Configuration saved",
   "configSaveFailed": "Failed to save configuration",
+  "containerSkillsTitle": "Container Built-in Skills",
+  "containerBuiltin": "Built-in",
+  "liveFromContainer": "Live",
+  "cachedData": "Cached",
+  "noContainerSkills": "No built-in skills detected",
   "types": {
     "tool": "Tool",
     "prompt": "Prompt",

@@ -51,10 +51,15 @@ import {
   ArrowUpDown,
   CheckSquare,
   X,
+  Box,
 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { toast } from 'sonner';
-import type { BotSkillItem, SkillItem } from '@repo/contracts';
+import type {
+  BotSkillItem,
+  SkillItem,
+  ContainerSkillItem,
+} from '@repo/contracts';
 import { useLocalizedFields } from '@/hooks/useLocalizedFields';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
@@ -429,11 +434,7 @@ function SkillConfigDialog({
     setEntries((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleChange = (
-    index: number,
-    field: 'key' | 'value',
-    val: string,
-  ) => {
+  const handleChange = (index: number, field: 'key' | 'value', val: string) => {
     setEntries((prev) =>
       prev.map((entry, i) =>
         i === index ? { ...entry, [field]: val } : entry,
@@ -508,6 +509,47 @@ function SkillConfigDialog({
 }
 
 /**
+ * 容器内置技能卡片（只读）
+ */
+function ContainerSkillCard({
+  skill,
+  t,
+}: {
+  skill: ContainerSkillItem;
+  t: (key: string) => string;
+}) {
+  return (
+    <Card className="border-dashed">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-muted flex h-8 w-8 items-center justify-center rounded text-lg">
+              <Box className="h-4 w-4" />
+            </div>
+            <div>
+              <CardTitle className="text-base">{skill.name}</CardTitle>
+              {skill.version && (
+                <CardDescription className="text-xs">
+                  v{skill.version}
+                </CardDescription>
+              )}
+            </div>
+          </div>
+          <Badge variant="secondary" className="text-xs">
+            {t('containerBuiltin')}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground line-clamp-2 text-sm">
+          {skill.description || t('noDescription')}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
  * Bot 技能管理页面
  */
 export default function BotSkillsPage() {
@@ -519,7 +561,9 @@ export default function BotSkillsPage() {
 
   // 基础状态
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [installingSkillId, setInstallingSkillId] = useState<string | null>(null);
+  const [installingSkillId, setInstallingSkillId] = useState<string | null>(
+    null,
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
   const [selectedTypeId, setSelectedTypeId] = useState<string>('all');
@@ -540,7 +584,9 @@ export default function BotSkillsPage() {
 
   // 批量安装状态
   const [batchMode, setBatchMode] = useState(false);
-  const [selectedSkillIds, setSelectedSkillIds] = useState<Set<string>>(new Set());
+  const [selectedSkillIds, setSelectedSkillIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [isBatchInstalling, setIsBatchInstalling] = useState(false);
 
   // 配置面板状态
@@ -557,6 +603,16 @@ export default function BotSkillsPage() {
 
   const installedSkills = installedResponse?.body?.data || [];
   const installedSkillIds = new Set(installedSkills.map((s) => s.skillId));
+
+  // 获取容器内置技能
+  const { data: containerResponse } = botSkillApi.containerSkills.useQuery(
+    ['bot-container-skills', hostname],
+    { params: { hostname } },
+    { enabled: !!hostname, queryKey: ['bot-container-skills', hostname] },
+  );
+
+  const containerSkills = containerResponse?.body?.data?.skills || [];
+  const containerSource = containerResponse?.body?.data?.source;
 
   // 已安装技能客户端搜索过滤
   const filteredInstalledSkills = useMemo(() => {
@@ -812,7 +868,10 @@ export default function BotSkillsPage() {
                     <Select
                       value={`${sortBy}-${sortOrder}`}
                       onValueChange={(val) => {
-                        const [field, order] = val.split('-') as ['name' | 'createdAt', 'asc' | 'desc'];
+                        const [field, order] = val.split('-') as [
+                          'name' | 'createdAt',
+                          'asc' | 'desc',
+                        ];
                         setSortBy(field);
                         setSortOrder(order);
                         resetPage();
@@ -823,10 +882,18 @@ export default function BotSkillsPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="createdAt-desc">{t('sortByDate')} ↓</SelectItem>
-                        <SelectItem value="createdAt-asc">{t('sortByDate')} ↑</SelectItem>
-                        <SelectItem value="name-asc">{t('sortByName')} A-Z</SelectItem>
-                        <SelectItem value="name-desc">{t('sortByName')} Z-A</SelectItem>
+                        <SelectItem value="createdAt-desc">
+                          {t('sortByDate')} ↓
+                        </SelectItem>
+                        <SelectItem value="createdAt-asc">
+                          {t('sortByDate')} ↑
+                        </SelectItem>
+                        <SelectItem value="name-asc">
+                          {t('sortByName')} A-Z
+                        </SelectItem>
+                        <SelectItem value="name-desc">
+                          {t('sortByName')} Z-A
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <Button
@@ -878,10 +945,18 @@ export default function BotSkillsPage() {
                   {/* 批量操作栏 */}
                   {batchMode && (
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" onClick={handleSelectAll}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleSelectAll}
+                      >
                         {t('selectAll')}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={handleDeselectAll}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleDeselectAll}
+                      >
                         {t('deselectAll')}
                       </Button>
                       {selectedSkillIds.size > 0 && (
@@ -893,7 +968,9 @@ export default function BotSkillsPage() {
                           {isBatchInstalling && (
                             <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                           )}
-                          {t('batchInstallCount', { count: selectedSkillIds.size })}
+                          {t('batchInstallCount', {
+                            count: selectedSkillIds.size,
+                          })}
                         </Button>
                       )}
                     </div>
@@ -965,6 +1042,32 @@ export default function BotSkillsPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* 容器内置技能 */}
+      {containerSkills.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">
+              {t('containerSkillsTitle')}
+            </h2>
+            {containerSource && containerSource !== 'none' && (
+              <Badge
+                variant={containerSource === 'docker' ? 'default' : 'outline'}
+                className="text-xs"
+              >
+                {containerSource === 'docker'
+                  ? t('liveFromContainer')
+                  : t('cachedData')}
+              </Badge>
+            )}
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {containerSkills.map((skill) => (
+              <ContainerSkillCard key={skill.name} skill={skill} t={t} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 已安装技能列表 */}
       {installedLoading ? (

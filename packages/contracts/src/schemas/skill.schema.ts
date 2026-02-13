@@ -210,7 +210,9 @@ export const BatchInstallSkillRequestSchema = z.object({
   skillIds: z.array(z.string().uuid()).min(1).max(20),
 });
 
-export type BatchInstallSkillRequest = z.infer<typeof BatchInstallSkillRequestSchema>;
+export type BatchInstallSkillRequest = z.infer<
+  typeof BatchInstallSkillRequestSchema
+>;
 
 /**
  * 批量安装技能响应 Schema
@@ -222,3 +224,29 @@ export const BatchInstallResultSchema = z.object({
 });
 
 export type BatchInstallResult = z.infer<typeof BatchInstallResultSchema>;
+
+/**
+ * 容器内置技能项 Schema（Docker 自动安装的技能）
+ */
+export const ContainerSkillItemSchema = z.object({
+  name: z.string(),
+  enabled: z.boolean(),
+  description: z.string().nullable().optional(),
+  version: z.string().nullable().optional(),
+  content: z.string().nullable().optional(),
+});
+
+export type ContainerSkillItem = z.infer<typeof ContainerSkillItemSchema>;
+
+/**
+ * 容器内置技能响应 Schema
+ */
+export const ContainerSkillsResponseSchema = z.object({
+  skills: z.array(ContainerSkillItemSchema),
+  source: z.enum(['docker', 'cache', 'none']),
+  fetchedAt: z.string().nullable(),
+});
+
+export type ContainerSkillsResponse = z.infer<
+  typeof ContainerSkillsResponseSchema
+>;

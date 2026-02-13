@@ -8,7 +8,12 @@ import {
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { SkillService, BotSkillService, BotService } from '@app/db';
-import { OpenClawSkillSyncClient } from '@app/clients/internal/openclaw';
+import {
+  OpenClawSkillSyncClient,
+  OpenClawClient,
+} from '@app/clients/internal/openclaw';
+import { DockerService } from '../bot-api/services/docker.service';
+import { WorkspaceService } from '../bot-api/services/workspace.service';
 import type { Prisma } from '@prisma/client';
 import type {
   SkillListQuery,
@@ -19,6 +24,7 @@ import type {
   InstallSkillRequest,
   UpdateBotSkillRequest,
   BatchInstallResult,
+  ContainerSkillsResponse,
 } from '@repo/contracts';
 
 const OPENCLAW_SOURCE = 'openclaw';
@@ -31,6 +37,9 @@ export class SkillApiService {
     private readonly botSkillService: BotSkillService,
     private readonly botService: BotService,
     private readonly openClawSyncClient: OpenClawSkillSyncClient,
+    private readonly openClawClient: OpenClawClient,
+    private readonly dockerService: DockerService,
+    private readonly workspaceService: WorkspaceService,
   ) {}
 
   /**
@@ -573,6 +582,71 @@ export class SkillApiService {
       hostname,
     });
     return { success: true };
+  }
+
+  /**
+   * 获取容器内置技能列表
+   * 策略：Docker 运行中 → exec 获取 → 持久化；否则读缓存
+   */
+  async getContainerSkills(
+    userId: string,
+    hostname: string,
+  ): Promise<ContainerSkillsResponse> {
+    const bot = await this.botService.get({ hostname, createdById: userId });
+    if (!bot) {
+      throw new NotFoundException('Bot 不存在');
+    }
+
+    // 尝试从运行中的容器获取
+    if (bot.containerId) {
+      const containerStatus = await this.dockerService.getContainerStatus(
+        bot.containerId,
+      );
+      if (containerStatus?.running) {
+        const skills = await this.openClawClient.listContainerSkills(
+          bot.containerId,
+        );
+        if (skills) {
+          // 持久化到文件系统
+          try {
+            await this.workspaceService.writeContainerSkills(
+              userId,
+              hostname,
+              skills,
+            );
+          } catch (error) {
+            this.logger.warn('容器技能持久化失败', {
+              hostname,
+              error: error instanceof Error ? error.message : 'Unknown error',
+            });
+          }
+          return {
+            skills,
+            source: 'docker',
+            fetchedAt: new Date().toISOString(),
+          };
+        }
+      }
+    }
+
+    // Fallback: 读取缓存
+    const cached = await this.workspaceService.readContainerSkills(
+      userId,
+      hostname,
+    );
+    if (cached) {
+      return {
+        skills: cached.skills,
+        source: 'cache',
+        fetchedAt: cached.fetchedAt,
+      };
+    }
+
+    return {
+      skills: [],
+      source: 'none',
+      fetchedAt: null,
+    };
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

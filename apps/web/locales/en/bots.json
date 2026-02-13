@@ -20,7 +20,7 @@
     "delete": "Delete",
     "refresh": "Refresh",
     "usage": "Usage",
-    "plugins": "Plugins",
+    "plugins": "MCP Tools",
     "skills": "Skills"
   },
   "status": {
@@ -386,7 +386,7 @@
       "diagnostics": "Diagnostics",
       "logs": "Logs",
       "settings": "Settings",
-      "plugins": "Plugins",
+      "plugins": "MCP Tools",
       "skills": "Skills",
       "usage": "Usage",
       "more": "More"

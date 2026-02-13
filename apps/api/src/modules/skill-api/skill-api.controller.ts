@@ -87,6 +87,17 @@ export class SkillApiController {
     });
   }
 
+  @TsRestHandler(botSkillC.containerSkills)
+  async getContainerSkills(@Req() req: AuthenticatedRequest): Promise<any> {
+    return tsRestHandler(botSkillC.containerSkills, async ({ params }) => {
+      const result = await this.skillApiService.getContainerSkills(
+        req.userId,
+        params.hostname,
+      );
+      return success(result);
+    });
+  }
+
   @TsRestHandler(botSkillC.install)
   async installSkill(@Req() req: AuthenticatedRequest): Promise<any> {
     return tsRestHandler(botSkillC.install, async ({ params, body }) => {

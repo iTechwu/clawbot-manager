@@ -20,7 +20,7 @@
     "delete": "删除",
     "refresh": "刷新",
     "usage": "用量",
-    "plugins": "插件",
+    "plugins": "MCP工具",
     "skills": "技能"
   },
   "status": {
@@ -389,7 +389,7 @@
       "diagnostics": "测试诊断",
       "logs": "应用日志",
       "settings": "设置",
-      "plugins": "插件",
+      "plugins": "MCP工具",
       "skills": "技能",
       "usage": "使用统计",
       "more": "更多"
