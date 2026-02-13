@@ -753,6 +753,7 @@ export class SkillApiService {
 
   /**
    * 补写缺失的 SKILL.md（已安装但尚未写入文件系统的技能）
+   * 如果 definition.content 为空且是 OpenClaw 技能，会尝试从 GitHub 拉取
    * 非阻塞调用，不影响列表接口响应速度
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -773,8 +774,58 @@ export class SkillApiService {
       );
       if (exists) continue;
 
-      const definition = skill.definition as Record<string, unknown> | null;
-      const mdContent = (definition?.content as string) || null;
+      let definition = skill.definition as Record<string, unknown> | null;
+      let mdContent = (definition?.content as string) || null;
+
+      // 如果 content 为空且是 OpenClaw 技能，尝试从 GitHub 拉取
+      if (
+        !mdContent &&
+        skill.source === OPENCLAW_SOURCE &&
+        skill.sourceUrl
+      ) {
+        try {
+          const skillDefinition =
+            await this.openClawSyncClient.fetchSkillDefinition(
+              skill.sourceUrl,
+            );
+          mdContent = skillDefinition.content || null;
+
+          // 更新 DB 中的 definition，后续不再重复拉取
+          if (mdContent) {
+            await this.skillService.update(
+              { id: skill.id },
+              {
+                definition: {
+                  ...((definition || {}) as Record<string, unknown>),
+                  name: skillDefinition.name,
+                  description: skillDefinition.description,
+                  version: skillDefinition.version,
+                  homepage: skillDefinition.homepage,
+                  repository: skillDefinition.repository,
+                  userInvocable: skillDefinition.userInvocable,
+                  tags: skillDefinition.tags,
+                  metadata: skillDefinition.metadata,
+                  content: skillDefinition.content,
+                  frontmatter: skillDefinition.frontmatter,
+                  sourceUrl: skill.sourceUrl,
+                } as Prisma.InputJsonValue,
+                version: skillDefinition.version || skill.version,
+              },
+            );
+            this.logger.info('Fetched SKILL.md from GitHub during sync', {
+              skillId: skill.id,
+              skillDirName,
+            });
+          }
+        } catch (error) {
+          this.logger.warn('Failed to fetch SKILL.md from GitHub during sync', {
+            skillId: skill.id,
+            sourceUrl: skill.sourceUrl,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
+      }
+
       const content =
         mdContent || this.generateSkillMd(skill.name, skill.description);
 
@@ -788,6 +839,7 @@ export class SkillApiService {
         this.logger.info('Synced missing SKILL.md', {
           skillId: skill.id,
           skillDirName,
+          hasGitHubContent: !!mdContent,
         });
       } catch (error) {
         this.logger.warn('Failed to sync SKILL.md', {

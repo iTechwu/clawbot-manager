@@ -453,7 +453,7 @@ export class OpenClawSkillSyncClient {
 
   /**
    * 获取单个技能的 SKILL.md 内容
-   * 将 GitHub tree URL 转换为 raw URL 并获取内容
+   * 优先使用 raw URL，失败时 fallback 到 GitHub API（适用于 raw.githubusercontent.com 被屏蔽的环境）
    * @param sourceUrl GitHub tree URL (如 https://github.com/openclaw/skills/tree/main/skills/author/slug/SKILL.md)
    */
   async fetchSkillDefinition(sourceUrl: string): Promise<SkillDefinition> {
@@ -461,7 +461,7 @@ export class OpenClawSkillSyncClient {
       sourceUrl,
     });
 
-    // 将 tree URL 转换为 raw URL，并应用代理配置
+    // 优先尝试 raw URL
     const rawUrl = this.convertToRawUrl(sourceUrl);
     const { url, headers } = this.getGitHubRequestConfig(rawUrl);
 
@@ -470,26 +470,76 @@ export class OpenClawSkillSyncClient {
         this.httpService.get<string>(url, { headers }).pipe(
           timeout(this.requestTimeout),
           catchError((error) => {
-            this.logger.error('OpenClawSkillSyncClient: 获取 SKILL.md 失败', {
-              rawUrl,
-              error: error instanceof Error ? error.message : 'Unknown error',
-            });
             throw error;
           }),
         ),
       );
 
       const content = response.data;
-      this.logger.info('OpenClawSkillSyncClient: SKILL.md 获取成功', {
+      this.logger.info('OpenClawSkillSyncClient: SKILL.md 获取成功 (raw)', {
         contentLength: content.length,
       });
+      return this.parseSkillMd(content, sourceUrl);
+    } catch (rawError) {
+      this.logger.warn(
+        'OpenClawSkillSyncClient: raw URL 获取失败，尝试 GitHub API',
+        {
+          rawUrl,
+          error:
+            rawError instanceof Error ? rawError.message : 'Unknown error',
+        },
+      );
+    }
 
-      // 解析 YAML frontmatter 和 Markdown 内容
+    // Fallback: 使用 GitHub API（api.github.com 通常不被屏蔽）
+    const apiUrl = this.convertToApiUrl(sourceUrl);
+    if (!apiUrl) {
+      throw new Error(
+        `无法将 sourceUrl 转换为 GitHub API URL: ${sourceUrl}`,
+      );
+    }
+
+    const apiHeaders: Record<string, string> = {
+      Accept: 'application/vnd.github.v3+json',
+    };
+    if (this.githubToken) {
+      apiHeaders['Authorization'] = `token ${this.githubToken}`;
+    }
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService
+          .get<{ content: string; encoding: string }>(apiUrl, {
+            headers: apiHeaders,
+          })
+          .pipe(
+            timeout(this.requestTimeout),
+            catchError((error) => {
+              this.logger.error(
+                'OpenClawSkillSyncClient: GitHub API 获取 SKILL.md 失败',
+                {
+                  apiUrl,
+                  error:
+                    error instanceof Error ? error.message : 'Unknown error',
+                },
+              );
+              throw error;
+            }),
+          ),
+      );
+
+      const content = Buffer.from(
+        response.data.content,
+        'base64',
+      ).toString('utf-8');
+      this.logger.info(
+        'OpenClawSkillSyncClient: SKILL.md 获取成功 (GitHub API)',
+        { contentLength: content.length },
+      );
       return this.parseSkillMd(content, sourceUrl);
     } catch (error) {
-      this.logger.error('OpenClawSkillSyncClient: 获取 SKILL.md 失败', {
+      this.logger.error('OpenClawSkillSyncClient: 获取 SKILL.md 全部失败', {
         sourceUrl,
-        rawUrl,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
       throw error;
@@ -505,6 +555,20 @@ export class OpenClawSkillSyncClient {
     return treeUrl
       .replace('github.com', 'raw.githubusercontent.com')
       .replace('/tree/', '/');
+  }
+
+  /**
+   * 将 GitHub tree URL 转换为 GitHub API URL
+   * https://github.com/{owner}/{repo}/tree/{ref}/{path}
+   * -> https://api.github.com/repos/{owner}/{repo}/contents/{path}?ref={ref}
+   */
+  private convertToApiUrl(treeUrl: string): string | null {
+    const match = treeUrl.match(
+      /github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)\/(.+)/,
+    );
+    if (!match) return null;
+    const [, owner, repo, ref, filePath] = match;
+    return `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${ref}`;
   }
 
   /**
