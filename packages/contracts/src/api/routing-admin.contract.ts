@@ -713,6 +713,69 @@ export const routingAdminContract = c.router(
       summary: '删除模型目录',
     },
 
+    /**
+     * GET /proxy/admin/routing/model-catalog/:id/tags - 获取模型的能力标签
+     */
+    getModelCatalogTags: {
+      method: 'GET',
+      path: '/model-catalog/:id/tags',
+      pathParams: z.object({ id: z.string().uuid() }),
+      responses: {
+        200: ApiResponseSchema(
+          z.object({
+            list: z.array(
+              z.object({
+                id: z.string(),
+                capabilityTagId: z.string(),
+                tagId: z.string(),
+                name: z.string(),
+                matchSource: z.string(),
+                confidence: z.number(),
+              }),
+            ),
+          }),
+        ),
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '获取模型的能力标签列表',
+    },
+
+    /**
+     * POST /proxy/admin/routing/model-catalog/:id/tags - 手动添加能力标签
+     */
+    addModelCatalogTag: {
+      method: 'POST',
+      path: '/model-catalog/:id/tags',
+      pathParams: z.object({ id: z.string().uuid() }),
+      body: z.object({
+        capabilityTagId: z.string().uuid(),
+      }),
+      responses: {
+        200: SuccessResponseSchema,
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+        400: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '手动为模型添加能力标签',
+    },
+
+    /**
+     * DELETE /proxy/admin/routing/model-catalog/:id/tags/:capabilityTagId - 移除能力标签
+     */
+    removeModelCatalogTag: {
+      method: 'DELETE',
+      path: '/model-catalog/:id/tags/:capabilityTagId',
+      pathParams: z.object({
+        id: z.string().uuid(),
+        capabilityTagId: z.string().uuid(),
+      }),
+      body: z.object({}).optional(),
+      responses: {
+        200: SuccessResponseSchema,
+        404: ApiResponseSchema(z.object({ error: z.string() })),
+      },
+      summary: '移除模型的能力标签',
+    },
+
     // ========================================================================
     // 成本计算
     // ========================================================================

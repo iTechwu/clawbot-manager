@@ -15,6 +15,7 @@ import {
   FallbackChainModelService,
   ModelCatalogService,
   CapabilityTagService,
+  ModelCapabilityTagService,
 } from '@app/db';
 import { success, error, deleted } from '@/common/ts-rest/response.helper';
 import { CommonErrorCode } from '@repo/contracts/errors';
@@ -38,6 +39,7 @@ export class RoutingAdminController {
     private readonly fallbackChainModelDb: FallbackChainModelService,
     private readonly modelCatalogDb: ModelCatalogService,
     private readonly capabilityTagDb: CapabilityTagService,
+    private readonly modelCapabilityTagDb: ModelCapabilityTagService,
     private readonly capabilityTagMatchingService: CapabilityTagMatchingService,
   ) {}
 
@@ -89,10 +91,12 @@ export class RoutingAdminController {
         model: cm.modelCatalog?.model,
         vendor: cm.modelCatalog?.vendor,
         displayName: cm.modelCatalog?.displayName ?? null,
-        supportsExtendedThinking: cm.modelCatalog?.supportsExtendedThinking ?? false,
+        supportsExtendedThinking:
+          cm.modelCatalog?.supportsExtendedThinking ?? false,
         supportsCacheControl: cm.modelCatalog?.supportsCacheControl ?? false,
         supportsVision: cm.modelCatalog?.supportsVision ?? false,
-        supportsFunctionCalling: cm.modelCatalog?.supportsFunctionCalling ?? true,
+        supportsFunctionCalling:
+          cm.modelCatalog?.supportsFunctionCalling ?? true,
       })),
     };
   }
@@ -107,7 +111,9 @@ export class RoutingAdminController {
       inputPrice: Number(item.inputPrice),
       outputPrice: Number(item.outputPrice),
       cacheReadPrice: item.cacheReadPrice ? Number(item.cacheReadPrice) : null,
-      cacheWritePrice: item.cacheWritePrice ? Number(item.cacheWritePrice) : null,
+      cacheWritePrice: item.cacheWritePrice
+        ? Number(item.cacheWritePrice)
+        : null,
       thinkingPrice: item.thinkingPrice ? Number(item.thinkingPrice) : null,
       reasoningScore: item.reasoningScore,
       codingScore: item.codingScore,
@@ -178,7 +184,9 @@ export class RoutingAdminController {
           requiresExtendedThinking: tag.requiresExtendedThinking,
           requiresCacheControl: tag.requiresCacheControl,
           requiresVision: tag.requiresVision,
-          maxCostPerMToken: tag.maxCostPerMToken ? Number(tag.maxCostPerMToken) : null,
+          maxCostPerMToken: tag.maxCostPerMToken
+            ? Number(tag.maxCostPerMToken)
+            : null,
           isActive: tag.isActive,
           isBuiltin: tag.isBuiltin ?? true,
           createdAt: tag.createdAt.toISOString(),
@@ -219,7 +227,10 @@ export class RoutingAdminController {
       if (!existing) {
         return error(CommonErrorCode.NotFound) as any;
       }
-      const tag = await this.capabilityTagDb.update({ id: params.id }, body as any);
+      const tag = await this.capabilityTagDb.update(
+        { id: params.id },
+        body as any,
+      );
       await this.configService.refreshConfigurations();
       return success(tag) as any;
     });
@@ -232,7 +243,9 @@ export class RoutingAdminController {
       if (!existing) {
         return error(CommonErrorCode.NotFound) as any;
       }
-      await this.capabilityTagDb.update({ id: params.id }, { isActive: false } as any);
+      await this.capabilityTagDb.update({ id: params.id }, {
+        isActive: false,
+      } as any);
       await this.configService.refreshConfigurations();
       return deleted() as any;
     });
@@ -252,7 +265,9 @@ export class RoutingAdminController {
 
       const result = [];
       for (const dbChain of dbChains) {
-        const chainModels = await this.fallbackChainModelDb.listByChainId(dbChain.id);
+        const chainModels = await this.fallbackChainModelDb.listByChainId(
+          dbChain.id,
+        );
         result.push(this.mapFallbackChain(dbChain, chainModels));
       }
 
@@ -267,7 +282,9 @@ export class RoutingAdminController {
       if (!chain) {
         return error(CommonErrorCode.NotFound) as any;
       }
-      const chainModels = await this.fallbackChainModelDb.listByChainId(chain.id);
+      const chainModels = await this.fallbackChainModelDb.listByChainId(
+        chain.id,
+      );
       return success(this.mapFallbackChain(chain, chainModels)) as any;
     });
   }
@@ -308,7 +325,10 @@ export class RoutingAdminController {
         return error(CommonErrorCode.NotFound) as any;
       }
       const { chainModels, ...chainData } = body;
-      const chain = await this.fallbackChainDb.update({ id: params.id }, chainData as any);
+      const chain = await this.fallbackChainDb.update(
+        { id: params.id },
+        chainData as any,
+      );
 
       // 更新关联的 chainModels（如果提供了）
       if (chainModels !== undefined) {
@@ -337,7 +357,9 @@ export class RoutingAdminController {
       }
       // 先删除关联的 chainModels，再软删除 chain，避免孤儿记录
       await this.fallbackChainModelDb.deleteByChainId(params.id);
-      await this.fallbackChainDb.update({ id: params.id }, { isDeleted: true } as any);
+      await this.fallbackChainDb.update({ id: params.id }, {
+        isDeleted: true,
+      } as any);
       await this.configService.refreshConfigurations();
       return deleted() as any;
     });
@@ -538,7 +560,10 @@ export class RoutingAdminController {
       if (!existing) {
         return error(CommonErrorCode.NotFound) as any;
       }
-      const item = await this.modelCatalogDb.update({ id: params.id }, body as any);
+      const item = await this.modelCatalogDb.update(
+        { id: params.id },
+        body as any,
+      );
       await this.configService.refreshConfigurations();
       return success(item) as any;
     });
@@ -551,7 +576,9 @@ export class RoutingAdminController {
       if (!existing) {
         return error(CommonErrorCode.NotFound) as any;
       }
-      await this.modelCatalogDb.update({ id: params.id }, { isEnabled: false } as any);
+      await this.modelCatalogDb.update({ id: params.id }, {
+        isEnabled: false,
+      } as any);
       await this.configService.refreshConfigurations();
       return deleted() as any;
     });
@@ -707,14 +734,22 @@ export class RoutingAdminController {
 
           const existing = await this.modelCatalogDb.getByModel(data.model);
           if (existing) {
-            await this.modelCatalogDb.update({ id: existing.id }, catalogFields as any);
+            await this.modelCatalogDb.update(
+              { id: existing.id },
+              catalogFields as any,
+            );
             updated++;
           } else {
-            await this.modelCatalogDb.create({ model: data.model, ...catalogFields } as any);
+            await this.modelCatalogDb.create({
+              model: data.model,
+              ...catalogFields,
+            } as any);
             created++;
           }
         } catch (e) {
-          this.logger.warn(`Failed to sync model catalog: ${data.model}`, { error: e });
+          this.logger.warn(`Failed to sync model catalog: ${data.model}`, {
+            error: e,
+          });
           skipped++;
         }
       }
@@ -734,11 +769,12 @@ export class RoutingAdminController {
         // 同步单个模型的标签
         const catalog = await this.modelCatalogDb.getById(body.modelCatalogId);
         if (catalog) {
-          const count = await this.capabilityTagMatchingService.assignTagsToModelCatalog(
-            catalog.id,
-            catalog.model,
-            catalog.vendor,
-          );
+          const count =
+            await this.capabilityTagMatchingService.assignTagsToModelCatalog(
+              catalog.id,
+              catalog.model,
+              catalog.vendor,
+            );
           processed = 1;
           tagsAssigned = count;
         }
@@ -747,21 +783,92 @@ export class RoutingAdminController {
         const catalogList = await this.modelCatalogDb.listAll();
         for (const catalog of catalogList) {
           try {
-            const count = await this.capabilityTagMatchingService.assignTagsToModelCatalog(
-              catalog.id,
-              catalog.model,
-              catalog.vendor,
-            );
+            const count =
+              await this.capabilityTagMatchingService.assignTagsToModelCatalog(
+                catalog.id,
+                catalog.model,
+                catalog.vendor,
+              );
             processed++;
             tagsAssigned += count;
           } catch (e) {
-            this.logger.warn(`Failed to sync tags for: ${catalog.model}`, { error: e });
+            this.logger.warn(`Failed to sync tags for: ${catalog.model}`, {
+              error: e,
+            });
           }
         }
       }
 
       await this.configService.refreshConfigurations();
       return success({ processed, tagsAssigned }) as any;
+    });
+  }
+
+  @TsRestHandler(c.getModelCatalogTags)
+  async getModelCatalogTags() {
+    return tsRestHandler(c.getModelCatalogTags, async ({ params }) => {
+      const catalog = await this.modelCatalogDb.getById(params.id);
+      if (!catalog) {
+        return error(CommonErrorCode.NotFound) as any;
+      }
+
+      const { list: tags } = await this.modelCapabilityTagDb.list(
+        { modelCatalogId: params.id },
+        { limit: 100 },
+        { include: { capabilityTag: true } } as any,
+      );
+
+      return success({
+        list: tags.map((t: any) => ({
+          id: t.id,
+          capabilityTagId: t.capabilityTagId,
+          tagId: t.capabilityTag?.tagId ?? '',
+          name: t.capabilityTag?.name ?? 'Unknown',
+          matchSource: t.matchSource,
+          confidence: t.confidence,
+        })),
+      }) as any;
+    });
+  }
+
+  @TsRestHandler(c.addModelCatalogTag)
+  async addModelCatalogTag() {
+    return tsRestHandler(c.addModelCatalogTag, async ({ params, body }) => {
+      const catalog = await this.modelCatalogDb.getById(params.id);
+      if (!catalog) {
+        return error(CommonErrorCode.NotFound) as any;
+      }
+
+      try {
+        await this.capabilityTagMatchingService.addManualTag(
+          params.id,
+          body.capabilityTagId,
+        );
+      } catch (e) {
+        if (e instanceof Error && e.message.includes('Unique constraint')) {
+          return error(CommonErrorCode.BadRequest, '该标签已存在') as any;
+        }
+        throw e;
+      }
+
+      return success({ message: 'ok' }) as any;
+    });
+  }
+
+  @TsRestHandler(c.removeModelCatalogTag)
+  async removeModelCatalogTag() {
+    return tsRestHandler(c.removeModelCatalogTag, async ({ params }) => {
+      const catalog = await this.modelCatalogDb.getById(params.id);
+      if (!catalog) {
+        return error(CommonErrorCode.NotFound) as any;
+      }
+
+      await this.capabilityTagMatchingService.removeTag(
+        params.id,
+        params.capabilityTagId,
+      );
+
+      return success({ message: 'ok' }) as any;
     });
   }
 }
