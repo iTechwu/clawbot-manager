@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import {
   SkillModule,
@@ -25,7 +25,7 @@ import { SkillApiService } from './skill-api.service';
     AuthModule,
     JwtModule,
     OpenClawModule,
-    BotApiModule,
+    forwardRef(() => BotApiModule),
   ],
   controllers: [SkillApiController],
   providers: [SkillApiService],

@@ -43,6 +43,7 @@ import { CapabilityTagMatchingService } from './services/capability-tag-matching
 import { ModelSyncService } from './services/model-sync.service';
 import { RoutingConfigService } from './services/routing-config.service';
 import { PluginApiModule } from '../plugin-api/plugin-api.module';
+import { SkillApiModule } from '../skill-api/skill-api.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { PluginApiModule } from '../plugin-api/plugin-api.module';
     ModelRoutingModule,
     PrismaModule,
     PluginApiModule,
+    forwardRef(() => SkillApiModule),
   ],
   controllers: [BotApiController, ModelRoutingController],
   providers: [

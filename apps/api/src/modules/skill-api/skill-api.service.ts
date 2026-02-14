@@ -4,9 +4,11 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import * as path from 'path';
 import * as semver from 'semver';
 import { SKILL_LIMITS } from '@repo/constants';
 import { SkillService, BotSkillService, BotService } from '@app/db';
@@ -648,6 +650,263 @@ export class SkillApiService {
 
     return { installed, skipped, failed };
   }
+
+  // ============================================================================
+  // 离线安装 / 私有 Skills
+  // ============================================================================
+
+  /**
+   * 直接从文件安装 Skill（离线安装 / 私有 skills）
+   * 不依赖 GitHub，用户直接上传 skill 文件
+   * @param userId 用户 ID
+   * @param hostname Bot hostname
+   * @param data Skill 文件数据
+   */
+  async installSkillFromFiles(
+    userId: string,
+    hostname: string,
+    data: {
+      name: string;
+      slug: string;
+      description?: string;
+      version?: string;
+      files: Array<{ relativePath: string; content: string }>;
+    },
+  ): Promise<BotSkillItem> {
+    const bot = await this.botService.get({ hostname, createdById: userId });
+    if (!bot) {
+      throw new NotFoundException('Bot 不存在');
+    }
+
+    // 验证文件
+    const files = this.validateAndNormalizeFiles(data.files);
+    if (files.length === 0) {
+      throw new BadRequestException('没有有效的 skill 文件');
+    }
+
+    // 生成 slug（如果没有提供）
+    const skillSlug = data.slug || this.generateSlug(data.name);
+
+    // 检查是否已存在同名 skill（用户私有）
+    let skill = await this.skillService.get({
+      slug: skillSlug,
+      createdById: userId,
+    });
+
+    // 检查是否有 SKILL.md
+    const skillMd = files.find((f) => f.relativePath === 'SKILL.md');
+    const hasInitScript = files.some(
+      (f) => f.relativePath === 'scripts/init.sh',
+    );
+    const hasReferences = files.some((f) =>
+      f.relativePath.startsWith('references/'),
+    );
+
+    // 创建或更新 Skill 记录
+    if (!skill) {
+      skill = await this.skillService.create({
+        name: data.name,
+        slug: skillSlug,
+        description: data.description || null,
+        version: data.version || '1.0.0',
+        definition: {
+          name: data.name,
+          description: data.description,
+          content: skillMd?.content || null,
+        } as Prisma.InputJsonValue,
+        isSystem: false,
+        isEnabled: true,
+        source: 'custom',
+        createdById: userId,
+        // 存储文件到数据库（用于后续安装）
+        files: files as unknown as Prisma.InputJsonValue,
+        filesSyncedAt: new Date(),
+        fileCount: files.length,
+        hasInitScript,
+        hasReferences,
+      });
+    } else {
+      // 更新现有 skill
+      skill = await this.skillService.update(
+        { id: skill.id },
+        {
+          name: data.name,
+          description: data.description || null,
+          version: data.version || skill.version,
+          definition: {
+            name: data.name,
+            description: data.description,
+            content: skillMd?.content || null,
+          } as Prisma.InputJsonValue,
+          files: files as unknown as Prisma.InputJsonValue,
+          filesSyncedAt: new Date(),
+          fileCount: files.length,
+          hasInitScript,
+          hasReferences,
+        },
+      );
+    }
+
+    // 检查是否已安装
+    const existing = await this.botSkillService.get({
+      botId: bot.id,
+      skillId: skill.id,
+    });
+    if (existing) {
+      throw new ConflictException('该技能已安装');
+    }
+
+    // 创建 BotSkill 记录
+    const botSkill = await this.botSkillService.create({
+      bot: { connect: { id: bot.id } },
+      skill: { connect: { id: skill.id } },
+      config: {},
+      isEnabled: true,
+      installedVersion: skill.version,
+      fileCount: files.length,
+      hasReferences,
+    });
+
+    this.logger.info('Skill installed from files', {
+      botId: bot.id,
+      skillId: skill.id,
+      hostname,
+      fileCount: files.length,
+      hasInitScript,
+    });
+
+    // 写入文件系统
+    const skillDirName = skillSlug;
+    try {
+      await this.workspaceService.writeSkillFiles(
+        userId,
+        hostname,
+        skillDirName,
+        files.map((f) => ({ ...f, size: f.content.length })),
+      );
+
+      // 执行初始化脚本（如果有）
+      if (hasInitScript && bot.containerId) {
+        await this.executeSkillScript(bot.containerId, skillDirName);
+        await this.botSkillService.update(
+          { id: botSkill.id },
+          { scriptExecuted: true },
+        );
+      }
+
+      // 触发热加载
+      if (bot.containerId) {
+        await this.openClawClient.reloadSkills(bot.containerId);
+      }
+    } catch (error) {
+      this.logger.warn('Failed to write skill files', {
+        skillId: skill.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+
+    const fullBotSkill = await this.botSkillService.getById(botSkill.id, {
+      select: {
+        id: true,
+        botId: true,
+        skillId: true,
+        config: true,
+        installedVersion: true,
+        fileCount: true,
+        scriptExecuted: true,
+        hasReferences: true,
+        isEnabled: true,
+        createdAt: true,
+        updatedAt: true,
+        skill: {
+          include: {
+            skillType: true,
+          },
+        },
+      },
+    });
+
+    return this.mapBotSkillToItem(fullBotSkill!);
+  }
+
+  /**
+   * 验证并规范化文件列表
+   * - 路径遍历检查
+   * - 文件大小限制
+   * - 必要的文件检查
+   */
+  private validateAndNormalizeFiles(
+    files: Array<{ relativePath: string; content: string }>,
+  ): Array<{ relativePath: string; content: string }> {
+    const validFiles: Array<{ relativePath: string; content: string }> = [];
+    let totalSize = 0;
+
+    for (const file of files) {
+      // 路径遍历检查
+      const normalized = path.normalize(file.relativePath);
+      if (normalized.startsWith('..') || path.isAbsolute(normalized)) {
+        this.logger.warn('Skipping unsafe file path', {
+          relativePath: file.relativePath,
+        });
+        continue;
+      }
+
+      // 排除敏感文件
+      const lowerPath = normalized.toLowerCase();
+      if (
+        lowerPath.includes('.env') ||
+        lowerPath.includes('credentials') ||
+        lowerPath.includes('private_key') ||
+        lowerPath.includes('_meta.json')
+      ) {
+        continue;
+      }
+
+      // 文件大小检查
+      const fileSize = Buffer.byteLength(file.content, 'utf8');
+      if (fileSize > 1024 * 1024) {
+        // 1MB 单文件限制
+        this.logger.warn('File too large, skipping', {
+          relativePath: file.relativePath,
+          size: fileSize,
+        });
+        continue;
+      }
+
+      totalSize += fileSize;
+      if (totalSize > SKILL_LIMITS.MAX_DIR_SIZE) {
+        this.logger.warn('Total size exceeds limit, stopping', {
+          totalSize,
+          limit: SKILL_LIMITS.MAX_DIR_SIZE,
+        });
+        break;
+      }
+
+      validFiles.push({
+        relativePath: normalized,
+        content: file.content,
+      });
+    }
+
+    // 文件数量限制
+    if (validFiles.length > SKILL_LIMITS.MAX_FILE_COUNT) {
+      return validFiles.slice(0, SKILL_LIMITS.MAX_FILE_COUNT);
+    }
+
+    return validFiles;
+  }
+
+  /**
+   * 生成 slug（从名称）
+   */
+  private generateSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 50);
+  }
+
   async updateBotSkillConfig(
     userId: string,
     hostname: string,

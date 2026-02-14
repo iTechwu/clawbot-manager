@@ -15,6 +15,7 @@ import {
   ContainerSkillsResponseSchema,
   UpdateBotSkillVersionResponseSchema,
   CheckSkillUpdatesResponseSchema,
+  InstallSkillFromFilesRequestSchema,
 } from '../schemas/skill.schema';
 
 const c = initContract();
@@ -212,6 +213,23 @@ export const botSkillContract = c.router(
       },
       summary: '批量检查技能更新',
       description: '检查所有已安装的 OpenClaw 技能是否有新版本',
+    },
+
+    /**
+     * 从文件安装 Skill（离线安装 / 私有 skills）
+     */
+    installFromFiles: {
+      method: 'POST',
+      path: '/:hostname/skills/install-from-files',
+      pathParams: z.object({ hostname: z.string() }),
+      body: InstallSkillFromFilesRequestSchema,
+      responses: {
+        200: createApiResponse(BotSkillItemSchema),
+        400: createApiResponse(z.null()),
+        409: createApiResponse(z.null()),
+      },
+      summary: '从文件安装技能',
+      description: '直接上传 skill 文件安装到 Bot，支持离线安装和私有 skills',
     },
 
     /**

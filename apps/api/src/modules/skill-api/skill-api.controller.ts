@@ -122,6 +122,23 @@ export class SkillApiController {
     });
   }
 
+  @TsRestHandler(botSkillC.installFromFiles)
+  async installSkillFromFiles(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<any> {
+    return tsRestHandler(
+      botSkillC.installFromFiles,
+      async ({ params, body }) => {
+        const result = await this.skillApiService.installSkillFromFiles(
+          req.userId,
+          params.hostname,
+          body,
+        );
+        return success(result);
+      },
+    );
+  }
+
   @TsRestHandler(botSkillC.updateConfig)
   async updateBotSkillConfig(@Req() req: AuthenticatedRequest): Promise<any> {
     return tsRestHandler(botSkillC.updateConfig, async ({ params, body }) => {

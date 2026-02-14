@@ -295,3 +295,32 @@ export const CheckSkillUpdatesResponseSchema = z.object({
 export type CheckSkillUpdatesResponse = z.infer<
   typeof CheckSkillUpdatesResponseSchema
 >;
+
+/**
+ * Skill 文件项 Schema
+ */
+export const SkillFileItemSchema = z.object({
+  relativePath: z.string().max(255),
+  content: z.string().max(1024 * 1024), // 1MB 单文件限制
+});
+
+export type SkillFileItem = z.infer<typeof SkillFileItemSchema>;
+
+/**
+ * 从文件安装 Skill 请求 Schema（离线安装 / 私有 skills）
+ */
+export const InstallSkillFromFilesRequestSchema = z.object({
+  name: z.string().min(1).max(100),
+  slug: z
+    .string()
+    .min(1)
+    .max(50)
+    .regex(/^[a-z0-9-]+$/),
+  description: z.string().max(500).optional(),
+  version: z.string().max(20).optional(),
+  files: z.array(SkillFileItemSchema).min(1).max(50),
+});
+
+export type InstallSkillFromFilesRequest = z.infer<
+  typeof InstallSkillFromFilesRequestSchema
+>;
