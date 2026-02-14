@@ -97,6 +97,70 @@ export class UpstreamService {
   }
 
   /**
+   * 构建上游请求选项（URL 解析、header 清理、MiniMax GroupId 注入）
+   */
+  private buildUpstreamOptions(req: UpstreamRequest): {
+    options: { hostname: string; port: number; path: string; method: string; headers: Record<string, string> };
+    useHttps: boolean;
+  } {
+    const { vendorConfig, path, method, headers, body, apiKey, customUrl } = req;
+
+    // 解析目标 URL
+    let targetHost: string;
+    let targetPort: number;
+    let targetBasePath: string;
+    let useHttps: boolean;
+
+    if (customUrl) {
+      const parsed = this.parseUrl(customUrl);
+      targetHost = parsed.hostname;
+      targetPort = parsed.port;
+      targetBasePath = parsed.basePath;
+      useHttps = parsed.protocol === 'https';
+    } else {
+      targetHost = vendorConfig.host;
+      targetPort = 443;
+      targetBasePath = vendorConfig.basePath;
+      useHttps = true;
+    }
+
+    // 构建上游路径
+    let upstreamPath = targetBasePath + path;
+
+    // 注入 provider 特定的 query 参数（如 MiniMax GroupId）
+    if (req.metadata && req.vendor === 'minimax' && req.metadata.group_id) {
+      const separator = upstreamPath.includes('?') ? '&' : '?';
+      upstreamPath += `${separator}GroupId=${encodeURIComponent(String(req.metadata.group_id))}`;
+    }
+
+    // 克隆并修改请求头
+    const upstreamHeaders: Record<string, string> = { ...headers };
+    delete upstreamHeaders['host'];
+    delete upstreamHeaders['connection'];
+    delete upstreamHeaders['authorization'];
+    delete upstreamHeaders['content-length'];
+
+    upstreamHeaders['host'] = targetHost;
+    upstreamHeaders[vendorConfig.authHeader.toLowerCase()] =
+      vendorConfig.authFormat(apiKey);
+
+    if (body) {
+      upstreamHeaders['content-length'] = String(body.length);
+    }
+
+    return {
+      options: {
+        hostname: targetHost,
+        port: targetPort,
+        path: upstreamPath,
+        method,
+        headers: upstreamHeaders,
+      },
+      useHttps,
+    };
+  }
+
+  /**
    * 转发请求到上游服务（流式响应）
    *
    * @param req 上游请求参数
@@ -110,68 +174,11 @@ export class UpstreamService {
     vendor?: string,
   ): Promise<StreamForwardResult> {
     return new Promise((resolve, reject) => {
-      const { vendorConfig, path, method, headers, body, apiKey, customUrl } =
-        req;
-
-      // 解析目标 URL
-      let targetHost: string;
-      let targetPort: number;
-      let targetBasePath: string;
-      let useHttps: boolean;
-
-      if (customUrl) {
-        const parsed = this.parseUrl(customUrl);
-        targetHost = parsed.hostname;
-        targetPort = parsed.port;
-        targetBasePath = parsed.basePath;
-        useHttps = parsed.protocol === 'https';
-      } else {
-        targetHost = vendorConfig.host;
-        targetPort = 443;
-        targetBasePath = vendorConfig.basePath;
-        useHttps = true;
-      }
-
-      // 构建上游路径
-      let upstreamPath = targetBasePath + path;
-
-      // 注入 provider 特定的 query 参数（如 MiniMax GroupId）
-      if (req.metadata && req.vendor === 'minimax' && req.metadata.group_id) {
-        const separator = upstreamPath.includes('?') ? '&' : '?';
-        upstreamPath += `${separator}GroupId=${encodeURIComponent(String(req.metadata.group_id))}`;
-      }
-
-      // 克隆并修改请求头
-      const upstreamHeaders: Record<string, string> = { ...headers };
-
-      // 移除 hop-by-hop 头
-      delete upstreamHeaders['host'];
-      delete upstreamHeaders['connection'];
-      delete upstreamHeaders['authorization'];
-      delete upstreamHeaders['content-length'];
-
-      // 设置正确的 host
-      upstreamHeaders['host'] = targetHost;
-
-      // 设置认证头（使用真实 API key）
-      upstreamHeaders[vendorConfig.authHeader.toLowerCase()] =
-        vendorConfig.authFormat(apiKey);
-
-      // 如果有 body，设置 content-length
-      if (body) {
-        upstreamHeaders['content-length'] = String(body.length);
-      }
-
-      const options = {
-        hostname: targetHost,
-        port: targetPort,
-        path: upstreamPath,
-        method,
-        headers: upstreamHeaders,
-      };
+      const { body } = req;
+      const { options, useHttps } = this.buildUpstreamOptions(req);
 
       this.logger.debug(
-        `Forwarding to upstream: ${method} ${useHttps ? 'https' : 'http'}://${targetHost}:${targetPort}${upstreamPath}`,
+        `Forwarding to upstream: ${options.method} ${useHttps ? 'https' : 'http'}://${options.hostname}:${options.port}${options.path}`,
       );
 
       // 收集响应数据用于 token 提取
@@ -351,57 +358,8 @@ export class UpstreamService {
     req: UpstreamRequest,
   ): Promise<UpstreamResult> {
     return new Promise((resolve, reject) => {
-      const { vendorConfig, path, method, headers, body, apiKey, customUrl } =
-        req;
-
-      // 解析目标 URL
-      let targetHost: string;
-      let targetPort: number;
-      let targetBasePath: string;
-      let useHttps: boolean;
-
-      if (customUrl) {
-        const parsed = this.parseUrl(customUrl);
-        targetHost = parsed.hostname;
-        targetPort = parsed.port;
-        targetBasePath = parsed.basePath;
-        useHttps = parsed.protocol === 'https';
-      } else {
-        targetHost = vendorConfig.host;
-        targetPort = 443;
-        targetBasePath = vendorConfig.basePath;
-        useHttps = true;
-      }
-
-      let upstreamPath = targetBasePath + path;
-
-      // 注入 provider 特定的 query 参数（如 MiniMax GroupId）
-      if (req.metadata && req.vendor === 'minimax' && req.metadata.group_id) {
-        const separator = upstreamPath.includes('?') ? '&' : '?';
-        upstreamPath += `${separator}GroupId=${encodeURIComponent(String(req.metadata.group_id))}`;
-      }
-
-      const upstreamHeaders: Record<string, string> = { ...headers };
-      delete upstreamHeaders['host'];
-      delete upstreamHeaders['connection'];
-      delete upstreamHeaders['authorization'];
-      delete upstreamHeaders['content-length'];
-
-      upstreamHeaders['host'] = targetHost;
-      upstreamHeaders[vendorConfig.authHeader.toLowerCase()] =
-        vendorConfig.authFormat(apiKey);
-
-      if (body) {
-        upstreamHeaders['content-length'] = String(body.length);
-      }
-
-      const options = {
-        hostname: targetHost,
-        port: targetPort,
-        path: upstreamPath,
-        method,
-        headers: upstreamHeaders,
-      };
+      const { body } = req;
+      const { options, useHttps } = this.buildUpstreamOptions(req);
 
       const httpModule = useHttps ? https : http;
       const proxyReq = httpModule.request(

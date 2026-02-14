@@ -85,15 +85,7 @@ export class KeyringService {
       { limit: 100 },
     );
 
-    const keysWithSecret = keys.map((k) => ({
-      id: k.id,
-      secretEncrypted: k.secretEncrypted,
-      baseUrl: k.baseUrl,
-      vendor: k.vendor,
-      metadata: k.metadata,
-    }));
-
-    return this.selectFromKeys(keysWithSecret, vendor);
+    return this.selectFromKeys(keys, vendor);
   }
 
   /**
@@ -117,14 +109,7 @@ export class KeyringService {
         );
 
         if (taggedKeys.length > 0) {
-          const keysWithSecret = taggedKeys.map((k) => ({
-            id: k.id,
-            secretEncrypted: k.secretEncrypted,
-            baseUrl: k.baseUrl,
-            vendor: k.vendor,
-            metadata: k.metadata,
-          }));
-          return this.selectFromKeys(keysWithSecret, `${vendor}:${tag}`);
+          return this.selectFromKeys(taggedKeys, `${vendor}:${tag}`);
         }
       }
     }
@@ -136,14 +121,7 @@ export class KeyringService {
     );
 
     if (defaultKeys.length > 0) {
-      const keysWithSecret = defaultKeys.map((k) => ({
-        id: k.id,
-        secretEncrypted: k.secretEncrypted,
-        baseUrl: k.baseUrl,
-        vendor: k.vendor,
-        metadata: k.metadata,
-      }));
-      return this.selectFromKeys(keysWithSecret, `${vendor}:default`);
+      return this.selectFromKeys(defaultKeys, `${vendor}:default`);
     }
 
     // 最后尝试：该 vendor 的任意密钥
@@ -153,14 +131,7 @@ export class KeyringService {
     );
 
     if (allKeys.length > 0) {
-      const keysWithSecret = allKeys.map((k) => ({
-        id: k.id,
-        secretEncrypted: k.secretEncrypted,
-        baseUrl: k.baseUrl,
-        vendor: k.vendor,
-        metadata: k.metadata,
-      }));
-      return this.selectFromKeys(keysWithSecret, vendor);
+      return this.selectFromKeys(allKeys, vendor);
     }
 
     return null;

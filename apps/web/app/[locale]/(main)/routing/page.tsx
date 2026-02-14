@@ -167,7 +167,7 @@ export default function RoutingPage() {
             loaded={status?.modelCatalog?.loaded ?? false}
             count={status?.modelCatalog?.count ?? 0}
             lastUpdate={status?.modelCatalog?.lastUpdate}
-            href="/routing/model-pricing"
+            href="/routing/model-catalog"
             icon={DollarSign}
           />
           <ConfigStatusCard

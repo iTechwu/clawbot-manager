@@ -128,7 +128,7 @@ export class CapabilityTagMatchingService {
     modelCatalogId: string,
     modelName: string,
     vendor: string,
-  ): Promise<void> {
+  ): Promise<number> {
     // 删除现有的自动分配标签（保留手动添加的）
     await this.deleteAutoAssignedTags(modelCatalogId);
 
@@ -159,6 +159,8 @@ export class CapabilityTagMatchingService {
     this.logger.info(
       `[CapabilityTagMatching] Assigned ${matches.length} tags to model catalog ${modelCatalogId}`,
     );
+
+    return matches.length;
   }
 
   /**

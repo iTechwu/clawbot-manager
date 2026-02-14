@@ -15,21 +15,10 @@ import {
   FallbackChainModelService,
   ModelCatalogService,
   CapabilityTagService,
-  ModelCapabilityTagService,
 } from '@app/db';
 import { success, error, deleted } from '@/common/ts-rest/response.helper';
 import { CommonErrorCode } from '@repo/contracts/errors';
 import { routingAdminContract as c } from '@repo/contracts';
-
-// Helper to generate consistent UUIDs from string IDs
-const generateUUID = (id: string): string => {
-  const hash = id.split('').reduce((acc, char) => {
-    return ((acc << 5) - acc + char.charCodeAt(0)) | 0;
-  }, 0);
-  return `00000000-0000-4000-8000-${Math.abs(hash).toString(16).padStart(12, '0')}`;
-};
-
-const now = new Date().toISOString();
 
 /**
  * RoutingAdminController - 混合架构路由配置管理 API
@@ -49,9 +38,98 @@ export class RoutingAdminController {
     private readonly fallbackChainModelDb: FallbackChainModelService,
     private readonly modelCatalogDb: ModelCatalogService,
     private readonly capabilityTagDb: CapabilityTagService,
-    private readonly modelCapabilityTagDb: ModelCapabilityTagService,
     private readonly capabilityTagMatchingService: CapabilityTagMatchingService,
   ) {}
+
+  // ============================================================================
+  // 响应映射辅助方法（消除重复映射代码）
+  // ============================================================================
+
+  private mapComplexityRoutingConfig(config: any) {
+    return {
+      id: config.id,
+      configId: config.configId,
+      name: config.name,
+      description: config.description,
+      isEnabled: config.isEnabled,
+      models: config.models,
+      classifierModel: config.classifierModel,
+      classifierVendor: config.classifierVendor,
+      classifierBaseUrl: null,
+      toolMinComplexity: config.toolMinComplexity,
+      isBuiltin: config.isBuiltin,
+      createdAt: config.createdAt.toISOString(),
+      updatedAt: config.updatedAt.toISOString(),
+    };
+  }
+
+  private mapFallbackChain(dbChain: any, chainModels: any[]) {
+    return {
+      id: dbChain.id,
+      chainId: dbChain.chainId,
+      name: dbChain.name,
+      description: dbChain.description,
+      models: dbChain.models,
+      triggerStatusCodes: dbChain.triggerStatusCodes,
+      triggerErrorTypes: dbChain.triggerErrorTypes,
+      triggerTimeoutMs: dbChain.triggerTimeoutMs,
+      maxRetries: dbChain.maxRetries,
+      retryDelayMs: dbChain.retryDelayMs,
+      preserveProtocol: dbChain.preserveProtocol,
+      isActive: dbChain.isActive,
+      isBuiltin: dbChain.isBuiltin,
+      createdAt: dbChain.createdAt.toISOString(),
+      updatedAt: dbChain.updatedAt.toISOString(),
+      chainModels: chainModels.map((cm: any) => ({
+        id: cm.id,
+        modelCatalogId: cm.modelCatalogId,
+        priority: cm.priority,
+        protocolOverride: cm.protocolOverride,
+        featuresOverride: cm.featuresOverride,
+        model: cm.modelCatalog?.model,
+        vendor: cm.modelCatalog?.vendor,
+        displayName: cm.modelCatalog?.displayName ?? null,
+        supportsExtendedThinking: cm.modelCatalog?.supportsExtendedThinking ?? false,
+        supportsCacheControl: cm.modelCatalog?.supportsCacheControl ?? false,
+        supportsVision: cm.modelCatalog?.supportsVision ?? false,
+        supportsFunctionCalling: cm.modelCatalog?.supportsFunctionCalling ?? true,
+      })),
+    };
+  }
+
+  private mapModelCatalog(item: any) {
+    return {
+      id: item.id,
+      model: item.model,
+      vendor: item.vendor,
+      displayName: item.displayName,
+      description: item.description,
+      inputPrice: Number(item.inputPrice),
+      outputPrice: Number(item.outputPrice),
+      cacheReadPrice: item.cacheReadPrice ? Number(item.cacheReadPrice) : null,
+      cacheWritePrice: item.cacheWritePrice ? Number(item.cacheWritePrice) : null,
+      thinkingPrice: item.thinkingPrice ? Number(item.thinkingPrice) : null,
+      reasoningScore: item.reasoningScore,
+      codingScore: item.codingScore,
+      creativityScore: item.creativityScore,
+      speedScore: item.speedScore,
+      contextLength: item.contextLength,
+      supportsExtendedThinking: item.supportsExtendedThinking,
+      supportsCacheControl: item.supportsCacheControl,
+      supportsVision: item.supportsVision,
+      supportsFunctionCalling: item.supportsFunctionCalling,
+      supportsStreaming: item.supportsStreaming,
+      recommendedScenarios: null,
+      isEnabled: item.isEnabled,
+      isDeprecated: false,
+      deprecationDate: null,
+      priceUpdatedAt: item.updatedAt.toISOString(),
+      notes: null,
+      metadata: null,
+      createdAt: item.createdAt.toISOString(),
+      updatedAt: item.updatedAt.toISOString(),
+    };
+  }
 
   // ============================================================================
   // 配置状态
@@ -175,39 +253,7 @@ export class RoutingAdminController {
       const result = [];
       for (const dbChain of dbChains) {
         const chainModels = await this.fallbackChainModelDb.listByChainId(dbChain.id);
-        result.push({
-          id: dbChain.id,
-          chainId: dbChain.chainId,
-          name: dbChain.name,
-          description: dbChain.description,
-          models: dbChain.models,
-          triggerStatusCodes: dbChain.triggerStatusCodes,
-          triggerErrorTypes: dbChain.triggerErrorTypes,
-          triggerTimeoutMs: dbChain.triggerTimeoutMs,
-          maxRetries: dbChain.maxRetries,
-          retryDelayMs: dbChain.retryDelayMs,
-          preserveProtocol: dbChain.preserveProtocol,
-          isActive: dbChain.isActive,
-          isBuiltin: dbChain.isBuiltin,
-          createdAt: dbChain.createdAt.toISOString(),
-          updatedAt: dbChain.updatedAt.toISOString(),
-          chainModels: chainModels.map((cm: any) => ({
-            id: cm.id,
-            modelCatalogId: cm.modelCatalogId,
-            priority: cm.priority,
-            protocolOverride: cm.protocolOverride,
-            featuresOverride: cm.featuresOverride,
-            model: cm.modelCatalog?.model,
-            vendor: cm.modelCatalog?.vendor,
-            displayName: cm.modelCatalog?.displayName ?? null,
-            isAvailable: true,
-            protocol: cm.protocolOverride || 'openai-compatible',
-            supportsExtendedThinking: cm.modelCatalog?.supportsExtendedThinking ?? false,
-            supportsCacheControl: cm.modelCatalog?.supportsCacheControl ?? false,
-            supportsVision: cm.modelCatalog?.supportsVision ?? false,
-            supportsFunctionCalling: cm.modelCatalog?.supportsFunctionCalling ?? true,
-          })),
-        });
+        result.push(this.mapFallbackChain(dbChain, chainModels));
       }
 
       return success({ list: result }) as any;
@@ -222,30 +268,7 @@ export class RoutingAdminController {
         return error(CommonErrorCode.NotFound) as any;
       }
       const chainModels = await this.fallbackChainModelDb.listByChainId(chain.id);
-      return success({
-        id: chain.id,
-        chainId: chain.chainId,
-        name: chain.name,
-        description: chain.description,
-        models: chain.models,
-        triggerStatusCodes: chain.triggerStatusCodes,
-        triggerErrorTypes: chain.triggerErrorTypes,
-        triggerTimeoutMs: chain.triggerTimeoutMs,
-        maxRetries: chain.maxRetries,
-        retryDelayMs: chain.retryDelayMs,
-        preserveProtocol: chain.preserveProtocol,
-        isActive: chain.isActive,
-        isBuiltin: chain.isBuiltin,
-        createdAt: chain.createdAt.toISOString(),
-        updatedAt: chain.updatedAt.toISOString(),
-        chainModels: chainModels.map((cm: any) => ({
-          id: cm.id,
-          modelCatalogId: cm.modelCatalogId,
-          priority: cm.priority,
-          model: cm.modelCatalog?.model,
-          vendor: cm.modelCatalog?.vendor,
-        })),
-      }) as any;
+      return success(this.mapFallbackChain(chain, chainModels)) as any;
     });
   }
 
@@ -312,8 +335,9 @@ export class RoutingAdminController {
       if (!existing) {
         return error(CommonErrorCode.NotFound) as any;
       }
-      await this.fallbackChainDb.update({ id: params.id }, { isDeleted: true } as any);
+      // 先删除关联的 chainModels，再软删除 chain，避免孤儿记录
       await this.fallbackChainModelDb.deleteByChainId(params.id);
+      await this.fallbackChainDb.update({ id: params.id }, { isDeleted: true } as any);
       await this.configService.refreshConfigurations();
       return deleted() as any;
     });
@@ -327,15 +351,17 @@ export class RoutingAdminController {
   async getCostStrategies() {
     return tsRestHandler(c.getCostStrategies, async () => {
       const strategies = this.costTracker.getAllCostStrategies();
+      const timestamp = new Date().toISOString();
       return success({
         list: strategies.map((strategy) => ({
-          id: generateUUID(strategy.strategyId),
+          // 成本策略为内存数据，使用 strategyId 的确定性 UUID
+          id: `00000000-0000-4000-8000-${Buffer.from(strategy.strategyId).toString('hex').slice(0, 12).padStart(12, '0')}`,
           ...strategy,
           description: null,
           isActive: true,
           isBuiltin: true,
-          createdAt: now,
-          updatedAt: now,
+          createdAt: timestamp,
+          updatedAt: timestamp,
         })),
       }) as any;
     });
@@ -364,21 +390,7 @@ export class RoutingAdminController {
         { orderBy: { createdAt: 'desc' }, limit: 100 },
       );
       return success({
-        list: configs.map((config) => ({
-          id: config.id,
-          configId: config.configId,
-          name: config.name,
-          description: config.description,
-          isEnabled: config.isEnabled,
-          models: config.models,
-          classifierModel: config.classifierModel,
-          classifierVendor: config.classifierVendor,
-          classifierBaseUrl: null,
-          toolMinComplexity: config.toolMinComplexity,
-          isBuiltin: config.isBuiltin,
-          createdAt: config.createdAt.toISOString(),
-          updatedAt: config.updatedAt.toISOString(),
-        })),
+        list: configs.map((config) => this.mapComplexityRoutingConfig(config)),
       }) as any;
     });
   }
@@ -392,21 +404,7 @@ export class RoutingAdminController {
       if (!config) {
         return error(CommonErrorCode.NotFound) as any;
       }
-      return success({
-        id: config.id,
-        configId: config.configId,
-        name: config.name,
-        description: config.description,
-        isEnabled: config.isEnabled,
-        models: config.models,
-        classifierModel: config.classifierModel,
-        classifierVendor: config.classifierVendor,
-        classifierBaseUrl: null,
-        toolMinComplexity: config.toolMinComplexity,
-        isBuiltin: config.isBuiltin,
-        createdAt: config.createdAt.toISOString(),
-        updatedAt: config.updatedAt.toISOString(),
-      }) as any;
+      return success(this.mapComplexityRoutingConfig(config)) as any;
     });
   }
 
@@ -425,22 +423,7 @@ export class RoutingAdminController {
       })) as any;
 
       await this.configService.refreshConfigurations();
-
-      return success({
-        id: config.id,
-        configId: config.configId,
-        name: config.name,
-        description: config.description,
-        isEnabled: config.isEnabled,
-        models: config.models,
-        classifierModel: config.classifierModel,
-        classifierVendor: config.classifierVendor,
-        classifierBaseUrl: null,
-        toolMinComplexity: config.toolMinComplexity,
-        isBuiltin: config.isBuiltin,
-        createdAt: config.createdAt.toISOString(),
-        updatedAt: config.updatedAt.toISOString(),
-      }) as any;
+      return success(this.mapComplexityRoutingConfig(config)) as any;
     });
   }
 
@@ -470,22 +453,7 @@ export class RoutingAdminController {
         );
 
         await this.configService.refreshConfigurations();
-
-        return success({
-          id: config.id,
-          configId: config.configId,
-          name: config.name,
-          description: config.description,
-          isEnabled: config.isEnabled,
-          models: config.models,
-          classifierModel: config.classifierModel,
-          classifierVendor: config.classifierVendor,
-          classifierBaseUrl: null,
-          toolMinComplexity: config.toolMinComplexity,
-          isBuiltin: config.isBuiltin,
-          createdAt: config.createdAt.toISOString(),
-          updatedAt: config.updatedAt.toISOString(),
-        }) as any;
+        return success(this.mapComplexityRoutingConfig(config)) as any;
       },
     );
   }
@@ -534,37 +502,7 @@ export class RoutingAdminController {
     return tsRestHandler(c.getModelCatalogList, async () => {
       const catalogList = await this.modelCatalogDb.listAll();
       return success({
-        list: catalogList.map((item) => ({
-          id: item.id,
-          model: item.model,
-          vendor: item.vendor,
-          displayName: item.displayName,
-          description: item.description,
-          inputPrice: Number(item.inputPrice),
-          outputPrice: Number(item.outputPrice),
-          cacheReadPrice: item.cacheReadPrice ? Number(item.cacheReadPrice) : undefined,
-          cacheWritePrice: item.cacheWritePrice ? Number(item.cacheWritePrice) : undefined,
-          thinkingPrice: item.thinkingPrice ? Number(item.thinkingPrice) : undefined,
-          reasoningScore: item.reasoningScore,
-          codingScore: item.codingScore,
-          creativityScore: item.creativityScore,
-          speedScore: item.speedScore,
-          contextLength: item.contextLength,
-          supportsExtendedThinking: item.supportsExtendedThinking,
-          supportsCacheControl: item.supportsCacheControl,
-          supportsVision: item.supportsVision,
-          supportsFunctionCalling: item.supportsFunctionCalling,
-          supportsStreaming: item.supportsStreaming,
-          recommendedScenarios: null,
-          isEnabled: item.isEnabled,
-          isDeprecated: false,
-          deprecationDate: null,
-          priceUpdatedAt: item.updatedAt.toISOString(),
-          notes: null,
-          metadata: null,
-          createdAt: item.createdAt.toISOString(),
-          updatedAt: item.updatedAt.toISOString(),
-        })),
+        list: catalogList.map((item) => this.mapModelCatalog(item)),
       }) as any;
     });
   }
@@ -576,27 +514,7 @@ export class RoutingAdminController {
       if (!item) {
         return error(CommonErrorCode.NotFound) as any;
       }
-      return success({
-        id: item.id,
-        model: item.model,
-        vendor: item.vendor,
-        displayName: item.displayName,
-        inputPrice: Number(item.inputPrice),
-        outputPrice: Number(item.outputPrice),
-        reasoningScore: item.reasoningScore,
-        codingScore: item.codingScore,
-        creativityScore: item.creativityScore,
-        speedScore: item.speedScore,
-        contextLength: item.contextLength,
-        supportsExtendedThinking: item.supportsExtendedThinking,
-        supportsCacheControl: item.supportsCacheControl,
-        supportsVision: item.supportsVision,
-        supportsFunctionCalling: item.supportsFunctionCalling,
-        supportsStreaming: item.supportsStreaming,
-        isEnabled: item.isEnabled,
-        createdAt: item.createdAt.toISOString(),
-        updatedAt: item.updatedAt.toISOString(),
-      }) as any;
+      return success(this.mapModelCatalog(item)) as any;
     });
   }
 
@@ -767,49 +685,32 @@ export class RoutingAdminController {
 
       for (const data of MODEL_CATALOG_DATA) {
         try {
+          const catalogFields = {
+            vendor: data.vendor,
+            inputPrice: data.inputPrice,
+            outputPrice: data.outputPrice,
+            displayName: data.displayName,
+            cacheReadPrice: data.cacheReadPrice,
+            cacheWritePrice: data.cacheWritePrice,
+            thinkingPrice: data.thinkingPrice,
+            reasoningScore: data.reasoningScore ?? 50,
+            codingScore: data.codingScore ?? 50,
+            creativityScore: data.creativityScore ?? 50,
+            speedScore: data.speedScore ?? 50,
+            contextLength: data.contextLength ?? 128000,
+            supportsExtendedThinking: data.supportsExtendedThinking ?? false,
+            supportsCacheControl: data.supportsCacheControl ?? false,
+            supportsVision: data.supportsVision ?? false,
+            supportsFunctionCalling: data.supportsFunctionCalling ?? true,
+            supportsStreaming: data.supportsStreaming ?? true,
+          };
+
           const existing = await this.modelCatalogDb.getByModel(data.model);
           if (existing) {
-            await this.modelCatalogDb.update({ id: existing.id }, {
-              vendor: data.vendor,
-              inputPrice: data.inputPrice,
-              outputPrice: data.outputPrice,
-              displayName: data.displayName,
-              cacheReadPrice: data.cacheReadPrice,
-              cacheWritePrice: data.cacheWritePrice,
-              thinkingPrice: data.thinkingPrice,
-              reasoningScore: data.reasoningScore,
-              codingScore: data.codingScore,
-              creativityScore: data.creativityScore,
-              speedScore: data.speedScore,
-              contextLength: data.contextLength,
-              supportsExtendedThinking: data.supportsExtendedThinking,
-              supportsCacheControl: data.supportsCacheControl,
-              supportsVision: data.supportsVision,
-              supportsFunctionCalling: data.supportsFunctionCalling,
-              supportsStreaming: data.supportsStreaming,
-            } as any);
+            await this.modelCatalogDb.update({ id: existing.id }, catalogFields as any);
             updated++;
           } else {
-            await this.modelCatalogDb.create({
-              model: data.model,
-              vendor: data.vendor,
-              inputPrice: data.inputPrice,
-              outputPrice: data.outputPrice,
-              displayName: data.displayName,
-              cacheReadPrice: data.cacheReadPrice,
-              cacheWritePrice: data.cacheWritePrice,
-              thinkingPrice: data.thinkingPrice,
-              reasoningScore: data.reasoningScore ?? 50,
-              codingScore: data.codingScore ?? 50,
-              creativityScore: data.creativityScore ?? 50,
-              speedScore: data.speedScore ?? 50,
-              contextLength: data.contextLength ?? 128000,
-              supportsExtendedThinking: data.supportsExtendedThinking ?? false,
-              supportsCacheControl: data.supportsCacheControl ?? false,
-              supportsVision: data.supportsVision ?? false,
-              supportsFunctionCalling: data.supportsFunctionCalling ?? true,
-              supportsStreaming: data.supportsStreaming ?? true,
-            } as any);
+            await this.modelCatalogDb.create({ model: data.model, ...catalogFields } as any);
             created++;
           }
         } catch (e) {
@@ -833,34 +734,26 @@ export class RoutingAdminController {
         // 同步单个模型的标签
         const catalog = await this.modelCatalogDb.getById(body.modelCatalogId);
         if (catalog) {
-          const matched = await this.capabilityTagMatchingService.matchTagsForModel(
-            catalog.model,
-            catalog.vendor,
-          );
-          await this.capabilityTagMatchingService.assignTagsToModelCatalog(
+          const count = await this.capabilityTagMatchingService.assignTagsToModelCatalog(
             catalog.id,
             catalog.model,
             catalog.vendor,
           );
           processed = 1;
-          tagsAssigned = matched.length;
+          tagsAssigned = count;
         }
       } else {
         // 同步所有模型的标签
         const catalogList = await this.modelCatalogDb.listAll();
         for (const catalog of catalogList) {
           try {
-            const matched = await this.capabilityTagMatchingService.matchTagsForModel(
-              catalog.model,
-              catalog.vendor,
-            );
-            await this.capabilityTagMatchingService.assignTagsToModelCatalog(
+            const count = await this.capabilityTagMatchingService.assignTagsToModelCatalog(
               catalog.id,
               catalog.model,
               catalog.vendor,
             );
             processed++;
-            tagsAssigned += matched.length;
+            tagsAssigned += count;
           } catch (e) {
             this.logger.warn(`Failed to sync tags for: ${catalog.model}`, { error: e });
           }

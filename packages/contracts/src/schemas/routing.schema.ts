@@ -21,7 +21,7 @@ export const ModelCatalogSchema = z.object({
   codingScore: z.number().default(50),
   creativityScore: z.number().default(50),
   speedScore: z.number().default(50),
-  contextLength: z.number().default(128),
+  contextLength: z.number().default(128000),
   // 特性支持
   supportsExtendedThinking: z.boolean().default(false),
   supportsCacheControl: z.boolean().default(false),

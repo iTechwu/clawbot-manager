@@ -67,7 +67,7 @@ export const CreateModelCatalogInputSchema = z.object({
   codingScore: z.number().default(50),
   creativityScore: z.number().default(50),
   speedScore: z.number().default(50),
-  contextLength: z.number().default(128),
+  contextLength: z.number().default(128000),
   supportsExtendedThinking: z.boolean().default(false),
   supportsCacheControl: z.boolean().default(false),
   supportsVision: z.boolean().default(false),
@@ -247,28 +247,6 @@ export const ClassifyComplexityInputSchema = z.object({
 export type ClassifyComplexityInput = z.infer<
   typeof ClassifyComplexityInputSchema
 >;
-
-// 导入/导出 Schema
-export const ExportConfigResponseSchema = z.object({
-  modelCatalog: z.array(ModelCatalogSchema),
-  capabilityTags: z.array(CapabilityTagSchema),
-  fallbackChains: z.array(FallbackChainSchema),
-  costStrategies: z.array(CostStrategySchema),
-  exportedAt: z.string(),
-  version: z.string(),
-});
-
-export type ExportConfigResponse = z.infer<typeof ExportConfigResponseSchema>;
-
-export const ImportConfigInputSchema = z.object({
-  modelCatalog: z.array(CreateModelCatalogInputSchema).optional(),
-  capabilityTags: z.array(CreateCapabilityTagInputSchema).optional(),
-  fallbackChains: z.array(CreateFallbackChainInputSchema).optional(),
-  costStrategies: z.array(CreateCostStrategyInputSchema).optional(),
-  overwrite: z.boolean().default(false),
-});
-
-export type ImportConfigInput = z.infer<typeof ImportConfigInputSchema>;
 
 // ============================================================================
 // Response Schemas
@@ -529,6 +507,7 @@ export const routingAdminContract = c.router(
 
     /**
      * POST /proxy/admin/routing/cost-strategies - 创建成本策略
+     * @todo 后端尚未实现，成本策略目前为内存数据，需先实现 DB 持久化
      */
     createCostStrategy: {
       method: 'POST',
@@ -543,6 +522,7 @@ export const routingAdminContract = c.router(
 
     /**
      * PUT /proxy/admin/routing/cost-strategies/:id - 更新成本策略
+     * @todo 后端尚未实现，成本策略目前为内存数据，需先实现 DB 持久化
      */
     updateCostStrategy: {
       method: 'PUT',
@@ -558,6 +538,7 @@ export const routingAdminContract = c.router(
 
     /**
      * DELETE /proxy/admin/routing/cost-strategies/:id - 删除成本策略
+     * @todo 后端尚未实现，成本策略目前为内存数据，需先实现 DB 持久化
      */
     deleteCostStrategy: {
       method: 'DELETE',
@@ -795,45 +776,6 @@ export const routingAdminContract = c.router(
         200: ApiResponseSchema(SelectModelResponseSchema),
       },
       summary: '根据成本策略选择最优模型',
-    },
-
-    // ========================================================================
-    // 配置导入/导出
-    // ========================================================================
-
-    /**
-     * GET /proxy/admin/routing/export - 导出所有配置
-     */
-    exportConfig: {
-      method: 'GET',
-      path: '/export',
-      responses: {
-        200: ApiResponseSchema(ExportConfigResponseSchema),
-      },
-      summary: '导出所有配置',
-    },
-
-    /**
-     * POST /proxy/admin/routing/import - 导入配置
-     */
-    importConfig: {
-      method: 'POST',
-      path: '/import',
-      body: ImportConfigInputSchema,
-      responses: {
-        200: ApiResponseSchema(
-          z.object({
-            imported: z.object({
-              modelCatalog: z.number(),
-              capabilityTags: z.number(),
-              fallbackChains: z.number(),
-              costStrategies: z.number(),
-            }),
-          }),
-        ),
-        400: ApiResponseSchema(z.object({ error: z.string() })),
-      },
-      summary: '导入配置',
     },
 
     // ========================================================================

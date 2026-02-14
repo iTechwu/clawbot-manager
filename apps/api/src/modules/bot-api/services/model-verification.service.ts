@@ -127,6 +127,18 @@ export class ModelVerificationService {
   ) {}
 
   /**
+   * 解析 ProviderKey 的有效 baseUrl
+   * 优先使用 ProviderKey 自身的 baseUrl，否则回退到 PROVIDER_CONFIGS 中的默认 apiHost
+   */
+  private resolveEffectiveBaseUrl(
+    vendor: string,
+    baseUrl?: string | null,
+  ): string | null {
+    const providerConfig = PROVIDER_CONFIGS[vendor as ProviderVendor];
+    return baseUrl || providerConfig?.apiHost || null;
+  }
+
+  /**
    * 根据模型名称推断模型类型
    * @param modelName 模型名称
    * @returns 模型类型，默认为 llm
@@ -376,9 +388,7 @@ export class ModelVerificationService {
     const apiKey = this.encryptionService.decrypt(Buffer.from(secretEncrypted));
     const effectiveApiType = apiType || this.inferApiType(vendor);
 
-    // 如果 ProviderKey 没有设置 baseUrl，回退到 PROVIDER_CONFIGS 中的默认 apiHost
-    const providerConfig = PROVIDER_CONFIGS[vendor as ProviderVendor];
-    const effectiveBaseUrl = baseUrl || providerConfig?.apiHost || null;
+    const effectiveBaseUrl = this.resolveEffectiveBaseUrl(vendor, baseUrl);
 
     this.logger.info(
       `[ModelVerification] Refreshing models for provider key: vendor=${vendor}, apiType=${effectiveApiType}, baseUrl=${effectiveBaseUrl}`,
@@ -487,9 +497,7 @@ export class ModelVerificationService {
     const apiKey = this.encryptionService.decrypt(Buffer.from(secretEncrypted));
     const effectiveApiType = apiType || this.inferApiType(vendor);
 
-    // 回退到 PROVIDER_CONFIGS 中的默认 apiHost
-    const providerConfig = PROVIDER_CONFIGS[vendor as ProviderVendor];
-    const effectiveBaseUrl = baseUrl || providerConfig?.apiHost || null;
+    const effectiveBaseUrl = this.resolveEffectiveBaseUrl(vendor, baseUrl);
 
     this.logger.info(
       `[ModelVerification] Verifying single model: ${model}, vendor=${vendor}, apiType=${effectiveApiType}`,
@@ -529,9 +537,7 @@ export class ModelVerificationService {
     const apiKey = this.encryptionService.decrypt(Buffer.from(secretEncrypted));
     const effectiveApiType = apiType || this.inferApiType(vendor);
 
-    // 回退到 PROVIDER_CONFIGS 中的默认 apiHost
-    const providerConfig = PROVIDER_CONFIGS[vendor as ProviderVendor];
-    const effectiveBaseUrl = baseUrl || providerConfig?.apiHost || null;
+    const effectiveBaseUrl = this.resolveEffectiveBaseUrl(vendor, baseUrl);
 
     // 获取该 providerKey 下的所有模型，强制重新验证
     const { list: unverifiedRecords } =
