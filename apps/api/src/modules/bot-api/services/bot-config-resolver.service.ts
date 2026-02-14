@@ -108,9 +108,7 @@ export class BotConfigResolverService {
 
     // 如果没有任何配置，返回 null
     if (!primaryBotModel && !primaryChannel) {
-      this.logger.debug(
-        `Bot ${botId} has no model or channel configuration`,
-      );
+      this.logger.debug(`Bot ${botId} has no model or channel configuration`);
       return null;
     }
 

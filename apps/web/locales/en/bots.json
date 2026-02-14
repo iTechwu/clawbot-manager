@@ -598,6 +598,11 @@
           "notAvailable": "Model {model} not available, please configure it in providers first",
           "noRuleToApply": "Please add a rule first",
           "availabilityHint": "Grayed models are not configured in current providers, numbers indicate available provider count"
+        },
+        "errors": {
+          "noRules": "Please add at least one routing rule",
+          "invalidRules": "Please select valid target models for all rules",
+          "noDefaultTarget": "Please select a default target model"
         }
       },
       "loadBalance": {
@@ -616,6 +621,10 @@
         "costOptimization": "Cost Optimization Strategy",
         "costOptimizationHint": "Select a preset cost optimization strategy to balance cost and performance",
         "strategySelected": "Strategy selected: {strategyId}",
+        "errors": {
+          "noTargets": "Please add at least one target model",
+          "invalidTargets": "Please select valid models for all targets"
+        },
         "templates": {
           "title": "Preset Templates",
           "dualEqual": {
@@ -646,6 +655,9 @@
         "chainSelected": "Fallback chain selected: {chainId}",
         "chainApplied": "Applied fallback chain \"{name}\" ({count} models)",
         "orConfigureManually": "Or configure failover manually",
+        "errors": {
+          "noPrimary": "Please select a primary target model"
+        },
         "templates": {
           "title": "Preset Templates",
           "singleFallback": {

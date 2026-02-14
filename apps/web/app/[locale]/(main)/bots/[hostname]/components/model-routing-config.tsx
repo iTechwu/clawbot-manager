@@ -55,6 +55,7 @@ import { toast } from 'sonner';
 import type {
   BotModelRouting,
   CreateRoutingConfigInput,
+  FallbackModel,
   UpdateRoutingConfigInput,
   RoutingConfig,
   FunctionRouteRule,
@@ -573,6 +574,42 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
     if (!formName.trim()) {
       toast.error('Please enter a routing name');
       return;
+    }
+
+    // 验证路由配置
+    if (formType === 'LOAD_BALANCE') {
+      if (lbTargets.length === 0) {
+        toast.error(t('loadBalance.errors.noTargets'));
+        return;
+      }
+      const invalidTargets = lbTargets.filter(
+        (t) => !t.providerKeyId || !t.model,
+      );
+      if (invalidTargets.length > 0) {
+        toast.error(t('loadBalance.errors.invalidTargets'));
+        return;
+      }
+    } else if (formType === 'FAILOVER') {
+      if (!failoverPrimary.providerKeyId || !failoverPrimary.model) {
+        toast.error(t('failover.errors.noPrimary'));
+        return;
+      }
+    } else if (formType === 'FUNCTION_ROUTE') {
+      if (functionRules.length === 0) {
+        toast.error(t('functionRoute.errors.noRules'));
+        return;
+      }
+      const invalidRules = functionRules.filter(
+        (r) => !r.target.providerKeyId || !r.target.model,
+      );
+      if (invalidRules.length > 0) {
+        toast.error(t('functionRoute.errors.invalidRules'));
+        return;
+      }
+      if (!defaultTarget.providerKeyId || !defaultTarget.model) {
+        toast.error(t('functionRoute.errors.noDefaultTarget'));
+        return;
+      }
     }
 
     setActionLoading(true);
@@ -1563,13 +1600,16 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                         const chain = fallbackChains.find(
                           (c) => c.chainId === chainId,
                         );
-                        const chainModels = chain?.models ?? [];
+                        const rawModels = chain?.models ?? [];
+                        const chainModels: FallbackModel[] = rawModels.filter(
+                          (m): m is FallbackModel => m != null,
+                        );
                         if (chainModels.length > 0) {
+                          const first = chainModels[0];
                           // Find matching providerKeyId for each model
-                          const resolveTarget = (m: {
-                            vendor: string;
-                            model: string;
-                          }): RoutingTarget => {
+                          const resolveTarget = (
+                            m: FallbackModel,
+                          ): RoutingTarget => {
                             const provider = botProviders.find(
                               (p) =>
                                 p.vendor === m.vendor &&
@@ -1580,16 +1620,18 @@ export function ModelRoutingConfig({ hostname }: ModelRoutingConfigProps) {
                               model: m.model,
                             };
                           };
-                          setFailoverPrimary(resolveTarget(chainModels[0]));
-                          setFailoverChain(
-                            chainModels.slice(1).map(resolveTarget),
-                          );
-                          toast.success(
-                            t('failover.chainApplied', {
-                              name: chain?.name ?? chainId,
-                              count: chainModels.length,
-                            }),
-                          );
+                          if (first !== undefined) {
+                            setFailoverPrimary(resolveTarget(first));
+                            setFailoverChain(
+                              chainModels.slice(1).map(resolveTarget),
+                            );
+                            toast.success(
+                              t('failover.chainApplied', {
+                                name: chain?.name ?? chainId,
+                                count: chainModels.length,
+                              }),
+                            );
+                          }
                         } else {
                           toast.info(t('failover.chainSelected', { chainId }));
                         }

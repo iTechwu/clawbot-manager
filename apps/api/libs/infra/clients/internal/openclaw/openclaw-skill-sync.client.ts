@@ -315,11 +315,14 @@ export class OpenClawSkillSyncClient {
     }
 
     if (remaining < 10) {
-      this.logger.warn('OpenClawSkillSyncClient: GitHub API Rate Limit 即将耗尽', {
-        remaining,
-        resetAt: reset ? new Date(reset * 1000).toISOString() : 'unknown',
-        hasToken: !!this.githubToken,
-      });
+      this.logger.warn(
+        'OpenClawSkillSyncClient: GitHub API Rate Limit 即将耗尽',
+        {
+          remaining,
+          resetAt: reset ? new Date(reset * 1000).toISOString() : 'unknown',
+          hasToken: !!this.githubToken,
+        },
+      );
     }
   }
 
@@ -327,7 +330,9 @@ export class OpenClawSkillSyncClient {
    * 从 AxiosError 中检测 429 状态码并抛出友好错误
    */
   private handleGitHubError(error: unknown): never {
-    const axiosError = error as { response?: { status?: number; headers?: Record<string, unknown> } };
+    const axiosError = error as {
+      response?: { status?: number; headers?: Record<string, unknown> };
+    };
     if (axiosError?.response?.status === 429) {
       const reset = Number(axiosError.response.headers?.['x-ratelimit-reset']);
       const resetTime = reset
@@ -589,7 +594,9 @@ export class OpenClawSkillSyncClient {
           ),
       );
 
-      this.checkRateLimit(response.headers as unknown as Record<string, unknown>);
+      this.checkRateLimit(
+        response.headers as unknown as Record<string, unknown>,
+      );
 
       const content = Buffer.from(response.data.content, 'base64').toString(
         'utf-8',
@@ -866,7 +873,9 @@ export class OpenClawSkillSyncClient {
             }),
           ),
       );
-      this.checkRateLimit(response.headers as unknown as Record<string, unknown>);
+      this.checkRateLimit(
+        response.headers as unknown as Record<string, unknown>,
+      );
       const content = Buffer.from(response.data.content, 'base64').toString(
         'utf-8',
       );

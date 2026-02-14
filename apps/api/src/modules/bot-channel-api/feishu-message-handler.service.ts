@@ -4,6 +4,7 @@
  * 职责：
  * - 统一处理飞书消息
  * - 消息去重（防止重复回复）
+ * - 支持多模态消息（文本、富文本、图片）
  * - 转发消息到 OpenClaw 并回复飞书
  *
  * 注意：此服务是单例，确保消息去重在所有连接之间共享
@@ -13,7 +14,15 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { BotChannelService, BotService } from '@app/db';
 import { FeishuClientService } from '@app/clients/internal/feishu';
-import { OpenClawClient } from '@app/clients/internal/openclaw';
+import {
+  OpenClawClient,
+  OpenClawContentPart,
+} from '@app/clients/internal/openclaw';
+import { parseFeishuMessage } from '@app/clients/internal/feishu/feishu-message-parser';
+import type { ParsedFeishuMessage } from '@app/clients/internal/feishu/feishu.types';
+
+/** 支持处理的消息类型 */
+const SUPPORTED_MESSAGE_TYPES = ['text', 'post', 'image'];
 
 @Injectable()
 export class FeishuMessageHandlerService {
@@ -42,6 +51,7 @@ export class FeishuMessageHandlerService {
 
   /**
    * 处理飞书消息
+   * 支持文本、富文本和图片消息
    * 转发消息到 OpenClaw 并回复飞书
    */
   private async handleFeishuMessage(channel: any, event: any): Promise<void> {
@@ -68,16 +78,8 @@ export class FeishuMessageHandlerService {
       }, this.MESSAGE_ID_TTL);
     }
 
-    // 解析消息内容
-    let messageText = '';
-    try {
-      if (rawContent) {
-        const content = JSON.parse(rawContent);
-        messageText = content.text || '';
-      }
-    } catch {
-      messageText = rawContent || '';
-    }
+    // 使用统一的消息解析器解析消息
+    const parsedMessage = parseFeishuMessage(messageType, rawContent || '');
 
     this.logger.info('========== 收到飞书消息（统一处理） ==========', {
       channelId: channel.id,
@@ -85,12 +87,23 @@ export class FeishuMessageHandlerService {
       messageId,
       chatId,
       messageType,
-      messageText,
+      messageText: parsedMessage.text,
+      hasImages: parsedMessage.hasImages,
+      imageCount: parsedMessage.images.length,
     });
 
-    // 只处理文本消息
-    if (messageType !== 'text' || !messageText.trim()) {
-      this.logger.debug('跳过非文本消息或空消息', { messageType, messageText });
+    // 检查是否为支持的消息类型
+    if (!SUPPORTED_MESSAGE_TYPES.includes(messageType)) {
+      this.logger.debug('不支持的消息类型，跳过', { messageType });
+      return;
+    }
+
+    // 检查是否有有效内容
+    if (!parsedMessage.text.trim() && !parsedMessage.hasImages) {
+      this.logger.debug('消息内容为空，跳过', {
+        messageType,
+        parsedMessage,
+      });
       return;
     }
 
@@ -134,18 +147,24 @@ export class FeishuMessageHandlerService {
         return;
       }
 
+      // 构建消息内容（支持多模态）
+      const message = await this.buildMessage(parsedMessage, channel.id);
+
       this.logger.info('转发消息到 OpenClaw', {
         botId: bot.id,
         botName: bot.name,
         port: bot.port,
-        messageLength: messageText.length,
+        messageType: typeof message === 'string' ? 'text' : 'multimodal',
+        textLength:
+          typeof message === 'string' ? message.length : message.length,
+        imageCount: parsedMessage.images.length,
       });
 
       // 发送消息到 OpenClaw
       const aiResponse = await this.openClawClient.chat(
         bot.port,
         bot.gatewayToken,
-        messageText,
+        message,
       );
 
       this.logger.info('收到 OpenClaw 响应', {
@@ -174,5 +193,83 @@ export class FeishuMessageHandlerService {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
+  }
+
+  /**
+   * 构建发送给 OpenClaw 的消息
+   * 如果消息包含图片，构建多模态消息格式
+   * 否则返回纯文本
+   */
+  private async buildMessage(
+    parsedMessage: ParsedFeishuMessage,
+    channelId: string,
+  ): Promise<string | OpenClawContentPart[]> {
+    // 如果没有图片，直接返回文本
+    if (!parsedMessage.hasImages) {
+      return parsedMessage.text;
+    }
+
+    // 构建多模态消息
+    const contentParts: OpenClawContentPart[] = [];
+
+    // 添加文本部分
+    if (parsedMessage.text.trim()) {
+      contentParts.push({
+        type: 'text',
+        text: parsedMessage.text,
+      });
+    }
+
+    // 下载并添加图片
+    const apiClient = this.feishuClientService.getApiClient(channelId);
+    if (!apiClient) {
+      this.logger.warn('找不到飞书 API 客户端，无法下载图片，仅发送文本', {
+        channelId,
+      });
+      return parsedMessage.text;
+    }
+
+    for (const imageInfo of parsedMessage.images) {
+      try {
+        this.logger.info('下载飞书图片', {
+          imageKey: imageInfo.imageKey,
+          channelId,
+        });
+
+        const imageData = await apiClient.getImageData(imageInfo.imageKey);
+
+        // 添加图片部分（使用 Base64 data URL）
+        contentParts.push({
+          type: 'image',
+          image_url: {
+            url: `data:${imageData.mimeType};base64,${imageData.base64}`,
+            detail: 'auto',
+          },
+        });
+
+        this.logger.info('飞书图片下载成功', {
+          imageKey: imageInfo.imageKey,
+          mimeType: imageData.mimeType,
+          size: imageData.size,
+        });
+      } catch (error) {
+        this.logger.error('下载飞书图片失败', {
+          imageKey: imageInfo.imageKey,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+        // 继续处理其他图片，不中断整个流程
+      }
+    }
+
+    // 如果所有图片都下载失败，回退到纯文本
+    if (contentParts.filter((p) => p.type === 'image').length === 0) {
+      this.logger.warn('所有图片下载失败，回退到纯文本模式', {
+        channelId,
+        textLength: parsedMessage.text.length,
+      });
+      return parsedMessage.text;
+    }
+
+    return contentParts;
   }
 }

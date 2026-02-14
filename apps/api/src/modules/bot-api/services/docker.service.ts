@@ -242,7 +242,9 @@ export class DockerService implements OnModuleInit {
       // Used to determine API protocol in entrypoint
       `AI_VENDOR=${originalProvider}`,
       // npm registry for China network (optional)
-      ...(process.env.NPM_CONFIG_REGISTRY && [`NPM_CONFIG_REGISTRY=${process.env.NPM_CONFIG_REGISTRY}`]),
+      ...(process.env.NPM_CONFIG_REGISTRY && [
+        `NPM_CONFIG_REGISTRY=${process.env.NPM_CONFIG_REGISTRY}`,
+      ]),
     ];
 
     // When using named volumes, bot needs to know its workspace subdirectory
@@ -367,7 +369,8 @@ export class DockerService implements OnModuleInit {
 
       // Use apiType for env var naming when provider differs from apiType
       // e.g., openai-compatible → use OPENAI_BASE_URL (not OPENAI_COMPATIBLE_BASE_URL)
-      const useApiType = options.apiType && options.aiProvider !== options.apiType;
+      const useApiType =
+        options.apiType && options.aiProvider !== options.apiType;
       const baseUrlEnvName = useApiType
         ? getBaseUrlEnvName(options.apiType!)
         : getBaseUrlEnvName(options.aiProvider);
@@ -384,7 +387,8 @@ export class DockerService implements OnModuleInit {
       );
     } else {
       // Direct mode: Pass API key and base URL directly
-      const useApiType = options.apiType && options.aiProvider !== options.apiType;
+      const useApiType =
+        options.apiType && options.aiProvider !== options.apiType;
 
       if (options.apiKey) {
         const envKeyName = useApiType

@@ -202,7 +202,10 @@ export class DockerExecService {
     return execId;
   }
 
-  private async startExec(execId: string, timeoutMs: number): Promise<ArrayBuffer> {
+  private async startExec(
+    execId: string,
+    timeoutMs: number,
+  ): Promise<ArrayBuffer> {
     const execStartUrl = `http://localhost/exec/${execId}/start`;
 
     const response = await firstValueFrom(

@@ -277,3 +277,97 @@ export interface FeishuChatInfo {
   external?: boolean;
   tenant_key?: string;
 }
+
+// ==================== 富文本消息解析类型 ====================
+
+/**
+ * 飞书富文本消息内容（post 类型）
+ * 参考: https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/im-v1/message-events/events/post
+ */
+export interface FeishuPostContent {
+  title?: string;
+  content: FeishuPostContentNode[][];
+}
+
+/**
+ * 富文本节点类型
+ */
+export type FeishuPostContentNode =
+  | FeishuPostTextNode
+  | FeishuPostImageNode
+  | FeishuPostLinkNode
+  | FeishuPostAtNode
+  | FeishuPostCodeNode;
+
+export interface FeishuPostTextNode {
+  tag: 'text';
+  text: string;
+  style?: FeishuPostStyle[];
+}
+
+export interface FeishuPostImageNode {
+  tag: 'img';
+  image_key: string;
+  width?: number;
+  height?: number;
+}
+
+export interface FeishuPostLinkNode {
+  tag: 'a';
+  text: string;
+  href: string;
+}
+
+export interface FeishuPostAtNode {
+  tag: 'at';
+  user_id: string;
+  text?: string;
+}
+
+export interface FeishuPostCodeNode {
+  tag: 'code';
+  text: string;
+  style?: FeishuPostStyle[];
+}
+
+export interface FeishuPostStyle {
+  key: 'bold' | 'italic' | 'underline' | 'lineThrough' | 'color';
+  value?: string;
+}
+
+/**
+ * 飞书图片消息内容（image 类型）
+ */
+export interface FeishuImageContent {
+  image_key: string;
+}
+
+/**
+ * 图片数据响应
+ */
+export interface FeishuImageData {
+  /** 图片 Base64 编码数据 */
+  base64: string;
+  /** 图片 MIME 类型 */
+  mimeType: string;
+  /** 图片大小（字节） */
+  size: number;
+}
+
+/**
+ * 解析后的消息内容
+ */
+export interface ParsedFeishuMessage {
+  /** 提取的纯文本内容 */
+  text: string;
+  /** 是否包含图片 */
+  hasImages: boolean;
+  /** 图片信息列表 */
+  images: Array<{
+    imageKey: string;
+    width?: number;
+    height?: number;
+  }>;
+  /** 原始消息类型 */
+  messageType: string;
+}

@@ -457,10 +457,7 @@ export class PluginApiService {
    * @param botId Bot ID
    * @param containerId 容器 ID
    */
-  async reconcileBotPlugins(
-    botId: string,
-    containerId: string,
-  ): Promise<void> {
+  async reconcileBotPlugins(botId: string, containerId: string): Promise<void> {
     this.logger.info('Reconciling bot plugins', { botId, containerId });
 
     // 获取所有已启用的插件
@@ -504,10 +501,7 @@ export class PluginApiService {
 
     if (Object.keys(mcpServers).length > 0) {
       try {
-        await this.openClawClient.injectMcpConfig(
-          containerId,
-          mcpServers,
-        );
+        await this.openClawClient.injectMcpConfig(containerId, mcpServers);
         this.logger.info('MCP configs reconciled', {
           botId,
           plugins: Object.keys(mcpServers),
@@ -543,10 +537,7 @@ export class PluginApiService {
       for (const [key, value] of Object.entries(
         pluginMcpConfig.env as Record<string, unknown>,
       )) {
-        env[key] = this.interpolateConfigValue(
-          String(value),
-          botConfig || {},
-        );
+        env[key] = this.interpolateConfigValue(String(value), botConfig || {});
       }
       result.env = env;
     }
@@ -621,7 +612,10 @@ export class PluginApiService {
   /**
    * 映射 BotPlugin（带 nested plugin）到 BotPluginItem
    */
-  private mapBotPluginToItemWithPlugin(botPlugin: any, plugin: any): BotPluginItem {
+  private mapBotPluginToItemWithPlugin(
+    botPlugin: any,
+    plugin: any,
+  ): BotPluginItem {
     return {
       id: botPlugin.id,
       botId: botPlugin.botId,

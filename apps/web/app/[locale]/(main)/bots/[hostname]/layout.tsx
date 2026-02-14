@@ -103,6 +103,7 @@ export default function BotDetailLayout({
       {/* 侧边栏导航 */}
       <BotSidebar
         hostname={hostname}
+        botName={bot?.name}
         status={
           bot?.status as
             | 'running'

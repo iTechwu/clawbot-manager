@@ -989,8 +989,21 @@ model Skill {
   sourceUrl    String?   @map("source_url") @db.VarChar(500)
   /// 技能作者（外部来源的作者）
   author       String?   @db.VarChar(100)
-  /// 最后同步时间
+  /// 最后同步时间（元数据同步）
   lastSyncedAt DateTime? @map("last_synced_at") @db.Timestamptz(6)
+
+  // ============ 预同步文件目录（用于加速安装）============
+  /// 完整的技能文件目录（从 GitHub 预同步）
+  /// 格式: [{ relativePath: string, content: string, size: number }]
+  files         Json?     @db.JsonB
+  /// 文件目录同步时间
+  filesSyncedAt DateTime? @map("files_synced_at") @db.Timestamptz(6)
+  /// 文件数量
+  fileCount     Int?      @map("file_count")
+  /// 是否包含初始化脚本 (scripts/init.sh)
+  hasInitScript Boolean   @default(false) @map("has_init_script")
+  /// 是否包含参考文档 (references/)
+  hasReferences Boolean   @default(false) @map("has_references")
 
   isDeleted Boolean   @default(false) @map("is_deleted")
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)

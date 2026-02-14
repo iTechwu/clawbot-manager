@@ -19,6 +19,7 @@ import type {
   FeishuCardContent,
   FeishuUserInfo,
   FeishuChatInfo,
+  FeishuImageData,
 } from './feishu.types';
 
 export class FeishuApiClient {
@@ -296,5 +297,51 @@ export class FeishuApiClient {
    */
   getConfig(): FeishuChannelConfig {
     return this.config;
+  }
+
+  /**
+   * 下载飞书图片并返回 Base64 编码数据
+   * @param imageKey 飞书图片 key（从消息中提取的 image_key）
+   * @returns 图片数据（Base64、MIME 类型、大小）
+   */
+  async getImageData(imageKey: string): Promise<FeishuImageData> {
+    const token = await this.getTenantAccessToken();
+    const url = `${this.baseUrl}/im/v1/images/${imageKey}`;
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: 'arraybuffer',
+        }),
+      );
+
+      // 从响应头获取 MIME 类型
+      const contentType =
+        response.headers['content-type'] || 'application/octet-stream';
+
+      // 转换为 Base64
+      const base64 = Buffer.from(response.data).toString('base64');
+
+      this.logger.info('Feishu image downloaded', {
+        imageKey,
+        mimeType: contentType,
+        size: response.data.byteLength,
+      });
+
+      return {
+        base64,
+        mimeType: contentType,
+        size: response.data.byteLength,
+      };
+    } catch (error) {
+      this.logger.error('Failed to download Feishu image', {
+        imageKey,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
+    }
   }
 }

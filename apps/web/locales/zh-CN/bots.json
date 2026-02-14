@@ -601,6 +601,11 @@
           "notAvailable": "模型 {model} 不可用，请先在供应商中配置",
           "noRuleToApply": "请先添加一条规则",
           "availabilityHint": "灰色模型表示未在当前供应商中配置，数字表示可用的供应商数量"
+        },
+        "errors": {
+          "noRules": "请至少添加一条路由规则",
+          "invalidRules": "请为所有规则选择有效的目标模型",
+          "noDefaultTarget": "请选择默认目标模型"
         }
       },
       "loadBalance": {
@@ -619,6 +624,10 @@
         "costOptimization": "成本优化策略",
         "costOptimizationHint": "选择预设的成本优化策略，自动平衡成本和性能",
         "strategySelected": "已选择策略: {strategyId}",
+        "errors": {
+          "noTargets": "请至少添加一个目标模型",
+          "invalidTargets": "请为所有目标选择有效的模型"
+        },
         "templates": {
           "title": "预设模板",
           "dualEqual": {
@@ -649,6 +658,9 @@
         "chainSelected": "已选择故障转移链: {chainId}",
         "chainApplied": "已应用故障转移链「{name}」（{count} 个模型）",
         "orConfigureManually": "或手动配置故障转移",
+        "errors": {
+          "noPrimary": "请选择主要目标模型"
+        },
         "templates": {
           "title": "预设模板",
           "singleFallback": {

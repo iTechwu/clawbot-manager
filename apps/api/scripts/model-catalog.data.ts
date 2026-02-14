@@ -2241,6 +2241,24 @@ export const MODEL_CATALOG_DATA: ModelCatalogData[] = [
   // Zhipu GLM Models
   // ============================================================================
   {
+    model: 'glm-5',
+    vendor: 'zhipu',
+    inputPrice: 1.5,
+    outputPrice: 1.5,
+    displayName: 'GLM 5',
+    reasoningScore: 95,
+    codingScore: 95,
+    creativityScore: 92,
+    speedScore: 82,
+    contextLength: 128,
+    supportsVision: true,
+    supportsFunctionCalling: true,
+    supportsStreaming: true,
+    supportsExtendedThinking: true,
+    supportsCacheControl: true,
+    recommendedScenarios: ['deep-reasoning', 'coding', 'creative'],
+  },
+  {
     model: 'glm-4.5',
     vendor: 'zhipu',
     inputPrice: 0.7,

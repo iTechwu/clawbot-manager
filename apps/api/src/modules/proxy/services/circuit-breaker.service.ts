@@ -1,9 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  OnModuleDestroy,
-  Optional,
-} from '@nestjs/common';
+import { Inject, Injectable, OnModuleDestroy, Optional } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 
@@ -77,7 +72,10 @@ export class CircuitBreakerService implements OnModuleDestroy {
     config?: Partial<CircuitBreakerConfig>,
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
-    this.cleanupInterval = setInterval(() => this.cleanup(), this.cleanupIntervalMs);
+    this.cleanupInterval = setInterval(
+      () => this.cleanup(),
+      this.cleanupIntervalMs,
+    );
   }
 
   onModuleDestroy() {
@@ -118,7 +116,7 @@ export class CircuitBreakerService implements OnModuleDestroy {
    * 记录成功
    */
   recordSuccess(providerKeyId: string): void {
-    let circuit = this.circuits.get(providerKeyId);
+    const circuit = this.circuits.get(providerKeyId);
 
     if (!circuit) {
       return; // 无记录表示正常，不需要处理
@@ -298,7 +296,8 @@ export class CircuitBreakerService implements OnModuleDestroy {
     let cleaned = 0;
 
     for (const [id, circuit] of this.circuits) {
-      const inactiveTime = now - Math.max(circuit.lastFailure, circuit.lastStateChange);
+      const inactiveTime =
+        now - Math.max(circuit.lastFailure, circuit.lastStateChange);
       if (inactiveTime > this.maxInactiveTime && circuit.status === 'closed') {
         this.circuits.delete(id);
         cleaned++;
@@ -306,7 +305,9 @@ export class CircuitBreakerService implements OnModuleDestroy {
     }
 
     if (cleaned > 0) {
-      this.logger.debug(`[CircuitBreaker] Cleaned up ${cleaned} inactive circuits`);
+      this.logger.debug(
+        `[CircuitBreaker] Cleaned up ${cleaned} inactive circuits`,
+      );
     }
   }
 }

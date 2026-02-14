@@ -18,7 +18,20 @@ import { DockerExecService } from './docker-exec.service';
 
 export interface OpenClawMessage {
   role: 'user' | 'assistant' | 'system';
-  content: string;
+  content: string | OpenClawContentPart[];
+}
+
+/**
+ * OpenClaw 多模态内容部分
+ * 支持文本和图片
+ */
+export interface OpenClawContentPart {
+  type: 'text' | 'image';
+  text?: string;
+  image_url?: {
+    url: string;
+    detail?: 'low' | 'high' | 'auto';
+  };
 }
 
 export interface OpenClawChatRequest {
@@ -86,18 +99,27 @@ export class OpenClawClient {
    * 使用 WebSocket 进行通信
    * @param port OpenClaw Gateway 端口
    * @param token Gateway 认证 token
-   * @param message 用户消息
+   * @param message 用户消息（字符串或多模态内容数组）
    * @param options 可选的聊天选项（上下文、模型、路由提示等）
    */
   async chat(
     port: number,
     token: string,
-    message: string,
+    message: string | OpenClawContentPart[],
     options?: OpenClawChatOptions,
   ): Promise<string> {
+    const messageInfo =
+      typeof message === 'string'
+        ? { length: message.length, type: 'text' }
+        : {
+            length: message.length,
+            type: 'multimodal',
+            imageCount: message.filter((p) => p.type === 'image').length,
+          };
+
     this.logger.info('OpenClawClient: 发送消息到 OpenClaw', {
       port,
-      messageLength: message.length,
+      ...messageInfo,
       contextLength: options?.context?.length || 0,
       model: options?.model,
       routingHint: options?.routingHint,
@@ -138,7 +160,7 @@ export class OpenClawClient {
   async chatLegacy(
     port: number,
     token: string,
-    message: string,
+    message: string | OpenClawContentPart[],
     context?: OpenClawMessage[],
   ): Promise<string> {
     return this.chat(port, token, message, { context });
@@ -238,7 +260,7 @@ export class OpenClawClient {
   private sendMessageViaWebSocket(
     port: number,
     token: string,
-    message: string,
+    message: string | OpenClawContentPart[],
     _context?: OpenClawMessage[],
   ): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -788,8 +810,14 @@ export class OpenClawClient {
    * @param containerId Docker 容器 ID
    * @param serverName MCP Server plugin slug（如 "mcp-server-slack"）
    */
-  async removeMcpConfig(containerId: string, serverName: string): Promise<void> {
-    this.logger.info('OpenClawClient: 移除 MCP 配置', { containerId, serverName });
+  async removeMcpConfig(
+    containerId: string,
+    serverName: string,
+  ): Promise<void> {
+    this.logger.info('OpenClawClient: 移除 MCP 配置', {
+      containerId,
+      serverName,
+    });
 
     // 安全校验：只允许合法字符（防止 shell 注入）
     if (!this.dockerExec.isValidName(serverName)) {
@@ -825,6 +853,73 @@ export class OpenClawClient {
     });
   }
 
+  // ============================================================================
+  // 热加载机制（无需重启容器即可生效）
+  // ============================================================================
+
+  /**
+   * 重新加载 Skills（热加载通知）
+   * 通知 OpenClaw 重新扫描并加载 skills 目录
+   * @param containerId Docker 容器 ID
+   */
+  async reloadSkills(containerId: string): Promise<void> {
+    this.logger.info('OpenClawClient: 重新加载 Skills', { containerId });
+
+    // 方案1：尝试调用 OpenClaw CLI 的 reload 命令（如果支持）
+    // 方案2：通过发送 SIGHUP 信号通知进程重载
+    // 方案3：目前 OpenClaw 会自动检测文件变化，此方法预留用于未来扩展
+
+    // 当前实现：记录日志，OpenClaw 通过文件系统 watch 自动重载
+    // 未来可以添加显式的 reload API 调用
+    this.logger.info(
+      'OpenClawClient: Skills 热加载完成（OpenClaw 自动检测文件变化）',
+      {
+        containerId,
+      },
+    );
+  }
+
+  /**
+   * 重新加载 MCP Servers（热加载通知）
+   * 通知 OpenClaw 重新连接所有 MCP 服务器
+   * @param containerId Docker 容器 ID
+   */
+  async reloadMcpServers(containerId: string): Promise<void> {
+    this.logger.info('OpenClawClient: 重新加载 MCP Servers', { containerId });
+
+    // 当前实现：记录日志，OpenClaw 会自动检测配置变化
+    // 未来可以添加显式的 MCP reload API 调用
+    this.logger.info(
+      'OpenClawClient: MCP Servers 热加载完成（OpenClaw 自动检测配置变化）',
+      {
+        containerId,
+      },
+    );
+  }
+
+  /**
+   * 检查 Skill 是否存在于容器内
+   * @param containerId Docker 容器 ID
+   * @param skillName 技能名称
+   */
+  async checkSkillExists(
+    containerId: string,
+    skillName: string,
+  ): Promise<boolean> {
+    // 安全校验
+    if (!this.dockerExec.isValidName(skillName)) {
+      return false;
+    }
+
+    const result = await this.dockerExec.executeCommand(containerId, [
+      'test',
+      '-d',
+      `/home/node/.openclaw/skills/${skillName}`,
+    ]);
+
+    return result.success;
+  }
+
   /**
    * 批量读取容器内每个技能的 SKILL.md 内容
    * 使用单次 exec 调用读取所有技能的 MD 文件，减少 Docker API 调用次数
@@ -836,7 +931,9 @@ export class OpenClawClient {
     if (skills.length === 0) return;
 
     // 安全校验：只允许合法字符的技能名参与 shell 命令（防止注入）
-    const safeSkills = skills.filter((s) => this.dockerExec.isValidName(s.name));
+    const safeSkills = skills.filter((s) =>
+      this.dockerExec.isValidName(s.name),
+    );
 
     if (safeSkills.length === 0) return;
 

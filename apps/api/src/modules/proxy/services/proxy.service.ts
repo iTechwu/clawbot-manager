@@ -384,7 +384,8 @@ export class ProxyService {
     // 如果请求路径是 /responses（OpenAI Responses API），只选择支持该协议的 provider
     // 国内厂商（zhipu, dashscope, doubao 等）apiType='openai'，仅支持 /chat/completions
     // OpenAI 原生 apiType='openai-response'，支持 /responses
-    const isResponsesApi = path === '/responses' || path.startsWith('/responses/');
+    const isResponsesApi =
+      path === '/responses' || path.startsWith('/responses/');
     const resolveOptions = isResponsesApi
       ? { requiredProtocol: 'openai-response' }
       : undefined;

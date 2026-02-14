@@ -1,4 +1,9 @@
-import { Inject, Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
@@ -36,7 +41,12 @@ import type { ConfigLoadStatus } from '@repo/contracts';
  */
 export class ConfigurationChangedEvent {
   constructor(
-    public readonly configType: 'modelCatalog' | 'capabilityTags' | 'fallbackChains' | 'costStrategies' | 'complexityRoutingConfigs',
+    public readonly configType:
+      | 'modelCatalog'
+      | 'capabilityTags'
+      | 'fallbackChains'
+      | 'costStrategies'
+      | 'complexityRoutingConfigs',
     public readonly count: number,
     public readonly timestamp: Date = new Date(),
   ) {}
@@ -471,7 +481,9 @@ export class ConfigurationService implements OnModuleInit, OnModuleDestroy {
    */
   onModuleDestroy(): void {
     this.stopPeriodicRefresh();
-    this.logger.info('[ConfigurationService] Module destroyed, resources cleaned up');
+    this.logger.info(
+      '[ConfigurationService] Module destroyed, resources cleaned up',
+    );
   }
 
   /**
@@ -506,7 +518,12 @@ export class ConfigurationService implements OnModuleInit, OnModuleDestroy {
    * 发送配置变更事件
    */
   private emitConfigChangedEvent(
-    configType: 'modelCatalog' | 'capabilityTags' | 'fallbackChains' | 'costStrategies' | 'complexityRoutingConfigs',
+    configType:
+      | 'modelCatalog'
+      | 'capabilityTags'
+      | 'fallbackChains'
+      | 'costStrategies'
+      | 'complexityRoutingConfigs',
     count: number,
   ): void {
     this.eventEmitter.emit(
@@ -519,9 +536,16 @@ export class ConfigurationService implements OnModuleInit, OnModuleDestroy {
    * 强制刷新指定类型的配置
    */
   async refreshConfigType(
-    configType: 'modelCatalog' | 'capabilityTags' | 'fallbackChains' | 'costStrategies' | 'complexityRoutingConfigs',
+    configType:
+      | 'modelCatalog'
+      | 'capabilityTags'
+      | 'fallbackChains'
+      | 'costStrategies'
+      | 'complexityRoutingConfigs',
   ): Promise<void> {
-    this.logger.info(`[ConfigurationService] Refreshing config type: ${configType}`);
+    this.logger.info(
+      `[ConfigurationService] Refreshing config type: ${configType}`,
+    );
 
     switch (configType) {
       case 'modelCatalog':
@@ -546,7 +570,9 @@ export class ConfigurationService implements OnModuleInit, OnModuleDestroy {
    * 清除所有缓存并重新加载配置
    */
   async invalidateAndReload(): Promise<void> {
-    this.logger.info('[ConfigurationService] Invalidating all caches and reloading...');
+    this.logger.info(
+      '[ConfigurationService] Invalidating all caches and reloading...',
+    );
 
     // 清除各服务的缓存
     this.routingEngine.clearCapabilityScoreCache();

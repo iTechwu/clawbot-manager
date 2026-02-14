@@ -6,3 +6,4 @@ export * from './feishu-api.client';
 export * from './feishu-sdk.client';
 export * from './feishu-client.service';
 export * from './feishu-client.module';
+export * from './feishu-message-parser';

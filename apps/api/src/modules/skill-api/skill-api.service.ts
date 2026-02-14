@@ -455,29 +455,42 @@ export class SkillApiService {
 
       try {
         if (updatedSkill.source === OPENCLAW_SOURCE && updatedSkill.sourceUrl) {
-          const { scriptExists, fileCount, hasReferences } =
+          const { scriptExists, fileCount, hasReferences, source } =
             await this.writeSkillToFilesystem(
               userId,
               hostname,
               skillDirName,
-              updatedSkill.sourceUrl,
+              {
+                id: updatedSkill.id,
+                sourceUrl: updatedSkill.sourceUrl,
+                files: (
+                  updatedSkill as unknown as { files: Prisma.JsonValue | null }
+                ).files,
+                filesSyncedAt: (
+                  updatedSkill as unknown as { filesSyncedAt: Date | null }
+                ).filesSyncedAt,
+                name: updatedSkill.name,
+                description: updatedSkill.description,
+              },
               mdContent,
-              updatedSkill.name,
-              updatedSkill.description,
             );
 
           const scriptExecuted =
             scriptExists && bot.containerId
-              ? !!(await this.executeSkillScript(
-                  bot.containerId,
-                  skillDirName,
-                ))
+              ? !!(await this.executeSkillScript(bot.containerId, skillDirName))
               : false;
 
           await this.botSkillService.update(
             { id: botSkill.id },
             { fileCount, scriptExecuted, hasReferences },
           );
+
+          this.logger.info('Skill files installed', {
+            skillId: data.skillId,
+            source,
+            fileCount,
+            scriptExists,
+          });
         } else {
           const content =
             mdContent ||
@@ -582,10 +595,18 @@ export class SkillApiService {
             userId,
             hostname,
             skillDirName,
-            skill.sourceUrl,
+            {
+              id: skill.id,
+              sourceUrl: skill.sourceUrl,
+              files: (skill as unknown as { files: Prisma.JsonValue | null })
+                .files,
+              filesSyncedAt: (
+                skill as unknown as { filesSyncedAt: Date | null }
+              ).filesSyncedAt,
+              name: skill.name,
+              description: skill.description,
+            },
             mdContent,
-            skill.name,
-            skill.description,
           )
             .then(({ fileCount, hasReferences }) =>
               this.botSkillService.update(
@@ -811,15 +832,22 @@ export class SkillApiService {
     // 5. 重写文件系统中的技能文件（整目录）
     const skillDirName = skill.slug || skill.name;
     try {
-      const { scriptExists, fileCount, hasReferences } =
+      const { scriptExists, fileCount, hasReferences, source } =
         await this.writeSkillToFilesystem(
           userId,
           hostname,
           skillDirName,
-          skill.sourceUrl,
+          {
+            id: skill.id,
+            sourceUrl: skill.sourceUrl,
+            files: (skill as unknown as { files: Prisma.JsonValue | null })
+              .files,
+            filesSyncedAt: (skill as unknown as { filesSyncedAt: Date | null })
+              .filesSyncedAt,
+            name: skill.name,
+            description: skill.description,
+          },
           skillDefinition.content,
-          skill.name,
-          skill.description,
         );
 
       const scriptExecuted =
@@ -831,6 +859,12 @@ export class SkillApiService {
         { id: botSkill.id },
         { fileCount, scriptExecuted, hasReferences },
       );
+
+      this.logger.info('Skill files updated', {
+        skillId,
+        source,
+        fileCount,
+      });
     } catch (error) {
       this.logger.warn('Failed to write updated skill files', {
         skillId,
@@ -1071,57 +1105,117 @@ export class SkillApiService {
 
   /**
    * 将技能文件写入文件系统
-   * 优先使用整目录安装，失败时 fallback 到单文件 SKILL.md
+   * 优先级：1. 数据库缓存 -> 2. GitHub 实时拉取 -> 3. 仅 SKILL.md
    */
   private async writeSkillToFilesystem(
     userId: string,
     hostname: string,
     skillDirName: string,
-    sourceUrl: string,
+    skill: {
+      id: string;
+      sourceUrl: string | null;
+      files: Prisma.JsonValue | null;
+      filesSyncedAt: Date | null;
+      name: string;
+      description: string | null;
+    },
     mdContent: string | null,
-    skillName: string,
-    skillDescription: string | null,
-  ): Promise<{ scriptExists: boolean; fileCount: number; hasReferences: boolean }> {
-    // 尝试整目录安装
-    try {
-      const files =
-        await this.openClawSyncClient.fetchSkillDirectory(sourceUrl);
+  ): Promise<{
+    scriptExists: boolean;
+    fileCount: number;
+    hasReferences: boolean;
+    source: 'cache' | 'github' | 'fallback';
+  }> {
+    // 1. 尝试使用数据库缓存的文件
+    if (skill.files && Array.isArray(skill.files) && skill.files.length > 0) {
+      try {
+        const files = skill.files as Array<{
+          relativePath: string;
+          content: string;
+          size: number;
+        }>;
 
-      const scriptExists = files.some(
-        (f) => f.relativePath === 'scripts/init.sh',
-      );
-      const hasReferences = files.some((f) =>
-        f.relativePath.startsWith('references/'),
-      );
+        const scriptExists = files.some(
+          (f) => f.relativePath === 'scripts/init.sh',
+        );
+        const hasReferences = files.some((f) =>
+          f.relativePath.startsWith('references/'),
+        );
 
-      await this.workspaceService.writeSkillFiles(
-        userId,
-        hostname,
-        skillDirName,
-        files,
-      );
+        await this.workspaceService.writeSkillFiles(
+          userId,
+          hostname,
+          skillDirName,
+          files,
+        );
 
-      this.logger.info('Full directory install succeeded', {
-        skillDirName,
-        fileCount: files.length,
-        scriptExists,
-        hasReferences,
-      });
+        this.logger.info('Skill installed from cache', {
+          skillDirName,
+          fileCount: files.length,
+          scriptExists,
+          hasReferences,
+          filesSyncedAt: skill.filesSyncedAt,
+        });
 
-      return { scriptExists, fileCount: files.length, hasReferences };
-    } catch (error) {
-      this.logger.warn(
-        'Full directory install failed, falling back to SKILL.md only',
-        {
+        return {
+          scriptExists,
+          fileCount: files.length,
+          hasReferences,
+          source: 'cache',
+        };
+      } catch (error) {
+        this.logger.warn('Failed to install from cache, trying GitHub', {
           skillDirName,
           error: error instanceof Error ? error.message : 'Unknown error',
-        },
-      );
+        });
+      }
     }
 
-    // Fallback: 仅写入 SKILL.md
+    // 2. 尝试从 GitHub 实时拉取
+    if (skill.sourceUrl) {
+      try {
+        const files = await this.openClawSyncClient.fetchSkillDirectory(
+          skill.sourceUrl,
+        );
+
+        const scriptExists = files.some(
+          (f) => f.relativePath === 'scripts/init.sh',
+        );
+        const hasReferences = files.some((f) =>
+          f.relativePath.startsWith('references/'),
+        );
+
+        await this.workspaceService.writeSkillFiles(
+          userId,
+          hostname,
+          skillDirName,
+          files,
+        );
+
+        this.logger.info('Skill installed from GitHub', {
+          skillDirName,
+          fileCount: files.length,
+          scriptExists,
+          hasReferences,
+        });
+
+        return {
+          scriptExists,
+          fileCount: files.length,
+          hasReferences,
+          source: 'github',
+        };
+      } catch (error) {
+        this.logger.warn('GitHub fetch failed, falling back to SKILL.md only', {
+          skillDirName,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    // 3. Fallback: 仅写入 SKILL.md
     const content =
-      mdContent || this.generateSkillMd(skillName, skillDescription);
+      mdContent || this.generateSkillMd(skill.name, skill.description);
     await this.workspaceService.writeInstalledSkillMd(
       userId,
       hostname,
@@ -1129,7 +1223,16 @@ export class SkillApiService {
       content,
     );
 
-    return { scriptExists: false, fileCount: 1, hasReferences: false };
+    this.logger.info('Skill installed with SKILL.md only (fallback)', {
+      skillDirName,
+    });
+
+    return {
+      scriptExists: false,
+      fileCount: 1,
+      hasReferences: false,
+      source: 'fallback',
+    };
   }
 
   /**
@@ -1200,7 +1303,7 @@ export class SkillApiService {
       );
       if (exists) continue;
 
-      let definition = skill.definition as Record<string, unknown> | null;
+      const definition = skill.definition as Record<string, unknown> | null;
       let mdContent = (definition?.content as string) || null;
 
       // 如果 content 为空且是 OpenClaw 技能，尝试从 GitHub 拉取
@@ -1256,10 +1359,18 @@ export class SkillApiService {
             userId,
             hostname,
             skillDirName,
-            skill.sourceUrl,
+            {
+              id: skill.id,
+              sourceUrl: skill.sourceUrl,
+              files: (skill as unknown as { files: Prisma.JsonValue | null })
+                .files,
+              filesSyncedAt: (
+                skill as unknown as { filesSyncedAt: Date | null }
+              ).filesSyncedAt,
+              name: skill.name,
+              description: skill.description,
+            },
             mdContent,
-            skill.name,
-            skill.description,
           );
         } else {
           await this.workspaceService.writeInstalledSkillMd(
@@ -1280,6 +1391,155 @@ export class SkillApiService {
           error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
+    }
+  }
+
+  // ============================================================================
+  // 容器恢复机制
+  // ============================================================================
+
+  /**
+   * 恢复 Bot 的所有已安装 Skills
+   * 在容器启动后调用，确保所有已安装的 skills 都存在于文件系统中
+   * @param botId Bot ID
+   * @param containerId 容器 ID
+   * @param userId 用户 ID
+   * @param hostname Bot hostname
+   */
+  async reconcileBotSkills(
+    botId: string,
+    containerId: string,
+    userId: string,
+    hostname: string,
+  ): Promise<{
+    total: number;
+    restored: number;
+    skipped: number;
+    errors: number;
+  }> {
+    this.logger.info('SkillApiService: 开始恢复 Bot Skills', {
+      botId,
+      containerId,
+    });
+
+    const result = { total: 0, restored: 0, skipped: 0, errors: 0 };
+
+    try {
+      // 获取所有已安装且启用的 skills
+      const botSkills = await this.botSkillService.list(
+        { botId, isEnabled: true },
+        { limit: 1000 },
+        {
+          select: {
+            id: true,
+            skillId: true,
+            skill: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                description: true,
+                source: true,
+                sourceUrl: true,
+                definition: true,
+                version: true,
+              },
+            },
+          },
+        },
+      );
+
+      result.total = botSkills.list.length;
+
+      if (result.total === 0) {
+        this.logger.info('SkillApiService: 没有需要恢复的 Skills', { botId });
+        return result;
+      }
+
+      // 检查并恢复每个 skill
+      for (const botSkill of botSkills.list) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const skill = (botSkill as any).skill as {
+          id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          source: string | null;
+          sourceUrl: string | null;
+          definition: Prisma.JsonValue | null;
+          version: string;
+        } | null;
+        if (!skill) continue;
+
+        const skillDirName = skill.slug || skill.name;
+
+        try {
+          // 检查容器内是否存在
+          const exists = await this.openClawClient.checkSkillExists(
+            containerId,
+            skillDirName,
+          );
+
+          if (!exists) {
+            // 重新写入文件系统
+            const definition = skill.definition as Record<
+              string,
+              unknown
+            > | null;
+            const mdContent = (definition?.content as string) || null;
+
+            await this.writeSkillToFilesystem(
+              userId,
+              hostname,
+              skillDirName,
+              {
+                id: skill.id,
+                sourceUrl: skill.sourceUrl,
+                files: (skill as unknown as { files: Prisma.JsonValue | null })
+                  .files,
+                filesSyncedAt: (
+                  skill as unknown as { filesSyncedAt: Date | null }
+                ).filesSyncedAt,
+                name: skill.name,
+                description: skill.description,
+              },
+              mdContent,
+            );
+
+            result.restored++;
+            this.logger.info('SkillApiService: Skill 已恢复', {
+              botId,
+              skillId: skill.id,
+              skillDirName,
+            });
+          } else {
+            result.skipped++;
+          }
+        } catch (error) {
+          result.errors++;
+          this.logger.warn('SkillApiService: 恢复 Skill 失败', {
+            botId,
+            skillId: skill.id,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
+      }
+
+      // 触发热加载
+      await this.openClawClient.reloadSkills(containerId);
+
+      this.logger.info('SkillApiService: Bot Skills 恢复完成', {
+        botId,
+        ...result,
+      });
+
+      return result;
+    } catch (error) {
+      this.logger.error('SkillApiService: Bot Skills 恢复失败', {
+        botId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
     }
   }
 

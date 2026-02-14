@@ -1,10 +1,7 @@
 import { Inject, Injectable, Optional, OnModuleDestroy } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import {
-  FallbackChainService,
-  FallbackChainModelService,
-} from '@app/db';
+import { FallbackChainService, FallbackChainModelService } from '@app/db';
 import { ModelResolverService, ResolvedModel } from './model-resolver.service';
 
 /**
@@ -81,7 +78,10 @@ export class FallbackEngineService implements OnModuleDestroy {
   // Fallback 链配置（运行时缓存）
   private fallbackChains: Map<string, FallbackChain> = new Map();
   // Fallback 链缓存（数据库加载的配置）
-  private chainCache = new Map<string, { chain: FallbackChain; expiry: number }>();
+  private chainCache = new Map<
+    string,
+    { chain: FallbackChain; expiry: number }
+  >();
   private readonly chainCacheTTL = 5 * 60 * 1000; // 5 分钟
 
   // 活跃的 Fallback 上下文
@@ -94,7 +94,8 @@ export class FallbackEngineService implements OnModuleDestroy {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @Optional() private readonly modelResolverService?: ModelResolverService,
     @Optional() private readonly fallbackChainService?: FallbackChainService,
-    @Optional() private readonly fallbackChainModelService?: FallbackChainModelService,
+    @Optional()
+    private readonly fallbackChainModelService?: FallbackChainModelService,
   ) {
     this.initializeDefaultChains();
     // 每分钟清理过期缓存
@@ -136,7 +137,9 @@ export class FallbackEngineService implements OnModuleDestroy {
   /**
    * 从数据库加载 Fallback 链配置
    */
-  async loadFallbackChainFromDb(chainId: string): Promise<FallbackChain | null> {
+  async loadFallbackChainFromDb(
+    chainId: string,
+  ): Promise<FallbackChain | null> {
     // 检查缓存
     const cached = this.chainCache.get(chainId);
     if (cached && cached.expiry > Date.now()) {
@@ -152,7 +155,9 @@ export class FallbackEngineService implements OnModuleDestroy {
         }
 
         // 获取模型列表
-        const models = await this.fallbackChainModelService.listByChainId(dbChain.id);
+        const models = await this.fallbackChainModelService.listByChainId(
+          dbChain.id,
+        );
 
         // 构建 FallbackChain 对象
         const chain = this.buildFallbackChain(dbChain, models);
@@ -214,12 +219,15 @@ export class FallbackEngineService implements OnModuleDestroy {
   /**
    * 从 vendor 推断协议
    */
-  private inferProtocol(vendor?: string): 'openai-compatible' | 'anthropic-native' {
+  private inferProtocol(
+    vendor?: string,
+  ): 'openai-compatible' | 'anthropic-native' {
     return vendor === 'anthropic' ? 'anthropic-native' : 'openai-compatible';
   }
 
   /**
    * 初始化默认 Fallback 链
+   * GLM-5 优先链路: GLM-5 -> Claude Opus 4.6 -> DeepSeek V3.2
    */
   private initializeDefaultChains(): void {
     const defaultChains: FallbackChain[] = [
@@ -228,16 +236,21 @@ export class FallbackEngineService implements OnModuleDestroy {
         name: '默认 Fallback 链',
         models: [
           {
+            vendor: 'zhipu',
+            model: 'glm-5',
+            protocol: 'openai-compatible',
+          },
+          {
             vendor: 'anthropic',
-            model: 'claude-sonnet-4-20250514',
+            model: 'claude-opus-4-6',
+            protocol: 'anthropic-native',
+          },
+          {
+            vendor: 'deepseek',
+            model: 'deepseek-v3-2-251201',
             protocol: 'openai-compatible',
           },
           { vendor: 'openai', model: 'gpt-4o', protocol: 'openai-compatible' },
-          {
-            vendor: 'deepseek',
-            model: 'deepseek-chat',
-            protocol: 'openai-compatible',
-          },
         ],
         triggerStatusCodes: [429, 500, 502, 503, 504],
         triggerErrorTypes: ['rate_limit', 'overloaded', 'timeout'],
@@ -251,23 +264,23 @@ export class FallbackEngineService implements OnModuleDestroy {
         name: '深度推理 Fallback 链',
         models: [
           {
-            vendor: 'anthropic',
-            model: 'claude-sonnet-4-20250514',
-            protocol: 'anthropic-native',
+            vendor: 'zhipu',
+            model: 'glm-5',
+            protocol: 'openai-compatible',
             features: { extendedThinking: true },
           },
           {
             vendor: 'anthropic',
-            model: 'claude-opus-4-20250514',
+            model: 'claude-opus-4-6',
             protocol: 'anthropic-native',
             features: { extendedThinking: true },
           },
-          { vendor: 'openai', model: 'o1', protocol: 'openai-compatible' },
           {
             vendor: 'deepseek',
-            model: 'deepseek-reasoner',
+            model: 'deepseek-v3-2-251201',
             protocol: 'openai-compatible',
           },
+          { vendor: 'openai', model: 'o1', protocol: 'openai-compatible' },
         ],
         triggerStatusCodes: [429, 500, 502, 503, 504],
         triggerErrorTypes: ['rate_limit', 'overloaded', 'timeout'],
@@ -282,7 +295,7 @@ export class FallbackEngineService implements OnModuleDestroy {
         models: [
           {
             vendor: 'deepseek',
-            model: 'deepseek-chat',
+            model: 'deepseek-v3-2-251201',
             protocol: 'openai-compatible',
           },
           {
@@ -291,8 +304,8 @@ export class FallbackEngineService implements OnModuleDestroy {
             protocol: 'openai-compatible',
           },
           {
-            vendor: 'google',
-            model: 'gemini-2.0-flash-exp',
+            vendor: 'zhipu',
+            model: 'glm-4.5-flash',
             protocol: 'openai-compatible',
           },
         ],
@@ -589,7 +602,9 @@ export class FallbackEngineService implements OnModuleDestroy {
   /**
    * 获取 Fallback 链配置（异步版本，尝试从数据库加载）
    */
-  async getFallbackChainAsync(chainId: string): Promise<FallbackChain | undefined> {
+  async getFallbackChainAsync(
+    chainId: string,
+  ): Promise<FallbackChain | undefined> {
     // 先检查内存缓存
     const cached = this.fallbackChains.get(chainId);
     if (cached) {
@@ -676,7 +691,9 @@ export class FallbackEngineService implements OnModuleDestroy {
       return [];
     }
 
-    return this.modelResolverService.resolveAll(model, { excludeProviderKeyIds });
+    return this.modelResolverService.resolveAll(model, {
+      excludeProviderKeyIds,
+    });
   }
 
   /**

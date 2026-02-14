@@ -1,10 +1,7 @@
 import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
-import {
-  ModelAvailabilityService,
-  ProviderKeyService,
-} from '@app/db';
+import { ModelAvailabilityService, ProviderKeyService } from '@app/db';
 
 /**
  * 解析后的模型实例
@@ -68,7 +65,10 @@ export class ModelResolverService implements OnModuleDestroy {
     private readonly providerKeyService: ProviderKeyService,
   ) {
     // 每分钟清理过期缓存
-    this.cleanupInterval = setInterval(() => this.cleanupExpiredCache(), 60 * 1000);
+    this.cleanupInterval = setInterval(
+      () => this.cleanupExpiredCache(),
+      60 * 1000,
+    );
   }
 
   onModuleDestroy() {
@@ -103,7 +103,9 @@ export class ModelResolverService implements OnModuleDestroy {
   invalidateCache(model?: string): void {
     if (model) {
       this.availabilityCache.delete(model);
-      this.logger.debug(`[ModelResolver] Cache invalidated for model: ${model}`);
+      this.logger.debug(
+        `[ModelResolver] Cache invalidated for model: ${model}`,
+      );
     } else {
       this.availabilityCache.clear();
       this.providerKeyCache.clear();
@@ -121,7 +123,9 @@ export class ModelResolverService implements OnModuleDestroy {
     const candidates = await this.resolveAll(model, options);
 
     if (candidates.length === 0) {
-      this.logger.warn(`[ModelResolver] No available vendor for model: ${model}`);
+      this.logger.warn(
+        `[ModelResolver] No available vendor for model: ${model}`,
+      );
       return null;
     }
 
@@ -190,24 +194,38 @@ export class ModelResolverService implements OnModuleDestroy {
     enriched: Array<{ availability: any; providerKey: any }>,
     options?: ResolveOptions,
   ): ResolvedModel[] {
-    let candidates = enriched.filter(({ availability: a, providerKey: pk }) => {
-      if (!pk) return false;
-      if (options?.excludeProviderKeyIds?.includes(a.providerKeyId)) return false;
-      if (options?.minHealthScore && a.healthScore < options.minHealthScore) return false;
-      if (options?.requiredProtocol && pk.apiType !== options.requiredProtocol) return false;
-      return true;
-    });
+    const candidates = enriched.filter(
+      ({ availability: a, providerKey: pk }) => {
+        if (!pk) return false;
+        if (options?.excludeProviderKeyIds?.includes(a.providerKeyId))
+          return false;
+        if (options?.minHealthScore && a.healthScore < options.minHealthScore)
+          return false;
+        if (
+          options?.requiredProtocol &&
+          pk.apiType !== options.requiredProtocol
+        )
+          return false;
+        return true;
+      },
+    );
 
-    candidates.sort(({ availability: a, providerKey: pkA }, { availability: b, providerKey: pkB }) => {
-      if (options?.preferredVendor) {
-        const aP = pkA?.vendor === options.preferredVendor;
-        const bP = pkB?.vendor === options.preferredVendor;
-        if (aP && !bP) return -1;
-        if (!aP && bP) return 1;
-      }
-      if (b.vendorPriority !== a.vendorPriority) return b.vendorPriority - a.vendorPriority;
-      return b.healthScore - a.healthScore;
-    });
+    candidates.sort(
+      (
+        { availability: a, providerKey: pkA },
+        { availability: b, providerKey: pkB },
+      ) => {
+        if (options?.preferredVendor) {
+          const aP = pkA?.vendor === options.preferredVendor;
+          const bP = pkB?.vendor === options.preferredVendor;
+          if (aP && !bP) return -1;
+          if (!aP && bP) return 1;
+        }
+        if (b.vendorPriority !== a.vendorPriority)
+          return b.vendorPriority - a.vendorPriority;
+        return b.healthScore - a.healthScore;
+      },
+    );
 
     return candidates.map(({ availability: c, providerKey: pk }) => ({
       availabilityId: c.id,

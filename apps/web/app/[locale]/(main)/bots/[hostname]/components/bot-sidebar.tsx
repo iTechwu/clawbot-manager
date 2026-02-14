@@ -11,6 +11,7 @@ import { botNavItems, botNavExtendedItems } from '@/lib/config/bot-nav';
 
 interface BotSidebarProps {
   hostname: string;
+  botName?: string;
   status?: 'running' | 'stopped' | 'starting' | 'error' | 'created' | 'draft';
   healthStatus?: 'HEALTHY' | 'UNHEALTHY' | 'UNKNOWN';
   hasProvider?: boolean;
@@ -53,6 +54,7 @@ const statusConfig = {
 
 export function BotSidebar({
   hostname,
+  botName,
   status = 'stopped',
   healthStatus,
   hasProvider,
@@ -104,7 +106,7 @@ export function BotSidebar({
             <span className="text-lg">🤖</span>
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="font-semibold truncate">{hostname}</h2>
+            <h2 className="font-semibold truncate">{botName || hostname}</h2>
             <div className="flex items-center gap-2">
               <div className={cn('size-2 rounded-full', statusInfo.color)} />
               <span className={cn('text-xs', statusInfo.textColor)}>

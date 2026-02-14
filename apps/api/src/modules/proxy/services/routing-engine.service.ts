@@ -38,15 +38,16 @@ export interface ComplexityRoutingConfig {
 
 /**
  * 默认复杂度路由配置
+ * GLM-5 优先链路: GLM-5 -> Claude Opus 4.6 -> DeepSeek V3.2
  */
 const DEFAULT_COMPLEXITY_ROUTING: ComplexityRoutingConfig = {
   enabled: true,
   models: {
-    super_easy: { vendor: 'deepseek', model: 'deepseek-v3' },
-    easy: { vendor: 'deepseek', model: 'deepseek-v3' },
-    medium: { vendor: 'openai', model: 'gpt-4o' },
-    hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
-    super_hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
+    super_easy: { vendor: 'zhipu', model: 'glm-5' },
+    easy: { vendor: 'zhipu', model: 'glm-5' },
+    medium: { vendor: 'zhipu', model: 'glm-5' },
+    hard: { vendor: 'zhipu', model: 'glm-5' },
+    super_hard: { vendor: 'zhipu', model: 'glm-5' },
   },
   toolMinComplexity: 'easy',
   classifier: {
@@ -154,11 +155,17 @@ export class RoutingEngineService implements OnModuleDestroy {
   private complexityRoutingConfig: ComplexityRoutingConfig =
     DEFAULT_COMPLEXITY_ROUTING;
   // 复杂度路由配置缓存（按 configId 缓存）
-  private complexityConfigCache = new Map<string, { config: ComplexityRoutingConfig; expiry: number }>();
+  private complexityConfigCache = new Map<
+    string,
+    { config: ComplexityRoutingConfig; expiry: number }
+  >();
   private readonly complexityConfigCacheTTL = 5 * 60 * 1000; // 5 分钟
 
   // 模型能力评分缓存
-  private modelCapabilityScoreCache = new Map<string, { score: number; expiry: number }>();
+  private modelCapabilityScoreCache = new Map<
+    string,
+    { score: number; expiry: number }
+  >();
   private readonly scoreCacheTTL = 5 * 60 * 1000; // 5 分钟
 
   // 定期清理过期缓存的定时器
@@ -177,7 +184,10 @@ export class RoutingEngineService implements OnModuleDestroy {
   ) {
     this.initializeDefaultTags();
     // 每分钟清理过期缓存
-    this.cleanupInterval = setInterval(() => this.cleanupAllCaches(), 60 * 1000);
+    this.cleanupInterval = setInterval(
+      () => this.cleanupAllCaches(),
+      60 * 1000,
+    );
   }
 
   onModuleDestroy() {
@@ -243,7 +253,9 @@ export class RoutingEngineService implements OnModuleDestroy {
   /**
    * 从数据库加载复杂度路由配置
    */
-  async loadComplexityRoutingConfig(configId?: string): Promise<ComplexityRoutingConfig> {
+  async loadComplexityRoutingConfig(
+    configId?: string,
+  ): Promise<ComplexityRoutingConfig> {
     // 如果指定了 configId，检查缓存
     if (configId) {
       const cached = this.complexityConfigCache.get(configId);
@@ -253,7 +265,10 @@ export class RoutingEngineService implements OnModuleDestroy {
     }
 
     // 从数据库加载
-    if (this.complexityRoutingConfigService && this.complexityRoutingModelMappingService) {
+    if (
+      this.complexityRoutingConfigService &&
+      this.complexityRoutingModelMappingService
+    ) {
       try {
         // 获取配置（默认使用 'default' 配置）
         const dbConfig = await this.complexityRoutingConfigService.get({
@@ -263,9 +278,10 @@ export class RoutingEngineService implements OnModuleDestroy {
 
         if (dbConfig) {
           // 获取模型映射
-          const mappings = await this.complexityRoutingModelMappingService.listByConfigId(
-            dbConfig.id,
-          );
+          const mappings =
+            await this.complexityRoutingModelMappingService.listByConfigId(
+              dbConfig.id,
+            );
 
           // 构建配置对象
           const config = this.buildComplexityRoutingConfig(dbConfig, mappings);
@@ -296,17 +312,18 @@ export class RoutingEngineService implements OnModuleDestroy {
 
   /**
    * 从数据库记录构建复杂度路由配置
+   * GLM-5 优先链路: GLM-5 -> Claude Opus 4.6 -> DeepSeek V3.2
    */
   private buildComplexityRoutingConfig(
     dbConfig: any,
     mappings: any[],
   ): ComplexityRoutingConfig {
     const models: Record<ComplexityLevel, ModelConfig> = {
-      super_easy: { vendor: 'deepseek', model: 'deepseek-v3' },
-      easy: { vendor: 'deepseek', model: 'deepseek-v3' },
-      medium: { vendor: 'openai', model: 'gpt-4o' },
-      hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
-      super_hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
+      super_easy: { vendor: 'zhipu', model: 'glm-5' },
+      easy: { vendor: 'zhipu', model: 'glm-5' },
+      medium: { vendor: 'zhipu', model: 'glm-5' },
+      hard: { vendor: 'zhipu', model: 'glm-5' },
+      super_hard: { vendor: 'zhipu', model: 'glm-5' },
     };
 
     // 按 complexityLevel 分组映射
@@ -323,7 +340,8 @@ export class RoutingEngineService implements OnModuleDestroy {
     return {
       enabled: dbConfig.isEnabled,
       models,
-      toolMinComplexity: (dbConfig.toolMinComplexity as ComplexityLevel) || 'easy',
+      toolMinComplexity:
+        (dbConfig.toolMinComplexity as ComplexityLevel) || 'easy',
       classifier: {
         model: dbConfig.classifierModel,
         vendor: dbConfig.classifierVendor,
@@ -333,6 +351,7 @@ export class RoutingEngineService implements OnModuleDestroy {
 
   /**
    * 初始化默认能力标签
+   * GLM-5 优先链路: GLM-5 -> Claude Opus 4.6 -> DeepSeek V3.2
    */
   private initializeDefaultTags(): void {
     const defaultTags: CapabilityTag[] = [
@@ -341,8 +360,8 @@ export class RoutingEngineService implements OnModuleDestroy {
         name: '深度推理',
         category: 'reasoning',
         priority: 100,
-        requiredProtocol: 'anthropic-native',
-        requiredModels: ['claude-opus-4-20250514', 'claude-sonnet-4-20250514'],
+        requiredProtocol: 'openai-compatible',
+        requiredModels: ['glm-5', 'claude-opus-4-6', 'deepseek-v3-2-251201'],
         requiresExtendedThinking: true,
       },
       {
@@ -352,10 +371,10 @@ export class RoutingEngineService implements OnModuleDestroy {
         priority: 50,
         requiredProtocol: 'openai-compatible',
         requiredModels: [
+          'glm-5',
+          'claude-opus-4-6',
           'gpt-4o',
-          'claude-sonnet-4-20250514',
-          'deepseek-chat',
-          'o3-mini',
+          'deepseek-v3-2-251201',
         ],
       },
       {
@@ -378,10 +397,9 @@ export class RoutingEngineService implements OnModuleDestroy {
         category: 'cost',
         priority: 90,
         requiredModels: [
-          'deepseek-chat',
+          'deepseek-v3-2-251201',
           'gpt-4o-mini',
-          'gemini-2.0-flash',
-          'doubao-pro-32k',
+          'glm-4.5-flash',
         ],
         requiresCacheControl: true,
       },
@@ -391,22 +409,14 @@ export class RoutingEngineService implements OnModuleDestroy {
         category: 'context',
         priority: 60,
         requiredProtocol: 'openai-compatible',
-        requiredModels: [
-          'gemini-1.5-pro',
-          'gemini-2.0-flash',
-          'doubao-pro-128k',
-        ],
+        requiredModels: ['glm-5', 'gemini-3-pro-preview', 'claude-opus-4-6'],
       },
       {
         tagId: 'vision',
         name: '视觉理解',
         category: 'vision',
         priority: 75,
-        requiredModels: [
-          'gpt-4o',
-          'claude-sonnet-4-20250514',
-          'gemini-2.0-flash',
-        ],
+        requiredModels: ['glm-5', 'gpt-4o', 'claude-opus-4-6'],
         requiresVision: true,
       },
     ];
@@ -582,7 +592,9 @@ export class RoutingEngineService implements OnModuleDestroy {
       if (context.primaryModel) {
         decision.model = context.primaryModel.model;
         decision.vendor = context.primaryModel.vendor;
-        decision.protocol = this.inferProtocolFromVendor(context.primaryModel.vendor);
+        decision.protocol = this.inferProtocolFromVendor(
+          context.primaryModel.vendor,
+        );
       } else if (requestedModel) {
         decision.model = requestedModel;
         decision.vendor = this.inferVendorFromModel(requestedModel);
@@ -798,7 +810,9 @@ export class RoutingEngineService implements OnModuleDestroy {
 
     // 主模型能力满足当前复杂度要求 → 使用主模型
     if (context.primaryModel) {
-      const primaryScore = await this.getModelCapabilityScore(context.primaryModel.model);
+      const primaryScore = await this.getModelCapabilityScore(
+        context.primaryModel.model,
+      );
       const requiredScore = this.getMinComplexityScore(finalLevel);
 
       if (primaryScore >= requiredScore) {
@@ -815,12 +829,15 @@ export class RoutingEngineService implements OnModuleDestroy {
           },
         };
 
-        this.logger.info('[RoutingEngine] Using primary model for complexity routing', {
-          complexity: finalLevel,
-          primaryModel: context.primaryModel.model,
-          primaryScore,
-          requiredScore,
-        });
+        this.logger.info(
+          '[RoutingEngine] Using primary model for complexity routing',
+          {
+            complexity: finalLevel,
+            primaryModel: context.primaryModel.model,
+            primaryScore,
+            requiredScore,
+          },
+        );
 
         // 继续检查特殊能力需求（Extended Thinking, Cache Control 等）
         // 8. 检查是否需要特殊能力（Extended Thinking, Cache Control 等）
@@ -838,7 +855,8 @@ export class RoutingEngineService implements OnModuleDestroy {
             // 如果主模型不是 Anthropic 模型，需要覆盖 vendor/protocol
             if (decision.vendor !== 'anthropic') {
               decision.vendor = 'anthropic';
-              decision.model = primaryRequirement.requiredModels?.[0] ||
+              decision.model =
+                primaryRequirement.requiredModels?.[0] ||
                 'claude-sonnet-4-20250514';
             }
           } else if (primaryRequirement.requiresCacheControl) {
@@ -1033,11 +1051,16 @@ export class RoutingEngineService implements OnModuleDestroy {
 
   /**
    * 硬编码的能力评分（用于数据库不可用时的 fallback）
+   * GLM-5 优先链路评分
    */
   private getFallbackCapabilityScore(model: string): number {
     const modelLower = model.toLowerCase();
 
-    // Anthropic
+    // Zhipu GLM (最高优先级)
+    if (modelLower === 'glm-5' || modelLower.includes('glm-5')) return 95;
+    if (modelLower.includes('glm-4.5')) return 88;
+    if (modelLower.includes('glm-4')) return 75;
+    // Anthropic Claude
     if (modelLower.includes('claude-opus-4')) return 100;
     if (modelLower.includes('claude-sonnet-4')) return 85;
     if (modelLower.includes('claude-3-5-haiku')) return 60;
@@ -1045,12 +1068,20 @@ export class RoutingEngineService implements OnModuleDestroy {
     if (modelLower === 'o1' || modelLower.includes('o1-')) return 95;
     if (modelLower === 'o3-mini' || modelLower.includes('o3-mini')) return 80;
     if (modelLower === 'gpt-4o' || modelLower.includes('gpt-4o')) return 82;
-    if (modelLower === 'gpt-4o-mini' || modelLower.includes('gpt-4o-mini')) return 55;
+    if (modelLower === 'gpt-4o-mini' || modelLower.includes('gpt-4o-mini'))
+      return 55;
     if (modelLower.includes('gpt-4-turbo')) return 78;
     // DeepSeek
-    if (modelLower === 'deepseek-reasoner' || modelLower.includes('deepseek-reasoner')) return 88;
-    if (modelLower === 'deepseek-v3' || modelLower.includes('deepseek-v3')) return 70;
-    if (modelLower === 'deepseek-chat' || modelLower.includes('deepseek-chat')) return 65;
+    if (
+      modelLower === 'deepseek-reasoner' ||
+      modelLower.includes('deepseek-reasoner')
+    )
+      return 88;
+    if (modelLower.includes('deepseek-v3-2')) return 72;
+    if (modelLower === 'deepseek-v3' || modelLower.includes('deepseek-v3'))
+      return 70;
+    if (modelLower === 'deepseek-chat' || modelLower.includes('deepseek-chat'))
+      return 65;
     // Google
     if (modelLower.includes('gemini-2.0-flash')) return 68;
     if (modelLower.includes('gemini-1.5-pro')) return 75;

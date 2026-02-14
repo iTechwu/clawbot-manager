@@ -154,9 +154,7 @@ export class ModelSyncService {
     }
 
     // 按 model name 查找 ModelCatalog
-    let catalog = await this.modelCatalogService.getByModel(
-      availability.model,
-    );
+    let catalog = await this.modelCatalogService.getByModel(availability.model);
 
     // 不存在则自动创建
     if (!catalog) {
