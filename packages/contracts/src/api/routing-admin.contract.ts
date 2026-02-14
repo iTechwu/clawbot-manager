@@ -858,6 +858,51 @@ export const routingAdminContract = c.router(
       description:
         '返回 ModelAvailability 中 isAvailable=true 的模型，包含定价和能力标签信息，用于路由配置页面的模型选择器',
     },
+
+    // ========================================================================
+    // 自动同步
+    // ========================================================================
+
+    /**
+     * POST /proxy/admin/routing/sync-model-catalog - 从内置数据同步模型目录
+     */
+    syncModelCatalog: {
+      method: 'POST',
+      path: '/sync-model-catalog',
+      body: z.object({}).optional(),
+      responses: {
+        200: ApiResponseSchema(
+          z.object({
+            created: z.number(),
+            updated: z.number(),
+            skipped: z.number(),
+          }),
+        ),
+      },
+      summary: '从内置数据同步模型目录',
+    },
+
+    /**
+     * POST /proxy/admin/routing/sync-capability-tags - 自动匹配能力标签
+     */
+    syncCapabilityTags: {
+      method: 'POST',
+      path: '/sync-capability-tags',
+      body: z
+        .object({
+          modelCatalogId: z.string().uuid().optional(),
+        })
+        .optional(),
+      responses: {
+        200: ApiResponseSchema(
+          z.object({
+            processed: z.number(),
+            tagsAssigned: z.number(),
+          }),
+        ),
+      },
+      summary: '自动匹配能力标签到模型',
+    },
   },
   {
     pathPrefix: '/proxy/admin/routing',

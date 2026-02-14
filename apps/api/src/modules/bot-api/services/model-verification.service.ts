@@ -603,7 +603,7 @@ export class ModelVerificationService {
       isAvailable: boolean;
       lastVerifiedAt: Date;
       errorMessage: string | null;
-      modelPricingId: string | null;
+      modelCatalogId: string | null;
       capabilityTags: Array<{ id: string; name: string }>;
       providerKeys: Array<{
         id: string;
@@ -620,7 +620,7 @@ export class ModelVerificationService {
       {
         include: {
           providerKey: true,
-          modelPricing: true,
+          modelCatalog: true,
           capabilityTags: {
             include: {
               capabilityTag: true,
@@ -641,7 +641,7 @@ export class ModelVerificationService {
       isAvailable: item.isAvailable,
       lastVerifiedAt: item.lastVerifiedAt,
       errorMessage: item.errorMessage,
-      modelPricingId: item.modelPricingId,
+      modelCatalogId: item.modelCatalogId,
       capabilityTags:
         item.capabilityTags?.map((mct: any) => ({
           id: mct.capabilityTag?.id ?? mct.capabilityTagId,

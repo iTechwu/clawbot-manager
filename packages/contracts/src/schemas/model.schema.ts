@@ -547,10 +547,10 @@ export type ExtendedAvailableModel = z.infer<
 export const ModelSyncStatusSchema = z.object({
   /** 总模型数 */
   totalModels: z.number(),
-  /** 定价已同步数 */
-  pricingSynced: z.number(),
-  /** 定价未同步数 */
-  pricingNotSynced: z.number(),
+  /** 目录已同步数 */
+  catalogSynced: z.number(),
+  /** 目录未同步数 */
+  catalogNotSynced: z.number(),
   /** 标签已同步数 */
   tagsSynced: z.number(),
   /** 标签未同步数 */

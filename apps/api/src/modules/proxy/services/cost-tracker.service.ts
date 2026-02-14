@@ -91,7 +91,7 @@ export class CostTrackerService {
   private costStrategies: Map<string, CostStrategy> = new Map();
 
   // 模型目录定价信息（从 ModelCatalog 加载）
-  private modelPricing: Map<string, ModelCatalogPricing> = new Map();
+  private modelCatalog: Map<string, ModelCatalogPricing> = new Map();
 
   // Bot 使用量追踪（内存缓存，定期持久化）
   private botUsage: Map<
@@ -276,7 +276,7 @@ export class CostTrackerService {
     ];
 
     for (const pricing of defaultPricing) {
-      this.modelPricing.set(pricing.model, pricing);
+      this.modelCatalog.set(pricing.model, pricing);
     }
   }
 
@@ -299,9 +299,9 @@ export class CostTrackerService {
   async loadModelCatalogPricingFromDb(
     pricing: ModelCatalogPricing[],
   ): Promise<void> {
-    this.modelPricing.clear();
+    this.modelCatalog.clear();
     for (const p of pricing) {
-      this.modelPricing.set(p.model, p);
+      this.modelCatalog.set(p.model, p);
     }
     this.logger.info(
       `[CostTracker] Loaded ${pricing.length} model catalog pricing from database`,
@@ -312,7 +312,7 @@ export class CostTrackerService {
    * 计算请求成本
    */
   calculateCost(model: string, usage: TokenUsage): CostCalculation {
-    const pricing = this.modelPricing.get(model);
+    const pricing = this.modelCatalog.get(model);
 
     if (!pricing) {
       this.logger.warn(`[CostTracker] No pricing found for model: ${model}`);
@@ -476,7 +476,7 @@ export class CostTrackerService {
     let bestScore = -Infinity;
 
     for (const modelName of availableModels) {
-      const pricing = this.modelPricing.get(modelName);
+      const pricing = this.modelCatalog.get(modelName);
       if (!pricing) continue;
 
       // 检查最低能力要求
@@ -555,14 +555,14 @@ export class CostTrackerService {
    * 获取模型目录定价
    */
   getModelCatalogPricing(model: string): ModelCatalogPricing | undefined {
-    return this.modelPricing.get(model);
+    return this.modelCatalog.get(model);
   }
 
   /**
    * 获取所有模型目录定价
    */
   getAllModelCatalogPricing(): ModelCatalogPricing[] {
-    return Array.from(this.modelPricing.values());
+    return Array.from(this.modelCatalog.values());
   }
 
   /**

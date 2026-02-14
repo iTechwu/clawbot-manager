@@ -5,7 +5,7 @@
  * 最后更新：2026-02-10
  */
 
-export interface ModelPricingData {
+export interface ModelCatalogData {
   model: string;
   vendor: string;
   inputPrice: number;
@@ -30,7 +30,7 @@ export interface ModelPricingData {
   recommendedScenarios?: string[];
 }
 
-export const MODEL_PRICING_DATA: ModelPricingData[] = [
+export const MODEL_CATALOG_DATA: ModelCatalogData[] = [
   // ============================================================================
   // OpenAI Models - GPT-4o Series
   // ============================================================================

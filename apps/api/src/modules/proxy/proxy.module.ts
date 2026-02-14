@@ -20,6 +20,8 @@ import {
   // Fallback chain & complexity routing model mapping modules
   FallbackChainModelModule,
   ComplexityRoutingModelMappingModule,
+  // Model capability tag module
+  ModelCapabilityTagModule,
 } from '@app/db';
 import { AuthModule } from '@app/auth';
 import { JwtModule } from '@app/jwt/jwt.module';
@@ -43,6 +45,7 @@ import { CostTrackerService } from './services/cost-tracker.service';
 import { ConfigurationService } from './services/configuration.service';
 import { BotComplexityRoutingService } from './services/bot-complexity-routing.service';
 import { ModelResolverService } from './services/model-resolver.service';
+import { CapabilityTagMatchingService } from '../bot-api/services/capability-tag-matching.service';
 
 /**
  * ProxyModule - API 代理模块
@@ -83,6 +86,8 @@ import { ModelResolverService } from './services/model-resolver.service';
     // Fallback chain & complexity routing model mapping modules
     FallbackChainModelModule,
     ComplexityRoutingModelMappingModule,
+    // Model capability tag module
+    ModelCapabilityTagModule,
     // Complexity classifier for complexity-based routing
     ComplexityClassifierModule,
   ],
@@ -105,6 +110,8 @@ import { ModelResolverService } from './services/model-resolver.service';
     BotComplexityRoutingService,
     // Model resolver service (model → vendor instance)
     ModelResolverService,
+    // Capability tag matching service (auto-sync tags)
+    CapabilityTagMatchingService,
   ],
   exports: [
     ProxyService,

@@ -1,18 +1,18 @@
 #!/usr/bin/env ts-node
 /**
- * 模型定价更新脚本
+ * 模型目录更新脚本
  *
  * 用于定期更新 AI 模型的定价信息到数据库
  *
  * 使用方法:
  *   # 直接运行（使用 ts-node）
- *   npx ts-node scripts/update-model-pricing.ts
+ *   npx ts-node scripts/update-model-catalog.ts
  *
  *   # 或者添加到 package.json scripts
- *   pnpm update:model-pricing
+ *   pnpm update:model-catalog
  *
  *   # 定时任务（cron）示例 - 每天凌晨 3 点更新
- *   0 3 * * * cd /path/to/apps/api && npx ts-node scripts/update-model-pricing.ts >> /var/log/model-pricing.log 2>&1
+ *   0 3 * * * cd /path/to/apps/api && npx ts-node scripts/update-model-catalog.ts >> /var/log/model-catalog.log 2>&1
  *
  * 环境变量:
  *   DATABASE_URL - 数据库连接字符串（必需）
@@ -22,7 +22,7 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
-import { MODEL_PRICING_DATA } from './model-pricing.data';
+import { MODEL_CATALOG_DATA } from './model-catalog.data';
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -51,9 +51,9 @@ async function updateModelCatalog(): Promise<UpdateStats> {
   };
 
   console.log('💰 Starting model catalog update...');
-  console.log(`📊 Processing ${MODEL_PRICING_DATA.length} models...\n`);
+  console.log(`📊 Processing ${MODEL_CATALOG_DATA.length} models...\n`);
 
-  for (const pricingData of MODEL_PRICING_DATA) {
+  for (const pricingData of MODEL_CATALOG_DATA) {
     try {
       const existing = await prisma.modelCatalog.findUnique({
         where: { model: pricingData.model },

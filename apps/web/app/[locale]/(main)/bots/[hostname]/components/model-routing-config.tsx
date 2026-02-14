@@ -108,7 +108,7 @@ const PREDEFINED_INTENT_KEYS = [
   'longContext',
 ] as const;
 
-// Model recommendations by scenario - based on model-pricing.data.ts
+// Model recommendations by scenario - based on model-catalog.data.ts
 // Updated with latest model versions (2026-02-10)
 const SCENARIO_MODEL_RECOMMENDATIONS: Record<
   string,

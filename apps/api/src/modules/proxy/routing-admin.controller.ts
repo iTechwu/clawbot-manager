@@ -1,16 +1,21 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Inject } from '@nestjs/common';
 import { TsRestHandler, tsRestHandler } from '@ts-rest/nest';
 import { AdminAuth } from '@app/auth';
-import { RoutingEngineService } from './services/routing-engine.service';
-import { FallbackEngineService } from './services/fallback-engine.service';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 import { CostTrackerService } from './services/cost-tracker.service';
 import { ConfigurationService } from './services/configuration.service';
+import { CapabilityTagMatchingService } from '../bot-api/services/capability-tag-matching.service';
+import { MODEL_CATALOG_DATA } from '../../../scripts/model-catalog.data';
 import { ComplexityClassifierService } from '@app/clients/internal/complexity-classifier';
 import {
   ComplexityRoutingConfigService,
   ModelAvailabilityService,
   FallbackChainService,
   FallbackChainModelService,
+  ModelCatalogService,
+  CapabilityTagService,
+  ModelCapabilityTagService,
 } from '@app/db';
 import { success, error, deleted } from '@/common/ts-rest/response.helper';
 import { CommonErrorCode } from '@repo/contracts/errors';
@@ -34,8 +39,7 @@ const now = new Date().toISOString();
 @AdminAuth()
 export class RoutingAdminController {
   constructor(
-    private readonly routingEngine: RoutingEngineService,
-    private readonly fallbackEngine: FallbackEngineService,
+    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly costTracker: CostTrackerService,
     private readonly configService: ConfigurationService,
     private readonly complexityClassifier: ComplexityClassifierService,
@@ -43,6 +47,10 @@ export class RoutingAdminController {
     private readonly modelAvailabilityDb: ModelAvailabilityService,
     private readonly fallbackChainDb: FallbackChainService,
     private readonly fallbackChainModelDb: FallbackChainModelService,
+    private readonly modelCatalogDb: ModelCatalogService,
+    private readonly capabilityTagDb: CapabilityTagService,
+    private readonly modelCapabilityTagDb: ModelCapabilityTagService,
+    private readonly capabilityTagMatchingService: CapabilityTagMatchingService,
   ) {}
 
   // ============================================================================
@@ -74,16 +82,29 @@ export class RoutingAdminController {
   @TsRestHandler(c.getCapabilityTags)
   async getCapabilityTags() {
     return tsRestHandler(c.getCapabilityTags, async () => {
-      const tags = this.routingEngine.getAllCapabilityTags();
+      const { list: tags } = await this.capabilityTagDb.list(
+        {},
+        { orderBy: { priority: 'desc' }, limit: 1000 },
+      );
       return success({
         list: tags.map((tag) => ({
-          id: generateUUID(tag.tagId),
-          ...tag,
-          description: null,
-          isActive: true,
-          isBuiltin: true,
-          createdAt: now,
-          updatedAt: now,
+          id: tag.id,
+          tagId: tag.tagId,
+          name: tag.name,
+          description: tag.description,
+          category: tag.category,
+          priority: tag.priority,
+          requiredProtocol: tag.requiredProtocol,
+          requiredSkills: tag.requiredSkills,
+          requiredModels: tag.requiredModels,
+          requiresExtendedThinking: tag.requiresExtendedThinking,
+          requiresCacheControl: tag.requiresCacheControl,
+          requiresVision: tag.requiresVision,
+          maxCostPerMToken: tag.maxCostPerMToken ? Number(tag.maxCostPerMToken) : null,
+          isActive: tag.isActive,
+          isBuiltin: tag.isBuiltin ?? true,
+          createdAt: tag.createdAt.toISOString(),
+          updatedAt: tag.updatedAt.toISOString(),
         })),
       }) as any;
     });
@@ -92,11 +113,50 @@ export class RoutingAdminController {
   @TsRestHandler(c.getCapabilityTag)
   async getCapabilityTag() {
     return tsRestHandler(c.getCapabilityTag, async ({ params }) => {
-      const tag = this.routingEngine.getCapabilityTag(params.tagId);
+      const tag = await this.capabilityTagDb.getByTagId(params.tagId);
       if (!tag) {
         return error(CommonErrorCode.NotFound) as any;
       }
       return success(tag) as any;
+    });
+  }
+
+  @TsRestHandler(c.createCapabilityTag)
+  async createCapabilityTag() {
+    return tsRestHandler(c.createCapabilityTag, async ({ body }) => {
+      const existing = await this.capabilityTagDb.getByTagId(body.tagId);
+      if (existing) {
+        return error(CommonErrorCode.BadRequest, '标签已存在') as any;
+      }
+      const tag = await this.capabilityTagDb.create(body as any);
+      await this.configService.refreshConfigurations();
+      return success(tag) as any;
+    });
+  }
+
+  @TsRestHandler(c.updateCapabilityTag)
+  async updateCapabilityTag() {
+    return tsRestHandler(c.updateCapabilityTag, async ({ params, body }) => {
+      const existing = await this.capabilityTagDb.getById(params.id);
+      if (!existing) {
+        return error(CommonErrorCode.NotFound) as any;
+      }
+      const tag = await this.capabilityTagDb.update({ id: params.id }, body as any);
+      await this.configService.refreshConfigurations();
+      return success(tag) as any;
+    });
+  }
+
+  @TsRestHandler(c.deleteCapabilityTag)
+  async deleteCapabilityTag() {
+    return tsRestHandler(c.deleteCapabilityTag, async ({ params }) => {
+      const existing = await this.capabilityTagDb.getById(params.id);
+      if (!existing) {
+        return error(CommonErrorCode.NotFound) as any;
+      }
+      await this.capabilityTagDb.update({ id: params.id }, { isActive: false } as any);
+      await this.configService.refreshConfigurations();
+      return deleted() as any;
     });
   }
 
@@ -107,69 +167,155 @@ export class RoutingAdminController {
   @TsRestHandler(c.getFallbackChains)
   async getFallbackChains() {
     return tsRestHandler(c.getFallbackChains, async () => {
-      const chains = this.fallbackEngine.getAllFallbackChains();
-
-      // 查询数据库中的 chainModels 关联数据（含能力信息）
-      const dbChains = await this.fallbackChainDb.list(
+      const { list: dbChains } = await this.fallbackChainDb.list(
         { isDeleted: false },
         { orderBy: { createdAt: 'asc' }, limit: 1000 },
       );
-      const chainModelsMap = new Map<string, any[]>();
-      for (const dbChain of dbChains.list) {
-        const chainModels = await this.fallbackChainModelDb.listByChainId(
-          dbChain.id,
-        );
-        if (chainModels.length > 0) {
-          chainModelsMap.set(dbChain.chainId, chainModels);
-        }
+
+      const result = [];
+      for (const dbChain of dbChains) {
+        const chainModels = await this.fallbackChainModelDb.listByChainId(dbChain.id);
+        result.push({
+          id: dbChain.id,
+          chainId: dbChain.chainId,
+          name: dbChain.name,
+          description: dbChain.description,
+          models: dbChain.models,
+          triggerStatusCodes: dbChain.triggerStatusCodes,
+          triggerErrorTypes: dbChain.triggerErrorTypes,
+          triggerTimeoutMs: dbChain.triggerTimeoutMs,
+          maxRetries: dbChain.maxRetries,
+          retryDelayMs: dbChain.retryDelayMs,
+          preserveProtocol: dbChain.preserveProtocol,
+          isActive: dbChain.isActive,
+          isBuiltin: dbChain.isBuiltin,
+          createdAt: dbChain.createdAt.toISOString(),
+          updatedAt: dbChain.updatedAt.toISOString(),
+          chainModels: chainModels.map((cm: any) => ({
+            id: cm.id,
+            modelCatalogId: cm.modelCatalogId,
+            priority: cm.priority,
+            protocolOverride: cm.protocolOverride,
+            featuresOverride: cm.featuresOverride,
+            model: cm.modelCatalog?.model,
+            vendor: cm.modelCatalog?.vendor,
+            displayName: cm.modelCatalog?.displayName ?? null,
+            isAvailable: true,
+            protocol: cm.protocolOverride || 'openai-compatible',
+            supportsExtendedThinking: cm.modelCatalog?.supportsExtendedThinking ?? false,
+            supportsCacheControl: cm.modelCatalog?.supportsCacheControl ?? false,
+            supportsVision: cm.modelCatalog?.supportsVision ?? false,
+            supportsFunctionCalling: cm.modelCatalog?.supportsFunctionCalling ?? true,
+          })),
+        });
       }
 
-      return success({
-        list: chains.map((chain) => {
-          const dbChainModels = chainModelsMap.get(chain.chainId);
-          return {
-            id: generateUUID(chain.chainId),
-            ...chain,
-            description: null,
-            isActive: true,
-            isBuiltin: true,
-            createdAt: now,
-            updatedAt: now,
-            // 新增：关联表模型数据（含能力信息）
-            chainModels:
-              dbChainModels?.map((cm: any) => ({
-                id: cm.id,
-                modelCatalogId: cm.modelCatalogId,
-                priority: cm.priority,
-                protocolOverride: cm.protocolOverride,
-                featuresOverride: cm.featuresOverride,
-                model: cm.modelCatalog.model,
-                vendor: cm.modelCatalog.vendor,
-                displayName: cm.modelCatalog.displayName ?? null,
-                isAvailable: true,
-                protocol: cm.protocolOverride || 'openai-compatible',
-                supportsExtendedThinking:
-                  cm.modelCatalog.supportsExtendedThinking ?? false,
-                supportsCacheControl:
-                  cm.modelCatalog.supportsCacheControl ?? false,
-                supportsVision: cm.modelCatalog.supportsVision ?? false,
-                supportsFunctionCalling:
-                  cm.modelCatalog.supportsFunctionCalling ?? true,
-              })) ?? undefined,
-          };
-        }),
-      }) as any;
+      return success({ list: result }) as any;
     });
   }
 
   @TsRestHandler(c.getFallbackChain)
   async getFallbackChain() {
     return tsRestHandler(c.getFallbackChain, async ({ params }) => {
-      const chain = this.fallbackEngine.getFallbackChain(params.chainId);
+      const chain = await this.fallbackChainDb.getByChainId(params.chainId);
       if (!chain) {
         return error(CommonErrorCode.NotFound) as any;
       }
+      const chainModels = await this.fallbackChainModelDb.listByChainId(chain.id);
+      return success({
+        id: chain.id,
+        chainId: chain.chainId,
+        name: chain.name,
+        description: chain.description,
+        models: chain.models,
+        triggerStatusCodes: chain.triggerStatusCodes,
+        triggerErrorTypes: chain.triggerErrorTypes,
+        triggerTimeoutMs: chain.triggerTimeoutMs,
+        maxRetries: chain.maxRetries,
+        retryDelayMs: chain.retryDelayMs,
+        preserveProtocol: chain.preserveProtocol,
+        isActive: chain.isActive,
+        isBuiltin: chain.isBuiltin,
+        createdAt: chain.createdAt.toISOString(),
+        updatedAt: chain.updatedAt.toISOString(),
+        chainModels: chainModels.map((cm: any) => ({
+          id: cm.id,
+          modelCatalogId: cm.modelCatalogId,
+          priority: cm.priority,
+          model: cm.modelCatalog?.model,
+          vendor: cm.modelCatalog?.vendor,
+        })),
+      }) as any;
+    });
+  }
+
+  @TsRestHandler(c.createFallbackChain)
+  async createFallbackChain() {
+    return tsRestHandler(c.createFallbackChain, async ({ body }) => {
+      const existing = await this.fallbackChainDb.getByChainId(body.chainId);
+      if (existing) {
+        return error(CommonErrorCode.BadRequest, 'Fallback 链已存在') as any;
+      }
+      const { chainModels, ...chainData } = body;
+      const chain = await this.fallbackChainDb.create(chainData as any);
+
+      // 创建关联的 chainModels
+      if (chainModels?.length) {
+        await this.fallbackChainModelDb.replaceChainModels(
+          chain.id,
+          chainModels.map((cm) => ({
+            modelCatalogId: cm.modelCatalogId,
+            priority: cm.priority ?? 0,
+            protocolOverride: cm.protocolOverride,
+            featuresOverride: cm.featuresOverride as any,
+          })),
+        );
+      }
+
+      await this.configService.refreshConfigurations();
       return success(chain) as any;
+    });
+  }
+
+  @TsRestHandler(c.updateFallbackChain)
+  async updateFallbackChain() {
+    return tsRestHandler(c.updateFallbackChain, async ({ params, body }) => {
+      const existing = await this.fallbackChainDb.getById(params.id);
+      if (!existing) {
+        return error(CommonErrorCode.NotFound) as any;
+      }
+      const { chainModels, ...chainData } = body;
+      const chain = await this.fallbackChainDb.update({ id: params.id }, chainData as any);
+
+      // 更新关联的 chainModels（如果提供了）
+      if (chainModels !== undefined) {
+        await this.fallbackChainModelDb.replaceChainModels(
+          params.id,
+          (chainModels ?? []).map((cm) => ({
+            modelCatalogId: cm.modelCatalogId!,
+            priority: cm.priority ?? 0,
+            protocolOverride: cm.protocolOverride,
+            featuresOverride: cm.featuresOverride as any,
+          })),
+        );
+      }
+
+      await this.configService.refreshConfigurations();
+      return success(chain) as any;
+    });
+  }
+
+  @TsRestHandler(c.deleteFallbackChain)
+  async deleteFallbackChain() {
+    return tsRestHandler(c.deleteFallbackChain, async ({ params }) => {
+      const existing = await this.fallbackChainDb.getById(params.id);
+      if (!existing) {
+        return error(CommonErrorCode.NotFound) as any;
+      }
+      await this.fallbackChainDb.update({ id: params.id }, { isDeleted: true } as any);
+      await this.fallbackChainModelDb.deleteByChainId(params.id);
+      await this.configService.refreshConfigurations();
+      return deleted() as any;
     });
   }
 
@@ -386,28 +532,38 @@ export class RoutingAdminController {
   @TsRestHandler(c.getModelCatalogList)
   async getModelCatalogList() {
     return tsRestHandler(c.getModelCatalogList, async () => {
-      const pricingList = this.costTracker.getAllModelCatalogPricing();
+      const catalogList = await this.modelCatalogDb.listAll();
       return success({
-        list: pricingList.map((pricing) => ({
-          id: generateUUID(pricing.model),
-          ...pricing,
-          displayName: null,
-          description: null,
-          contextLength: 128,
-          supportsExtendedThinking: pricing.thinkingPrice !== undefined,
-          supportsCacheControl: pricing.cacheReadPrice !== undefined,
-          supportsVision: false,
-          supportsFunctionCalling: true,
-          supportsStreaming: true,
+        list: catalogList.map((item) => ({
+          id: item.id,
+          model: item.model,
+          vendor: item.vendor,
+          displayName: item.displayName,
+          description: item.description,
+          inputPrice: Number(item.inputPrice),
+          outputPrice: Number(item.outputPrice),
+          cacheReadPrice: item.cacheReadPrice ? Number(item.cacheReadPrice) : undefined,
+          cacheWritePrice: item.cacheWritePrice ? Number(item.cacheWritePrice) : undefined,
+          thinkingPrice: item.thinkingPrice ? Number(item.thinkingPrice) : undefined,
+          reasoningScore: item.reasoningScore,
+          codingScore: item.codingScore,
+          creativityScore: item.creativityScore,
+          speedScore: item.speedScore,
+          contextLength: item.contextLength,
+          supportsExtendedThinking: item.supportsExtendedThinking,
+          supportsCacheControl: item.supportsCacheControl,
+          supportsVision: item.supportsVision,
+          supportsFunctionCalling: item.supportsFunctionCalling,
+          supportsStreaming: item.supportsStreaming,
           recommendedScenarios: null,
-          isEnabled: true,
+          isEnabled: item.isEnabled,
           isDeprecated: false,
           deprecationDate: null,
-          priceUpdatedAt: now,
+          priceUpdatedAt: item.updatedAt.toISOString(),
           notes: null,
           metadata: null,
-          createdAt: now,
-          updatedAt: now,
+          createdAt: item.createdAt.toISOString(),
+          updatedAt: item.updatedAt.toISOString(),
         })),
       }) as any;
     });
@@ -416,11 +572,70 @@ export class RoutingAdminController {
   @TsRestHandler(c.getModelCatalog)
   async getModelCatalog() {
     return tsRestHandler(c.getModelCatalog, async ({ params }) => {
-      const pricing = this.costTracker.getModelCatalogPricing(params.model);
-      if (!pricing) {
+      const item = await this.modelCatalogDb.getByModel(params.model);
+      if (!item) {
         return error(CommonErrorCode.NotFound) as any;
       }
-      return success(pricing) as any;
+      return success({
+        id: item.id,
+        model: item.model,
+        vendor: item.vendor,
+        displayName: item.displayName,
+        inputPrice: Number(item.inputPrice),
+        outputPrice: Number(item.outputPrice),
+        reasoningScore: item.reasoningScore,
+        codingScore: item.codingScore,
+        creativityScore: item.creativityScore,
+        speedScore: item.speedScore,
+        contextLength: item.contextLength,
+        supportsExtendedThinking: item.supportsExtendedThinking,
+        supportsCacheControl: item.supportsCacheControl,
+        supportsVision: item.supportsVision,
+        supportsFunctionCalling: item.supportsFunctionCalling,
+        supportsStreaming: item.supportsStreaming,
+        isEnabled: item.isEnabled,
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
+      }) as any;
+    });
+  }
+
+  @TsRestHandler(c.createModelCatalog)
+  async createModelCatalog() {
+    return tsRestHandler(c.createModelCatalog, async ({ body }) => {
+      const existing = await this.modelCatalogDb.getByModel(body.model);
+      if (existing) {
+        return error(CommonErrorCode.BadRequest, '模型已存在') as any;
+      }
+      const item = await this.modelCatalogDb.create(body as any);
+      await this.configService.refreshConfigurations();
+      return success(item) as any;
+    });
+  }
+
+  @TsRestHandler(c.updateModelCatalog)
+  async updateModelCatalog() {
+    return tsRestHandler(c.updateModelCatalog, async ({ params, body }) => {
+      const existing = await this.modelCatalogDb.getById(params.id);
+      if (!existing) {
+        return error(CommonErrorCode.NotFound) as any;
+      }
+      const item = await this.modelCatalogDb.update({ id: params.id }, body as any);
+      await this.configService.refreshConfigurations();
+      return success(item) as any;
+    });
+  }
+
+  @TsRestHandler(c.deleteModelCatalog)
+  async deleteModelCatalog() {
+    return tsRestHandler(c.deleteModelCatalog, async ({ params }) => {
+      const existing = await this.modelCatalogDb.getById(params.id);
+      if (!existing) {
+        return error(CommonErrorCode.NotFound) as any;
+      }
+      await this.modelCatalogDb.update({ id: params.id }, { isEnabled: false } as any);
+      await this.configService.refreshConfigurations();
+      return deleted() as any;
     });
   }
 
@@ -536,6 +751,124 @@ export class RoutingAdminController {
       }));
 
       return success({ list: result }) as any;
+    });
+  }
+
+  // ============================================================================
+  // 自动同步
+  // ============================================================================
+
+  @TsRestHandler(c.syncModelCatalog)
+  async syncModelCatalog() {
+    return tsRestHandler(c.syncModelCatalog, async () => {
+      let created = 0;
+      let updated = 0;
+      let skipped = 0;
+
+      for (const data of MODEL_CATALOG_DATA) {
+        try {
+          const existing = await this.modelCatalogDb.getByModel(data.model);
+          if (existing) {
+            await this.modelCatalogDb.update({ id: existing.id }, {
+              vendor: data.vendor,
+              inputPrice: data.inputPrice,
+              outputPrice: data.outputPrice,
+              displayName: data.displayName,
+              cacheReadPrice: data.cacheReadPrice,
+              cacheWritePrice: data.cacheWritePrice,
+              thinkingPrice: data.thinkingPrice,
+              reasoningScore: data.reasoningScore,
+              codingScore: data.codingScore,
+              creativityScore: data.creativityScore,
+              speedScore: data.speedScore,
+              contextLength: data.contextLength,
+              supportsExtendedThinking: data.supportsExtendedThinking,
+              supportsCacheControl: data.supportsCacheControl,
+              supportsVision: data.supportsVision,
+              supportsFunctionCalling: data.supportsFunctionCalling,
+              supportsStreaming: data.supportsStreaming,
+            } as any);
+            updated++;
+          } else {
+            await this.modelCatalogDb.create({
+              model: data.model,
+              vendor: data.vendor,
+              inputPrice: data.inputPrice,
+              outputPrice: data.outputPrice,
+              displayName: data.displayName,
+              cacheReadPrice: data.cacheReadPrice,
+              cacheWritePrice: data.cacheWritePrice,
+              thinkingPrice: data.thinkingPrice,
+              reasoningScore: data.reasoningScore ?? 50,
+              codingScore: data.codingScore ?? 50,
+              creativityScore: data.creativityScore ?? 50,
+              speedScore: data.speedScore ?? 50,
+              contextLength: data.contextLength ?? 128000,
+              supportsExtendedThinking: data.supportsExtendedThinking ?? false,
+              supportsCacheControl: data.supportsCacheControl ?? false,
+              supportsVision: data.supportsVision ?? false,
+              supportsFunctionCalling: data.supportsFunctionCalling ?? true,
+              supportsStreaming: data.supportsStreaming ?? true,
+            } as any);
+            created++;
+          }
+        } catch (e) {
+          this.logger.warn(`Failed to sync model catalog: ${data.model}`, { error: e });
+          skipped++;
+        }
+      }
+
+      await this.configService.refreshConfigurations();
+      return success({ created, updated, skipped }) as any;
+    });
+  }
+
+  @TsRestHandler(c.syncCapabilityTags)
+  async syncCapabilityTags() {
+    return tsRestHandler(c.syncCapabilityTags, async ({ body }) => {
+      let processed = 0;
+      let tagsAssigned = 0;
+
+      if (body?.modelCatalogId) {
+        // 同步单个模型的标签
+        const catalog = await this.modelCatalogDb.getById(body.modelCatalogId);
+        if (catalog) {
+          const matched = await this.capabilityTagMatchingService.matchTagsForModel(
+            catalog.model,
+            catalog.vendor,
+          );
+          await this.capabilityTagMatchingService.assignTagsToModelCatalog(
+            catalog.id,
+            catalog.model,
+            catalog.vendor,
+          );
+          processed = 1;
+          tagsAssigned = matched.length;
+        }
+      } else {
+        // 同步所有模型的标签
+        const catalogList = await this.modelCatalogDb.listAll();
+        for (const catalog of catalogList) {
+          try {
+            const matched = await this.capabilityTagMatchingService.matchTagsForModel(
+              catalog.model,
+              catalog.vendor,
+            );
+            await this.capabilityTagMatchingService.assignTagsToModelCatalog(
+              catalog.id,
+              catalog.model,
+              catalog.vendor,
+            );
+            processed++;
+            tagsAssigned += matched.length;
+          } catch (e) {
+            this.logger.warn(`Failed to sync tags for: ${catalog.model}`, { error: e });
+          }
+        }
+      }
+
+      await this.configService.refreshConfigurations();
+      return success({ processed, tagsAssigned }) as any;
     });
   }
 }

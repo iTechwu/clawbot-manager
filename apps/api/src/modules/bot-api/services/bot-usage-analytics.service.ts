@@ -482,7 +482,7 @@ export class BotUsageAnalyticsService implements OnModuleInit {
 
     let totalCost = 0;
     for (const row of result) {
-      const pricing = this.getModelPricing(row.model);
+      const pricing = this.getModelCatalogPricing(row.model);
       const inputCost =
         (Number(row.request_tokens || 0) / 1_000_000) * pricing.input;
       const outputCost =
@@ -509,7 +509,7 @@ export class BotUsageAnalyticsService implements OnModuleInit {
   /**
    * 获取模型定价（从缓存）
    */
-  private getModelPricing(model: string | null): {
+  private getModelCatalogPricing(model: string | null): {
     input: number;
     output: number;
   } {

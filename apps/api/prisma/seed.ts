@@ -26,7 +26,7 @@ import { PLUGIN_DEFINITIONS } from '../scripts/plugin-definitions.data';
 import { SYSTEM_TEMPLATES } from '../scripts/persona-templates.data';
 
 // Model catalog data
-import { MODEL_PRICING_DATA } from '../scripts/model-pricing.data';
+import { MODEL_CATALOG_DATA } from '../scripts/model-catalog.data';
 
 // Capability tags data
 import { CAPABILITY_TAGS_DATA } from '../scripts/capability-tags.data';
@@ -297,7 +297,7 @@ async function seedPlugins() {
 async function seedModelCatalog() {
   console.log('\n💰 Seeding model catalog...');
 
-  for (const pricingData of MODEL_PRICING_DATA) {
+  for (const pricingData of MODEL_CATALOG_DATA) {
     const existing = await prisma.modelCatalog.findUnique({
       where: { model: pricingData.model },
     });

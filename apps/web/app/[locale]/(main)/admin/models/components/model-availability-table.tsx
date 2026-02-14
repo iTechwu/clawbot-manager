@@ -83,7 +83,7 @@ export function ModelAvailabilityTable() {
     return result;
   }, [availability, searchQuery, vendorFilter, statusFilter]);
 
-  const handleSyncModelPricing = async (modelId: string) => {
+  const handleSyncModelCatalog = async (modelId: string) => {
     const result = await syncPricing(modelId);
     if (result) {
       toast.success('定价同步完成');
@@ -176,7 +176,7 @@ export function ModelAvailabilityTable() {
                   <ModelRow
                     key={model.id}
                     model={model}
-                    onSyncPricing={handleSyncModelPricing}
+                    onSyncPricing={handleSyncModelCatalog}
                     onSyncTags={handleSyncModelTags}
                     syncingPricing={syncingPricing}
                     syncingTags={syncingTags}

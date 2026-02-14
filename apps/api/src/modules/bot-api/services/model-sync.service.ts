@@ -31,8 +31,8 @@ export interface SyncTagsResult {
  */
 export interface ModelSyncStatus {
   totalModels: number;
-  pricingSynced: number;
-  pricingNotSynced: number;
+  catalogSynced: number;
+  catalogNotSynced: number;
   tagsSynced: number;
   tagsNotSynced: number;
   lastSyncAt: Date | null;
@@ -223,7 +223,7 @@ export class ModelSyncService {
     );
 
     const totalModels = availabilities.length;
-    const pricingSynced = availabilities.filter(
+    const catalogSynced = availabilities.filter(
       (a: any) => a.modelCatalogId,
     ).length;
     const tagsSynced = totalModels; // Tags are now on ModelCatalog level, always considered synced
@@ -233,8 +233,8 @@ export class ModelSyncService {
 
     return {
       totalModels,
-      pricingSynced,
-      pricingNotSynced: totalModels - pricingSynced,
+      catalogSynced,
+      catalogNotSynced: totalModels - catalogSynced,
       tagsSynced,
       tagsNotSynced: totalModels - tagsSynced,
       lastSyncAt,
