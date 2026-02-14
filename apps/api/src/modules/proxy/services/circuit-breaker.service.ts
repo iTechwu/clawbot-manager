@@ -1,4 +1,9 @@
-import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  OnModuleDestroy,
+  Optional,
+} from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 
@@ -32,6 +37,9 @@ export interface CircuitBreakerConfig {
   halfOpenMaxRequests: number;
 }
 
+/** DI token，用于可选注入断路器配置（不提供则使用默认配置） */
+export const CIRCUIT_BREAKER_CONFIG = 'CIRCUIT_BREAKER_CONFIG';
+
 const DEFAULT_CONFIG: CircuitBreakerConfig = {
   failureThreshold: 5,
   successThreshold: 2,
@@ -64,6 +72,8 @@ export class CircuitBreakerService implements OnModuleDestroy {
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Optional()
+    @Inject(CIRCUIT_BREAKER_CONFIG)
     config?: Partial<CircuitBreakerConfig>,
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
