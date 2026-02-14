@@ -42,6 +42,15 @@ export interface ModelTagAssociation {
 }
 
 /**
+ * Primary model info from BotModel (isPrimary=true)
+ */
+export interface PrimaryModelInfo {
+  modelId: string;
+  providerKeyId: string;
+  vendor: string;
+}
+
+/**
  * Model capability analysis result
  */
 interface ModelCapability {
@@ -259,6 +268,12 @@ const NON_ROUTABLE_TAGS = new Set([
   'premium', 'general-purpose', 'embedding', '3d-generation',
 ]);
 
+/**
+ * Only generate a routing rule for a non-primary model when its confidence
+ * exceeds this threshold. Below this, the request stays on the primary model.
+ */
+const PRIMARY_OVERRIDE_CONFIDENCE_THRESHOLD = 80;
+
 @Injectable()
 export class RoutingSuggestionService {
   constructor(
@@ -271,11 +286,13 @@ export class RoutingSuggestionService {
    * @param providers - Bot's available models grouped by provider
    * @param capabilityTags - All active capability tags from DB
    * @param modelTagAssociations - Which models have which capability tags
+   * @param primaryModel - Bot's primary model (isPrimary=true), used as default + fallback anchor
    */
   async generateSuggestions(
     providers: ProviderInfo[],
     capabilityTags: CapabilityTagInfo[],
     modelTagAssociations: ModelTagAssociation[],
+    primaryModel?: PrimaryModelInfo,
   ): Promise<RoutingSuggestionResult> {
     // Build a flat list of all available models with their provider info
     const availableModels = this.buildAvailableModelList(providers);
@@ -284,6 +301,7 @@ export class RoutingSuggestionService {
       providerCount: providers.length,
       totalModels: availableModels.length,
       capabilityTagCount: capabilityTags.length,
+      primaryModel: primaryModel?.modelId ?? 'none',
     });
 
     // Build model -> tagIds lookup from associations
@@ -297,19 +315,19 @@ export class RoutingSuggestionService {
       availableModels, capabilityTags, modelTagMap,
     );
 
-    // Generate function route rules — one per routable capability tag
+    // Generate function route rules — only for non-primary models with high confidence
     const functionRouteRules = this.generateFunctionRouteRules(
-      availableModels, capabilityTags, modelTagMap,
+      availableModels, capabilityTags, modelTagMap, primaryModel,
     );
 
-    // Default target: best general-purpose model
+    // Default target: primary model (fallback to general-purpose tag)
     const defaultTarget = this.selectDefaultTarget(
-      availableModels, capabilityTags, modelTagMap,
+      availableModels, capabilityTags, modelTagMap, primaryModel,
     );
 
-    // Failover suggestion
+    // Failover suggestion: primary model as chain head
     const failoverSuggestion = this.generateFailoverSuggestion(
-      availableModels, capabilityTags, modelTagMap,
+      availableModels, capabilityTags, modelTagMap, primaryModel,
     );
 
     const summary = this.generateSummary(modelCapabilities, functionRouteRules);
@@ -393,6 +411,7 @@ export class RoutingSuggestionService {
     availableModels: Array<{ modelId: string; providerKeyId: string; vendor: string }>,
     capabilityTags: CapabilityTagInfo[],
     modelTagMap: Map<string, Set<string>>,
+    primaryModel?: PrimaryModelInfo,
   ): SuggestedRoutingRule[] {
     const rules: SuggestedRoutingRule[] = [];
 
@@ -409,6 +428,16 @@ export class RoutingSuggestionService {
         availableModels, tag, modelTagMap,
       );
       if (!bestModel) continue;
+
+      // Skip if best model IS the primary model (default route handles it)
+      if (primaryModel && bestModel.modelId === primaryModel.modelId) {
+        continue;
+      }
+
+      // Skip if confidence is below threshold — keep on primary model
+      if (primaryModel && bestModel.confidence < PRIMARY_OVERRIDE_CONFIDENCE_THRESHOLD) {
+        continue;
+      }
 
       rules.push({
         name: tag.name,
@@ -438,6 +467,16 @@ export class RoutingSuggestionService {
         availableModels, capabilityTags, modelTagMap, scenario,
       );
       if (!bestModel) continue;
+
+      // Skip if best model IS the primary model
+      if (primaryModel && bestModel.modelId === primaryModel.modelId) {
+        continue;
+      }
+
+      // Skip if confidence is below threshold
+      if (primaryModel && bestModel.confidence < PRIMARY_OVERRIDE_CONFIDENCE_THRESHOLD) {
+        continue;
+      }
 
       rules.push({
         name: scenario.name,
@@ -502,8 +541,22 @@ export class RoutingSuggestionService {
     availableModels: Array<{ modelId: string; providerKeyId: string; vendor: string }>,
     capabilityTags: CapabilityTagInfo[],
     modelTagMap: Map<string, Set<string>>,
+    primaryModel?: PrimaryModelInfo,
   ): RoutingTarget {
-    // Find the "general-purpose" tag
+    // 1. Primary model takes priority as default target
+    if (primaryModel) {
+      const primaryAvailable = availableModels.find(
+        (m) => m.modelId === primaryModel.modelId,
+      );
+      if (primaryAvailable) {
+        return {
+          providerKeyId: primaryModel.providerKeyId,
+          model: primaryModel.modelId,
+        };
+      }
+    }
+
+    // 2. Fallback: find the "general-purpose" tag
     const gpTag = capabilityTags.find((t) => t.tagId === 'general-purpose');
     if (gpTag) {
       const best = this.findBestModelForTag(availableModels, gpTag, modelTagMap);
@@ -512,7 +565,7 @@ export class RoutingSuggestionService {
       }
     }
 
-    // Fallback: pick the model that has the most capability tags
+    // 3. Fallback: pick the model that has the most capability tags
     let bestModel = availableModels[0];
     let maxTags = 0;
     for (const model of availableModels) {
@@ -533,33 +586,40 @@ export class RoutingSuggestionService {
     availableModels: Array<{ modelId: string; providerKeyId: string; vendor: string }>,
     capabilityTags: CapabilityTagInfo[],
     modelTagMap: Map<string, Set<string>>,
+    primaryModel?: PrimaryModelInfo,
   ): { primary: RoutingTarget; fallbackChain: RoutingTarget[] } | undefined {
     if (availableModels.length < 2) return undefined;
 
-    // Score each model by how many capability tags it covers
-    const scored = availableModels.map((m) => ({
-      ...m,
-      tagCount: modelTagMap.get(m.modelId)?.size ?? 0,
-    }));
-    scored.sort((a, b) => b.tagCount - a.tagCount);
+    // Determine primary target
+    let primary: typeof availableModels[0];
 
-    // Check if model is in "premium" requiredModels
-    const premiumTag = capabilityTags.find((t) => t.tagId === 'premium');
-    const premiumModels = new Set(premiumTag?.requiredModels ?? []);
+    if (primaryModel) {
+      // Use the designated primary model
+      primary = availableModels.find(
+        (m) => m.modelId === primaryModel.modelId,
+      ) || availableModels[0];
+    } else {
+      // Legacy fallback: score by tag count + premium preference
+      const scored = availableModels.map((m) => ({
+        ...m,
+        tagCount: modelTagMap.get(m.modelId)?.size ?? 0,
+      }));
+      scored.sort((a, b) => b.tagCount - a.tagCount);
 
-    // Prefer premium models for primary
-    const premiumAvailable = scored.filter((m) =>
-      premiumModels.has(m.modelId) ||
-      [...premiumModels].some(
-        (pm) => m.modelId.toLowerCase().includes(pm.toLowerCase()),
-      ),
-    );
+      const premiumTag = capabilityTags.find((t) => t.tagId === 'premium');
+      const premiumModels = new Set(premiumTag?.requiredModels ?? []);
+      const premiumAvailable = scored.filter((m) =>
+        premiumModels.has(m.modelId) ||
+        [...premiumModels].some(
+          (pm) => m.modelId.toLowerCase().includes(pm.toLowerCase()),
+        ),
+      );
 
-    const primary = premiumAvailable[0] || scored[0];
+      primary = premiumAvailable[0] || scored[0];
+    }
 
-    // Build fallback chain with vendor diversity
-    // Prefer models from different vendors than primary
-    const remaining = scored.filter((m) => m.modelId !== primary.modelId);
+    // Build fallback chain with vendor diversity (exclude primary)
+    const remaining = availableModels.filter((m) => m.modelId !== primary.modelId);
     const fallbacks: typeof remaining = [];
     const usedVendors = new Set([primary.vendor]);
 

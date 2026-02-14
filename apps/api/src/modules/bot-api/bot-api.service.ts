@@ -3,6 +3,8 @@ import {
   NotFoundException,
   ConflictException,
   Logger,
+  forwardRef,
+  Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -22,6 +24,7 @@ import { BotConfigResolverService } from './services/bot-config-resolver.service
 import { AvailableModelService } from './services/available-model.service';
 import { ModelVerificationService } from './services/model-verification.service';
 import type { Bot, ProviderKey, BotStatus, Prisma } from '@prisma/client';
+import { PluginApiService } from '../plugin-api/plugin-api.service';
 import type {
   CreateBotInput,
   SimpleCreateBotInput,
@@ -57,6 +60,7 @@ export class BotApiService {
     private readonly botConfigResolver: BotConfigResolverService,
     private readonly availableModelService: AvailableModelService,
     private readonly modelVerificationService: ModelVerificationService,
+    @Inject(forwardRef(() => PluginApiService)) private readonly pluginApiService: PluginApiService,
   ) {
     this.logger.log(`BotApiService initialized`);
   }
@@ -979,6 +983,9 @@ export class BotApiService {
       }
 
       await this.botService.update({ id: bot.id }, { status: 'running' });
+
+      // Reconcile bot plugins after container starts
+      await this.pluginApiService.reconcileBotPlugins(bot.id, bot.containerId);
 
       // Log operation
       await this.operateLogService.create({

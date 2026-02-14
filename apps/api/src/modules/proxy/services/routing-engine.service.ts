@@ -116,6 +116,12 @@ export interface ProxyRequestBody {
 export interface BotRoutingContext {
   botId: string;
   installedSkills: string[];
+  /** 主模型信息（用于锚定路由决策） */
+  primaryModel?: {
+    model: string;
+    vendor: string;
+    providerKeyId: string;
+  };
   routingConfig?: {
     routingEnabled: boolean;
     routingMode: 'auto' | 'manual' | 'cost-optimized' | 'complexity-based';
@@ -397,9 +403,13 @@ export class RoutingEngineService {
       features: {},
     };
 
-    // 如果没有特殊需求，使用请求的模型
+    // 如果没有特殊需求，优先使用主模型（主模型锚定）
     if (requirements.length === 0) {
-      if (requestedModel) {
+      if (context.primaryModel) {
+        decision.model = context.primaryModel.model;
+        decision.vendor = context.primaryModel.vendor;
+        decision.protocol = this.inferProtocolFromVendor(context.primaryModel.vendor);
+      } else if (requestedModel) {
         decision.model = requestedModel;
         decision.vendor = this.inferVendorFromModel(requestedModel);
       }
@@ -605,8 +615,80 @@ export class RoutingEngineService {
       }
     }
 
-    // 6. 根据复杂度选择模型
+    // 6. 根据复杂度选择模型（主模型锚定策略）
     const modelConfig = complexityConfig.models[finalLevel];
+
+    // 主模型能力满足当前复杂度要求 → 使用主模型
+    if (context.primaryModel) {
+      const primaryScore = this.getModelCapabilityScore(context.primaryModel.model);
+      const requiredScore = this.getMinComplexityScore(finalLevel);
+
+      if (primaryScore >= requiredScore) {
+        // 主模型能力满足要求，使用主模型
+        const decision: RouteDecision = {
+          protocol: this.inferProtocolFromVendor(context.primaryModel.vendor),
+          vendor: context.primaryModel.vendor,
+          model: context.primaryModel.model,
+          features: {},
+          complexity: {
+            level: finalLevel,
+            latencyMs: classifyResult.latencyMs,
+            inheritedFromContext: classifyResult.inheritedFromContext,
+          },
+        };
+
+        this.logger.info('[RoutingEngine] Using primary model for complexity routing', {
+          complexity: finalLevel,
+          primaryModel: context.primaryModel.model,
+          primaryScore,
+          requiredScore,
+        });
+
+        // 继续检查特殊能力需求（Extended Thinking, Cache Control 等）
+        // 8. 检查是否需要特殊能力（Extended Thinking, Cache Control 等）
+        const requirements = this.parseCapabilityRequirements(
+          requestBody,
+          routingHint,
+        );
+        if (requirements.length > 0) {
+          const primaryRequirement = requirements[0];
+
+          // Extended Thinking 需要 Anthropic Native
+          if (primaryRequirement.requiresExtendedThinking) {
+            decision.protocol = 'anthropic-native';
+            decision.features.extendedThinking = true;
+            // 如果主模型不是 Anthropic 模型，需要覆盖 vendor/protocol
+            if (decision.vendor !== 'anthropic') {
+              decision.vendor = 'anthropic';
+              decision.model = primaryRequirement.requiredModels?.[0] ||
+                'claude-sonnet-4-20250514';
+            }
+          } else if (primaryRequirement.requiresCacheControl) {
+            decision.protocol = 'anthropic-native';
+            decision.features.cacheControl = true;
+            if (decision.vendor !== 'anthropic') {
+              decision.vendor = 'anthropic';
+              decision.model = 'claude-sonnet-4-20250514';
+            }
+          } else if (primaryRequirement.requiredProtocol) {
+            decision.protocol = primaryRequirement.requiredProtocol;
+          }
+        }
+
+        // 9. 应用 fallback 和 cost 配置
+        if (context.routingConfig) {
+          if (context.routingConfig.fallbackChainId) {
+            decision.fallbackChainId = context.routingConfig.fallbackChainId;
+          }
+          if (context.routingConfig.costStrategyId) {
+            decision.costStrategyId = context.routingConfig.costStrategyId;
+          }
+        }
+
+        return decision;
+      }
+      // 主模型能力不足 → 继续使用复杂度映射的模型
+    }
 
     // 7. 构建路由决策
     const decision: RouteDecision = {
@@ -726,6 +808,50 @@ export class RoutingEngineService {
     }
 
     return '';
+  }
+
+  /**
+   * 获取模型能力分数
+   */
+  private getModelCapabilityScore(model: string): number {
+    const modelLower = model.toLowerCase();
+
+    // Anthropic
+    if (modelLower.includes('claude-opus-4')) return 100;
+    if (modelLower.includes('claude-sonnet-4')) return 85;
+    if (modelLower.includes('claude-3-5-haiku')) return 60;
+    // OpenAI
+    if (modelLower === 'o1' || modelLower.includes('o1-')) return 95;
+    if (modelLower === 'o3-mini' || modelLower.includes('o3-mini')) return 80;
+    if (modelLower === 'gpt-4o' || modelLower.includes('gpt-4o')) return 82;
+    if (modelLower === 'gpt-4o-mini' || modelLower.includes('gpt-4o-mini')) return 55;
+    if (modelLower.includes('gpt-4-turbo')) return 78;
+    // DeepSeek
+    if (modelLower === 'deepseek-reasoner' || modelLower.includes('deepseek-reasoner')) return 88;
+    if (modelLower === 'deepseek-v3' || modelLower.includes('deepseek-v3')) return 70;
+    if (modelLower === 'deepseek-chat' || modelLower.includes('deepseek-chat')) return 65;
+    // Google
+    if (modelLower.includes('gemini-2.0-flash')) return 68;
+    if (modelLower.includes('gemini-1.5-pro')) return 75;
+    // Others
+    if (modelLower.includes('llama-3.3-70b-versatile')) return 62;
+
+    // 默认分数
+    return 50;
+  }
+
+  /**
+   * 获取指定复杂度等级所需的最小能力分数
+   */
+  private getMinComplexityScore(level: ComplexityLevel): number {
+    const scoreMap: Record<ComplexityLevel, number> = {
+      super_easy: 0,
+      easy: 40,
+      medium: 60,
+      hard: 80,
+      super_hard: 90,
+    };
+    return scoreMap[level];
   }
 
   /**

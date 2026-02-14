@@ -238,6 +238,11 @@ export class DockerService implements OnModuleInit {
       `AI_PROVIDER=${options.aiProvider}`,
       `AI_MODEL=${normalizedModel}`,
       `CHANNEL_TYPE=${options.channelType}`,
+      // Original vendor name before mapping (e.g., "zhipu", "dashscope", "openai")
+      // Used to determine API protocol in entrypoint
+      `AI_VENDOR=${originalProvider}`,
+      // npm registry for China network (optional)
+      ...(process.env.NPM_CONFIG_REGISTRY && [`NPM_CONFIG_REGISTRY=${process.env.NPM_CONFIG_REGISTRY}`]),
     ];
 
     // When using named volumes, bot needs to know its workspace subdirectory
@@ -445,10 +450,13 @@ export class DockerService implements OnModuleInit {
           AUTH_PROVIDER="$AI_API_TYPE"
           MODEL_PROVIDER="$AI_API_TYPE"
         elif echo "$PROVIDER" | grep -q -- "-compatible$"; then
-          # For *-compatible providers (e.g., openai-compatible), extract base apiType for auth
-          # MODEL_PROVIDER keeps the full name (e.g., openai-compatible) for model prefix
+          # For *-compatible providers (e.g., openai-compatible):
+          # Use the BASE provider name (e.g., "openai") as MODEL_PROVIDER
+          # This ensures OpenClaw uses its built-in provider which reads
+          # API keys from standard environment variables (OPENAI_API_KEY, etc.)
+          # The proxy URL still contains "-compatible" for auto-routing
           AUTH_PROVIDER=$(echo "$PROVIDER" | sed 's/-compatible$//')
-          MODEL_PROVIDER="$PROVIDER"
+          MODEL_PROVIDER="$AUTH_PROVIDER"
         else
           AUTH_PROVIDER="$PROVIDER"
           MODEL_PROVIDER="$PROVIDER"
@@ -571,10 +579,11 @@ JSON_EOF
         echo "Created openclaw.json:"
         cat "$JSON_CONFIG_FILE"
 
-        # Prepare auth-profiles directory (file created as LAST step before gateway)
+        # Prepare auth-profiles directory
         AUTH_PROFILES_DIR="$CONFIG_DIR/agents/main/agent"
         mkdir -p "$AUTH_PROFILES_DIR"
         AUTH_PROFILES_FILE="$AUTH_PROFILES_DIR/auth-profiles.json"
+        ROOT_AUTH_FILE="$CONFIG_DIR/auth-profiles.json"
 
         # Clean up any invalid config keys from previous runs
         # OpenClaw validates config strictly and rejects unknown keys
@@ -583,22 +592,34 @@ JSON_EOF
 
         # CRITICAL: Configure the base URL AFTER doctor --fix
         # doctor --fix overwrites our configuration, so we must set it again
-        # OpenClaw reads models.providers.<provider>.baseUrl for API endpoint
-        if [ -n "$OPENAI_BASE_URL" ]; then
-          echo "Setting OpenAI base URL: $OPENAI_BASE_URL"
-          # Try to set via CLI first (may fail due to schema validation)
-          # Use MODEL_PROVIDER so the provider key matches the model prefix
-          node /app/openclaw.mjs config set "models.providers.$MODEL_PROVIDER.baseUrl" "$OPENAI_BASE_URL" 2>/dev/null || true
-          node /app/openclaw.mjs config set "models.providers.$MODEL_PROVIDER.models" '[]' 2>/dev/null || true
+        # Use MODEL_PROVIDER (base provider name) for config key
+        #
+        # Determine the API protocol for OpenClaw provider config:
+        # - apiType=openai AND vendor!=openai → "openai-completions" (Chat Completions API: /chat/completions)
+        #   Domestic providers (zhipu, dashscope, doubao, etc.) only support /chat/completions
+        # - Otherwise (e.g., native OpenAI with apiType=openai-response) → leave default
+        # See: https://docs.bigmodel.cn/cn/coding-plan/tool/openclaw
+        OPENCLAW_API_PROTOCOL=""
+        if [ "$AI_API_TYPE" = "openai" ] && [ "$AI_VENDOR" != "openai" ]; then
+          OPENCLAW_API_PROTOCOL="openai-completions"
+        fi
 
-          # Directly patch the openclaw.json file using node (primary method)
-          # This is more reliable than the CLI config set command
-          # Use MODEL_PROVIDER as the key so it matches the model prefix
-          echo "Configuring models.providers.$MODEL_PROVIDER in openclaw.json..."
+        # Configure npm registry for China network (optional)
+        # NPM_CONFIG_REGISTRY env var will be passed by the manager
+        if [ -n "$NPM_CONFIG_REGISTRY" ]; then
+          npm config set registry "$NPM_CONFIG_REGISTRY"
+          echo "npm registry configured: $NPM_CONFIG_REGISTRY"
+        fi
+
+        if [ -n "$OPENAI_BASE_URL" ]; then
+          echo "Setting base URL for provider $MODEL_PROVIDER: $OPENAI_BASE_URL (api: $OPENCLAW_API_PROTOCOL)"
+          # Directly patch openclaw.json with provider config including apiKey and api protocol
+          # This is more reliable than CLI config set commands
           node -e "
             const fs = require('fs');
             const configPath = '$JSON_CONFIG_FILE';
             const providerKey = '$MODEL_PROVIDER';
+            const apiProtocol = '$OPENCLAW_API_PROTOCOL';
             try {
               const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
               config.models = config.models || {};
@@ -606,8 +627,14 @@ JSON_EOF
               config.models.providers[providerKey] = config.models.providers[providerKey] || {};
               config.models.providers[providerKey].baseUrl = '$OPENAI_BASE_URL';
               config.models.providers[providerKey].models = [];
+              if ('$API_KEY') {
+                config.models.providers[providerKey].apiKey = '$API_KEY';
+              }
+              if (apiProtocol) {
+                config.models.providers[providerKey].api = apiProtocol;
+              }
               fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-              console.log('Successfully patched openclaw.json with provider: ' + providerKey);
+              console.log('Patched openclaw.json with provider: ' + providerKey + (apiProtocol ? ' (api: ' + apiProtocol + ')' : ''));
             } catch (e) {
               console.error('Failed to patch config:', e.message);
             }
@@ -620,10 +647,9 @@ JSON_EOF
           node /app/openclaw.mjs models set "$FULL_MODEL" 2>/dev/null || echo "Warning: Failed to set model"
         fi
 
-        # CRITICAL: Create auth-profiles.json as the VERY LAST config step
-        # Must be after doctor --fix AND after models set, as both can overwrite this file
-        # Use MODEL_PROVIDER as the key so it matches the model prefix
-        # e.g., model "openai-compatible/doubao-..." needs provider key "openai-compatible"
+        # Create auth-profiles.json as a fallback credential source
+        # Primary auth is via environment variables (OPENAI_API_KEY, etc.)
+        # but auth-profiles.json provides a backup for providers that check it
         echo "Creating auth-profiles.json for provider: $MODEL_PROVIDER"
         if [ -n "$OPENAI_BASE_URL" ]; then
           cat > "$AUTH_PROFILES_FILE" << AUTH_EOF
@@ -644,25 +670,25 @@ AUTH_EOF
 }
 AUTH_EOF
         fi
-        echo "Created auth-profiles.json:"
+        cp "$AUTH_PROFILES_FILE" "$ROOT_AUTH_FILE"
+        # Make auth-profiles read-only to prevent gateway from overwriting during init
+        chmod 444 "$AUTH_PROFILES_FILE" 2>/dev/null || true
+        chmod 444 "$ROOT_AUTH_FILE" 2>/dev/null || true
+        echo "Created auth-profiles.json (read-only):"
         cat "$AUTH_PROFILES_FILE"
 
-        # Debug: Show final openclaw.json configuration
+        # Debug: Show final configuration
         echo "=== Final openclaw.json ==="
         cat "$JSON_CONFIG_FILE" 2>/dev/null || echo "Config file not found"
         echo "==========================="
-
-        # Debug: Show final auth-profiles.json to verify it wasn't overwritten
-        echo "=== Final auth-profiles.json ==="
-        cat "$AUTH_PROFILES_FILE" 2>/dev/null || echo "Auth profiles file not found"
-        echo "================================"
-
-        # Debug: Output all relevant environment variables
         echo "=== Environment Configuration ==="
         echo "PROVIDER: $PROVIDER"
+        echo "AI_VENDOR: $AI_VENDOR"
         echo "AUTH_PROVIDER: $AUTH_PROVIDER"
         echo "MODEL_PROVIDER: $MODEL_PROVIDER"
+        echo "FULL_MODEL: $FULL_MODEL"
         echo "AI_API_TYPE: $AI_API_TYPE"
+        echo "OPENCLAW_API_PROTOCOL: $OPENCLAW_API_PROTOCOL"
         echo "OPENAI_BASE_URL: $OPENAI_BASE_URL"
         echo "PROXY_URL: $PROXY_URL"
         if [ -n "$PROXY_TOKEN" ]; then echo "PROXY_TOKEN: [SET]"; else echo "PROXY_TOKEN: [NOT SET]"; fi
@@ -670,8 +696,7 @@ AUTH_EOF
         echo "================================="
 
         # Start the gateway
-        # Note: --bind lan is configured in openclaw.json, but we pass it here for clarity
-        # The gateway token is configured in openclaw.json for WebSocket authentication
+        # Using exec so gateway becomes PID 1 for proper signal handling
         exec node /app/openclaw.mjs gateway --port ${options.port} --bind lan
         `,
       ],

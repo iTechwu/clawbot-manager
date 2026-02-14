@@ -12,7 +12,10 @@ import {
   ModelCapabilityTagService,
 } from '@app/db';
 import { ModelRouterService } from './services/model-router.service';
-import { RoutingSuggestionService } from './services/routing-suggestion.service';
+import {
+  RoutingSuggestionService,
+  type PrimaryModelInfo,
+} from './services/routing-suggestion.service';
 import { EncryptionService } from './services/encryption.service';
 import type {
   BotModelRouting as PrismaBotModelRouting,
@@ -306,6 +309,7 @@ export class ModelRoutingService {
   /**
    * 获取 AI 推荐的路由配置
    * 根据 Bot 的 models 分析并生成推荐的路由规则
+   * 以主模型为锚点：默认路由 + Fallback 首选
    */
   async suggestRouting(
     hostname: string,
@@ -313,46 +317,75 @@ export class ModelRoutingService {
   ): Promise<RoutingSuggestionResult> {
     const bot = await this.getBotByHostname(hostname, userId);
 
-    // Get all bot models
+    // 1. Get all bot models
     const { list: botModels } = await this.botModelService.list({
       botId: bot.id,
     });
 
-    // Build model info for suggestion service
-    const modelInfos = await Promise.all(
-      botModels.map(async (bm) => {
-        // Get model availability to find provider key
-        const { list: availabilities } =
-          await this.modelAvailabilityService.list(
-            { model: bm.modelId },
-            { limit: 1 },
-          );
-        const availability = availabilities[0];
+    const modelIds = botModels.map((bm) => bm.modelId);
+    const primaryBotModel = botModels.find((bm) => bm.isPrimary);
 
-        let providerKey = null;
-        if (availability?.providerKeyId) {
-          providerKey = await this.providerKeyService.get({
-            id: availability.providerKeyId,
-          });
-        }
+    // 2. Batch query ModelAvailability (replaces N individual queries)
+    const { list: allAvailabilities } =
+      await this.modelAvailabilityService.list(
+        { model: { in: modelIds } },
+        { limit: 500 },
+      );
 
-        return {
-          modelId: bm.modelId,
-          isPrimary: bm.isPrimary,
-          vendor: providerKey?.vendor || 'openai',
-          providerKeyId: availability?.providerKeyId || null,
+    // 3. Batch query ProviderKeys (replaces N individual queries)
+    const uniqueProviderKeyIds = [
+      ...new Set(allAvailabilities.map((a) => a.providerKeyId)),
+    ];
+    const providerKeyMap = new Map<string, any>();
+    if (uniqueProviderKeyIds.length > 0) {
+      const { list: providerKeys } = await this.providerKeyService.list(
+        { id: { in: uniqueProviderKeyIds } },
+        { limit: 500 },
+      );
+      for (const pk of providerKeys) {
+        providerKeyMap.set(pk.id, pk);
+      }
+    }
+
+    // 4. Build modelInfos without N+1 queries
+    const modelInfos = botModels.map((bm) => {
+      const availability = allAvailabilities.find(
+        (a) => a.model === bm.modelId,
+      );
+      const providerKey = availability
+        ? providerKeyMap.get(availability.providerKeyId)
+        : null;
+      return {
+        modelId: bm.modelId,
+        isPrimary: bm.isPrimary,
+        vendor: (providerKey?.vendor as string) || 'openai',
+        providerKeyId: availability?.providerKeyId || null,
+      };
+    });
+
+    // 5. Build PrimaryModelInfo
+    let primaryModel: PrimaryModelInfo | undefined;
+    if (primaryBotModel) {
+      const primaryInfo = modelInfos.find(
+        (m) => m.modelId === primaryBotModel.modelId,
+      );
+      if (primaryInfo?.providerKeyId) {
+        primaryModel = {
+          modelId: primaryInfo.modelId,
+          providerKeyId: primaryInfo.providerKeyId,
+          vendor: primaryInfo.vendor,
         };
-      }),
-    );
+      }
+    }
 
     this.logger.info('Generating routing suggestions', {
       botId: bot.id,
       hostname,
       modelCount: modelInfos.length,
+      primaryModel: primaryModel?.modelId ?? 'none',
     });
 
-    // Transform model infos to ProviderInfo[] format for suggestion service
-    // Group models by providerKeyId
+    // 6. Group models by providerKeyId
     const providerMap = new Map<
       string,
       { providerKeyId: string; vendor: string; allowedModels: string[] }
@@ -371,7 +404,7 @@ export class ModelRoutingService {
       }
     }
 
-    // Fetch capability tags and model-tag associations from DB
+    // 7. Fetch capability tags
     const { list: capabilityTagsRaw } = await this.capabilityTagService.list(
       { isActive: true },
       { limit: 100 },
@@ -385,23 +418,29 @@ export class ModelRoutingService {
       requiredModels: (t.requiredModels as string[] | null) ?? null,
     }));
 
-    // Get model-tag associations for all bot models
-    const modelIds = modelInfos.map((m) => m.modelId);
+    // 8. Query ModelCapabilityTags filtered by bot's models (replaces full-table scan)
+    const modelCatalogIds = allAvailabilities
+      .filter((a) => a.modelCatalogId)
+      .map((a) => a.modelCatalogId);
+
     const { list: modelCapTags } = await this.modelCapabilityTagService.list(
-      {},
+      modelCatalogIds.length > 0
+        ? { modelCatalogId: { in: modelCatalogIds } }
+        : {},
       { limit: 5000 },
       {
         include: {
-          modelAvailability: { select: { model: true } },
+          modelCatalog: { select: { model: true } },
           capabilityTag: { select: { tagId: true } },
         },
       } as any,
     );
-    // Build model -> tagIds associations (only for bot's models)
+
+    // 9. Build model -> tagIds associations
     const modelIdSet = new Set(modelIds);
     const assocMap = new Map<string, string[]>();
     for (const mct of modelCapTags as any[]) {
-      const modelName = mct.modelAvailability?.model;
+      const modelName = mct.modelCatalog?.model;
       const tagId = mct.capabilityTag?.tagId;
       if (!modelName || !tagId || !modelIdSet.has(modelName)) continue;
       const existing = assocMap.get(modelName);
@@ -415,10 +454,12 @@ export class ModelRoutingService {
       ([modelId, tagIds]) => ({ modelId, tagIds }),
     );
 
+    // 10. Generate suggestions with primary model anchor
     return this.routingSuggestionService.generateSuggestions(
       Array.from(providerMap.values()),
       capabilityTags,
       modelTagAssociations,
+      primaryModel,
     );
   }
 

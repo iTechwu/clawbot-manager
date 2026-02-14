@@ -42,6 +42,7 @@ import { ModelVerificationService } from './services/model-verification.service'
 import { CapabilityTagMatchingService } from './services/capability-tag-matching.service';
 import { ModelSyncService } from './services/model-sync.service';
 import { RoutingConfigService } from './services/routing-config.service';
+import { PluginApiModule } from '../plugin-api/plugin-api.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { RoutingConfigService } from './services/routing-config.service';
     FallbackChainModule,
     ModelRoutingModule,
     PrismaModule,
+    PluginApiModule,
   ],
   controllers: [BotApiController, ModelRoutingController],
   providers: [

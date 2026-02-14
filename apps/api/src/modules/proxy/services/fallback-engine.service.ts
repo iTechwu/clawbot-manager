@@ -267,6 +267,108 @@ export class FallbackEngineService {
   }
 
   /**
+   * 根据 bot 的可用模型动态生成 Fallback 链
+   * 主模型作为链首，其余按 vendor 多样性排列
+   *
+   * @param botId Bot ID
+   * @param availableModels Bot 的可用模型（包含 isPrimary）
+   * @param chainId 可选的链 ID，如果未提供则自动生成
+   * @returns 生成的 Fallback 链
+   */
+  buildDynamicFallbackChain(
+    botId: string,
+    availableModels: { model: string; vendor: string; isPrimary: boolean }[],
+    chainId?: string,
+  ): FallbackChain {
+    if (availableModels.length === 0) {
+      throw new Error(`No available models for bot ${botId}`);
+    }
+
+    // 1. 找到主模型
+    const primaryModel = availableModels.find((m) => m.isPrimary);
+    const nonPrimaryModels = availableModels.filter((m) => !m.isPrimary);
+
+    // 2. 构建模型列表：主模型在首位
+    const models: FallbackModel[] = [];
+
+    if (primaryModel) {
+      models.push({
+        vendor: primaryModel.vendor,
+        model: primaryModel.model,
+        protocol: this.inferProtocol(primaryModel.vendor),
+      });
+    }
+
+    // 3. 按 vendor 多样性排列非主模型
+    const usedVendors = new Set(primaryModel ? [primaryModel.vendor] : []);
+
+    // 第一轮：不同 vendor 的模型
+    for (const m of nonPrimaryModels) {
+      if (models.length >= 4) break; // 最多 4 个模型
+      if (!usedVendors.has(m.vendor)) {
+        models.push({
+          vendor: m.vendor,
+          model: m.model,
+          protocol: this.inferProtocol(m.vendor),
+        });
+        usedVendors.add(m.vendor);
+      }
+    }
+
+    // 第二轮：填充剩余位置
+    for (const m of nonPrimaryModels) {
+      if (models.length >= 4) break;
+      if (!models.some((existing) => existing.model === m.model)) {
+        models.push({
+          vendor: m.vendor,
+          model: m.model,
+          protocol: this.inferProtocol(m.vendor),
+        });
+      }
+    }
+
+    const effectiveChainId = chainId || `bot-${botId}-dynamic`;
+
+    return {
+      chainId: effectiveChainId,
+      name: `Bot ${botId} 动态 Fallback 链`,
+      models,
+      triggerStatusCodes: [429, 500, 502, 503, 504],
+      triggerErrorTypes: ['rate_limit', 'overloaded', 'timeout'],
+      triggerTimeoutMs: 60000,
+      maxRetries: Math.min(models.length, 3),
+      retryDelayMs: 2000,
+      preserveProtocol: false,
+    };
+  }
+
+  /**
+   * 为 bot 注册动态 Fallback 链（替代硬编码默认链）
+   *
+   * @param botId Bot ID
+   * @param availableModels Bot 的可用模型
+   * @returns 注册的 chainId
+   */
+  registerBotFallbackChain(
+    botId: string,
+    availableModels: { model: string; vendor: string; isPrimary: boolean }[],
+  ): string {
+    const chain = this.buildDynamicFallbackChain(botId, availableModels);
+    this.fallbackChains.set(chain.chainId, chain);
+    this.logger.info(
+      `[FallbackEngine] Registered dynamic chain for bot ${botId}: ${chain.models.map((m) => m.model).join(' → ')}`,
+    );
+    return chain.chainId;
+  }
+
+  /**
+   * 根据 vendor 推断协议类型
+   */
+  private inferProtocol(vendor: string): 'openai-compatible' | 'anthropic-native' {
+    return vendor === 'anthropic' ? 'anthropic-native' : 'openai-compatible';
+  }
+
+  /**
    * 获取下一个 Fallback 模型
    */
   getNextFallback(

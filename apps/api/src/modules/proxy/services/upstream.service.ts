@@ -41,6 +41,10 @@ export interface UpstreamResult {
 export interface StreamForwardResult {
   statusCode: number;
   tokenUsage: TokenUsage | null;
+  /** 响应时间 (ms) */
+  responseTimeMs: number;
+  /** 请求是否成功（2xx 状态码） */
+  success: boolean;
 }
 
 /**
@@ -100,10 +104,17 @@ export class UpstreamService {
    * 构建上游请求选项（URL 解析、header 清理、MiniMax GroupId 注入）
    */
   private buildUpstreamOptions(req: UpstreamRequest): {
-    options: { hostname: string; port: number; path: string; method: string; headers: Record<string, string> };
+    options: {
+      hostname: string;
+      port: number;
+      path: string;
+      method: string;
+      headers: Record<string, string>;
+    };
     useHttps: boolean;
   } {
-    const { vendorConfig, path, method, headers, body, apiKey, customUrl } = req;
+    const { vendorConfig, path, method, headers, body, apiKey, customUrl } =
+      req;
 
     // 解析目标 URL
     let targetHost: string;
@@ -173,16 +184,20 @@ export class UpstreamService {
     rawResponse: ServerResponse,
     vendor?: string,
   ): Promise<StreamForwardResult> {
+    const startTime = Date.now();
+
     return new Promise((resolve, reject) => {
       const { body } = req;
       const { options, useHttps } = this.buildUpstreamOptions(req);
 
-      this.logger.debug(
-        `Forwarding to upstream: ${options.method} ${useHttps ? 'https' : 'http'}://${options.hostname}:${options.port}${options.path}`,
+      this.logger.info(
+        `[Proxy] Forwarding to upstream: ${options.method} ${useHttps ? 'https' : 'http'}://${options.hostname}:${options.port}${options.path}`,
       );
 
-      // 收集响应数据用于 token 提取
+      // 收集响应数据用于 token 提取（仅收集最后 64KB 用于 usage 提取）
       const responseChunks: Buffer[] = [];
+      let totalBufferSize = 0;
+      const MAX_BUFFER_SIZE = 64 * 1024; // 64KB limit for usage extraction
 
       const httpModule = useHttps ? https : http;
       const proxyReq = httpModule.request(
@@ -217,8 +232,27 @@ export class UpstreamService {
 
           proxyRes.on('data', (chunk) => {
             rawResponse.write(chunk);
-            // 收集 chunk 用于 token 提取
-            responseChunks.push(chunk);
+            // 仅收集最后 64KB 用于 usage 提取（避免长对话内存爆炸）
+            if (totalBufferSize + chunk.length <= MAX_BUFFER_SIZE) {
+              responseChunks.push(chunk);
+              totalBufferSize += chunk.length;
+            } else {
+              // 超过限制时，丢弃旧数据，保留最新的
+              const overflow = totalBufferSize + chunk.length - MAX_BUFFER_SIZE;
+              while (overflow > 0 && responseChunks.length > 0) {
+                const first = responseChunks[0];
+                if (first.length <= overflow) {
+                  totalBufferSize -= first.length;
+                  responseChunks.shift();
+                } else {
+                  responseChunks[0] = first.subarray(overflow);
+                  totalBufferSize -= overflow;
+                  break;
+                }
+              }
+              responseChunks.push(chunk);
+              totalBufferSize += chunk.length;
+            }
             // 强制刷新 SSE - 确保事件立即发送
             if (typeof (rawResponse as any).flush === 'function') {
               (rawResponse as any).flush();
@@ -227,6 +261,8 @@ export class UpstreamService {
 
           proxyRes.on('end', () => {
             rawResponse.end();
+
+            const responseTimeMs = Date.now() - startTime;
 
             // Log response data for debugging (concise summary)
             const rawBuffer = Buffer.concat(responseChunks);
@@ -240,7 +276,9 @@ export class UpstreamService {
               } else if (contentEncoding === 'deflate') {
                 responseData = zlib.inflateSync(rawBuffer).toString('utf-8');
               } else if (contentEncoding === 'br') {
-                responseData = zlib.brotliDecompressSync(rawBuffer).toString('utf-8');
+                responseData = zlib
+                  .brotliDecompressSync(rawBuffer)
+                  .toString('utf-8');
               } else {
                 responseData = rawBuffer.toString('utf-8');
               }
@@ -281,7 +319,7 @@ export class UpstreamService {
                   // Ignore parse errors
                 }
                 this.logger.info(
-                  `[Proxy] Response: status=${statusCode}, events=${lines.length}, usage=${JSON.stringify(usageSummary)}`,
+                  `[Proxy] Response: status=${statusCode}, time=${responseTimeMs}ms, events=${lines.length}, usage=${JSON.stringify(usageSummary)}`,
                 );
               } else {
                 try {
@@ -293,23 +331,24 @@ export class UpstreamService {
                     error: jsonResponse.error,
                   };
                   this.logger.info(
-                    `[Proxy] Response: status=${statusCode}, summary=${JSON.stringify(summary)}`,
+                    `[Proxy] Response: status=${statusCode}, time=${responseTimeMs}ms, summary=${JSON.stringify(summary)}`,
                   );
                 } catch {
                   this.logger.info(
-                    `[Proxy] Response: status=${statusCode}, body (truncated)=${responseData.substring(0, 500)}`,
+                    `[Proxy] Response: status=${statusCode}, time=${responseTimeMs}ms, body (truncated)=${responseData.substring(0, 500)}`,
                   );
                 }
               }
             } else {
               this.logger.info(
-                `[Proxy] Response: status=${statusCode}, empty body`,
+                `[Proxy] Response: status=${statusCode}, time=${responseTimeMs}ms, empty body`,
               );
             }
 
             // 提取 token 使用量
             let tokenUsage: TokenUsage | null = null;
-            if (vendor && statusCode >= 200 && statusCode < 300) {
+            const success = statusCode >= 200 && statusCode < 300;
+            if (vendor && success) {
               try {
                 tokenUsage = this.tokenExtractor.extractFromResponse(
                   vendor,
@@ -321,7 +360,7 @@ export class UpstreamService {
               }
             }
 
-            resolve({ statusCode, tokenUsage });
+            resolve({ statusCode, tokenUsage, responseTimeMs, success });
           });
 
           proxyRes.on('error', (err) => {

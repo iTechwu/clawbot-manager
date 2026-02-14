@@ -60,6 +60,15 @@ export interface OpenClawChatOptions {
   containerId?: string;
 }
 
+/**
+ * MCP Server 配置（用于 openclaw.json mcpServers）
+ */
+export interface McpServerConfig {
+  command: string;
+  args: string[];
+  env?: Record<string, string>;
+}
+
 @Injectable()
 export class OpenClawClient {
   private readonly requestTimeout = 120000; // 2 分钟超时
@@ -902,6 +911,177 @@ export class OpenClawClient {
     }
 
     return [];
+  }
+
+  /**
+   * 注入 MCP Server 配置到 OpenClaw 容器的 openclaw.json
+   * 在插件安装后，将 mcpConfig 实际注入到容器的配置文件中
+   * @param containerId Docker 容器 ID
+   * @param mcpServers Record<string, McpServerConfig>
+   *   McpServerConfig 格式：{ "plugin-slug": { "command": "npx", "args": [...], "env": {...} }
+   *   注意：这会合并（而非覆盖）openclaw.json 中的 mcpServers 配置
+   */
+  async injectMcpConfig(
+    containerId: string,
+    mcpServers: Record<string, McpServerConfig>,
+  ): Promise<void> {
+    this.logger.info('OpenClawClient: 注入 MCP 配置', { containerId });
+
+    // 构建 node 脚本：读取 openclaw.json，更新 mcpServers，写回文件
+    const mcpServersJson = JSON.stringify(mcpServers).replace(/"/g, '\\"');
+
+    const nodeScript = `
+      const fs = require("fs");
+      const configPath = "/home/node/.openclaw/openclaw.json";
+      const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+      config.mcpServers = config.mcpServers || {};
+      const newServers = ${mcpServersJson};
+      for (const [name, server] of Object.entries(newServers)) {
+        config.mcpServers[name] = server;
+      }
+      fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
+      console.log(JSON.stringify({ success: true }));
+    `;
+
+    try {
+      const execCreateUrl = `http://localhost/containers/${containerId}/exec`;
+      const execCreateResponse = await firstValueFrom(
+        this.httpService
+          .post(execCreateUrl, {
+            AttachStdout: true,
+            AttachStderr: true,
+            Cmd: ['node', '-e', nodeScript],
+          })
+          .pipe(
+            timeout(15000),
+            catchError((error) => {
+              this.logger.error('OpenClawClient: 创建 exec 失败', {
+                error: error instanceof Error ? error.message : 'Unknown error',
+              });
+              throw error;
+            }),
+          ),
+      );
+
+      const execId = execCreateResponse.data?.Id;
+      if (!execId) {
+        throw new Error('Failed to create exec instance');
+      }
+
+      const execStartUrl = `http://localhost/exec/${execId}/start`;
+      const execStartResponse = await firstValueFrom(
+        this.httpService
+          .post(execStartUrl, { Detach: false, Tty: false }, {
+            socketPath: '/var/run/docker.sock',
+            timeout: 15000,
+            responseType: 'arraybuffer',
+          })
+          .pipe(
+            timeout(15000),
+            catchError((error) => {
+              this.logger.error('OpenClawClient: 启动 exec 失败', {
+                error: error instanceof Error ? error.message : 'Unknown error',
+              });
+              throw error;
+            }),
+          ),
+      );
+
+      const stdout = this.parseDockerExecOutput(execStartResponse.data);
+      this.logger.info('OpenClawClient: MCP 配置注入完成', {
+        containerId,
+        plugins: Object.keys(mcpServers),
+        output: stdout,
+      });
+    } catch (error) {
+      this.logger.error('OpenClawClient: MCP 配置注入失败', {
+        containerId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * 移除指定 MCP Server 配置
+   * @param containerId Docker 容器 ID
+   * @param serverName MCP Server plugin slug（如 "mcp-server-slack"）
+   */
+  async removeMcpConfig(containerId: string, serverName: string): Promise<void> {
+    this.logger.info('OpenClawClient: 移除 MCP 配置', { containerId, serverName });
+
+    // 构建 node 脚本：读取 openclaw.json，删除指定 mcpServers，写回文件
+    const nodeScript = `
+      const fs = require("fs");
+      const configPath = "/home/node/.openclaw/openclaw.json";
+      const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+      if (config.mcpServers) {
+        delete config.mcpServers.${serverName};
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
+        console.log(JSON.stringify({ success: true, removed: "${serverName}" }));
+      } else {
+        console.log(JSON.stringify({ success: true, message: "No mcpServers found" }));
+      }
+    `;
+
+    try {
+      const execCreateUrl = `http://localhost/containers/${containerId}/exec`;
+      const execCreateResponse = await firstValueFrom(
+        this.httpService
+          .post(execCreateUrl, {
+            AttachStdout: true,
+            AttachStderr: true,
+            Cmd: ['node', '-e', nodeScript],
+          })
+          .pipe(
+            timeout(10000),
+            catchError((error) => {
+              this.logger.error('OpenClawClient: 创建 exec 失败', {
+                error: error instanceof Error ? error.message : 'Unknown error',
+              });
+              throw error;
+            }),
+          ),
+      );
+
+      const execId = execCreateResponse.data?.Id;
+      if (!execId) {
+        throw new Error('Failed to create exec instance');
+      }
+
+      const execStartUrl = `http://localhost/exec/${execId}/start`;
+      const execStartResponse = await firstValueFrom(
+        this.httpService
+          .post(execStartUrl, { Detach: false, Tty: false }, {
+            socketPath: '/var/run/docker.sock',
+            timeout: 10000,
+            responseType: 'arraybuffer',
+          })
+          .pipe(
+            timeout(10000),
+            catchError((error) => {
+              this.logger.error('OpenClawClient: 启动 exec 失败', {
+                error: error instanceof Error ? error.message : 'Unknown error',
+              });
+              throw error;
+            }),
+          ),
+      );
+
+      const stdout = this.parseDockerExecOutput(execStartResponse.data);
+      this.logger.info('OpenClawClient: MCP 配置移除完成', {
+        containerId,
+        serverName,
+        output: stdout,
+      });
+    } catch (error) {
+      this.logger.error('OpenClawClient: MCP 配置移除失败', {
+        containerId,
+        serverName,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
+    }
   }
 
   /**

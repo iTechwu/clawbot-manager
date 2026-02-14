@@ -23,6 +23,18 @@ export const API_CODE = {
   VALIDATION_ERROR: 422,
 } as const;
 
+// Plugin limits
+export const PLUGIN_LIMITS = {
+  /** MCP exec 超时（毫秒） */
+  MCP_EXEC_TIMEOUT: 30000,
+  /** 单个 Bot 最大插件数量 */
+  MAX_PLUGINS_PER_BOT: 20,
+  /** 允许的 MCP 命令白名单（安全限制） */
+  ALLOWED_MCP_COMMANDS: ['npx', 'node'],
+  /** MCP Server 启动超时（毫秒） */
+  MCP_SERVER_STARTUP_TIMEOUT: 10000,
+} as const;
+
 // Pagination defaults
 export const PAGINATION = {
   DEFAULT_PAGE: 1,

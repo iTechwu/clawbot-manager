@@ -11,12 +11,8 @@ import { getVendorConfigWithCustomUrl } from '../config/vendor.config';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { normalizeModelForProxy } from '@/utils/model-normalizer';
-import {
-  BotComplexityRoutingService,
-} from './bot-complexity-routing.service';
-import {
-  ModelResolverService,
-} from './model-resolver.service';
+import { BotComplexityRoutingService } from './bot-complexity-routing.service';
+import { ModelResolverService } from './model-resolver.service';
 
 /**
  * 代理请求参数
@@ -222,7 +218,11 @@ export class ProxyService {
     // Normalize model name in request body
     // OpenClaw sends model names with provider prefix (e.g., openai-compatible/gpt-4o)
     // We need to strip the prefix before forwarding to the upstream
-    let normalizedBody = this.normalizeRequestBody(body, effectiveApiType, isCustom);
+    let normalizedBody = this.normalizeRequestBody(
+      body,
+      effectiveApiType,
+      isCustom,
+    );
 
     // Apply complexity-based routing if enabled
     // This will analyze the request and potentially switch to a different model
@@ -262,12 +262,12 @@ export class ProxyService {
       }
     }
 
-    // 记录请求开始时间
+    // 记录请求开始时间（用于错误情况下的耗时记录）
     const startTime = Date.now();
 
     // 转发请求到上游
     try {
-      const { statusCode, tokenUsage } =
+      const { statusCode, tokenUsage, responseTimeMs } =
         await this.upstreamService.forwardToUpstream(
           {
             vendorConfig: vendorConfig!,
@@ -284,9 +284,6 @@ export class ProxyService {
           effectiveApiType,
         );
 
-      // 计算请求耗时
-      const durationMs = Date.now() - startTime;
-
       // 记录使用日志（包含 token 使用量和耗时）
       await this.logUsage(
         botId,
@@ -296,7 +293,7 @@ export class ProxyService {
         path,
         tokenUsage,
         undefined,
-        durationMs,
+        responseTimeMs,
       );
 
       // 检查配额并发送通知（异步，不阻塞响应）
@@ -376,11 +373,31 @@ export class ProxyService {
     );
 
     // 3. 解析所有可用 provider（按 vendorPriority DESC, healthScore DESC 排序）
-    const candidates = await this.modelResolverService.resolveAll(model);
+    // 如果请求路径是 /responses（OpenAI Responses API），只选择支持该协议的 provider
+    // 国内厂商（zhipu, dashscope, doubao 等）apiType='openai'，仅支持 /chat/completions
+    // OpenAI 原生 apiType='openai-response'，支持 /responses
+    const isResponsesApi = path === '/responses' || path.startsWith('/responses/');
+    const resolveOptions = isResponsesApi
+      ? { requiredProtocol: 'openai-response' }
+      : undefined;
+
+    if (isResponsesApi) {
+      this.logger.info(
+        `[Proxy] Auto-routing: /responses path detected, filtering to openai-response protocol only`,
+      );
+    }
+
+    const candidates = await this.modelResolverService.resolveAll(
+      model,
+      resolveOptions,
+    );
     if (candidates.length === 0) {
+      const protocolHint = isResponsesApi
+        ? ` (only providers with apiType=openai-response support /responses endpoint)`
+        : '';
       return {
         success: false,
-        error: `No available providers for model: ${model}`,
+        error: `No available providers for model: ${model}${protocolHint}`,
       };
     }
 
@@ -435,14 +452,25 @@ export class ProxyService {
           true,
         );
 
+        // Extract normalized model name for logging
+        let normalizedModel = model;
+        try {
+          if (normalizedBody) {
+            const parsed = JSON.parse(normalizedBody.toString('utf-8'));
+            if (parsed.model) normalizedModel = parsed.model;
+          }
+        } catch {
+          // ignore
+        }
+
         this.logger.info(
-          `[Proxy] Auto-routing: trying provider ${candidate.vendor} (key=${candidate.providerKeyId.substring(0, 8)}..., baseUrl=${baseUrl || 'default'})`,
+          `[Proxy] Auto-routing: trying provider ${candidate.vendor} (model=${normalizedModel}, key=${candidate.providerKeyId.substring(0, 8)}..., baseUrl=${baseUrl || 'default'}, apiKey=${apiKey.substring(0, 8)}..., path=${path})`,
         );
 
         startTime = Date.now();
 
         // 转发到上游
-        const { statusCode, tokenUsage } =
+        const { statusCode, tokenUsage, responseTimeMs, success } =
           await this.upstreamService.forwardToUpstream(
             {
               vendorConfig: vendorConfig!,
@@ -460,12 +488,9 @@ export class ProxyService {
             effectiveApiType,
           );
 
-        const durationMs = Date.now() - startTime;
-        const isSuccess = statusCode >= 200 && statusCode < 300;
-
         // 更新 health score
         this.modelResolverService
-          .updateHealthScore(candidate.providerKeyId, model, isSuccess)
+          .updateHealthScore(candidate.providerKeyId, model, success)
           .catch((err) =>
             this.logger.error('[Proxy] Failed to update health score:', err),
           );
@@ -479,7 +504,7 @@ export class ProxyService {
           path,
           tokenUsage,
           undefined,
-          durationMs,
+          responseTimeMs,
         );
 
         // 检查配额
@@ -689,7 +714,9 @@ export class ProxyService {
           if (field in bodyJson) {
             delete bodyJson[field];
             modified = true;
-            this.logger.debug(`Stripped non-standard field: ${field} (vendor: ${vendor}, isCustom: ${isCustom})`);
+            this.logger.debug(
+              `Stripped non-standard field: ${field} (vendor: ${vendor}, isCustom: ${isCustom})`,
+            );
           }
         }
       }
