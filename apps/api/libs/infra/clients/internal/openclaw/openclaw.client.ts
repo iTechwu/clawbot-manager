@@ -14,6 +14,7 @@ import { firstValueFrom, timeout, catchError } from 'rxjs';
 import WebSocket from 'ws';
 import { randomUUID } from 'crypto';
 import type { ContainerSkillItem } from '@repo/contracts';
+import { DockerExecService } from './docker-exec.service';
 
 export interface OpenClawMessage {
   role: 'user' | 'assistant' | 'system';
@@ -77,6 +78,7 @@ export class OpenClawClient {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly httpService: HttpService,
+    private readonly dockerExec: DockerExecService,
   ) {}
 
   /**
@@ -150,69 +152,24 @@ export class OpenClawClient {
   async switchModel(containerId: string, model: string): Promise<void> {
     this.logger.info('OpenClawClient: 切换模型', { containerId, model });
 
-    try {
-      // 使用 HTTP 调用 Docker API 执行命令
-      // 注意：这需要 Docker socket 访问权限
-      const execCreateUrl = `http://localhost/containers/${containerId}/exec`;
-      const execCreateResponse = await firstValueFrom(
-        this.httpService
-          .post(
-            execCreateUrl,
-            {
-              AttachStdout: true,
-              AttachStderr: true,
-              Cmd: ['node', '/app/openclaw.mjs', 'models', 'set', model],
-            },
-            {
-              socketPath: '/var/run/docker.sock',
-              timeout: 10000,
-            },
-          )
-          .pipe(
-            timeout(10000),
-            catchError((error) => {
-              this.logger.error('OpenClawClient: 创建 exec 失败', {
-                error: error instanceof Error ? error.message : 'Unknown error',
-              });
-              throw error;
-            }),
-          ),
-      );
+    const result = await this.dockerExec.executeCommand(
+      containerId,
+      ['node', '/app/openclaw.mjs', 'models', 'set', model],
+      { timeout: 10000 },
+    );
 
-      const execId = execCreateResponse.data?.Id;
-      if (!execId) {
-        throw new Error('Failed to create exec instance');
-      }
-
-      // 启动 exec
-      const execStartUrl = `http://localhost/exec/${execId}/start`;
-      await firstValueFrom(
-        this.httpService
-          .post(
-            execStartUrl,
-            { Detach: false, Tty: false },
-            {
-              socketPath: '/var/run/docker.sock',
-              timeout: 10000,
-            },
-          )
-          .pipe(
-            timeout(10000),
-            catchError((error) => {
-              this.logger.error('OpenClawClient: 启动 exec 失败', {
-                error: error instanceof Error ? error.message : 'Unknown error',
-              });
-              throw error;
-            }),
-          ),
-      );
-
-      this.logger.info('OpenClawClient: 模型切换成功', { containerId, model });
-    } catch (error) {
-      this.logger.error('OpenClawClient: 模型切换失败', {
+    if (result.success) {
+      this.logger.info('OpenClawClient: 模型切换成功', {
         containerId,
         model,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        durationMs: result.durationMs,
+      });
+    } else {
+      this.logger.warn('OpenClawClient: 模型切换失败', {
+        containerId,
+        model,
+        stderr: result.stderr,
+        durationMs: result.durationMs,
       });
       // 不抛出错误，允许继续使用当前模型
     }
@@ -227,8 +184,11 @@ export class OpenClawClient {
     skillName: string,
     scriptName: string = 'init.sh',
   ): Promise<{ stdout: string; success: boolean } | null> {
-    const safeNamePattern = /^[a-zA-Z0-9_\-.]+$/;
-    if (!safeNamePattern.test(skillName) || !safeNamePattern.test(scriptName)) {
+    // 使用 DockerExecService 的安全验证
+    if (
+      !this.dockerExec.isValidName(skillName) ||
+      !this.dockerExec.isValidName(scriptName)
+    ) {
       this.logger.warn('OpenClawClient: 非法技能名或脚本名', {
         skillName,
         scriptName,
@@ -243,76 +203,29 @@ export class OpenClawClient {
       scriptPath,
     });
 
-    try {
-      const execCreateUrl = `http://localhost/containers/${containerId}/exec`;
-      const execCreateResponse = await firstValueFrom(
-        this.httpService
-          .post(
-            execCreateUrl,
-            {
-              AttachStdout: true,
-              AttachStderr: true,
-              Cmd: ['sh', scriptPath],
-              User: 'node',
-            },
-            {
-              socketPath: '/var/run/docker.sock',
-              timeout: 10000,
-            },
-          )
-          .pipe(
-            timeout(10000),
-            catchError((error) => {
-              this.logger.error('OpenClawClient: 创建脚本 exec 失败', {
-                error: error instanceof Error ? error.message : 'Unknown error',
-              });
-              throw error;
-            }),
-          ),
-      );
+    const result = await this.dockerExec.executeCommand(
+      containerId,
+      ['sh', scriptPath],
+      { user: 'node', timeout: 30000 },
+    );
 
-      const execId = execCreateResponse.data?.Id;
-      if (!execId) return null;
-
-      const execStartUrl = `http://localhost/exec/${execId}/start`;
-      const execStartResponse = await firstValueFrom(
-        this.httpService
-          .post(
-            execStartUrl,
-            { Detach: false, Tty: false },
-            {
-              socketPath: '/var/run/docker.sock',
-              timeout: 30000,
-              responseType: 'arraybuffer',
-            },
-          )
-          .pipe(
-            timeout(30000),
-            catchError((error) => {
-              this.logger.error('OpenClawClient: 脚本执行超时或失败', {
-                error: error instanceof Error ? error.message : 'Unknown error',
-              });
-              throw error;
-            }),
-          ),
-      );
-
-      const stdout = this.parseDockerExecOutput(execStartResponse.data);
+    if (result.success) {
       this.logger.info('OpenClawClient: 脚本执行完成', {
         containerId,
         skillName,
-        outputLength: stdout.length,
+        outputLength: result.stdout.length,
+        durationMs: result.durationMs,
       });
-
-      return { stdout, success: true };
-    } catch (error) {
+    } else {
       this.logger.error('OpenClawClient: 脚本执行失败', {
         containerId,
         skillName,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        stderr: result.stderr,
+        durationMs: result.durationMs,
       });
-      return { stdout: '', success: false };
     }
+
+    return { stdout: result.stdout, success: result.success };
   }
 
   /**
@@ -718,103 +631,16 @@ export class OpenClawClient {
 
   /**
    * 在容器内执行命令并返回 stdout 输出
+   * 使用 DockerExecService 统一处理
    */
   private async execInContainer(
     containerId: string,
     cmd: string[],
   ): Promise<string | null> {
-    try {
-      const execCreateUrl = `http://localhost/containers/${containerId}/exec`;
-      const execCreateResponse = await firstValueFrom(
-        this.httpService
-          .post(
-            execCreateUrl,
-            {
-              AttachStdout: true,
-              AttachStderr: true,
-              Cmd: cmd,
-            },
-            {
-              socketPath: '/var/run/docker.sock',
-              timeout: 10000,
-            },
-          )
-          .pipe(
-            timeout(10000),
-            catchError((error) => {
-              this.logger.error('OpenClawClient: 创建 exec 失败', {
-                error: error instanceof Error ? error.message : 'Unknown error',
-                cmd: cmd.join(' '),
-              });
-              throw error;
-            }),
-          ),
-      );
-
-      const execId = execCreateResponse.data?.Id;
-      if (!execId) {
-        return null;
-      }
-
-      const execStartUrl = `http://localhost/exec/${execId}/start`;
-      const execStartResponse = await firstValueFrom(
-        this.httpService
-          .post(
-            execStartUrl,
-            { Detach: false, Tty: false },
-            {
-              socketPath: '/var/run/docker.sock',
-              timeout: 15000,
-              responseType: 'arraybuffer',
-            },
-          )
-          .pipe(
-            timeout(15000),
-            catchError((error) => {
-              this.logger.error('OpenClawClient: 启动 exec 失败', {
-                error: error instanceof Error ? error.message : 'Unknown error',
-              });
-              throw error;
-            }),
-          ),
-      );
-
-      return this.parseDockerExecOutput(execStartResponse.data);
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * 解析 Docker exec 多路复用流输出
-   * Docker exec 输出格式：每帧 8 字节头 + payload
-   * 头部：[stream_type(1), 0, 0, 0, size(4 bytes big-endian)]
-   */
-  private parseDockerExecOutput(data: ArrayBuffer | Buffer): string {
-    const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
-    let output = '';
-    let offset = 0;
-
-    while (offset + 8 <= buffer.length) {
-      const streamType = buffer[offset];
-      const size = buffer.readUInt32BE(offset + 4);
-      offset += 8;
-
-      if (offset + size > buffer.length) break;
-
-      // streamType 1 = stdout, 2 = stderr; 只取 stdout
-      if (streamType === 1) {
-        output += buffer.subarray(offset, offset + size).toString('utf-8');
-      }
-      offset += size;
-    }
-
-    // 如果解析失败（非多路复用格式），直接返回原始字符串
-    if (!output && buffer.length > 0) {
-      output = buffer.toString('utf-8');
-    }
-
-    return output.trim();
+    const result = await this.dockerExec.executeCommand(containerId, cmd, {
+      timeout: 15000,
+    });
+    return result.success ? result.stdout : null;
   }
 
   /**
@@ -927,7 +753,7 @@ export class OpenClawClient {
   ): Promise<void> {
     this.logger.info('OpenClawClient: 注入 MCP 配置', { containerId });
 
-    // 构建 node 脚本：读取 openclaw.json，更新 mcpServers，写回文件
+    // 安全序列化 MCP 配置
     const mcpServersJson = JSON.stringify(mcpServers).replace(/"/g, '\\"');
 
     const nodeScript = `
@@ -943,63 +769,18 @@ export class OpenClawClient {
       console.log(JSON.stringify({ success: true }));
     `;
 
-    try {
-      const execCreateUrl = `http://localhost/containers/${containerId}/exec`;
-      const execCreateResponse = await firstValueFrom(
-        this.httpService
-          .post(execCreateUrl, {
-            AttachStdout: true,
-            AttachStderr: true,
-            Cmd: ['node', '-e', nodeScript],
-          })
-          .pipe(
-            timeout(15000),
-            catchError((error) => {
-              this.logger.error('OpenClawClient: 创建 exec 失败', {
-                error: error instanceof Error ? error.message : 'Unknown error',
-              });
-              throw error;
-            }),
-          ),
-      );
+    const result = await this.dockerExec.executeNodeScript(
+      containerId,
+      nodeScript,
+      { timeout: 15000, throwOnError: true },
+    );
 
-      const execId = execCreateResponse.data?.Id;
-      if (!execId) {
-        throw new Error('Failed to create exec instance');
-      }
-
-      const execStartUrl = `http://localhost/exec/${execId}/start`;
-      const execStartResponse = await firstValueFrom(
-        this.httpService
-          .post(execStartUrl, { Detach: false, Tty: false }, {
-            socketPath: '/var/run/docker.sock',
-            timeout: 15000,
-            responseType: 'arraybuffer',
-          })
-          .pipe(
-            timeout(15000),
-            catchError((error) => {
-              this.logger.error('OpenClawClient: 启动 exec 失败', {
-                error: error instanceof Error ? error.message : 'Unknown error',
-              });
-              throw error;
-            }),
-          ),
-      );
-
-      const stdout = this.parseDockerExecOutput(execStartResponse.data);
-      this.logger.info('OpenClawClient: MCP 配置注入完成', {
-        containerId,
-        plugins: Object.keys(mcpServers),
-        output: stdout,
-      });
-    } catch (error) {
-      this.logger.error('OpenClawClient: MCP 配置注入失败', {
-        containerId,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-      throw error;
-    }
+    this.logger.info('OpenClawClient: MCP 配置注入完成', {
+      containerId,
+      plugins: Object.keys(mcpServers),
+      output: result.stdout,
+      durationMs: result.durationMs,
+    });
   }
 
   /**
@@ -1010,13 +791,19 @@ export class OpenClawClient {
   async removeMcpConfig(containerId: string, serverName: string): Promise<void> {
     this.logger.info('OpenClawClient: 移除 MCP 配置', { containerId, serverName });
 
+    // 安全校验：只允许合法字符（防止 shell 注入）
+    if (!this.dockerExec.isValidName(serverName)) {
+      throw new Error(`Invalid server name: ${serverName}`);
+    }
+
     // 构建 node 脚本：读取 openclaw.json，删除指定 mcpServers，写回文件
+    // 使用引号包裹属性名，避免注入风险
     const nodeScript = `
       const fs = require("fs");
       const configPath = "/home/node/.openclaw/openclaw.json";
       const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
       if (config.mcpServers) {
-        delete config.mcpServers.${serverName};
+        delete config.mcpServers["${serverName}"];
         fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
         console.log(JSON.stringify({ success: true, removed: "${serverName}" }));
       } else {
@@ -1024,64 +811,18 @@ export class OpenClawClient {
       }
     `;
 
-    try {
-      const execCreateUrl = `http://localhost/containers/${containerId}/exec`;
-      const execCreateResponse = await firstValueFrom(
-        this.httpService
-          .post(execCreateUrl, {
-            AttachStdout: true,
-            AttachStderr: true,
-            Cmd: ['node', '-e', nodeScript],
-          })
-          .pipe(
-            timeout(10000),
-            catchError((error) => {
-              this.logger.error('OpenClawClient: 创建 exec 失败', {
-                error: error instanceof Error ? error.message : 'Unknown error',
-              });
-              throw error;
-            }),
-          ),
-      );
+    const result = await this.dockerExec.executeNodeScript(
+      containerId,
+      nodeScript,
+      { timeout: 10000, throwOnError: true },
+    );
 
-      const execId = execCreateResponse.data?.Id;
-      if (!execId) {
-        throw new Error('Failed to create exec instance');
-      }
-
-      const execStartUrl = `http://localhost/exec/${execId}/start`;
-      const execStartResponse = await firstValueFrom(
-        this.httpService
-          .post(execStartUrl, { Detach: false, Tty: false }, {
-            socketPath: '/var/run/docker.sock',
-            timeout: 10000,
-            responseType: 'arraybuffer',
-          })
-          .pipe(
-            timeout(10000),
-            catchError((error) => {
-              this.logger.error('OpenClawClient: 启动 exec 失败', {
-                error: error instanceof Error ? error.message : 'Unknown error',
-              });
-              throw error;
-            }),
-          ),
-      );
-
-      const stdout = this.parseDockerExecOutput(execStartResponse.data);
-      this.logger.info('OpenClawClient: MCP 配置移除完成', {
-        containerId,
-        serverName,
-        output: stdout,
-      });
-    } catch (error) {
-      this.logger.error('OpenClawClient: MCP 配置移除失败', {
-        containerId,
-        serverName,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-      throw error;
-    }
+    this.logger.info('OpenClawClient: MCP 配置移除完成', {
+      containerId,
+      serverName,
+      output: result.stdout,
+      durationMs: result.durationMs,
+    });
   }
 
   /**
@@ -1095,8 +836,7 @@ export class OpenClawClient {
     if (skills.length === 0) return;
 
     // 安全校验：只允许合法字符的技能名参与 shell 命令（防止注入）
-    const safeNamePattern = /^[a-zA-Z0-9_\-.]+$/;
-    const safeSkills = skills.filter((s) => safeNamePattern.test(s.name));
+    const safeSkills = skills.filter((s) => this.dockerExec.isValidName(s.name));
 
     if (safeSkills.length === 0) return;
 

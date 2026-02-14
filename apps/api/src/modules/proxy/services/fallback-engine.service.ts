@@ -1,6 +1,10 @@
-import { Inject, Injectable, Optional } from '@nestjs/common';
+import { Inject, Injectable, Optional, OnModuleDestroy } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import {
+  FallbackChainService,
+  FallbackChainModelService,
+} from '@app/db';
 import { ModelResolverService, ResolvedModel } from './model-resolver.service';
 
 /**
@@ -73,18 +77,145 @@ export interface FallbackDecision {
  * - 追踪 Fallback 状态
  */
 @Injectable()
-export class FallbackEngineService {
-  // Fallback 链配置（后续从数据库加载）
+export class FallbackEngineService implements OnModuleDestroy {
+  // Fallback 链配置（运行时缓存）
   private fallbackChains: Map<string, FallbackChain> = new Map();
+  // Fallback 链缓存（数据库加载的配置）
+  private chainCache = new Map<string, { chain: FallbackChain; expiry: number }>();
+  private readonly chainCacheTTL = 5 * 60 * 1000; // 5 分钟
 
   // 活跃的 Fallback 上下文
   private activeContexts: Map<string, FallbackContext> = new Map();
 
+  // 定期清理过期缓存的定时器
+  private cleanupInterval?: NodeJS.Timeout;
+
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @Optional() private readonly modelResolverService?: ModelResolverService,
+    @Optional() private readonly fallbackChainService?: FallbackChainService,
+    @Optional() private readonly fallbackChainModelService?: FallbackChainModelService,
   ) {
     this.initializeDefaultChains();
+    // 每分钟清理过期缓存
+    this.cleanupInterval = setInterval(() => this.cleanupCache(), 60 * 1000);
+  }
+
+  onModuleDestroy() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
+  }
+
+  /**
+   * 清理过期缓存
+   */
+  private cleanupCache(): void {
+    const now = Date.now();
+    for (const [chainId, entry] of this.chainCache) {
+      if (entry.expiry < now) {
+        this.chainCache.delete(chainId);
+      }
+    }
+  }
+
+  /**
+   * 清除 Fallback 链缓存
+   */
+  clearChainCache(chainId?: string): void {
+    if (chainId) {
+      this.chainCache.delete(chainId);
+      this.fallbackChains.delete(chainId);
+    } else {
+      this.chainCache.clear();
+      // 重新初始化默认链
+      this.initializeDefaultChains();
+    }
+  }
+
+  /**
+   * 从数据库加载 Fallback 链配置
+   */
+  async loadFallbackChainFromDb(chainId: string): Promise<FallbackChain | null> {
+    // 检查缓存
+    const cached = this.chainCache.get(chainId);
+    if (cached && cached.expiry > Date.now()) {
+      return cached.chain;
+    }
+
+    // 从数据库加载
+    if (this.fallbackChainService && this.fallbackChainModelService) {
+      try {
+        const dbChain = await this.fallbackChainService.getByChainId(chainId);
+        if (!dbChain) {
+          return null;
+        }
+
+        // 获取模型列表
+        const models = await this.fallbackChainModelService.listByChainId(dbChain.id);
+
+        // 构建 FallbackChain 对象
+        const chain = this.buildFallbackChain(dbChain, models);
+
+        // 缓存结果
+        this.chainCache.set(chainId, {
+          chain,
+          expiry: Date.now() + this.chainCacheTTL,
+        });
+
+        this.logger.info(
+          `[FallbackEngine] Loaded fallback chain from DB: ${chainId}`,
+        );
+
+        return chain;
+      } catch (error) {
+        this.logger.warn(
+          `[FallbackEngine] Failed to load fallback chain ${chainId} from DB`,
+          { error },
+        );
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * 从数据库记录构建 FallbackChain 对象
+   */
+  private buildFallbackChain(dbChain: any, models: any[]): FallbackChain {
+    const fallbackModels: FallbackModel[] = models.map((m) => ({
+      modelCatalogId: m.modelCatalogId,
+      vendor: m.modelCatalog?.vendor || 'openai',
+      model: m.modelCatalog?.model || m.modelId,
+      protocol: this.inferProtocol(m.modelCatalog?.vendor),
+      displayName: m.modelCatalog?.displayName,
+    }));
+
+    return {
+      id: dbChain.id,
+      chainId: dbChain.chainId,
+      name: dbChain.name,
+      models: fallbackModels,
+      triggerStatusCodes: (dbChain.triggerStatusCodes as number[]) || [
+        429, 500, 502, 503, 504,
+      ],
+      triggerErrorTypes: (dbChain.triggerErrorTypes as string[]) || [
+        'rate_limit',
+        'overloaded',
+        'timeout',
+      ],
+      triggerTimeoutMs: dbChain.triggerTimeoutMs || 60000,
+      maxRetries: dbChain.maxRetries || 3,
+      retryDelayMs: dbChain.retryDelayMs || 2000,
+      preserveProtocol: dbChain.preserveProtocol ?? false,
+    };
+  }
+
+  /**
+   * 从 vendor 推断协议
+   */
+  private inferProtocol(vendor?: string): 'openai-compatible' | 'anthropic-native' {
+    return vendor === 'anthropic' ? 'anthropic-native' : 'openai-compatible';
   }
 
   /**
@@ -362,13 +493,6 @@ export class FallbackEngineService {
   }
 
   /**
-   * 根据 vendor 推断协议类型
-   */
-  private inferProtocol(vendor: string): 'openai-compatible' | 'anthropic-native' {
-    return vendor === 'anthropic' ? 'anthropic-native' : 'openai-compatible';
-  }
-
-  /**
    * 获取下一个 Fallback 模型
    */
   getNextFallback(
@@ -456,10 +580,31 @@ export class FallbackEngineService {
   }
 
   /**
-   * 获取 Fallback 链配置
+   * 获取 Fallback 链配置（同步版本，仅返回已缓存的链）
    */
   getFallbackChain(chainId: string): FallbackChain | undefined {
     return this.fallbackChains.get(chainId);
+  }
+
+  /**
+   * 获取 Fallback 链配置（异步版本，尝试从数据库加载）
+   */
+  async getFallbackChainAsync(chainId: string): Promise<FallbackChain | undefined> {
+    // 先检查内存缓存
+    const cached = this.fallbackChains.get(chainId);
+    if (cached) {
+      return cached;
+    }
+
+    // 尝试从数据库加载
+    const dbChain = await this.loadFallbackChainFromDb(chainId);
+    if (dbChain) {
+      // 更新内存缓存
+      this.fallbackChains.set(chainId, dbChain);
+      return dbChain;
+    }
+
+    return undefined;
   }
 
   /**

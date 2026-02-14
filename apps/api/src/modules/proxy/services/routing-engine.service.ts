@@ -1,4 +1,4 @@
-import { Inject, Injectable, Optional } from '@nestjs/common';
+import { Inject, Injectable, Optional, OnModuleDestroy } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import {
@@ -9,6 +9,11 @@ import {
   type ModelConfig,
   type ClassifierConfig,
 } from '@app/clients/internal/complexity-classifier';
+import {
+  ModelCatalogService,
+  ComplexityRoutingConfigService,
+  ComplexityRoutingModelMappingService,
+} from '@app/db';
 
 /**
  * 复杂度路由配置
@@ -142,19 +147,188 @@ export interface BotRoutingContext {
  * - 返回路由决策
  */
 @Injectable()
-export class RoutingEngineService {
+export class RoutingEngineService implements OnModuleDestroy {
   // 预定义能力标签（后续从数据库加载）
   private capabilityTags: Map<string, CapabilityTag> = new Map();
-  // 复杂度路由配置
+  // 复杂度路由配置（运行时缓存）
   private complexityRoutingConfig: ComplexityRoutingConfig =
     DEFAULT_COMPLEXITY_ROUTING;
+  // 复杂度路由配置缓存（按 configId 缓存）
+  private complexityConfigCache = new Map<string, { config: ComplexityRoutingConfig; expiry: number }>();
+  private readonly complexityConfigCacheTTL = 5 * 60 * 1000; // 5 分钟
+
+  // 模型能力评分缓存
+  private modelCapabilityScoreCache = new Map<string, { score: number; expiry: number }>();
+  private readonly scoreCacheTTL = 5 * 60 * 1000; // 5 分钟
+
+  // 定期清理过期缓存的定时器
+  private cleanupInterval?: NodeJS.Timeout;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     @Optional()
+    private readonly modelCatalogService?: ModelCatalogService,
+    @Optional()
+    private readonly complexityRoutingConfigService?: ComplexityRoutingConfigService,
+    @Optional()
+    private readonly complexityRoutingModelMappingService?: ComplexityRoutingModelMappingService,
+    @Optional()
     private readonly complexityClassifier?: ComplexityClassifierService,
   ) {
     this.initializeDefaultTags();
+    // 每分钟清理过期缓存
+    this.cleanupInterval = setInterval(() => this.cleanupAllCaches(), 60 * 1000);
+  }
+
+  onModuleDestroy() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
+  }
+
+  /**
+   * 清理所有过期缓存
+   */
+  private cleanupAllCaches(): void {
+    this.cleanupScoreCache();
+    this.cleanupComplexityConfigCache();
+  }
+
+  /**
+   * 清理过期的评分缓存
+   */
+  private cleanupScoreCache(): void {
+    const now = Date.now();
+    for (const [model, entry] of this.modelCapabilityScoreCache) {
+      if (entry.expiry < now) {
+        this.modelCapabilityScoreCache.delete(model);
+      }
+    }
+  }
+
+  /**
+   * 清理过期的复杂度配置缓存
+   */
+  private cleanupComplexityConfigCache(): void {
+    const now = Date.now();
+    for (const [configId, entry] of this.complexityConfigCache) {
+      if (entry.expiry < now) {
+        this.complexityConfigCache.delete(configId);
+      }
+    }
+  }
+
+  /**
+   * 清除模型能力评分缓存
+   */
+  clearCapabilityScoreCache(model?: string): void {
+    if (model) {
+      this.modelCapabilityScoreCache.delete(model);
+    } else {
+      this.modelCapabilityScoreCache.clear();
+    }
+  }
+
+  /**
+   * 清除复杂度路由配置缓存
+   */
+  clearComplexityConfigCache(configId?: string): void {
+    if (configId) {
+      this.complexityConfigCache.delete(configId);
+    } else {
+      this.complexityConfigCache.clear();
+    }
+  }
+
+  /**
+   * 从数据库加载复杂度路由配置
+   */
+  async loadComplexityRoutingConfig(configId?: string): Promise<ComplexityRoutingConfig> {
+    // 如果指定了 configId，检查缓存
+    if (configId) {
+      const cached = this.complexityConfigCache.get(configId);
+      if (cached && cached.expiry > Date.now()) {
+        return cached.config;
+      }
+    }
+
+    // 从数据库加载
+    if (this.complexityRoutingConfigService && this.complexityRoutingModelMappingService) {
+      try {
+        // 获取配置（默认使用 'default' 配置）
+        const dbConfig = await this.complexityRoutingConfigService.get({
+          configId: configId || 'default',
+          isEnabled: true,
+        });
+
+        if (dbConfig) {
+          // 获取模型映射
+          const mappings = await this.complexityRoutingModelMappingService.listByConfigId(
+            dbConfig.id,
+          );
+
+          // 构建配置对象
+          const config = this.buildComplexityRoutingConfig(dbConfig, mappings);
+
+          // 缓存配置
+          this.complexityConfigCache.set(dbConfig.configId, {
+            config,
+            expiry: Date.now() + this.complexityConfigCacheTTL,
+          });
+
+          this.logger.info(
+            `[RoutingEngine] Loaded complexity routing config from DB: ${dbConfig.configId}`,
+          );
+
+          return config;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `[RoutingEngine] Failed to load complexity routing config from DB, using default`,
+          { error },
+        );
+      }
+    }
+
+    // 返回默认配置
+    return DEFAULT_COMPLEXITY_ROUTING;
+  }
+
+  /**
+   * 从数据库记录构建复杂度路由配置
+   */
+  private buildComplexityRoutingConfig(
+    dbConfig: any,
+    mappings: any[],
+  ): ComplexityRoutingConfig {
+    const models: Record<ComplexityLevel, ModelConfig> = {
+      super_easy: { vendor: 'deepseek', model: 'deepseek-v3' },
+      easy: { vendor: 'deepseek', model: 'deepseek-v3' },
+      medium: { vendor: 'openai', model: 'gpt-4o' },
+      hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
+      super_hard: { vendor: 'anthropic', model: 'claude-opus-4-20250514' },
+    };
+
+    // 按 complexityLevel 分组映射
+    for (const mapping of mappings) {
+      const level = mapping.complexityLevel as ComplexityLevel;
+      if (COMPLEXITY_LEVELS.includes(level) && mapping.modelCatalog) {
+        models[level] = {
+          vendor: mapping.modelCatalog.vendor,
+          model: mapping.modelCatalog.model,
+        };
+      }
+    }
+
+    return {
+      enabled: dbConfig.isEnabled,
+      models,
+      toolMinComplexity: (dbConfig.toolMinComplexity as ComplexityLevel) || 'easy',
+      classifier: {
+        model: dbConfig.classifierModel,
+        vendor: dbConfig.classifierVendor,
+      },
+    };
   }
 
   /**
@@ -558,9 +732,13 @@ export class RoutingEngineService {
     context: BotRoutingContext,
     routingHint?: string,
   ): Promise<RouteDecision> {
-    // 1. 获取复杂度路由配置
-    const complexityConfig =
-      context.routingConfig?.complexityRouting || this.complexityRoutingConfig;
+    // 1. 获取复杂度路由配置（优先级：context > 数据库 > 默认）
+    let complexityConfig = context.routingConfig?.complexityRouting;
+
+    if (!complexityConfig) {
+      // 尝试从数据库加载默认配置
+      complexityConfig = await this.loadComplexityRoutingConfig('default');
+    }
 
     // 2. 如果未启用复杂度路由或没有分类器，使用传统路由
     if (!complexityConfig.enabled || !this.complexityClassifier) {
@@ -620,7 +798,7 @@ export class RoutingEngineService {
 
     // 主模型能力满足当前复杂度要求 → 使用主模型
     if (context.primaryModel) {
-      const primaryScore = this.getModelCapabilityScore(context.primaryModel.model);
+      const primaryScore = await this.getModelCapabilityScore(context.primaryModel.model);
       const requiredScore = this.getMinComplexityScore(finalLevel);
 
       if (primaryScore >= requiredScore) {
@@ -812,8 +990,51 @@ export class RoutingEngineService {
 
   /**
    * 获取模型能力分数
+   * 优先从数据库 ModelCatalog.reasoningScore 读取，其次使用缓存，最后使用硬编码默认值
    */
-  private getModelCapabilityScore(model: string): number {
+  private async getModelCapabilityScore(model: string): Promise<number> {
+    // 检查缓存
+    const cached = this.modelCapabilityScoreCache.get(model);
+    if (cached && cached.expiry > Date.now()) {
+      return cached.score;
+    }
+
+    // 尝试从数据库读取
+    if (this.modelCatalogService) {
+      try {
+        const catalog = await this.modelCatalogService.get({ model });
+        if (catalog) {
+          // 使用推理评分作为能力分数（0-100）
+          const score = catalog.reasoningScore ?? 50;
+          // 缓存结果
+          this.modelCapabilityScoreCache.set(model, {
+            score,
+            expiry: Date.now() + this.scoreCacheTTL,
+          });
+          return score;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `[RoutingEngine] Failed to get capability score from DB for ${model}, using fallback`,
+          { error },
+        );
+      }
+    }
+
+    // Fallback: 使用硬编码默认值
+    const fallbackScore = this.getFallbackCapabilityScore(model);
+    // 缓存结果（使用较短的 TTL）
+    this.modelCapabilityScoreCache.set(model, {
+      score: fallbackScore,
+      expiry: Date.now() + 60 * 1000, // 1 分钟
+    });
+    return fallbackScore;
+  }
+
+  /**
+   * 硬编码的能力评分（用于数据库不可用时的 fallback）
+   */
+  private getFallbackCapabilityScore(model: string): number {
     const modelLower = model.toLowerCase();
 
     // Anthropic

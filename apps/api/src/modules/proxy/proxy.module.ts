@@ -45,7 +45,10 @@ import { CostTrackerService } from './services/cost-tracker.service';
 import { ConfigurationService } from './services/configuration.service';
 import { BotComplexityRoutingService } from './services/bot-complexity-routing.service';
 import { ModelResolverService } from './services/model-resolver.service';
+import { CircuitBreakerService } from './services/circuit-breaker.service';
 import { CapabilityTagMatchingService } from '../bot-api/services/capability-tag-matching.service';
+// Event listeners
+import { HealthScoreListener } from './events/health-score.listener';
 
 /**
  * ProxyModule - API 代理模块
@@ -110,8 +113,12 @@ import { CapabilityTagMatchingService } from '../bot-api/services/capability-tag
     BotComplexityRoutingService,
     // Model resolver service (model → vendor instance)
     ModelResolverService,
+    // Circuit breaker service (provider failure protection)
+    CircuitBreakerService,
     // Capability tag matching service (auto-sync tags)
     CapabilityTagMatchingService,
+    // Event listeners
+    HealthScoreListener,
   ],
   exports: [
     ProxyService,
@@ -128,6 +135,8 @@ import { CapabilityTagMatchingService } from '../bot-api/services/capability-tag
     BotComplexityRoutingService,
     // Model resolver service
     ModelResolverService,
+    // Circuit breaker service
+    CircuitBreakerService,
   ],
 })
 export class ProxyModule {}

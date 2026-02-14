@@ -1,4 +1,5 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { RoutingEngineService, CapabilityTag } from './routing-engine.service';
@@ -31,16 +32,40 @@ import type {
 import type { ConfigLoadStatus } from '@repo/contracts';
 
 /**
+ * 配置变更事件
+ */
+export class ConfigurationChangedEvent {
+  constructor(
+    public readonly configType: 'modelCatalog' | 'capabilityTags' | 'fallbackChains' | 'costStrategies' | 'complexityRoutingConfigs',
+    public readonly count: number,
+    public readonly timestamp: Date = new Date(),
+  ) {}
+}
+
+/**
+ * 配置变更事件名称
+ */
+export const CONFIG_EVENTS = {
+  CHANGED: 'configuration.changed',
+  REFRESH: 'configuration.refresh',
+} as const;
+
+/**
  * ConfigurationService - 数据库驱动的配置管理服务
  *
  * 负责：
  * - 从数据库加载路由配置
- * - 定期刷新配置
- * - 配置变更通知
+ * - 定期刷新配置（5分钟）
+ * - 配置变更通知（通过 EventEmitter2）
  * - 配置状态监控
+ * - 缓存失效管理
+ *
+ * 配置加载优先级：
+ * 1. 数据库配置（如果存在）
+ * 2. 默认硬编码配置（如果数据库为空）
  */
 @Injectable()
-export class ConfigurationService implements OnModuleInit {
+export class ConfigurationService implements OnModuleInit, OnModuleDestroy {
   private loadStatus: ConfigLoadStatus = {
     modelCatalog: { loaded: false, count: 0 },
     capabilityTags: { loaded: false, count: 0 },
@@ -54,6 +79,7 @@ export class ConfigurationService implements OnModuleInit {
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly eventEmitter: EventEmitter2,
     private readonly routingEngine: RoutingEngineService,
     private readonly fallbackEngine: FallbackEngineService,
     private readonly costTracker: CostTrackerService,
@@ -143,6 +169,9 @@ export class ConfigurationService implements OnModuleInit {
         count: pricing.length,
         lastUpdate: new Date().toISOString(),
       };
+
+      // 发送配置变更事件
+      this.emitConfigChangedEvent('modelCatalog', pricing.length);
     } catch (error) {
       this.logger.error('[ConfigurationService] Failed to load model catalog', {
         error,
@@ -438,6 +467,14 @@ export class ConfigurationService implements OnModuleInit {
   }
 
   /**
+   * 模块销毁时清理资源
+   */
+  onModuleDestroy(): void {
+    this.stopPeriodicRefresh();
+    this.logger.info('[ConfigurationService] Module destroyed, resources cleaned up');
+  }
+
+  /**
    * 手动触发配置刷新
    */
   async refreshConfigurations(): Promise<void> {
@@ -463,6 +500,61 @@ export class ConfigurationService implements OnModuleInit {
       this.loadStatus.costStrategies.loaded &&
       this.loadStatus.complexityRoutingConfigs.loaded
     );
+  }
+
+  /**
+   * 发送配置变更事件
+   */
+  private emitConfigChangedEvent(
+    configType: 'modelCatalog' | 'capabilityTags' | 'fallbackChains' | 'costStrategies' | 'complexityRoutingConfigs',
+    count: number,
+  ): void {
+    this.eventEmitter.emit(
+      CONFIG_EVENTS.CHANGED,
+      new ConfigurationChangedEvent(configType, count),
+    );
+  }
+
+  /**
+   * 强制刷新指定类型的配置
+   */
+  async refreshConfigType(
+    configType: 'modelCatalog' | 'capabilityTags' | 'fallbackChains' | 'costStrategies' | 'complexityRoutingConfigs',
+  ): Promise<void> {
+    this.logger.info(`[ConfigurationService] Refreshing config type: ${configType}`);
+
+    switch (configType) {
+      case 'modelCatalog':
+        await this.loadModelCatalog();
+        break;
+      case 'capabilityTags':
+        await this.loadCapabilityTags();
+        break;
+      case 'fallbackChains':
+        await this.loadFallbackChains();
+        break;
+      case 'costStrategies':
+        await this.loadCostStrategies();
+        break;
+      case 'complexityRoutingConfigs':
+        await this.loadComplexityRoutingConfigs();
+        break;
+    }
+  }
+
+  /**
+   * 清除所有缓存并重新加载配置
+   */
+  async invalidateAndReload(): Promise<void> {
+    this.logger.info('[ConfigurationService] Invalidating all caches and reloading...');
+
+    // 清除各服务的缓存
+    this.routingEngine.clearCapabilityScoreCache();
+    this.routingEngine.clearComplexityConfigCache();
+    this.fallbackEngine.clearChainCache();
+
+    // 重新加载所有配置
+    await this.loadAllConfigurations();
   }
 
   // ============================================================================

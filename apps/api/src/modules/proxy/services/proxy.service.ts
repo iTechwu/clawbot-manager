@@ -1,4 +1,5 @@
 import { Inject, Injectable, Optional } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { ServerResponse } from 'http';
 import { BotService, BotUsageLogService, ProviderKeyService } from '@app/db';
 import { EncryptionService } from '../../bot-api/services/encryption.service';
@@ -13,6 +14,11 @@ import { Logger } from 'winston';
 import { normalizeModelForProxy } from '@/utils/model-normalizer';
 import { BotComplexityRoutingService } from './bot-complexity-routing.service';
 import { ModelResolverService } from './model-resolver.service';
+import { CircuitBreakerService } from './circuit-breaker.service';
+import {
+  HealthScoreUpdateEvent,
+  HEALTH_SCORE_EVENTS,
+} from '../events/health-score.event';
 
 /**
  * 代理请求参数
@@ -63,6 +69,8 @@ export class ProxyService {
     private readonly quotaService: QuotaService,
     private readonly modelResolverService: ModelResolverService,
     private readonly providerKeyService: ProviderKeyService,
+    private readonly circuitBreakerService: CircuitBreakerService,
+    private readonly eventEmitter: EventEmitter2,
     @Optional()
     private readonly botComplexityRouting?: BotComplexityRoutingService,
   ) {}
@@ -411,6 +419,14 @@ export class ProxyService {
       const isLastAttempt = i === candidates.length - 1;
       let startTime = Date.now();
 
+      // 检查断路器状态
+      if (!this.circuitBreakerService.isAvailable(candidate.providerKeyId)) {
+        this.logger.debug(
+          `[Proxy] Auto-routing: provider ${candidate.vendor} circuit is OPEN, skipping`,
+        );
+        continue;
+      }
+
       try {
         // 获取 provider key 并解密 API key
         const providerKey = await this.providerKeyService.getById(
@@ -488,12 +504,14 @@ export class ProxyService {
             effectiveApiType,
           );
 
-        // 更新 health score
-        this.modelResolverService
-          .updateHealthScore(candidate.providerKeyId, model, success)
-          .catch((err) =>
-            this.logger.error('[Proxy] Failed to update health score:', err),
-          );
+        // 异步更新 health score（通过事件，避免阻塞请求）
+        this.eventEmitter.emit(
+          HEALTH_SCORE_EVENTS.UPDATE,
+          new HealthScoreUpdateEvent(candidate.providerKeyId, model, success),
+        );
+
+        // 更新断路器状态（成功）
+        this.circuitBreakerService.recordSuccess(candidate.providerKeyId);
 
         // 记录使用日志
         await this.logUsage(
@@ -518,12 +536,17 @@ export class ProxyService {
           error instanceof Error ? error.message : 'Unknown error';
         const durationMs = Date.now() - startTime;
 
-        // 更新 health score（失败）
-        this.modelResolverService
-          .updateHealthScore(candidate.providerKeyId, model, false)
-          .catch((err) =>
-            this.logger.error('[Proxy] Failed to update health score:', err),
-          );
+        // 异步更新 health score（通过事件，避免阻塞请求）
+        this.eventEmitter.emit(
+          HEALTH_SCORE_EVENTS.UPDATE,
+          new HealthScoreUpdateEvent(candidate.providerKeyId, model, false),
+        );
+
+        // 更新断路器状态（失败）
+        this.circuitBreakerService.recordFailure(
+          candidate.providerKeyId,
+          errorMessage,
+        );
 
         this.logger.warn(
           `[Proxy] Auto-routing: provider ${candidate.vendor} failed: ${errorMessage}`,
