@@ -1256,6 +1256,9 @@ export default function BotSkillsPage() {
             )}
           </TabsTrigger>
           <TabsTrigger value="container">
+            {containerLoading && (
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            )}
             {t('tabContainer')}
             {!containerLoading && containerSkills.length > 0 && (
               <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-xs">
@@ -1359,10 +1362,16 @@ export default function BotSkillsPage() {
         {/* 容器内置技能 */}
         <TabsContent value="container" className="space-y-4">
           {containerLoading ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {[1, 2].map((i) => (
-                <SkillCardSkeleton key={i} />
-              ))}
+            <div className="space-y-4">
+              <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{t('containerLoadingText')}</span>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <SkillCardSkeleton key={i} />
+                ))}
+              </div>
             </div>
           ) : containerSkills.length === 0 ? (
             <div className="text-muted-foreground py-8 text-center">

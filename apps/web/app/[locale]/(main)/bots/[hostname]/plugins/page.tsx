@@ -73,7 +73,7 @@ function InstalledPluginCard({
   t: (key: string) => string;
 }) {
   const { plugin } = botPlugin;
-  const CategoryIcon = categoryIcons[plugin.category];
+  const CategoryIcon = categoryIcons[plugin.category] ?? Puzzle;
 
   return (
     <Card>

@@ -56,6 +56,7 @@
   "liveFromContainer": "Live",
   "cachedData": "Cached",
   "noContainerSkills": "No built-in skills detected",
+  "containerLoadingText": "Loading container built-in skills…",
   "tabInstalled": "Installed Skills",
   "tabContainer": "Container Built-in",
   "updateAvailable": "Update available",

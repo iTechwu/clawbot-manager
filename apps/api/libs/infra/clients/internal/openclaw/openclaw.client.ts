@@ -75,6 +75,21 @@ export interface OpenClawChatOptions {
 }
 
 /**
+ * 直接通过 Proxy 发送多模态消息的选项
+ * 绕过 OpenClaw Gateway，直接调用 Keyring Proxy HTTP 端点
+ */
+export interface ProxyVisionChatOptions {
+  /** Docker 容器 ID（用于读取 proxy token） */
+  containerId: string;
+  /** Proxy 基础 URL（如 http://127.0.0.1:3200/api） */
+  proxyBaseUrl: string;
+  /** 视觉模型名称 */
+  visionModel: string;
+  /** 多模态消息内容 */
+  content: OpenClawContentPart[];
+}
+
+/**
  * MCP Server 配置（用于 openclaw.json mcpServers）
  */
 export interface McpServerConfig {
@@ -87,6 +102,8 @@ export interface McpServerConfig {
 export class OpenClawClient {
   private readonly requestTimeout = 120000; // 2 分钟超时
   private readonly wsTimeout = 120000; // WebSocket 响应超时
+  /** 缓存容器的 proxy token（containerId → token） */
+  private readonly proxyTokenCache = new Map<string, string>();
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
@@ -194,6 +211,136 @@ export class OpenClawClient {
         durationMs: result.durationMs,
       });
       // 不抛出错误，允许继续使用当前模型
+    }
+  }
+
+  /**
+   * 从容器环境变量中读取 Proxy Token（带缓存）
+   * @param containerId Docker 容器 ID
+   * @returns Proxy Token 字符串，失败返回 null
+   */
+  async getContainerProxyToken(
+    containerId: string,
+  ): Promise<string | null> {
+    // 检查缓存
+    const cached = this.proxyTokenCache.get(containerId);
+    if (cached) return cached;
+
+    const result = await this.dockerExec.executeCommand(
+      containerId,
+      ['printenv', 'PROXY_TOKEN'],
+      { timeout: 5000 },
+    );
+
+    if (result.success && result.stdout.trim()) {
+      const token = result.stdout.trim();
+      this.proxyTokenCache.set(containerId, token);
+      return token;
+    }
+
+    this.logger.warn('OpenClawClient: 无法读取容器 Proxy Token', {
+      containerId,
+      stderr: result.stderr,
+    });
+    return null;
+  }
+
+  /**
+   * 通过 Keyring Proxy 直接发送多模态消息（绕过 OpenClaw Gateway）
+   *
+   * 用于包含图片的视觉请求，因为 OpenClaw Gateway 的 chat.send
+   * WebSocket 协议不支持多模态内容数组。
+   *
+   * 流程：
+   * 1. 从容器读取 Proxy Token
+   * 2. 构建 OpenAI 兼容的 chat/completions 请求
+   * 3. 直接调用 Keyring Proxy HTTP 端点
+   * 4. 收集并返回响应文本
+   */
+  async chatViaProxy(options: ProxyVisionChatOptions): Promise<string> {
+    const { containerId, proxyBaseUrl, visionModel, content } = options;
+
+    this.logger.info('OpenClawClient: 通过 Proxy 发送视觉请求', {
+      containerId,
+      visionModel,
+      contentParts: content.length,
+      imageCount: content.filter((p) => p.type === 'image').length,
+    });
+
+    // 1. 获取 Proxy Token
+    const proxyToken = await this.getContainerProxyToken(containerId);
+    if (!proxyToken) {
+      throw new Error('无法获取 Proxy Token，无法发送视觉请求');
+    }
+
+    // 2. 构建 OpenAI 兼容请求体
+    const requestBody = {
+      model: visionModel,
+      messages: [
+        {
+          role: 'user',
+          content: content.map((part) => {
+            if (part.type === 'text') {
+              return { type: 'text', text: part.text || '' };
+            }
+            return {
+              type: 'image_url',
+              image_url: part.image_url,
+            };
+          }),
+        },
+      ],
+      stream: false,
+      max_tokens: 4096,
+    };
+
+    // 3. 调用 Proxy HTTP 端点
+    // 使用 openai-compatible vendor 触发自动路由
+    const url = `${proxyBaseUrl}/v1/openai-compatible/chat/completions`;
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService
+          .post(url, requestBody, {
+            headers: {
+              Authorization: `Bearer ${proxyToken}`,
+              'Content-Type': 'application/json',
+            },
+            timeout: this.requestTimeout,
+          })
+          .pipe(
+            catchError((error) => {
+              this.logger.error('OpenClawClient: Proxy 视觉请求失败', {
+                error: error.message,
+                status: error.response?.status,
+                data: error.response?.data
+                  ? JSON.stringify(error.response.data).substring(0, 500)
+                  : undefined,
+              });
+              throw error;
+            }),
+          ),
+      );
+
+      // 4. 提取响应文本
+      const data = response.data;
+      const responseText =
+        data?.choices?.[0]?.message?.content || '';
+
+      this.logger.info('OpenClawClient: Proxy 视觉请求成功', {
+        visionModel,
+        responseLength: responseText.length,
+        responsePreview: responseText.substring(0, 200),
+      });
+
+      return responseText;
+    } catch (error) {
+      this.logger.error('OpenClawClient: Proxy 视觉请求异常', {
+        containerId,
+        visionModel,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
     }
   }
 

@@ -3,27 +3,37 @@
  *
  * 职责：
  * - 解析飞书不同类型的消息内容
- * - 提取文本和图片信息
- * - 支持富文本（post）和图片（image）类型消息
+ * - 提取文本、图片和文件信息
+ * - 支持富文本（post）、图片（image）和文件（file）类型消息
  */
 import type {
   FeishuPostContent,
   FeishuPostContentNode,
   FeishuImageContent,
+  FeishuFileContent,
   ParsedFeishuMessage,
 } from './feishu.types';
+
+/**
+ * 创建空的解析结果
+ */
+function createEmptyResult(messageType: string): ParsedFeishuMessage {
+  return {
+    text: '',
+    hasImages: false,
+    images: [],
+    hasFiles: false,
+    files: [],
+    messageType,
+  };
+}
 
 /**
  * 解析飞书富文本消息（post 类型）
  * 提取文本和图片信息
  */
 export function parsePostContent(rawContent: string): ParsedFeishuMessage {
-  const result: ParsedFeishuMessage = {
-    text: '',
-    hasImages: false,
-    images: [],
-    messageType: 'post',
-  };
+  const result: ParsedFeishuMessage = createEmptyResult('post');
 
   try {
     const content: FeishuPostContent = JSON.parse(rawContent);
@@ -78,10 +88,9 @@ export function parsePostContent(rawContent: string): ParsedFeishuMessage {
  */
 export function parseImageContent(rawContent: string): ParsedFeishuMessage {
   const result: ParsedFeishuMessage = {
+    ...createEmptyResult('image'),
     text: '[图片]',
     hasImages: true,
-    images: [],
-    messageType: 'image',
   };
 
   try {
@@ -106,15 +115,45 @@ export function parseImageContent(rawContent: string): ParsedFeishuMessage {
 }
 
 /**
+ * 解析飞书文件消息（file 类型）
+ */
+export function parseFileContent(rawContent: string): ParsedFeishuMessage {
+  const result: ParsedFeishuMessage = createEmptyResult('file');
+
+  try {
+    const content: FeishuFileContent = JSON.parse(rawContent);
+
+    if (content.file_key && content.file_name) {
+      result.hasFiles = true;
+      result.files.push({
+        fileKey: content.file_key,
+        fileName: content.file_name,
+      });
+      // 文件消息的文本描述
+      result.text = `[文件: ${content.file_name}]`;
+    }
+  } catch {
+    // 解析失败，尝试从原始内容中提取 file_key 和 file_name
+    const keyMatch = rawContent.match(/"file_key"\s*:\s*"([^"]+)"/);
+    const nameMatch = rawContent.match(/"file_name"\s*:\s*"([^"]+)"/);
+    if (keyMatch && nameMatch) {
+      result.hasFiles = true;
+      result.files.push({
+        fileKey: keyMatch[1],
+        fileName: nameMatch[1],
+      });
+      result.text = `[文件: ${nameMatch[1]}]`;
+    }
+  }
+
+  return result;
+}
+
+/**
  * 解析飞书纯文本消息（text 类型）
  */
 export function parseTextContent(rawContent: string): ParsedFeishuMessage {
-  const result: ParsedFeishuMessage = {
-    text: '',
-    hasImages: false,
-    images: [],
-    messageType: 'text',
-  };
+  const result: ParsedFeishuMessage = createEmptyResult('text');
 
   try {
     const content = JSON.parse(rawContent);
@@ -139,6 +178,8 @@ export function parseFeishuMessage(
       return parsePostContent(rawContent);
     case 'image':
       return parseImageContent(rawContent);
+    case 'file':
+      return parseFileContent(rawContent);
     case 'text':
       return parseTextContent(rawContent);
     default:

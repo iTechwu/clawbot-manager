@@ -56,6 +56,7 @@
   "liveFromContainer": "实时",
   "cachedData": "缓存",
   "noContainerSkills": "未检测到内置技能",
+  "containerLoadingText": "正在加载容器内置技能…",
   "tabInstalled": "已安装技能",
   "tabContainer": "容器内置",
   "updateAvailable": "有更新",

@@ -349,7 +349,8 @@ export class ProxyService {
     rawResponse: ServerResponse,
     urlApiType: string,
   ): Promise<ProxyResult> {
-    const { path, method, headers, body, botToken, vendor } = params;
+    const { path, method, headers, body: originalBody, botToken, vendor } = params;
+    let body = originalBody;
 
     // 1. 验证 token（仅做身份认证）
     const isZeroTrust = this.keyringProxyService.isZeroTrustEnabled();
@@ -371,7 +372,7 @@ export class ProxyService {
     }
 
     // 2. 提取 model 名称
-    const model = this.extractModelFromBody(body);
+    let model = this.extractModelFromBody(body);
     if (!model) {
       return { success: false, error: 'No model specified in request body' };
     }
@@ -379,6 +380,32 @@ export class ProxyService {
     this.logger.info(
       `[Proxy] Auto-routing: model=${model}, apiType=${urlApiType}, botId=${botId}`,
     );
+
+    // 2.5 应用关键词路由：根据消息内容匹配路由规则，可能切换到不同模型
+    try {
+      const bodyJson = body ? JSON.parse(body.toString('utf-8')) : null;
+      const userMessage = bodyJson?.messages
+        ? this.extractUserMessage(bodyJson.messages)
+        : null;
+      if (userMessage) {
+        const routeResult = await this.keyringProxyService.routeModel({
+          botId,
+          message: userMessage,
+        });
+
+        if (routeResult && routeResult.model !== model) {
+          this.logger.info(
+            `[Proxy] Keyword routing matched: "${routeResult.matchedRule || routeResult.reason}" → model=${routeResult.model} (was ${model})`,
+          );
+          model = routeResult.model;
+          body = this.replaceModelInBody(body, model);
+        }
+      }
+    } catch (routeError) {
+      this.logger.warn('[Proxy] Keyword routing failed, using original model', {
+        error: routeError instanceof Error ? routeError.message : String(routeError),
+      });
+    }
 
     // 3. 解析所有可用 provider（按 vendorPriority DESC, healthScore DESC 排序）
     // 如果请求路径是 /responses（OpenAI Responses API），只选择支持该协议的 provider
@@ -890,6 +917,23 @@ export class ProxyService {
   /**
    * 从消息数组中提取最后一条用户消息
    */
+  /**
+   * 替换 request body 中的 model 名称
+   */
+  private replaceModelInBody(
+    body: Buffer | null,
+    newModel: string,
+  ): Buffer | null {
+    if (!body || body.length === 0) return body;
+    try {
+      const bodyJson = JSON.parse(body.toString('utf-8'));
+      bodyJson.model = newModel;
+      return Buffer.from(JSON.stringify(bodyJson), 'utf-8');
+    } catch {
+      return body;
+    }
+  }
+
   private extractUserMessage(
     messages: Array<{ role: string; content: unknown }>,
   ): string | null {

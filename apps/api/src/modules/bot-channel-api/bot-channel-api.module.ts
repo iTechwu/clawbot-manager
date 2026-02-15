@@ -20,6 +20,8 @@ import {
 import { CryptModule } from '@app/clients/internal/crypt';
 import { FeishuClientModule } from '@app/clients/internal/feishu';
 import { OpenClawModule } from '@app/clients/internal/openclaw';
+import { OcrModule } from '@app/shared-services/ocr';
+import { FileStorageServiceModule } from '@app/shared-services/file-storage';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { OpenClawModule } from '@app/clients/internal/openclaw';
     CryptModule,
     FeishuClientModule,
     OpenClawModule,
+    OcrModule,
+    FileStorageServiceModule,
   ],
   controllers: [BotChannelApiController],
   providers: [

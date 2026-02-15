@@ -343,6 +343,14 @@ export interface FeishuImageContent {
 }
 
 /**
+ * 飞书文件消息内容（file 类型）
+ */
+export interface FeishuFileContent {
+  file_key: string;
+  file_name: string;
+}
+
+/**
  * 图片数据响应
  */
 export interface FeishuImageData {
@@ -352,6 +360,20 @@ export interface FeishuImageData {
   mimeType: string;
   /** 图片大小（字节） */
   size: number;
+}
+
+/**
+ * 文件数据响应
+ */
+export interface FeishuFileData {
+  /** 文件 Base64 编码数据 */
+  base64: string;
+  /** 文件 MIME 类型 */
+  mimeType: string;
+  /** 文件大小（字节） */
+  size: number;
+  /** 文件名 */
+  fileName: string;
 }
 
 /**
@@ -367,6 +389,13 @@ export interface ParsedFeishuMessage {
     imageKey: string;
     width?: number;
     height?: number;
+  }>;
+  /** 是否包含文件 */
+  hasFiles: boolean;
+  /** 文件信息列表 */
+  files: Array<{
+    fileKey: string;
+    fileName: string;
   }>;
   /** 原始消息类型 */
   messageType: string;
